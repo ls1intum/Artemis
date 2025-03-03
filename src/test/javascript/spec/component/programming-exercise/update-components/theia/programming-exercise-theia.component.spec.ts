@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockPipe } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -8,7 +9,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { programmingExerciseCreationConfigMock } from '../programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
-import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 
 describe('ProgrammingExerciseTheiaComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTheiaComponent>;
@@ -21,8 +21,8 @@ describe('ProgrammingExerciseTheiaComponent', () => {
             getTheiaImages: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [ProgrammingExerciseTheiaComponent, ArtemisSharedLibsModule],
-            declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe)],
+            imports: [ProgrammingExerciseTheiaComponent],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockPipe(RemoveKeysPipe), MockDirective(TranslateDirective)],
             providers: [
                 {
                     provide: ActivatedRoute,

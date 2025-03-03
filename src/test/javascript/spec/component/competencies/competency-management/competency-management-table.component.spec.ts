@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import '@angular/localize/init';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
@@ -10,9 +9,14 @@ import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-mod
 import { MockProvider } from 'ng-mocks';
 import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/entities/competency.model';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('CompetencyManagementTableComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementTableComponent>;
@@ -23,9 +27,18 @@ describe('CompetencyManagementTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyManagementTableComponent, ArtemisTestModule, ArtemisSharedModule, ArtemisMarkdownModule],
+            imports: [CompetencyManagementTableComponent],
             declarations: [],
-            providers: [MockProvider(AlertService), { provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                MockProvider(AlertService),
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

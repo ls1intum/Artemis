@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sa
 
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptor;
 
-class IdCategorizer implements RuleCategorizer {
+public class IdCategorizer implements RuleCategorizer {
 
     @Override
     public String categorizeRule(ReportingDescriptor rule) {

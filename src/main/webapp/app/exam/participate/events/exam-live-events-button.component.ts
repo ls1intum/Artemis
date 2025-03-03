@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -6,6 +6,7 @@ import { Subscription, from } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 import dayjs from 'dayjs/esm';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export const USER_DISPLAY_RELEVANT_EVENTS = [
     ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
@@ -20,8 +21,13 @@ export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_
     templateUrl: './exam-live-events-button.component.html',
     styleUrls: ['./exam-live-events-button.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [FaIconComponent],
 })
 export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private liveEventsService = inject(ExamParticipationLiveEventsService);
+
     private modalRef?: NgbModalRef;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
@@ -30,12 +36,6 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
 
     // Icons
     faBullhorn = faBullhorn;
-
-    constructor(
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private liveEventsService: ExamParticipationLiveEventsService,
-    ) {}
 
     ngOnInit(): void {
         this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {

@@ -25,15 +25,15 @@ export class AuthServerProvider implements IAuthServerProvider {
     private sessionStorage = inject(SessionStorageService);
 
     login(credentials: Credentials): Observable<object> {
-        return this.http.post('api/public/authenticate', credentials);
+        return this.http.post('api/core/public/authenticate', credentials);
     }
 
     loginSAML2(rememberMe: boolean): Observable<object> {
-        return this.http.post('api/public/saml2', rememberMe.toString());
+        return this.http.post('api/core/public/saml2', rememberMe.toString());
     }
 
     logout(): Observable<object> {
-        return this.http.post('api/public/logout', null);
+        return this.http.post('api/core/public/logout', null);
     }
 
     /**

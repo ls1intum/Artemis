@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Alert Overlay Component Tests', () => {
     let comp: AlertOverlayComponent;
@@ -13,9 +13,11 @@ describe('Alert Overlay Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NoopAnimationsModule],
-            declarations: [AlertOverlayComponent, CloseCircleComponent],
-            providers: [{ provide: AlertService, useClass: AlertService }],
+            imports: [NoopAnimationsModule],
+            providers: [
+                { provide: AlertService, useClass: AlertService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {

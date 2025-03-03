@@ -51,20 +51,28 @@
                 [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
             >
                 @if (activeConversation) {
-                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (onUpdateSidebar)="prepareSidebarData()" />
+                    <jhi-conversation-header
+                        (collapseSearch)="toggleChannelSearch()"
+                        (onUpdateSidebar)="prepareSidebarData()"
+                        (togglePinnedMessage)="togglePinnedView()"
+                        [pinnedMessageCount]="pinnedCount"
+                    />
                     <jhi-conversation-messages
                         [contentHeightDev]="!isProduction || isTestServer"
-                        (openThread)="postInThread = $event"
+                        (openThread)="openThread($event)"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
+                        (onNavigateToPost)="onTriggerNavigateToPost($event)"
                         [focusPostId]="focusPostId"
                         [openThreadOnFocus]="openThreadOnFocus"
+                        [showOnlyPinned]="showOnlyPinned"
+                        (pinnedCount)="onPinnedCountChanged($event)"
                     />
                 } @else {
                     @if (selectedSavedPostStatus === null) {
                         <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                     } @else {
-                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)"></jhi-saved-posts>
+                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)" />
                     }
                 }
             </div>

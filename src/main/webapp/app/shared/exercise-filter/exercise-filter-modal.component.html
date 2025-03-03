@@ -70,11 +70,6 @@
             </div>
         }
 
-        <!--        <div class="form-group">-->
-        <!--            <label class="form-control-label h6" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>-->
-        <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
-        <!--        </div>-->
-
         <!--    On typescript version 5.5.4 the explicit check for difficultyFilter is needed,
         as otherwise typescript thinks it could be undefined in the loop (the client would not start in this case) -->
         @if (difficultyFilter?.isDisplayed && difficultyFilter) {

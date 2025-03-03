@@ -1,5 +1,5 @@
 import { FeedbackItemService } from 'app/exercises/shared/feedback/item/feedback-item-service';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -20,7 +20,7 @@ import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-grou
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
-    constructor(private translateService: TranslateService) {}
+    private translateService = inject(TranslateService);
 
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));

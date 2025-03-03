@@ -13,9 +13,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { LectureService } from 'app/lecture/lecture.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
@@ -26,6 +25,7 @@ import { Course } from 'app/entities/course.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -43,7 +43,6 @@ describe('Lecture', () => {
     let futureLecture2: Lecture;
     let unspecifiedLecture: Lecture;
     let lectureToIngest: Lecture;
-    let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
         const lastWeek = dayjs().subtract(1, 'week');
@@ -98,14 +97,12 @@ describe('Lecture', () => {
         lectureToIngest.title = 'machine Learning';
         lectureToIngest.course = new Course();
         lectureToIngest.course.id = 99;
-        consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         const profileInfo = {
             activeProfiles: [],
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -140,7 +137,7 @@ describe('Lecture', () => {
                             }),
                         );
                     },
-                    import: (courseId, lectureId) => {
+                    import: (_courseId, lectureId) => {
                         return of(
                             new HttpResponse({
                                 body: { id: lectureId } as Lecture,
@@ -152,6 +149,8 @@ describe('Lecture', () => {
                         return of(new HttpResponse({ status: 200 }));
                     },
                 }),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -299,10 +298,10 @@ describe('Lecture', () => {
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).not.toHaveBeenCalled();
     });
-    it('should log error when error occurs', () => {
+
+    it('should do nothing when error occurs', () => {
         lectureComponent.lectures = [lectureToIngest];
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to send Lectures Ingestion request', expect.any(Error));
     });
 });

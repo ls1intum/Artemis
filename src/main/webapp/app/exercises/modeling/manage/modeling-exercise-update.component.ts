@@ -1,7 +1,12 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -26,23 +31,69 @@ import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exerci
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { Subscription } from 'rxjs';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel } from '@angular/forms';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
+import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
+import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
     templateUrl: './modeling-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        DocumentationButtonComponent,
+        FormStatusBarComponent,
+        ExerciseTitleChannelNameComponent,
+        HelpIconComponent,
+        CategorySelectorComponent,
+        DifficultyPickerComponent,
+        TeamConfigFormGroupComponent,
+        MarkdownEditorMonacoComponent,
+        CompetencySelectionComponent,
+        ModelingEditorComponent,
+        FormDateTimePickerComponent,
+        IncludedInOverallScorePickerComponent,
+        CustomMinDirective,
+        CustomMaxDirective,
+        ExerciseFeedbackSuggestionOptionsComponent,
+        ExerciseUpdatePlagiarismComponent,
+        PresentationScoreComponent,
+        GradingInstructionsDetailsComponent,
+        FormFooterComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private alertService = inject(AlertService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private eventManager = inject(EventManager);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
     @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
-    @ViewChild(ModelingEditorComponent, { static: false })
-    modelingEditor?: ModelingEditorComponent;
+    @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
     @ViewChild('bonusPoints') bonusPoints?: NgModel;
     @ViewChild('points') points?: NgModel;
     @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
@@ -79,20 +130,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    constructor(
-        private alertService: AlertService,
-        private modelingExerciseService: ModelingExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private exerciseGroupService: ExerciseGroupService,
-        private eventManager: EventManager,
-        private activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {

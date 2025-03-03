@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -12,7 +11,7 @@ describe('JhiCopyIconButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip)],
+            imports: [ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip)],
             declarations: [CopyIconButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         }).compileComponents();

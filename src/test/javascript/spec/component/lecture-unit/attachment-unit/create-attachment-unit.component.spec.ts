@@ -1,39 +1,31 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-
-@Component({ selector: 'jhi-attachment-unit-form', template: '' })
-class AttachmentUnitFormStubComponent {
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-}
-
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
-class LectureUnitLayoutStubComponent {
-    @Input()
-    isLoading = false;
-}
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('CreateAttachmentUnitComponent', () => {
     let createAttachmentUnitComponentFixture: ComponentFixture<CreateAttachmentUnitComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [AttachmentUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateAttachmentUnitComponent],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AttachmentUnitService),
                 MockProvider(AlertService),
@@ -41,6 +33,7 @@ describe('CreateAttachmentUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
                         parent: {
                             parent: {
                                 paramMap: of({
@@ -65,13 +58,15 @@ describe('CreateAttachmentUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                createAttachmentUnitComponentFixture = TestBed.createComponent(CreateAttachmentUnitComponent);
-            });
+        }).compileComponents();
+
+        createAttachmentUnitComponentFixture = TestBed.createComponent(CreateAttachmentUnitComponent);
     });
 
     afterEach(() => {
@@ -125,10 +120,8 @@ describe('CreateAttachmentUnitComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         createAttachmentUnitComponentFixture.detectChanges();
 
-        const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = createAttachmentUnitComponentFixture.debugElement.query(
-            By.directive(AttachmentUnitFormStubComponent),
-        ).componentInstance;
-        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        const attachmentUnitFormComponent = createAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
 
         createAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);

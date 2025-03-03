@@ -74,12 +74,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findByExerciseIdAndStudentLogin(exerciseId, username));
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
+
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
+        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
@@ -88,40 +92,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(long exerciseId, String username);
-
-    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username));
-    }
-
-    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
-
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(long exerciseId, long teamId);
-
-    @Query("""
-            SELECT DISTINCT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.team team
-                LEFT JOIN FETCH team.students
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.team.shortName = :teamShortName
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
-            @Param("teamShortName") String teamShortName);
-
-    @Query("""
-            SELECT DISTINCT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions
-                LEFT JOIN FETCH participation.team team
-                LEFT JOIN FETCH team.students
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.team.shortName = :teamShortName
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") long exerciseId,
-            @Param("teamShortName") String teamShortName);
 
     @Query("""
             SELECT DISTINCT participation
@@ -158,17 +130,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
-
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-                AND participation.testRun = :testRun
-            """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
-            @Param("username") String username, @Param("testRun") boolean testRun);
 
     @Query("""
             SELECT participation.repositoryUri

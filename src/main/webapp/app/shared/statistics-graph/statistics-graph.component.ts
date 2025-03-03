@@ -1,19 +1,25 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
 import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-graph',
     templateUrl: './statistics-graph.component.html',
     styleUrls: ['../chart/vertical-bar-chart.scss'],
+    imports: [FaIconComponent, BarChartModule, ArtemisTranslatePipe],
 })
 export class StatisticsGraphComponent implements OnChanges {
+    private service = inject(StatisticsService);
+    private translateService = inject(TranslateService);
+
     @Input()
     graphType: Graphs;
     @Input()
@@ -53,10 +59,7 @@ export class StatisticsGraphComponent implements OnChanges {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(
-        private service: StatisticsService,
-        private translateService: TranslateService,
-    ) {
+    constructor() {
         this.translateService.onLangChange.subscribe(() => {
             this.onSystemLanguageChange();
         });

@@ -1,8 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
-import { ActivatedRoute, provideRouter } from '@angular/router';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
@@ -14,33 +12,21 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { Team } from 'app/entities/team.model';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ExerciseScoresComponent, FilterProp } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockCourseManagementService } from '../../../../helpers/mocks/service/mock-course-management.service';
 import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
 import { MockParticipationService } from '../../../../helpers/mocks/service/mock-participation.service';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { MockProgrammingSubmissionService } from '../../../../helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -120,23 +106,7 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
-            declarations: [
-                ExerciseScoresComponent,
-                MockComponent(ExerciseScoresExportButtonComponent),
-                MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
-                MockComponent(SubmissionExportButtonComponent),
-                MockComponent(DataTableComponent),
-                MockComponent(ResultComponent),
-                MockDirective(FeatureToggleLinkDirective),
-                MockTranslateValuesDirective,
-                MockHasAnyAuthorityDirective,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(NgModel),
-            ],
             providers: [
-                provideRouter([]),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ResultService, useClass: MockResultService },

@@ -3,7 +3,7 @@ import { ExternalCloningService } from 'app/exercises/programming/shared/service
 
 describe('ExternalCloningService', () => {
     let service: ExternalCloningService;
-    const baseUrl = 'https://artemis.cit.tum.de';
+    const baseUrl = 'https://artemis.tum.de';
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
@@ -12,7 +12,7 @@ describe('ExternalCloningService', () => {
 
     it('should build source tree url correctly', () => {
         const cloneUrl = baseUrl + '/git/reo.git';
-        const expectedUrl = `sourcetree://cloneRepo?type=stash&cloneUrl=https://artemis.cit.tum.de/git/reo.git&baseWebUrl=https://artemis.cit.tum.de`;
+        const expectedUrl = `sourcetree://cloneRepo?type=stash&cloneUrl=https://artemis.tum.de/git/reo.git&baseWebUrl=https://artemis.tum.de`;
         expect(service.buildSourceTreeUrl(baseUrl, cloneUrl)).toEqual(expectedUrl);
     });
 
@@ -23,7 +23,7 @@ describe('ExternalCloningService', () => {
     it('should build ide deeplink url correctly', () => {
         const cloneUrl = baseUrl + '/git/repo.git';
         const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-        const expectedUrl = 'vscode://vscode.git/clone?url=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
+        const expectedUrl = 'vscode://vscode.git/clone?url=https%3A%2F%2Fartemis.tum.de%2Fgit%2Frepo.git';
         expect(service.buildIdeUrl(cloneUrl, ide)).toEqual(expectedUrl);
     });
 

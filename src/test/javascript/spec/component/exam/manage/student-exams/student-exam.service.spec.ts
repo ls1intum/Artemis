@@ -1,11 +1,11 @@
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { TestBed } from '@angular/core/testing';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Router } from '@angular/router';
-import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
+import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Student Exam Service', () => {
     let httpClient: any;
@@ -14,16 +14,23 @@ describe('Student Exam Service', () => {
     let accountService: AccountService;
 
     beforeEach(() => {
-        httpClient = {
-            put: jest.fn(),
-            get: jest.fn(),
-            patch: jest.fn(),
-        };
-        accountService = {
-            setAccessRightsForCourse: jest.fn(),
-        } as any as AccountService;
+        TestBed.configureTestingModule({
+            providers: [
+                {
+                    provide: AccountService,
+                    useValue: {
+                        setAccessRightsForCourse: jest.fn(),
+                    },
+                },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        });
+
+        service = TestBed.inject(StudentExamService);
+        accountService = TestBed.inject(AccountService);
+        httpClient = TestBed.inject(HttpClient);
         httpClientPutSpy = jest.spyOn(httpClient, 'put');
-        service = new StudentExamService(new MockRouter() as any as Router, httpClient as HttpClient, accountService);
     });
 
     afterEach(() => {
@@ -69,7 +76,7 @@ describe('Student Exam Service', () => {
         service.find(1, 2, 3).subscribe((result) => (returnedExam = result));
 
         expect(getSpy).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledWith(`api/courses/1/exams/2/student-exams/3`, { observe: 'response' });
+        expect(getSpy).toHaveBeenCalledWith(`api/exam/courses/1/exams/2/student-exams/3`, { observe: 'response' });
         expect(returnedExam).toBe(findResponse);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 1 : 0);
 
@@ -78,7 +85,7 @@ describe('Student Exam Service', () => {
         service.updateWorkingTime(1, 2, 3, 10).subscribe((result) => (returnedExam = result));
 
         expect(patchSpy).toHaveBeenCalledOnce();
-        expect(patchSpy).toHaveBeenCalledWith(`api/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
+        expect(patchSpy).toHaveBeenCalledWith(`api/exam/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
         expect(returnedExam).toBe(updateResponse);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 2 : 0);
     });
@@ -115,7 +122,7 @@ describe('Student Exam Service', () => {
         service.findAllForExam(1, 2).subscribe((result) => (returnedExams = result));
 
         expect(getSpy).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledWith(`api/courses/1/exams/2/student-exams`, { observe: 'response' });
+        expect(getSpy).toHaveBeenCalledWith(`api/exam/courses/1/exams/2/student-exams`, { observe: 'response' });
         expect(returnedExams).toBe(response);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(2);
     });

@@ -10,7 +10,8 @@ import { CompetencyGraphModalComponent } from 'app/course/learning-paths/compone
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 enum TableColumn {
     ID = 'ID',
@@ -21,9 +22,8 @@ enum TableColumn {
 
 @Component({
     selector: 'jhi-learning-paths-table',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisSharedModule],
+    imports: [NgbPaginationModule, NgbTypeaheadModule, FormsModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './learning-paths-table.component.html',
     styleUrls: ['./learning-paths-table.component.scss', '../../pages/learning-path-instructor-page/learning-path-instructor-page.component.scss'],
 })
@@ -51,14 +51,11 @@ export class LearningPathsTableComponent {
     private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
 
     constructor() {
-        effect(
-            () => {
-                // Load learning paths whenever the courseId changes
-                const courseId = this.courseId();
-                untracked(() => this.loadLearningPaths(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            // Load learning paths whenever the courseId changes
+            const courseId = this.courseId();
+            untracked(() => this.loadLearningPaths(courseId));
+        });
     }
 
     private async loadLearningPaths(courseId: number): Promise<void> {
@@ -91,7 +88,7 @@ export class LearningPathsTableComponent {
         await this.loadLearningPaths(this.courseId());
     }
 
-    openCompetencyGraph(learningPathId: number): void {
-        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, learningPathId);
+    openCompetencyGraph(learningPathId: number, name: string | undefined): void {
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, learningPathId, name);
     }
 }

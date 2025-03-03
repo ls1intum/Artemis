@@ -9,7 +9,6 @@ describe('LinkPreviewService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), LinkPreviewService],
         });
         service = TestBed.inject(LinkPreviewService);
@@ -33,9 +32,9 @@ describe('LinkPreviewService', () => {
             expect(preview).toEqual(mockPreview);
         });
 
-        const req = httpMock.expectOne('api/link-preview');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toBe(mockUrl);
+        const req = httpMock.expectOne('api/communication/link-preview?url=https%253A%252F%252Fexample.com');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.body).toBeNull();
 
         req.flush(mockPreview);
         tick();
@@ -55,7 +54,7 @@ describe('LinkPreviewService', () => {
             expect(preview).toEqual(mockPreview);
         });
 
-        const req = httpMock.expectOne('api/link-preview');
+        const req = httpMock.expectOne('api/communication/link-preview?url=https%253A%252F%252Fexample.com');
         req.flush(mockPreview);
         tick();
 
@@ -65,7 +64,7 @@ describe('LinkPreviewService', () => {
         });
 
         // No HTTP request should be made since the preview is cached
-        httpMock.expectNone('api/link-preview');
+        httpMock.expectNone('api/communication/link-preview');
         tick();
     }));
 });

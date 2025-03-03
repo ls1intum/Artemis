@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-complaint-alert/assessment-complaint-alert.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentComplaintAlertComponent', () => {
     let component: AssessmentComplaintAlertComponent;
@@ -11,8 +11,7 @@ describe('AssessmentComplaintAlertComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [AssessmentComplaintAlertComponent, TranslatePipeMock],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

@@ -52,6 +52,16 @@ public class GroupChatService {
      */
     public GroupChat startGroupChat(Course course, Set<User> startingMembers) {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var participantIds = startingMembers.stream().map(User::getId).toList();
+        var existingChatBetweenUsers = groupChatRepository.findGroupChatWithExactParticipants(course.getId(), participantIds, startingMembers.size());
+        if (existingChatBetweenUsers.isPresent()) {
+            GroupChat chat = existingChatBetweenUsers.get();
+            if (chat.getLastMessageDate() == null && !requestingUser.getId().equals(chat.getCreator().getId())) {
+                chat.setCreator(requestingUser);
+                return groupChatRepository.save(existingChatBetweenUsers.get());
+            }
+            return existingChatBetweenUsers.get();
+        }
         var groupChat = new GroupChat();
         groupChat.setCourse(course);
         groupChat.setCreator(requestingUser);

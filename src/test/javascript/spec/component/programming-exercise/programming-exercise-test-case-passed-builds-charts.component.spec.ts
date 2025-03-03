@@ -8,16 +8,9 @@ describe('TestCasePassedBuildsChartComponent', () => {
     let fixture: ComponentFixture<TestCasePassedBuildsChartComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            declarations: [TestCasePassedBuildsChartComponent],
-            providers: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestCasePassedBuildsChartComponent);
-                comp = fixture.componentInstance as TestCasePassedBuildsChartComponent;
-            });
+        TestBed.configureTestingModule({}).compileComponents();
+        fixture = TestBed.createComponent(TestCasePassedBuildsChartComponent);
+        comp = fixture.componentInstance as TestCasePassedBuildsChartComponent;
     });
 
     const initComponent = (testCaseStats: TestCaseStats | undefined, totalParticipations: number) => {

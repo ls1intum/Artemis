@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -36,7 +36,16 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = 'api/courses';
+    private http = inject(HttpClient);
+    private courseStorageService = inject(CourseStorageService);
+    private lectureService = inject(LectureService);
+    private accountService = inject(AccountService);
+    private entityTitleService = inject(EntityTitleService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private scoresStorageService = inject(ScoresStorageService);
+
+    private resourceUrl = 'api/core/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
@@ -44,17 +53,6 @@ export class CourseManagementService {
 
     private courseOverviewSubject = new BehaviorSubject<boolean>(false);
     isCourseOverview$ = this.courseOverviewSubject.asObservable();
-
-    constructor(
-        private http: HttpClient,
-        private courseStorageService: CourseStorageService,
-        private lectureService: LectureService,
-        private accountService: AccountService,
-        private entityTitleService: EntityTitleService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private tutorialGroupsService: TutorialGroupsService,
-        private scoresStorageService: ScoresStorageService,
-    ) {}
 
     /**
      * updates a course using a PUT request
@@ -81,7 +79,7 @@ export class CourseManagementService {
      * @param onlineCourseConfiguration - the updates to the online course configuration
      */
     updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
-        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
+        return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
@@ -221,7 +219,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
-        return this.http.get<StudentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
+        return this.http.get<StudentParticipation[]>(`api/exercise/courses/${courseId}/participations`);
     }
 
     /**

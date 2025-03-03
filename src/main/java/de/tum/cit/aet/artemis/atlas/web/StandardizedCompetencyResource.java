@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.List;
 
@@ -28,10 +28,10 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * REST controller for managing {@link StandardizedCompetency} entities.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.StandardizedCompetencies)
 @RestController
-@RequestMapping("api/standardized-competencies/")
+@RequestMapping("api/atlas/standardized-competencies/")
 public class StandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);

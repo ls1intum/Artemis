@@ -5,13 +5,12 @@ import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-te
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Create Test Run Modal Component', () => {
     let comp: CreateTestRunModalComponent;
@@ -25,14 +24,7 @@ describe('Create Test Run Modal Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule],
-            declarations: [CreateTestRunModalComponent],
-            providers: [
-                NgbModal,
-                NgbActiveModal,
-                { provide: ArtemisDurationFromSecondsPipe, useClass: ArtemisDurationFromSecondsPipe },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CreateTestRunModalComponent);

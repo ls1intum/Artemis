@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -54,7 +53,6 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -67,6 +65,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -210,10 +209,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [ArtemisTestModule, MockModule(PieChartModule), RouterModule.forRoot([])];
+    const imports = [RouterModule.forRoot([]), ExerciseAssessmentDashboardComponent];
 
     const declarations = [
-        ExerciseAssessmentDashboardComponent,
         MockComponent(TutorLeaderboardComponent),
         MockComponent(TutorParticipationGraphComponent),
         MockComponent(HeaderExercisePageWithDetailsComponent),
@@ -251,6 +249,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
         MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
+        provideHttpClient(),
+        provideHttpClientTesting(),
     ];
 
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,12 +8,18 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { orderBy } from 'lodash-es';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-team-exercise-search',
     templateUrl: './team-exercise-search.component.html',
+    imports: [FormsModule, NgbTypeahead, ArtemisTranslatePipe],
 })
 export class TeamExerciseSearchComponent {
+    private courseService = inject(CourseManagementService);
+    private translateService = inject(TranslateService);
+
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -32,11 +38,6 @@ export class TeamExerciseSearchComponent {
     exerciseOptionsLoaded = false;
 
     inputDisplayValue: string;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private translateService: TranslateService,
-    ) {}
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);

@@ -1,5 +1,5 @@
-import { Component, OnChanges, OnDestroy, OnInit, ViewChild, computed, inject, input, output } from '@angular/core';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { Component, OnChanges, OnInit, computed, inject, input, output } from '@angular/core';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -10,30 +10,36 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
-import { UserRole } from 'app/shared/metis/metis.util';
+import { DisplayPriority, UserRole } from 'app/shared/metis/metis.util';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Post } from 'app/entities/metis/post.model';
+import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
     styleUrls: ['../metis.component.scss'],
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
 })
-export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
-    readOnlyMode = input<boolean>(false);
+export class PostingHeaderComponent implements OnInit, OnChanges {
     lastReadDate = input<dayjs.Dayjs>();
-    previewMode = input<boolean>(false);
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    isAtLeastInstructorInCourse: boolean;
     posting = input<Posting>();
-    isCommunicationPage = input<boolean>();
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
     hasChannelModerationRights = input<boolean>(false);
-    isModalOpen = output<void>();
-
+    isCommunicationPage = input<boolean>();
     isDeleted = input<boolean>(false);
 
+    isModalOpen = output<void>();
     readonly onUserNameClicked = output<void>();
 
+    isAtLeastInstructorInCourse: boolean;
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
@@ -48,12 +54,17 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     readonly faPencilAlt = faPencilAlt;
     readonly faCheckSquare = faCheckSquare;
 
-    protected metisService: MetisService = inject(MetisService);
-    protected accountService: AccountService = inject(AccountService);
+    private metisService = inject(MetisService);
+    private accountService = inject(AccountService);
 
     isPostResolved = computed<boolean>(() => {
-        const p = this.posting();
-        return this.isPost(p) && p.resolved === true;
+        const posting = this.posting();
+        return this.isPost(posting) && posting.resolved === true;
+    });
+
+    isPostPinned = computed<boolean>(() => {
+        const posting = this.posting();
+        return this.isPost(posting) && posting.displayPriority == DisplayPriority.PINNED;
     });
 
     /**
@@ -97,13 +108,6 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
 
     get creationDate(): dayjs.Dayjs | undefined {
         return this.posting()?.creationDate;
-    }
-
-    /**
-     * on leaving the page, the modal should be closed
-     */
-    ngOnDestroy(): void {
-        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**

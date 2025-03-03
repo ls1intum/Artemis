@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/entities/exam/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -14,10 +14,16 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { StudentsUploadImagesButtonComponent } from './upload-images/students-upload-images-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -29,8 +35,26 @@ const cssClasses = {
     templateUrl: './exam-students.component.html',
     styleUrls: ['./exam-students.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        UsersImportButtonComponent,
+        StudentsUploadImagesButtonComponent,
+        FaIconComponent,
+        RouterLink,
+        DeleteButtonDirective,
+        DataTableComponent,
+        NgxDatatableModule,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+    private studentExamService = inject(StudentExamService);
+
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
     readonly ButtonType = ButtonType;
@@ -67,16 +91,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faUpload = faUpload;
     faCheck = faCheck;
     faTimes = faTimes;
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private examManagementService: ExamManagementService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private studentExamService: StudentExamService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;
@@ -267,13 +281,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     searchTextFromUser = (user: User): string => {
         return user.login || '';
-    };
-
-    /**
-     * Computes the row class that is being added to all rows of the datatable
-     */
-    dataTableRowClass = () => {
-        return this.rowClass;
     };
 
     /**

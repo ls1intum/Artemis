@@ -104,7 +104,7 @@ public abstract class InternalUrlService {
             return null;
         }
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(urlToReplace);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(urlToReplace);
         return builder.host(internalUrl.getHost()).port(internalUrl.getPort()).toUriString();
     }
 }

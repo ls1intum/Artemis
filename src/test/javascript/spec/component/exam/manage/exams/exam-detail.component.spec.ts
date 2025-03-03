@@ -28,7 +28,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
@@ -118,7 +118,7 @@ describe('ExamDetailComponent', () => {
                     safeHtmlForMarkdown: () => exampleHTML,
                 }),
                 MockProvider(AlertService),
-                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 MockProvider(ArtemisDurationFromSecondsPipe),

@@ -6,12 +6,32 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgClass, NgStyle } from '@angular/common';
+import { DifficultyBadgeComponent } from './difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from './included-in-score-badge.component';
+import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 
 @Component({
     selector: 'jhi-header-participation-page',
     templateUrl: './header-participation-page.component.html',
     styleUrls: ['./header-participation-page.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [
+        TranslateDirective,
+        NgClass,
+        NgStyle,
+        DifficultyBadgeComponent,
+        IncludedInScoreBadgeComponent,
+        SubmissionResultStatusComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     readonly ButtonType = ButtonType;
@@ -51,17 +71,14 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     /**
      * Sets the status badge and categories of the exercise on changes
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         if (this.exercise) {
             this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
             this.exerciseCategories = this.exercise.categories || [];
             this.dueDate = getExerciseDueDate(this.exercise, this.participation);
-            if (this.participation?.results?.last()?.rated) {
-                this.achievedPoints = roundValueSpecifiedByCourseSettings(
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    (this.participation.results?.last()?.score! * this.exercise.maxPoints!) / 100,
-                    getCourseFromExercise(this.exercise),
-                );
+            const result = getLatestResultOfStudentParticipation(this.participation, false, true);
+            if (result?.rated) {
+                this.achievedPoints = roundValueSpecifiedByCourseSettings((result.score! * this.exercise.maxPoints!) / 100, getCourseFromExercise(this.exercise));
             }
         }
     }

@@ -1,50 +1,29 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { By } from '@angular/platform-browser';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/core/util/alert.service';
 
+
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;
-    let alertService: AlertService;
     const fileName = 'testFile';
     const codeLine = 1;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule)],
-            declarations: [
-                CodeEditorTutorAssessmentInlineFeedbackComponent,
-                MockComponent(GradingInstructionLinkIconComponent),
-                MockComponent(AssessmentCorrectionRoundBadgeComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(NgModel),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(QuotePipe),
-                MockPipe(FeedbackContentPipe),
-            ],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(StructuredGradingCriterionService),
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
         })
             .compileComponents()
             .then(() => {
@@ -155,6 +134,17 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
         const textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedbackWithSpecialCharacters);
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
+    });
+
+    it('should not display credits and icons for non-graded feedback suggestions', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const badgeElement = fixture.debugElement.query(By.css('.badge'));
+        expect(badgeElement).toBeNull();
     });
 
     it('should display credits and icons for graded feedback', () => {

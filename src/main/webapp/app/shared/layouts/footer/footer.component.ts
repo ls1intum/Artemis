@@ -1,12 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.scss'],
+    imports: [TranslateDirective, RouterLink, ArtemisTranslatePipe],
 })
 export class FooterComponent implements OnInit {
+    private profileService = inject(ProfileService);
+
     readonly RELEASE_URL = 'https://github.com/ls1intum/Artemis/releases';
     readonly FEEDBACK_URL = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
@@ -17,8 +23,6 @@ export class FooterComponent implements OnInit {
     gitCommitUser: string;
     isTestServer: boolean;
     isProduction: boolean;
-
-    constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

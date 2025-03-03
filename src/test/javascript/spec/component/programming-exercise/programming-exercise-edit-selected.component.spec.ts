@@ -1,11 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import dayjs from 'dayjs/esm';
 
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,6 +14,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
+import { MockProvider } from 'ng-mocks';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
     let comp: ProgrammingExerciseEditSelectedComponent;
@@ -23,13 +24,13 @@ describe('ProgrammingExercise Edit Selected Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseEditSelectedComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(NgbActiveModal),
+                provideHttpClient(),
             ],
         })
             .overrideTemplate(ProgrammingExerciseEditSelectedComponent, '')

@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         <!-- Exercise Group as rows -->
-        @for (exerciseGroup of exam.exerciseGroups; track exerciseGroup.id) {
+        @for (exerciseGroup of exam().exerciseGroups; track exerciseGroup.id) {
             <tr [class.exerciseGroupNotSelected]="!exerciseGroupContainsExercises(exerciseGroup)">
                 <td>
                     <!-- Display general exercise group settings (name, mandatory) to the left -->

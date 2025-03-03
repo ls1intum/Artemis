@@ -29,9 +29,20 @@ jhi-category-selector {
     }
 
     .category-chip-input {
-        height: 30px !important;
         color: var(--text-editor-color);
     }
+}
+
+.mdc-text-field--outlined .mat-mdc-form-field-infix,
+.mdc-text-field--no-label .mat-mdc-form-field-infix {
+    padding-top: var(--mat-form-field-container-vertical-padding, 0.5rem) !important;
+    padding-bottom: var(--mat-form-field-container-vertical-padding, 0.5rem) !important;
+    min-height: var(--mat-form-field-container-height, 1.75rem) !important;
+}
+
+.mat-mdc-standard-chip.mdc-evolution-chip--with-trailing-action .mdc-evolution-chip__action--primary {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 /* Otherwise each custom tag will have an additional border */

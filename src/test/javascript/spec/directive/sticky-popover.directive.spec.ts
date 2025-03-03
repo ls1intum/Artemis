@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 
 @Component({
     template: '<div [jhiStickyPopover]="content" placement="right" triggers="manual"></div><ng-template #content><span>some content</span></ng-template>',
+    imports: [StickyPopoverDirective],
 })
 class StickyPopoverComponent {
     pattern: string;
@@ -19,8 +19,7 @@ describe('StickyPopoverDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [StickyPopoverDirective, StickyPopoverComponent],
+            imports: [StickyPopoverComponent],
         })
             .compileComponents()
             .then(() => {

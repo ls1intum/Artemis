@@ -49,6 +49,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     ngOnDestroy(): void {
         if (this.deleteTimer !== undefined) {
             clearTimeout(this.deleteTimer);
+            this.deletePostingWithoutTimeout();
         }
 
         if (this.deleteInterval !== undefined) {
@@ -72,11 +73,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
             this.deleteTimer = setTimeout(
                 () => {
-                    if (this.isAnswerPost) {
-                        this.metisService.deleteAnswerPost(this.posting);
-                    } else {
-                        this.metisService.deletePost(this.posting);
-                    }
+                    this.deletePostingWithoutTimeout();
                 },
                 // We add a tiny buffer to make it possible for the user to react a bit longer than the ui displays (+1000)
                 this.deleteTimerInSeconds * 1000 + 1000,
@@ -97,11 +94,16 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     togglePin() {
         this.reactionsBar.togglePin();
         this.showDropdown = false;
+        this.changeDetector.detectChanges();
     }
 
     deletePost() {
         this.reactionsBar.deletePosting();
         this.showDropdown = false;
+    }
+
+    forwardMessage() {
+        this.reactionsBar.forwardMessage();
     }
 
     checkIfPinned(): DisplayPriority {
@@ -136,6 +138,14 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
         } else {
             this.metisService.savePost(this.posting);
             this.posting.isSaved = true;
+        }
+    }
+
+    private deletePostingWithoutTimeout() {
+        if (this.isAnswerPost) {
+            this.metisService.deleteAnswerPost(this.posting);
+        } else {
+            this.metisService.deletePost(this.posting);
         }
     }
 

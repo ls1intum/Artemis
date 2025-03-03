@@ -1,12 +1,10 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
-import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
-import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
 import { By } from '@angular/platform-browser';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ConnectionWarning', () => {
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
@@ -16,15 +14,14 @@ describe('ConnectionWarning', () => {
     beforeEach(() => {
         subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPopoverModule],
-            declarations: [JhiConnectionWarningComponent, CloseCircleComponent, TranslatePipeMock],
             providers: [
                 {
-                    provide: JhiWebsocketService,
+                    provide: WebsocketService,
                     useValue: {
                         connectionState: subject.asObservable(),
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

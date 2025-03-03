@@ -1,26 +1,33 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUserAttendanceCheckDTO } from 'app/entities/exam/exam-users-attendance-check-dto.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { UserService } from 'app/core/user/user.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faUserSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',
     templateUrl: './exam-students-attendance-check.component.html',
     encapsulation: ViewEncapsulation.None,
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+    private sortService = inject(SortService);
+
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly ActionType = ActionType;
@@ -49,24 +56,12 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
 
     // Icons
     faPlus = faPlus;
-    faUserSlash = faUserSlash;
     faInfoCircle = faInfoCircle;
     faUpload = faUpload;
     faCheck = faCheck;
     faTimes = faTimes;
     faXmark = faXmark;
     faSort = faSort;
-
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private examManagementService: ExamManagementService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private sortService: SortService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

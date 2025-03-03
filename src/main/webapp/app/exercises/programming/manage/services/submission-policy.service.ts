@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
@@ -14,9 +14,9 @@ export interface ISubmissionPolicyService {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionPolicyService implements ISubmissionPolicyService {
-    public baseResourceUrl = 'api/programming-exercises/{exerciseId}/submission-policy';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public baseResourceUrl = 'api/programming/programming-exercises/{exerciseId}/submission-policy';
 
     /**
      * Returns the observable of the submission policy of the programming exercise with the id that
@@ -90,7 +90,7 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
     }
 
     getParticipationSubmissionCount(participationId: number): Observable<number> {
-        return this.http.get<number>(`api/participations/${participationId}/submission-count`);
+        return this.http.get<number>(`api/programming/participations/${participationId}/submission-count`);
     }
 
     /**

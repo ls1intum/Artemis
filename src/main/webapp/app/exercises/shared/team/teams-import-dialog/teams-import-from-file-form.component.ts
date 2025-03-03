@@ -1,10 +1,13 @@
-import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { StudentWithTeam, Team } from 'app/entities/team.model';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { parse } from 'papaparse';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 const csvColumns = Object.freeze({
     registrationNumber: 'registrationnumber',
@@ -33,8 +36,12 @@ type CsvEntry = { [column: string]: string };
     selector: 'jhi-teams-import-from-file-form',
     templateUrl: './teams-import-from-file-form.component.html',
     styleUrls: ['./teams-import-from-file-form.component.scss'],
+    imports: [TranslateDirective, HelpIconComponent, FaIconComponent],
 })
 export class TeamsImportFromFileFormComponent {
+    private changeDetector = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+
     @Output() teamsChanged = new EventEmitter<Team[]>();
     sourceTeams?: Team[];
     importedTeams: StudentWithTeam[] = [];
@@ -44,11 +51,6 @@ export class TeamsImportFromFileFormComponent {
 
     // Icons
     faSpinner = faSpinner;
-
-    constructor(
-        private changeDetector: ChangeDetectorRef,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Move file reader creation to separate function to be able to mock

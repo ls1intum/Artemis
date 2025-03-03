@@ -1,3 +1,1 @@
-export class PlagiarismSubmissionElement {
-    private PlagiarismSubmissionElement() {}
-}
+export class PlagiarismSubmissionElement {}

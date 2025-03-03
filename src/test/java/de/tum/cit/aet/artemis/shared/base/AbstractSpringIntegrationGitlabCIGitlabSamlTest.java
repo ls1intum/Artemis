@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.shared.base;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
@@ -50,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCITriggerServic
 // TODO: rewrite this test to use LocalVC instead of GitLab
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, "gitlabci", "gitlab", PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, "gitlabci", "gitlab", PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_gitlabci" })
 public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends AbstractArtemisIntegrationTest {
 
@@ -254,11 +256,6 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws GitLabApiException {
-        gitlabRequestMockProvider.mockDeleteVcsUser(user.getLogin(), userExistsInUserManagement, failInVcs);
-    }
-
-    @Override
     public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws GitLabApiException {
         gitlabRequestMockProvider.mockUpdateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
     }
@@ -311,6 +308,11 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     @Override
     public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
+        // Unsupported action in GitLab CI setup
+    }
+
+    @Override
+    public void mockGetBuildPlanConfig(String projectKey, String planName) {
         // Unsupported action in GitLab CI setup
     }
 
@@ -403,5 +405,10 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     @Override
     public void mockUserExists(String username) throws Exception {
         gitlabRequestMockProvider.mockUserExists(username, true);
+    }
+
+    @Override
+    public void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException {
+        // not needed for GitLab
     }
 }

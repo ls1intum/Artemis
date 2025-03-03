@@ -45,7 +45,7 @@ public class SavedPostScheduleService {
     /**
      * Cleans up all saved posts where the post entity does not exist anymore
      */
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 5 0 * * *")
     public void cleanupOrphanedSavedPosts() {
         List<SavedPost> orphanedPosts = savedPostRepository.findOrphanedPostReferences();
         if (!orphanedPosts.isEmpty()) {

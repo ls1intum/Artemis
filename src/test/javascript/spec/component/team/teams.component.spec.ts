@@ -1,19 +1,17 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { NgModel } from '@angular/forms';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { MockTeamService, mockTeams } from '../../helpers/mocks/service/mock-team.service';
+import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockComponent } from 'ng-mocks';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-export-button.component';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
@@ -22,12 +20,17 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsComponent', () => {
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;
-    let router: Router;
 
     const route = {
         params: of({ exerciseId: 1 }),
@@ -36,10 +39,9 @@ describe('TeamsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
+            imports: [NgxDatatableModule],
             declarations: [
                 TeamsComponent,
-                MockDirective(NgModel),
                 TranslatePipeMock,
                 MockComponent(TeamsExportButtonComponent),
                 MockComponent(TeamsImportButtonComponent),
@@ -50,11 +52,15 @@ describe('TeamsComponent', () => {
                 MockComponent(TeamDeleteButtonComponent),
             ],
             providers: [
-                provideRouter([]),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: TeamService, useClass: MockTeamService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -62,10 +68,6 @@ describe('TeamsComponent', () => {
                 fixture = TestBed.createComponent(TeamsComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                router = debugElement.injector.get(Router);
-                fixture.ngZone!.run(() => {
-                    router.initialNavigation();
-                });
             });
     });
 

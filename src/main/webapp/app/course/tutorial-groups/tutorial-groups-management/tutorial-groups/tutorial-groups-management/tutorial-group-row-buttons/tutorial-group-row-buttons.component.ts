@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -9,13 +9,21 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private modalService = inject(NgbModal);
+
     ngUnsubscribe = new Subject<void>();
 
     @Input() isAtLeastInstructor = false;
@@ -34,10 +42,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     faTrash = faTrash;
     faCalendar = faCalendarAlt;
 
-    public constructor(
-        private tutorialGroupsService: TutorialGroupsService,
-        private modalService: NgbModal,
-    ) {}
+    public constructor() {}
 
     openSessionDialog(event: MouseEvent) {
         event.stopPropagation();

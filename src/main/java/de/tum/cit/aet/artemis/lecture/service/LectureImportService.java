@@ -50,7 +50,7 @@ public class LectureImportService {
      * @param importLectureUnits Whether to import the lecture units of the lecture
      * @return The lecture in the new course
      */
-    @Transactional // Required to circumvent errors with ordered collection of lecture units
+    @Transactional // TODO: NOT OK -- remove @Transactional (old comment: required to circumvent errors with ordered collection of lecture units)
     public Lecture importLecture(final Lecture importedLecture, final Course course, boolean importLectureUnits) {
         log.debug("Creating a new Lecture based on lecture {}", importedLecture);
 

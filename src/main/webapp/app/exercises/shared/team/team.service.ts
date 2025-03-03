@@ -1,8 +1,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentWithTeam, Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
@@ -102,24 +102,22 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService, OnDestroy {
+    private http = inject(HttpClient);
+    private websocketService = inject(WebsocketService);
+    private accountService = inject(AccountService);
+
     // Team Assignment Update Stream
     private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
     private teamAssignmentUpdatesResolver: () => void;
     private authenticationStateSubscriber: Subscription;
     private websocketStatusSubscription?: Subscription;
 
-    constructor(
-        protected http: HttpClient,
-        private websocketService: JhiWebsocketService,
-        private accountService: AccountService,
-    ) {}
-
     ngOnDestroy(): void {
         this.websocketStatusSubscription?.unsubscribe();
     }
 
     static resourceUrl(exerciseId: number) {
-        return `api/exercises/${exerciseId}/teams`;
+        return `api/exercise/exercises/${exerciseId}/teams`;
     }
 
     /**
@@ -187,7 +185,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {string} shortName - Short name to search for
      */
     existsByShortName(course: Course, shortName: string): Observable<HttpResponse<boolean>> {
-        return this.http.get<boolean>(`api/courses/${course.id}/teams/exists?shortName=${shortName}`, { observe: 'response' });
+        return this.http.get<boolean>(`api/exercise/courses/${course.id}/teams/exists?shortName=${shortName}`, { observe: 'response' });
     }
 
     /**
@@ -197,7 +195,7 @@ export class TeamService implements ITeamService, OnDestroy {
      * @param {string} loginOrName - Login/Name to search for
      */
     searchInCourseForExerciseTeam(course: Course, exercise: Exercise, loginOrName: string): Observable<HttpResponse<TeamSearchUser[]>> {
-        const url = `api/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
+        const url = `api/exercise/courses/${course.id}/exercises/${exercise.id}/team-search-users?loginOrName=${loginOrName}`;
         return this.http.get<TeamSearchUser[]>(url, { observe: 'response' });
     }
 
@@ -235,7 +233,7 @@ export class TeamService implements ITeamService, OnDestroy {
     // TODO: Move this method to the CourseManagementService and delete the only here used duplicated setAccessRightsCourseEntityResponseType() helper method
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
         return this.http
-            .get<Course>(`api/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
+            .get<Course>(`api/exercise/courses/${course.id}/teams/${team.shortName}/with-exercises-and-participations`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.setAccessRightsCourseEntityResponseType(res)));
     }
 

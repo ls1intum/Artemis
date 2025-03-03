@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -21,6 +20,10 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 describe('ExamExerciseRowButtonsComponent', () => {
     const course = { id: 3 } as Course;
@@ -54,7 +57,6 @@ describe('ExamExerciseRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ExamExerciseRowButtonsComponent, TranslatePipeMock, MockDirective(DeleteButtonDirective), MockRouterLinkDirective],
             providers: [
                 MockProvider(TextExerciseService),
@@ -62,6 +64,9 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(ModelingExerciseService),
                 MockProvider(QuizExerciseService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(EventManager),
             ],
         })
             .compileComponents()

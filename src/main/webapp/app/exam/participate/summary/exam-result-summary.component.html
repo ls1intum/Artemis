@@ -19,7 +19,7 @@
         <jhi-exam-general-information
             [exam]="studentExam.exam!"
             [studentExam]="studentExam"
-            [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
+            [reviewIsOpen]="(studentExam?.exam || false) && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
         />
     </div>
 }

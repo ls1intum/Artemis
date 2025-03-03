@@ -2,8 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
-import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { TableEditableCheckboxComponent } from 'app/shared/table/table-editable-checkbox.component';
 
 describe('TableEditableFieldComponent', () => {
@@ -15,7 +13,7 @@ describe('TableEditableFieldComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ArtemisTableModule],
+            imports: [TranslateModule.forRoot()],
         })
             .compileComponents()
             .then(() => {

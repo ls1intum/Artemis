@@ -1,4 +1,3 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -8,19 +7,14 @@ import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-uni
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-
-@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
-class MarkdownEditorStubComponent {
-    @Input() markdown: string;
-    @Input() enableResize = false;
-    @Output() markdownChange = new EventEmitter<string>();
-}
+import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 type Store = {
     [key: string]: any;
@@ -31,7 +25,7 @@ describe('TextUnitFormComponent', () => {
 
     let textUnitFormComponentFixture: ComponentFixture<TextUnitFormComponent>;
     let textUnitFormComponent: TextUnitFormComponent;
-    beforeEach(() => {
+    beforeEach(async () => {
         // mocking router
         // mocking the local storage for cache testing
         store = {};
@@ -45,23 +39,27 @@ describe('TextUnitFormComponent', () => {
             return (store[key] = <string>value);
         });
 
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
+        await TestBed.configureTestingModule({
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 TextUnitFormComponent,
-                MarkdownEditorStubComponent,
+                MockComponent(MarkdownEditorMonacoComponent),
                 FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
             ],
-            providers: [MockProvider(TranslateService), { provide: Router, useClass: MockRouter }],
-            schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                textUnitFormComponentFixture = TestBed.createComponent(TextUnitFormComponent);
-                textUnitFormComponent = textUnitFormComponentFixture.componentInstance;
-            });
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        textUnitFormComponentFixture = TestBed.createComponent(TextUnitFormComponent);
+        textUnitFormComponent = textUnitFormComponentFixture.componentInstance;
     });
 
     afterEach(() => {
@@ -106,7 +104,7 @@ describe('TextUnitFormComponent', () => {
         const exampleName = 'Test';
         textUnitFormComponent.form.get('name')!.setValue(exampleName);
         // simulate setting markdown
-        const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
+        const markdownEditor: MarkdownEditorMonacoComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
         const exampleMarkdown = 'Lorem Ipsum';
         markdownEditor.markdownChange.emit(exampleMarkdown);
 
@@ -149,7 +147,7 @@ describe('TextUnitFormComponent', () => {
         routerMock.setUrl(fakeUrl);
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
         tick();
-        const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
+        const markdownEditor: MarkdownEditorMonacoComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
         const exampleMarkdown = 'Lorem Ipsum';
         markdownEditor.markdownChange.emit(''); // will be ignored
         tick(500);
@@ -180,7 +178,7 @@ describe('TextUnitFormComponent', () => {
         expect(textUnitFormComponent.nameControl!.value).toEqual(formData.name);
         expect(textUnitFormComponent.releaseDateControl!.value).toEqual(formData.releaseDate);
         expect(textUnitFormComponent.content).toEqual(formData.content);
-        const markdownEditor: MarkdownEditorStubComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorStubComponent)).componentInstance;
+        const markdownEditor: MarkdownEditorMonacoComponent = textUnitFormComponentFixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
         expect(markdownEditor.markdown).toEqual(formData.content);
     }));
 });

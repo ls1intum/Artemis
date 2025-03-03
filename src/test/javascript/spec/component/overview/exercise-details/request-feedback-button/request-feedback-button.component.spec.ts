@@ -1,19 +1,22 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement, TemplateRef } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
-import { DebugElement } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -26,8 +29,13 @@ describe('RequestFeedbackButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RequestFeedbackButtonComponent],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }, MockProvider(HttpClient)],
+            imports: [RequestFeedbackButtonComponent, NgbTooltipModule],
+            providers: [
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -49,25 +57,59 @@ describe('RequestFeedbackButtonComponent', () => {
         jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: { exercise: exercise } })));
     }
 
-    it('should handle errors when requestFeedback fails', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = {
+    function initAndTick() {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+    }
+
+    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation, preliminaryModule: string = 'module'): Exercise {
+        return {
             id: 1,
-            submissions: [{ id: 1, submitted: true }],
+            type,
+            course: isExam ? undefined : {},
+            studentParticipations: participation ? [participation] : undefined,
+            allowFeedbackRequests: true,
+            preliminaryFeedbackModule: preliminaryModule,
+        } as Exercise;
+    }
+
+    function createParticipation(submitted = true): StudentParticipation {
+        return {
+            id: 1,
+            submissions: [{ id: 1, submitted }],
             testRun: false,
         } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: undefined, studentParticipations: [participation], preliminaryFeedbackModule: 'module' } as Exercise;
+    }
+
+    function setupComponentInputs(exercise: Exercise, isSubmitted?: boolean, isGeneratingFeedback?: boolean) {
         fixture.componentRef.setInput('exercise', exercise);
+        if (isSubmitted !== undefined) {
+            fixture.componentRef.setInput('isSubmitted', isSubmitted);
+        }
+        if (isGeneratingFeedback !== undefined) {
+            fixture.componentRef.setInput('isGeneratingFeedback', isGeneratingFeedback);
+        }
         mockExerciseDetails(exercise);
+    }
+
+    it('should handle errors when requestAIFeedback fails', fakeAsync(() => {
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
+        setupComponentInputs(exercise);
+        component.hasUserAcceptedExternalLLMUsage = true;
 
         jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
-            new Observable((subscriber) => {
+            new Observable<StudentParticipation>((subscriber) => {
                 subscriber.error({ error: { errorKey: 'someError' } });
             }),
         );
         jest.spyOn(alertService, 'error');
 
-        component.requestFeedback();
+        // component.requestAIFeedback({} as any);
+        const mockTemplateRef = {} as TemplateRef<any>;
+        component.requestAIFeedback(mockTemplateRef);
         tick();
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
@@ -75,13 +117,10 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should display the button when Athena is enabled and it is not an exam exercise', fakeAsync(() => {
         setAthenaEnabled(true);
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, preliminaryFeedbackModule: 'module' } as Exercise; // course undefined means exam exercise
-        fixture.componentRef.setInput('exercise', exercise);
-        mockExerciseDetails(exercise);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false);
+        setupComponentInputs(exercise);
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
@@ -90,11 +129,10 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should not display the button when it is an exam exercise', fakeAsync(() => {
         setAthenaEnabled(true);
-        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: undefined } as Exercise);
+        const exercise = createBaseExercise(ExerciseType.TEXT, true);
+        setupComponentInputs(exercise);
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        initAndTick();
 
         const button = debugElement.query(By.css('button'));
         const link = debugElement.query(By.css('a'));
@@ -104,13 +142,10 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should disable the button when participation is missing', fakeAsync(() => {
         setAthenaEnabled(true);
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: undefined, preliminaryFeedbackModule: 'module' } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
-        mockExerciseDetails(exercise);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false);
+        setupComponentInputs(exercise);
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
@@ -119,18 +154,12 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should display the correct button label and style when Athena is enabled', fakeAsync(() => {
         setAthenaEnabled(true);
-        const participation = {
-            id: 1,
-            submissions: [{ id: 1, submitted: true }],
-        } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation], preliminaryFeedbackModule: 'module' } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise);
         component.isExamExercise = false;
-        mockExerciseDetails(exercise);
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
@@ -139,67 +168,47 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(span.nativeElement.textContent).toContain('artemisApp.exerciseActions.requestAutomaticFeedback');
     }));
 
-    it('should call requestFeedback() when button is clicked', fakeAsync(() => {
+    it('should call requestAIFeedback() when button is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
-        const participation = {
-            id: 1,
-            submissions: [{ id: 1, submitted: false }],
-            testRun: false,
-        } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, studentParticipations: [participation], course: {}, preliminaryFeedbackModule: 'module' } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
+        setupComponentInputs(exercise);
+        component.hasUserAcceptedExternalLLMUsage = true;
 
-        mockExerciseDetails(exercise);
+        initAndTick();
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        jest.spyOn(component, 'requestAIFeedback');
+        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        jest.spyOn(component, 'requestFeedback');
-        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
-            new Observable((subscriber) => {
-                subscriber.next();
-                subscriber.complete();
-            }),
-        );
-
-        const button = debugElement.query(By.css('a'));
+        const button = debugElement.query(By.css('button'));
+        expect(button).not.toBeNull();
         button.nativeElement.click();
         tick();
 
-        expect(component.requestFeedback).toHaveBeenCalled();
+        expect(component.requestAIFeedback).toHaveBeenCalled();
     }));
 
-    it('should show an alert when requestFeedback() is called and conditions are not satisfied', fakeAsync(() => {
+    it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', fakeAsync(() => {
         setAthenaEnabled(true);
-
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, preliminaryFeedbackModule: 'module' } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
+        const exercise = createBaseExercise(ExerciseType.TEXT, false);
+        setupComponentInputs(exercise);
+        component.hasUserAcceptedExternalLLMUsage = true;
 
         jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
         jest.spyOn(alertService, 'warning');
 
-        component.requestFeedback();
+        component.requestAIFeedback({} as any);
 
         expect(alertService.warning).toHaveBeenCalled();
     }));
 
     it('should disable the button if latest submission is not submitted or feedback is generating', fakeAsync(() => {
         setAthenaEnabled(true);
-        const participation = {
-            id: 1,
-            submissions: [{ id: 1, submitted: false }],
-            testRun: false,
-        } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [participation], course: {}, preliminaryFeedbackModule: 'module' } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('isSubmitted', false);
-        fixture.componentRef.setInput('isGeneratingFeedback', false);
-        mockExerciseDetails(exercise);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, false, false);
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
@@ -208,24 +217,57 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should enable the button if latest submission is submitted and feedback is not generating', fakeAsync(() => {
         setAthenaEnabled(true);
-        const participation = {
-            id: 1,
-            submissions: [{ id: 1, submitted: true }],
-            testRun: false,
-        } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation], preliminaryFeedbackModule: 'module' } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
-        fixture.componentRef.setInput('isSubmitted', true);
-        fixture.componentRef.setInput('isGeneratingFeedback', false);
-        mockExerciseDetails(exercise);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true, false);
 
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+        initAndTick();
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
         expect(button.nativeElement.disabled).toBeFalse();
+    }));
+
+    it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestAIFeedback is clicked', fakeAsync(() => {
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true, false);
+        component.hasUserAcceptedExternalLLMUsage = false;
+
+        // Set up modal spy
+        const modalService = TestBed.inject(NgbModal);
+        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({} as any);
+
+        initAndTick();
+
+        const button = debugElement.query(By.css('button'));
+        expect(button).not.toBeNull();
+        button.nativeElement.click();
+        tick();
+
+        expect(modalSpy).toHaveBeenCalled();
+    }));
+
+    it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
+        setAthenaEnabled(true);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+        setupComponentInputs(exercise, true, false);
+        component.hasUserAcceptedExternalLLMUsage = true;
+
+        // Set up spies
+        const modalService = TestBed.inject(NgbModal);
+        const modalSpy = jest.spyOn(modalService, 'open');
+        const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
+
+        // Just call requestAIFeedback with an empty template ref object
+        const mockTemplateRef = {} as TemplateRef<any>;
+        component.requestAIFeedback(mockTemplateRef);
+        tick();
+
+        expect(modalSpy).not.toHaveBeenCalled();
+        expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
     }));
 
     it('should display the button when Athena is disabled and it is not an exam exercise and manual feedback requests are enabled', fakeAsync(() => {

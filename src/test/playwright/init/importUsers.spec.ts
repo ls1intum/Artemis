@@ -1,5 +1,5 @@
 import { test } from '../support/fixtures';
-import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../support/users';
+import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, UserRole } from '../support/users';
 import { USER_ID, USER_ROLE, users } from '../support/users';
 
 test.describe('Setup users', async () => {
@@ -7,10 +7,14 @@ test.describe('Setup users', async () => {
         test.beforeEach('Creates all required users', async ({ login, userManagementAPIRequests }) => {
             await login(admin);
             for (const userKey in USER_ID) {
-                const user = users.getUserWithId(USER_ID[userKey]);
+                // @ts-ignore
+                const userId: number = USER_ID[userKey];
+                const user = users.getUserWithId(userId);
                 const getUserResponse = await userManagementAPIRequests.getUser(user.username);
                 if (!getUserResponse.ok()) {
-                    await userManagementAPIRequests.createUser(user.username, user.password, USER_ROLE[userKey]);
+                    // @ts-ignore
+                    const userRole: UserRole = USER_ROLE[userKey];
+                    await userManagementAPIRequests.createUser(user.username, user.password, userRole);
                 }
             }
         });

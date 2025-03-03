@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { SortService } from 'app/shared/service/sort.service';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
@@ -22,23 +21,19 @@ describe('TutorLeaderboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(RouterModule)],
-            declarations: [TutorLeaderboardComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AccountService),
                 {
                     provide: Router,
                     useClass: MockRouter,
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorLeaderboardComponent);
-                comp = fixture.componentInstance;
-                sortService = TestBed.inject(SortService);
-                sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty').mockImplementation(() => []);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(TutorLeaderboardComponent);
+        comp = fixture.componentInstance;
+        sortService = TestBed.inject(SortService);
+        sortByPropertySpy = jest.spyOn(sortService, 'sortByProperty').mockImplementation(() => []);
     });
 
     afterEach(() => {

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ArtemisTestModule } from '../../test.module';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { Interactable } from '@interactjs/core/Interactable';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
@@ -15,10 +14,7 @@ describe('CodeEditorGridComponent', () => {
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CodeEditorGridComponent],
-        })
+        TestBed.configureTestingModule({})
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorGridComponent);

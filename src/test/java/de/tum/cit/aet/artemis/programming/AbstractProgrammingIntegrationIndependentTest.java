@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -93,6 +94,9 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     @Autowired
     protected UserTestRepository userRepository;
+
+    @Autowired
+    protected LongFeedbackTextRepository longFeedbackTextRepository;
 
     // Services
     @Autowired

@@ -1,12 +1,12 @@
-import { Directive, HostBinding, Input, OnDestroy, OnInit } from '@angular/core';
+import { Directive, HostBinding, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
-@Directive({
-    selector: '[jhiFeatureToggle]',
-})
+@Directive({ selector: '[jhiFeatureToggle]' })
 export class FeatureToggleDirective implements OnInit, OnDestroy {
+    private featureToggleService = inject(FeatureToggleService);
+
     @Input('jhiFeatureToggle') features: FeatureToggle | FeatureToggle[];
     /**
      * This input must be used to overwrite the disabled state given that the feature toggle is inactive.
@@ -22,8 +22,6 @@ export class FeatureToggleDirective implements OnInit, OnDestroy {
     private featureActive = true;
 
     private featureToggleActiveSubscription: Subscription;
-
-    constructor(private featureToggleService: FeatureToggleService) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

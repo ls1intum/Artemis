@@ -2,7 +2,6 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, ViewEnca
 import { Subject } from 'rxjs';
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'star-rating',
     template: `<div #starMain></div>`,
     styleUrls: ['./star-rating.component.scss'],

@@ -2,15 +2,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../test.module';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { FormsModule } from 'app/forms/forms.module';
+
+import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ImportAllCompetenciesComponent', () => {
     let fixture: ComponentFixture<ImportAllCompetenciesComponent>;
@@ -18,8 +20,9 @@ describe('ImportAllCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ImportAllCompetenciesComponent, ArtemisTestModule, FormsModule, MockComponent(NgbPagination), ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+            imports: [ImportAllCompetenciesComponent, MockComponent(NgbPagination), FontAwesomeTestingModule],
             declarations: [MockRouter, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbActiveModal), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {

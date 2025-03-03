@@ -7,17 +7,19 @@ import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisSharedComponentModule } from '../../../shared/components/shared-component.module';
-import { ArtemisSharedCommonModule } from '../../../shared/shared-common.module';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
+
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-course-lti-configuration',
     templateUrl: './course-lti-configuration.component.html',
-    standalone: true,
     imports: [
         FormsModule,
         TranslateDirective,
@@ -29,10 +31,12 @@ import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pi
         NgbNavLinkBase,
         NgbNavContent,
         NgbTooltip,
-        ArtemisSharedComponentModule,
-        ArtemisSharedCommonModule,
         NgbNavOutlet,
         ArtemisTranslatePipe,
+        CopyIconButtonComponent,
+        HelpIconComponent,
+        SortDirective,
+        SortByDirective,
     ],
 })
 export class CourseLtiConfigurationComponent implements OnInit {

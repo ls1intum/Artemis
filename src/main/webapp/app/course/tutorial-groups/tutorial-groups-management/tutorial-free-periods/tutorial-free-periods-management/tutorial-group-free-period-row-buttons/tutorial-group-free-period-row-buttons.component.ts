@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,13 +9,21 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { catchError, takeUntil } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-free-period-row-buttons',
     templateUrl: './tutorial-group-free-period-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe],
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
+    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
+    private modalService = inject(NgbModal);
+
     @Input() course: Course;
     @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
     @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
@@ -30,11 +38,6 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     faWrench = faWrench;
     faUsers = faUsers;
     faTrash = faTrash;
-
-    constructor(
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private modalService: NgbModal,
-    ) {}
 
     deleteTutorialFreePeriod = () => {
         this.tutorialGroupFreePeriodService

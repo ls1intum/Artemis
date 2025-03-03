@@ -12,8 +12,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { ArtemisTestModule } from '../../test.module';
-import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
+import { FitTextDirective } from 'app/exercises/quiz/shared/fit-text/fit-text.directive';
 
 describe('DragAndDropQuestionComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;
@@ -29,7 +28,7 @@ describe('DragAndDropQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDropModule, FitTextModule],
+            imports: [DragDropModule, FitTextDirective],
             declarations: [
                 DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -178,6 +178,7 @@
             "allowFeedbackRequests": "Allow automatic preliminary feedback requests",
             "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena.",
             "submissionAlreadyHasAthenaResult": "This submission already has an existing AI result. Please submit again before requesting further feedback.",
+            "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
             "startError": "<strong>Uh oh! Something went wrong... Please try again to start the exercise in a few minutes.</strong>",
             "name": "Name",
             "studentId": "Login",
@@ -242,7 +243,8 @@
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!",
                         "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects",
-                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\"."
+                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
+                        "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
                     }
                 },
                 "points": {

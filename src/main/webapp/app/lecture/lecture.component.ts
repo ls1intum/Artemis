@@ -1,13 +1,13 @@
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +17,15 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { DocumentationButtonComponent } from '../shared/components/documentation-button/documentation-button.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SortDirective } from '../shared/sort/sort.directive';
+import { SortByDirective } from '../shared/sort/sort-by.directive';
+import { DeleteButtonDirective } from '../shared/delete-dialog/delete-button.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { HtmlForMarkdownPipe } from '../shared/pipes/html-for-markdown.pipe';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -28,8 +37,32 @@ export enum LectureDateFilter {
 @Component({
     selector: 'jhi-lecture',
     templateUrl: './lecture.component.html',
+    imports: [
+        TranslateDirective,
+        DocumentationButtonComponent,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgClass,
+        FaIconComponent,
+        NgbDropdownMenu,
+        RouterLink,
+        SortDirective,
+        SortByDirective,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        HtmlForMarkdownPipe,
+    ],
 })
 export class LectureComponent implements OnInit, OnDestroy {
+    protected lectureService = inject(LectureService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     lectures: Lecture[];
     filteredLectures: Lecture[];
     courseId: number;
@@ -63,16 +96,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private profileInfoSubscription: Subscription;
 
-    constructor(
-        protected lectureService: LectureService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {
+    constructor() {
         this.predicate = 'id';
         this.ascending = true;
     }
@@ -95,7 +119,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         this.profileInfoSubscription?.unsubscribe();
     }
 
-    trackId(index: number, item: Lecture) {
+    trackId(_index: number, item: Lecture) {
         return item.id;
     }
 
@@ -124,6 +148,12 @@ export class LectureComponent implements OnInit, OnDestroy {
         );
     }
 
+    private deleteLectureFromDisplayedLectures(lectureId: number) {
+        this.dialogErrorSource.next('');
+        this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
+        this.applyFilters();
+    }
+
     /**
      * Deletes Lecture
      * @param lectureId the id of the lecture
@@ -131,9 +161,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     deleteLecture(lectureId: number) {
         this.lectureService.delete(lectureId).subscribe({
             next: () => {
-                this.dialogErrorSource.next('');
-                this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
-                this.applyFilters();
+                this.deleteLectureFromDisplayedLectures(lectureId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
@@ -141,7 +169,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     /**
      * Toggles some filters for the lectures
-     * @param filters: The filters which should be toggled (activated if not already activated, and vice versa)
+     * @param filters The filters which should be toggled (activated if not already activated, and vice versa)
      */
     toggleFilters(filters: LectureDateFilter[]) {
         filters.forEach((f) => (this.activeFilters.has(f) ? this.activeFilters.delete(f) : this.activeFilters.add(f)));
@@ -220,9 +248,8 @@ export class LectureComponent implements OnInit, OnDestroy {
         if (this.lectures.first()) {
             this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allLecturesSuccess'),
-                error: (error) => {
+                error: () => {
                     this.alertService.error('artemisApp.iris.ingestionAlert.allLecturesError');
-                    console.error('Failed to send Lectures Ingestion request', error);
                 },
             });
         }
@@ -246,8 +273,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     });
                 }
             },
-            error: (err: HttpErrorResponse) => {
-                console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err);
+            error: () => {
                 this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
             },
         });

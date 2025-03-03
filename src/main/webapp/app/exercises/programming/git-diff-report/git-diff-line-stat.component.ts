@@ -4,7 +4,6 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     selector: 'jhi-git-diff-line-stat',
     templateUrl: './git-diff-line-stat.component.html',
     styleUrls: ['./git-diff-line-stat.component.scss'],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GitDiffLineStatComponent {

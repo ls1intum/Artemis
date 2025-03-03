@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -8,12 +8,25 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ProgrammingExerciseLifecycleComponent } from '../shared/lifecycle/programming-exercise-lifecycle.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
+    imports: [TranslateDirective, FormsModule, HelpIconComponent, ProgrammingExerciseLifecycleComponent, ButtonComponent, FaIconComponent],
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private exerciseService = inject(ExerciseService);
+
     newProgrammingExercise: ProgrammingExercise;
     selectedProgrammingExercises: ProgrammingExercise[];
 
@@ -26,14 +39,6 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
 
     // Icons
     faSave = faSave;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private exerciseService: ExerciseService,
-    ) {}
 
     ngOnInit(): void {
         this.notificationText = undefined;

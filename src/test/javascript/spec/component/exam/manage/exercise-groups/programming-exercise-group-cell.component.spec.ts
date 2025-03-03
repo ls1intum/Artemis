@@ -1,18 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { ArtemisTestModule } from '../../../../test.module';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { RepositoryType } from '../../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 describe('Programming Exercise Group Cell Component', () => {
     let comp: ProgrammingExerciseGroupCellComponent;
@@ -50,18 +52,19 @@ describe('Programming Exercise Group Cell Component', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisSharedCommonModule],
-            declarations: [ProgrammingExerciseGroupCellComponent, TranslatePipeMock],
             providers: [
                 { provide: ProfileService, useValue: mockedProfileService },
-                { provide: AlertService, useClass: MockAlertService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                provideHttpClient(),
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseGroupCellComponent);
                 comp = fixture.componentInstance;
-                comp.exercise = exercise;
+                fixture.componentRef.setInput('exercise', exercise);
                 mockProgrammingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
                 mockAlertService = fixture.debugElement.injector.get(AlertService);
             });
@@ -74,7 +77,7 @@ describe('Programming Exercise Group Cell Component', () => {
     });
 
     it('should display short name', () => {
-        comp.displayShortName = true;
+        fixture.componentRef.setInput('displayShortName', true);
         fixture.detectChanges();
         const div = fixture.debugElement.query(By.css('div:first-child'));
         expect(div).not.toBeNull();
@@ -82,7 +85,7 @@ describe('Programming Exercise Group Cell Component', () => {
     });
 
     it('should display respository url', () => {
-        comp.displayRepositoryUri = true;
+        fixture.componentRef.setInput('displayRepositoryUri', true);
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('a'));
         expect(span).toBeDefined();
@@ -91,7 +94,7 @@ describe('Programming Exercise Group Cell Component', () => {
     });
 
     it('should display editor mode flags', () => {
-        comp.displayEditorModus = true;
+        fixture.componentRef.setInput('displayEditorModus', true);
         fixture.detectChanges();
 
         const div0 = fixture.debugElement.query(By.css('div > div > div:first-child'));
@@ -113,7 +116,7 @@ describe('Programming Exercise Group Cell Component', () => {
         const alertSuccessStub = jest.spyOn(mockAlertService, 'success');
 
         // WHEN
-        comp.downloadRepository('TEMPLATE');
+        comp.downloadRepository(RepositoryType.TEMPLATE);
 
         // THEN
         expect(exportRepositoryStub).toHaveBeenCalledOnce();

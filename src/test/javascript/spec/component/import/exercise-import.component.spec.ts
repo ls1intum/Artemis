@@ -1,5 +1,5 @@
 import { Injector } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -20,10 +20,11 @@ import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -41,7 +42,7 @@ describe('ExerciseImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
+            imports: [FormsModule, MockComponent(NgbPagination)],
             declarations: [
                 ExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
@@ -50,6 +51,7 @@ describe('ExerciseImportComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(TranslateDirective),
             ],
+            providers: [MockProvider(NgbActiveModal), provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
@@ -269,8 +271,7 @@ describe('ExerciseImportComponent', () => {
             comp.exerciseType = exerciseType;
 
             comp.ngOnInit();
-
-            expect(getSpy).toHaveBeenCalledExactlyOnceWith(expectedPagingService, undefined, 0); // default values for arguments 2 and 3
+            expect(getSpy).toHaveBeenCalledWith(expectedPagingService, {});
         }),
     );
 
@@ -285,7 +286,7 @@ describe('ExerciseImportComponent', () => {
         comp.ngOnInit();
 
         expect(comp.titleKey).toContain('configureGrading');
-        expect(getSpy).toHaveBeenCalledExactlyOnceWith(CodeAnalysisPagingService, undefined, 0);
+        expect(getSpy).toHaveBeenCalledWith(CodeAnalysisPagingService, {});
     });
 
     it('should sort by exam title when only the exam filter is active', () => {

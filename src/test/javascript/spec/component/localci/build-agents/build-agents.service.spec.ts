@@ -76,7 +76,6 @@ describe('BuildAgentsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(BuildAgentsService);
@@ -222,6 +221,32 @@ describe('BuildAgentsService', () => {
         // Set up the expected HTTP request and flush the response with an error.
         const req = httpMock.expectOne(`${service.adminResourceUrl}/agents/resume-all`);
         expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
+    it('should clear distributed data', () => {
+        service.clearDistributedData().subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/clear-distributed-data`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({});
+    });
+
+    it('should handle clear distributed data error', async () => {
+        const errorMessage = 'Failed to clear distributed data';
+
+        const observable = lastValueFrom(service.clearDistributedData());
+
+        // Set up the expected HTTP request and flush the response with an error.
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/clear-distributed-data`);
+        expect(req.request.method).toBe('DELETE');
         req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
 
         try {

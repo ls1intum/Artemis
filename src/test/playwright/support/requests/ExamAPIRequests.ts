@@ -4,7 +4,6 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../constants';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { UserCredentials } from '../users';
@@ -99,7 +98,7 @@ export class ExamAPIRequests {
             exam.numberOfCorrectionRoundsInExam = 0;
         }
 
-        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams`, { data: exam });
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams`, { data: exam });
         return response.json();
     }
 
@@ -108,15 +107,21 @@ export class ExamAPIRequests {
      * @param exam the exam object
      * */
     async deleteExam(exam: Exam) {
-        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}`);
+        await this.page.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}`);
     }
 
     /**
      * Register the student for the exam
-     * @param exam the exam object
      */
     async registerStudentForExam(exam: Exam, student: UserCredentials) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/students/${student.username}`);
+    }
+
+    /**
+     * Register all course students for the exam
+     */
+    async registerAllCourseStudentsForExam(exam: Exam) {
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/register-course-students`);
     }
 
     /**
@@ -133,7 +138,7 @@ export class ExamAPIRequests {
             exerciseArray,
             workingTime,
         };
-        await this.page.request.post(`${COURSE_BASE}/${courseId}/exams/${examId}/test-run`, { data });
+        await this.page.request.post(`api/exam/courses/${courseId}/exams/${examId}/test-run`, { data });
     }
 
     /**
@@ -148,12 +153,12 @@ export class ExamAPIRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups`, { data: exerciseGroup });
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/exercise-groups`, { data: exerciseGroup });
         return response.json();
     }
 
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
-        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
+        await this.page.request.delete(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
     }
 
     /**
@@ -161,7 +166,7 @@ export class ExamAPIRequests {
      * @param exam the exam for which the missing exams are generated
      */
     async generateMissingIndividualExams(exam: Exam) {
-        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
         return await response.json();
     }
 
@@ -170,7 +175,7 @@ export class ExamAPIRequests {
      * @param exam the exam for which the student-exams are fetched
      */
     async getAllStudentExams(exam: Exam) {
-        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams`);
+        const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams`);
         return await response.json();
     }
 
@@ -179,7 +184,7 @@ export class ExamAPIRequests {
      * @param exam the exam for which the exercises are prepared
      */
     async prepareExerciseStartForExam(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
     }
 
     /**
@@ -187,7 +192,7 @@ export class ExamAPIRequests {
      * @param exam the exam to get the scores for
      */
     async getExamScores(exam: Exam) {
-        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/scores`);
+        const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/scores`);
         return await response.json();
     }
 
@@ -201,11 +206,24 @@ export class ExamAPIRequests {
             exam,
             ...gradingScale,
         };
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
+        await this.page.request.post(`api/assessment/courses/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
     }
 
     async getGradeSummary(exam: Exam, studentExam: StudentExam) {
-        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExam.id}/grade-summary`);
+        const response = await this.page.request.get(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/${studentExam.id}/grade-summary`);
         return await response.json();
+    }
+
+    /**
+     * Determines the time left until the exam ends and finishes the exam by subtracting it from the working time.
+     */
+    async finishExam(exam: Exam) {
+        const examEndDate = dayjs(exam.endDate! as dayjs.Dayjs);
+        // Determine the time left until the exam ends and add extra minute
+        // to make sure the exam is finished after subtracting it from the working time
+        const examTimeLeftInSeconds = examEndDate.diff(dayjs(), 'seconds') + 60;
+        if (examTimeLeftInSeconds > 0) {
+            await this.page.request.patch(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/working-time`, { data: -examTimeLeftInSeconds });
+        }
     }
 }

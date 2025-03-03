@@ -5,19 +5,25 @@ import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     standalone: true,
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
-    templateUrl: './exercise-feedback-suggestion-options.component.html',
+    templateUrl: './exercise-feedback-suggstion-options.component.html',
+    imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
+    private athenaService = inject(AthenaService);
+    private activatedRoute = inject(ActivatedRoute);
+
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
-    @Input() readOnly: boolean = false;
+    @Input() readOnly = false;
 
     protected readonly ExerciseType = ExerciseType;
 
@@ -30,11 +36,6 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     availableAthenaModules: string[];
     initialAthenaModule?: string;
     showDropdownList: boolean = false;
-
-    constructor(
-        private athenaService: AthenaService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));

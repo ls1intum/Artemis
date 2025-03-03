@@ -1,5 +1,4 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../test.module';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import dayjs from 'dayjs/esm';
@@ -9,11 +8,10 @@ import { provideHttpClient } from '@angular/common/http';
 describe('SubmissionVersion Service', () => {
     let service: SubmissionVersionService;
     let httpMock: HttpTestingController;
-    let submission: TextSubmission;
+    const submission = new TextSubmission();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
@@ -30,7 +28,7 @@ describe('SubmissionVersion Service', () => {
         };
         const expected = [submissionVersion];
         service.findAllSubmissionVersionsOfSubmission(submissionId).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ url: `api/submissions/${submissionId}/versions`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `api/exercise/submissions/${submissionId}/versions`, method: 'GET' });
         req.flush(expected);
         tick();
     }));

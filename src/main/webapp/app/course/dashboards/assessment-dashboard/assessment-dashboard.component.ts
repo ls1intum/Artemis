@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
@@ -17,19 +17,62 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
+import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
+import { FormsModule } from '@angular/forms';
+
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
+import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
     styleUrls: ['./exam-assessment-buttons/exam-assessment-buttons.component.scss'],
     providers: [CourseManagementService],
+    imports: [
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
+        ExamAssessmentButtonsComponent,
+        AssessmentDashboardInformationComponent,
+        FormsModule,
+        NgbTooltip,
+        ArtemisTranslatePipe,
+        SecondCorrectionEnableButtonComponent,
+        TutorParticipationGraphComponent,
+        TutorLeaderboardComponent,
+        NotReleasedTagComponent,
+        DocumentationButtonComponent,
+        ArtemisTimeAgoPipe,
+        ArtemisDatePipe,
+        SortDirective,
+        SortByDirective,
+    ],
 })
 export class AssessmentDashboardComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private route = inject(ActivatedRoute);
+    private guidedTourService = inject(GuidedTourService);
+    private sortService = inject(SortService);
+
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
 
@@ -78,17 +121,6 @@ export class AssessmentDashboardComponent implements OnInit {
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
-        private sortService: SortService,
-    ) {}
 
     /**
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.

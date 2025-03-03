@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Faq, FaqState } from 'app/entities/faq.model';
@@ -10,7 +10,7 @@ type EntityArrayResponseType = HttpResponse<Faq[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FaqService {
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api/communication/courses';
 
     private http = inject(HttpClient);
 
@@ -156,6 +156,17 @@ export class FaqService {
 
     findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
         return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Trigger the Ingestion of all Faqs in the course.
+     */
+    ingestFaqsInPyris(courseId: number): Observable<HttpResponse<void>> {
+        const params = new HttpParams();
+        return this.http.post<void>(`api/communication/courses/${courseId}/faqs/ingest`, null, {
+            params: params,
             observe: 'response',
         });
     }

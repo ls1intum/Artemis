@@ -62,7 +62,7 @@
                 [programmingExercise]="programmingExercise()"
                 [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
                 [isLocal]="isLocal()"
-                [checkoutSolutionRepository]="programmingExercise().buildConfig?.checkoutSolutionRepository"
+                [checkoutSolutionRepository]="programmingExercise().buildConfig?.checkoutSolutionRepository || false"
                 (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
                 [isCreateOrEdit]="true"
                 [isEditMode]="programmingExerciseCreationConfig.isEdit"

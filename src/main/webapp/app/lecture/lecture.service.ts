@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -15,14 +15,12 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
-    public resourceUrl = 'api/lectures';
+    protected http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private lectureUnitService = inject(LectureUnitService);
+    private entityTitleService = inject(EntityTitleService);
 
-    constructor(
-        protected http: HttpClient,
-        private accountService: AccountService,
-        private lectureUnitService: LectureUnitService,
-        private entityTitleService: EntityTitleService,
-    ) {}
+    public resourceUrl = 'api/lecture/lectures';
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
@@ -90,7 +88,7 @@ export class LectureService {
     findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
         const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
                 params,
                 observe: 'response',
             })
@@ -103,7 +101,7 @@ export class LectureService {
 
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Lecture[]>(`api/courses/${courseId}/lectures-with-slides`, {
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-with-slides`, {
                 observe: 'response',
             })
             .pipe(
@@ -112,6 +110,7 @@ export class LectureService {
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
+
     /**
      * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
      *
@@ -123,11 +122,12 @@ export class LectureService {
         if (lectureId !== undefined) {
             params = params.set('lectureId', lectureId.toString());
         }
-        return this.http.post<void>(`api/courses/${courseId}/ingest`, null, {
+        return this.http.post<void>(`api/lecture/courses/${courseId}/ingest`, null, {
             params: params,
             observe: 'response',
         });
     }
+
     /**
      * Fetch the ingestion state of all the lectures inside the course specified
      * @param courseId

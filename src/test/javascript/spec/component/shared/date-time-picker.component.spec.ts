@@ -1,10 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgModel } from '@angular/forms';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
@@ -17,8 +15,8 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule)],
-            declarations: [FormDateTimePickerComponent, MockDirective(NgModel)],
+            imports: [MockModule(OwlDateTimeModule), MockPipe(ArtemisTranslatePipe), MockModule(NgbTooltipModule)],
+            declarations: [FormDateTimePickerComponent],
         })
             .compileComponents()
             .then(() => {

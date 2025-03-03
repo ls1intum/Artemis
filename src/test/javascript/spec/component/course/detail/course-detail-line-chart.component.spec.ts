@@ -1,16 +1,15 @@
-import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../../test.module';
-import { LineChartModule } from '@swimlane/ngx-charts';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import dayjs from 'dayjs/esm';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseDetailLineChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
@@ -21,9 +20,12 @@ describe('CourseDetailLineChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(LineChartModule)],
-            declarations: [CourseDetailLineChartComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
-            providers: [MockCourseManagementService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+            ],
         })
             .compileComponents()
             .then(() => {

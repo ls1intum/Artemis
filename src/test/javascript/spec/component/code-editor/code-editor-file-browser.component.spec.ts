@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { Subject, of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
+import { of, Subject } from 'rxjs';
 import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -16,10 +15,10 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/mock-code-editor-conflict-state.service';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -52,6 +51,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorConflictStateService, useClass: MockCodeEditorConflictStateService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -948,7 +948,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)]);
         });
 
-        it('should aggregate file badges for a collapsed folder for FEEDBACK_SUGGESTION', () => {
+        it('should aggregate file badges for a collapsed folder FEEDBACK_SUGGESTION', () => {
             const result = comp.getFolderBadges({ value: 'folderB', collapsed: true } as TreeviewItem<string>);
             expect(result).toEqual([new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)]); // 1 + 2
         });

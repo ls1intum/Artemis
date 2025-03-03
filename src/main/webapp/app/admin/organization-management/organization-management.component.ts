@@ -1,15 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
+    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective],
 })
 export class OrganizationManagementComponent implements OnInit {
+    private organizationService = inject(OrganizationManagementService);
+
     organizations: Organization[];
 
     private dialogErrorSource = new Subject<string>();
@@ -20,8 +27,6 @@ export class OrganizationManagementComponent implements OnInit {
     faTimes = faTimes;
     faEye = faEye;
     faWrench = faWrench;
-
-    constructor(private organizationService: OrganizationManagementService) {}
 
     ngOnInit(): void {
         this.organizationService.getOrganizations().subscribe((organizations) => {

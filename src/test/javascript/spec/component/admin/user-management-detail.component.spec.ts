@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { ArtemisTestModule } from '../../test.module';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { User } from 'app/core/user/user.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -17,8 +16,6 @@ describe('User Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [UserManagementDetailComponent],
             providers: [
                 {
                     provide: ActivatedRoute,

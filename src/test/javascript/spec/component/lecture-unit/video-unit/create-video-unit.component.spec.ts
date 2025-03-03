@@ -1,29 +1,22 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import dayjs from 'dayjs/esm';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-
-@Component({ selector: 'jhi-video-unit-form', template: '' })
-class VideoUnitFormStubComponent {
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
-}
-
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
-class LectureUnitLayoutStubComponent {
-    @Input()
-    isLoading = false;
-}
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('CreateVideoUnitComponent', () => {
     let createVideoUnitComponentFixture: ComponentFixture<CreateVideoUnitComponent>;
@@ -31,8 +24,7 @@ describe('CreateVideoUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [VideoUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateVideoUnitComponent],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(VideoUnitService),
                 MockProvider(AlertService),
@@ -40,6 +32,9 @@ describe('CreateVideoUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: {
+                            paramMap: convertToParamMap({ courseId: 1 }),
+                        },
                         parent: {
                             parent: {
                                 paramMap: of({
@@ -64,6 +59,10 @@ describe('CreateVideoUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
         })
@@ -104,7 +103,7 @@ describe('CreateVideoUnitComponent', () => {
 
         createVideoUnitComponentFixture.detectChanges();
         tick();
-        const videoUnitForm: VideoUnitFormStubComponent = createVideoUnitComponentFixture.debugElement.query(By.directive(VideoUnitFormStubComponent)).componentInstance;
+        const videoUnitForm: VideoUnitFormComponent = createVideoUnitComponentFixture.debugElement.query(By.directive(VideoUnitFormComponent)).componentInstance;
         videoUnitForm.formSubmitted.emit(formDate);
 
         createVideoUnitComponentFixture.whenStable().then(() => {

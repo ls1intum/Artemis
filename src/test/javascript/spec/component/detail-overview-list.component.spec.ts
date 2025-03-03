@@ -11,8 +11,8 @@ import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -36,13 +36,12 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ExerciseDetailDirective],
-            declarations: [DetailOverviewListComponent, TranslatePipeMock],
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()

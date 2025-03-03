@@ -8,7 +8,6 @@ import { DecimalPipe } from '@angular/common';
     selector: 'jhi-metrics-garbagecollector',
     templateUrl: './metrics-garbagecollector.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe],
 })
 export class MetricsGarbageCollectorComponent {

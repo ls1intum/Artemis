@@ -22,6 +22,8 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateExerciseUnitComponent', () => {
     let createExerciseUnitComponentFixture: ComponentFixture<CreateExerciseUnitComponent>;
@@ -36,7 +38,6 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 CreateExerciseUnitComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -77,6 +78,7 @@ describe('CreateExerciseUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         })

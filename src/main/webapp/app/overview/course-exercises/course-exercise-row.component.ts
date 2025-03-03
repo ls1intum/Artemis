@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import dayjs from 'dayjs/esm';
@@ -11,13 +11,44 @@ import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SubmissionResultStatusComponent } from '../submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from '../exercise-details/exercise-details-student-actions.component';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
+import { NgClass } from '@angular/common';
+import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 
 @Component({
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
     styleUrls: ['./course-exercise-row.scss'],
+    imports: [
+        RouterLink,
+        FaIconComponent,
+        NgbTooltip,
+        SubmissionResultStatusComponent,
+        ExerciseDetailsStudentActionsComponent,
+        OrionFilterDirective,
+        NgClass,
+        ExerciseCategoriesComponent,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
+    private accountService = inject(AccountService);
+    private participationService = inject(ParticipationService);
+    private exerciseService = inject(ExerciseService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
@@ -40,13 +71,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
 
     participationUpdateListener: Subscription;
 
-    constructor(
-        private accountService: AccountService,
-        private participationService: ParticipationService,
-        private exerciseService: ExerciseService,
-        private participationWebsocketService: ParticipationWebsocketService,
-    ) {}
-
     ngOnInit() {
         if (this.exercise?.studentParticipations?.length) {
             this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
@@ -67,7 +91,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
         this.routerLink = ['/courses', this.course.id!.toString(), 'exercises', this.exercise.id!.toString()];
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exercise.id!);
         if (cachedParticipations?.length) {
             this.exercise.studentParticipations = cachedParticipations;

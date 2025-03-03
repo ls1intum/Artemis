@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
@@ -14,13 +13,28 @@ import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
+import { NgClass } from '@angular/common';
+import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
+import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
+    imports: [NgClass, ExamLiveEventsButtonComponent, ExamStartInformationComponent, FormsModule, TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, OnInit {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
+    private examParticipationService = inject(ExamParticipationService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     /**
      * if startView is set to true: startText and confirmationStartText will be displayed
      * if startView is set to false: endText and confirmationEndText will be displayed
@@ -65,15 +79,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     faCircleExclamation = faCircleExclamation;
     faDoorClosed = faDoorClosed;
 
-    constructor(
-        private courseService: CourseManagementService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private translateService: TranslateService,
-        private accountService: AccountService,
-        private examParticipationService: ExamParticipationService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
-
     ngOnInit(): void {
         this.isAttendanceChecked = this.exam.testExam || !this.exam.examWithAttendanceCheck || this.attendanceChecked;
     }
@@ -83,7 +88,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      * changes in the exam and subscription is handled in the exam-participation.component
      * if the student exam changes, we need to update the displayed times
      */
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;
@@ -187,8 +192,8 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     /**
      * Express the given timespan as humanized text
      *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
-     * @return {string} humanized text for the given amount of seconds
+     * @param remainingTimeSeconds the amount of seconds to display
+     * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number): string {
         if (remainingTimeSeconds > 210) {

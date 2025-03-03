@@ -1,7 +1,19 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
 import SockJS from 'sockjs-client';
-import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
+import Stomp, { Client, ConnectionHeaders, Message, Subscription as StompSubscription } from 'webstomp-client';
+import { gzip, ungzip } from 'pako';
+import { captureException } from '@sentry/angular';
+
+interface SockJSExtended extends WebSocket {
+    _transport?: {
+        url?: string;
+    };
+}
+
+// must be the same as in GzipMessageConverter.java
+export const COMPRESSION_HEADER_KEY = 'X-Compressed';
+export const COMPRESSION_HEADER: Record<string, string> = { [COMPRESSION_HEADER_KEY]: 'true' };
 
 export interface IWebsocketService {
     /**
@@ -27,20 +39,20 @@ export interface IWebsocketService {
 
     /**
      * Send data through the websocket connection
-     * @param path {string} the path for the websocket connection
-     * @param data {object} the data to send through the websocket connection
+     * @param path the path for the websocket connection
+     * @param data the data to send through the websocket connection
      */
-    send(path: string, data: any): void;
+    send<T>(path: string, data: T): void;
 
     /**
      * Subscribe to a channel.
-     * @param channel
+     * @param channel topic
      */
     subscribe(channel: string): IWebsocketService;
 
     /**
      * Unsubscribe a channel.
-     * @param channel
+     * @param channel topic
      */
     unsubscribe(channel: string): void;
 
@@ -76,7 +88,7 @@ export class ConnectionState {
  * Server <1--1> Stomp <1--1> websocket.service.ts <1--n*m> Angular components * channel topic
  */
 @Injectable({ providedIn: 'root' })
-export class JhiWebsocketService implements IWebsocketService, OnDestroy {
+export class WebsocketService implements IWebsocketService, OnDestroy {
     private stompClient?: Client;
 
     // we store the STOMP subscriptions per channel so that we can unsubscribe in case we are not interested any more
@@ -93,7 +105,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
     private connecting = false;
-    private socket: any = undefined;
+    private socket: SockJSExtended | undefined = undefined;
     private subscriptionCounter = 0;
 
     constructor() {
@@ -161,10 +173,11 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             debug: false,
             protocols: ['v12.stomp'],
         };
+        // TODO: consider to switch to RxStomp (like in the latest jhipster version)
         this.stompClient = Stomp.over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
         this.stompClient.debug = () => {};
-        const headers = <ConnectionHeaders>{};
+        const headers = {} as ConnectionHeaders;
 
         this.stompClient.connect(
             headers,
@@ -177,7 +190,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
                     if (this.observables.size !== 0) {
-                        this.observables.forEach((observable, channel) => this.addSubscription(channel));
+                        this.observables.forEach((_observable, channel) => this.addSubscription(channel));
                     }
                 } else {
                     this.alreadyConnectedOnce = true;
@@ -192,22 +205,89 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param channel the path (e.g. '/courses/5/exercises/10') that should be subscribed
      */
     private addSubscription(channel: string) {
-        const subscription = this.stompClient!.subscribe(
-            channel,
-            (message) => {
-                // this code is invoked if a new websocket message was received from the server
-                // we pass the message to the subscriber (e.g. a component who will be notified and can handle the message)
-                if (this.subscribers.has(channel)) {
-                    this.subscribers.get(channel)!.next(JhiWebsocketService.parseJSON(message.body));
-                }
-            },
-            {
-                id: this.getSessionId() + '-' + this.subscriptionCounter++,
-            },
-        );
+        const subscription = this.stompClient!.subscribe(channel, this.handleIncomingMessage(channel), {
+            id: this.getSessionId() + '-' + this.subscriptionCounter++,
+        });
         this.stompSubscriptions.set(channel, subscription);
     }
 
+    /**
+     * Handle incoming messages from the server, which are potentially compressed:
+     * 1. Decode the Base64 string to binary data
+     * 2. Decompress the binary data to a string payload (JSON)
+     * 3. Parse the JSON payload and pass it to the subscribers
+     * @param channel the channel the message was received on
+     */
+    private handleIncomingMessage(channel: string) {
+        return (message: Message) => {
+            // this code is invoked if a new websocket message was received from the server
+            // we pass the message to the subscriber (e.g. a component who will be notified and can handle the message)
+            if (this.subscribers.has(channel)) {
+                const isCompressed = message.headers[COMPRESSION_HEADER_KEY] === 'true';
+                let payload = message.body;
+
+                if (isCompressed) {
+                    try {
+                        payload = WebsocketService.decodeAndDecompress(payload);
+                    } catch (error) {
+                        captureException('Failed to decompress message', error);
+                    }
+                }
+
+                this.subscribers.get(channel)!.next(WebsocketService.parseJSON<object>(payload));
+            }
+        };
+    }
+
+    /**
+     * Compresses a given string payload using GZIP and encodes the compressed data into a Base64 string.
+     *
+     * <p>This method performs the following steps:
+     * <ol>
+     *   <li>Compresses the input string using GZIP.</li>
+     *   <li>Converts the compressed binary data into a Base64-encoded string.</li>
+     * </ol>
+     *
+     * @param payload The string payload to be compressed and encoded.
+     * @returns A Base64-encoded string representing the compressed payload.
+     * @throws Error If compression or Base64 encoding fails.
+     */
+    private static compressAndEncode(payload: string): string {
+        // 1. Compress if larger than 1 KB
+        const compressedPayload = gzip(payload);
+        // 2. Convert binary data to base64 string
+        return window.btoa(
+            Array.from(compressedPayload)
+                .map((byte) => String.fromCharCode(byte))
+                .join(''),
+        );
+    }
+
+    /**
+     * Decodes a Base64-encoded string and decompresses the resulting binary data using GZIP.
+     *
+     * <p>This method performs the following steps:
+     * <ol>
+     *   <li>Decodes the Base64-encoded string into binary data.</li>
+     *   <li>Decompresses the binary data using GZIP.</li>
+     * </ol>
+     *
+     * @param payload The Base64-encoded string representing compressed data.
+     * @returns The decompressed string.
+     * @throws Error If decoding or decompression fails.
+     */
+    private static decodeAndDecompress(payload: string): string {
+        // 1. Decode the Base64 string to binary (ArrayBuffer) and convert to Uint8Array
+        const binaryData = Uint8Array.from(window.atob(payload), (char) => char.charCodeAt(0));
+        // 2. Decompress using pako
+        return ungzip(binaryData, { to: 'string' });
+    }
+
+    /**
+     * Checks whether the WebSocket connection is currently established.
+     *
+     * @returns true if the WebSocket connection is active; otherwise, false.
+     */
     public isConnected(): boolean {
         return this.stompClient?.connected || false;
     }
@@ -216,7 +296,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false
      */
     disconnect() {
-        this.observables.forEach((observable, channel) => this.unsubscribe(channel));
+        this.observables.forEach((_observable, channel) => this.unsubscribe(channel));
         this.waitUntilConnectionSubscriptions.forEach((subscription) => subscription.unsubscribe());
         if (this.stompClient) {
             this.stompClient.disconnect();
@@ -241,13 +321,33 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Send data through the websocket connection
-     * @param path {string} the path for the websocket connection
-     * @param data {object} the data to send through the websocket connection
+     * Send data through the websocket connection, potentially compressing the payload.
+     * Only compresses data if the JSON stringified payload size is larger than 1 KB.
+     * 1. Convert the data into JSON
+     * 2. Compress the JSON payload into binary data if it is larger than 1 KB
+     * 3. Convert the binary data into a Base64 string
+     *
+     * @param path the path for the websocket connection
+     * @param data the data to send through the websocket connection
      */
-    send(path: string, data: any): void {
+    send<T>(path: string, data: T): void {
         if (this.isConnected()) {
-            this.stompClient!.send(path, JSON.stringify(data), {});
+            const jsonPayload = JSON.stringify(data);
+            const payloadSize = new Blob([jsonPayload]).size; // Measure payload size
+
+            if (payloadSize > 1024) {
+                try {
+                    const base64StringPayload = WebsocketService.compressAndEncode(jsonPayload);
+                    this.stompClient!.send(path, base64StringPayload, COMPRESSION_HEADER);
+                } catch (error) {
+                    captureException('Failed to compress websocket message', error);
+                    // Send uncompressed payload if an error occurs
+                    this.stompClient!.send(path, jsonPayload, {});
+                }
+            } else {
+                // Send uncompressed payload
+                this.stompClient!.send(path, jsonPayload, {});
+            }
         }
     }
 
@@ -272,8 +372,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Unsubscribe a channel.
-     * @param channel
+     * Unsubscribe a channel if the component is not interested in the messages anymore
+     * @param channel topic for which the component wants to unsubscribe
      */
     unsubscribe(channel: string) {
         if (this && this.stompSubscriptions && this.stompSubscriptions.has(channel)) {
@@ -322,20 +422,30 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.disconnect();
     }
 
-    private static parseJSON(response: string): any {
+    /**
+     * Parses a JSON string into an object of the specified generic type.
+     *
+     * <p>This method attempts to parse the provided JSON string. If parsing fails,
+     * it returns the input string cast to the specified type. This can be useful
+     * for handling cases where the response might not always be a valid JSON string.</p>
+     *
+     * @param response The JSON string to be parsed.
+     * @returns The parsed object of the specified type, or the input string cast to the type if parsing fails.
+     * @template T The type of the object to return after parsing.
+     * @throws Error If JSON parsing fails and the input is not a valid string cast to the specified type.
+     */
+    private static parseJSON<T>(response: string): T {
         try {
             return JSON.parse(response);
         } catch {
-            return response;
+            return response as T;
         }
     }
 
-    // https://stackoverflow.com/a/35651029/3802758
+    // see https://stackoverflow.com/a/35651029/3802758
     private getSessionId(): string {
-        if (this.socket && this.socket._transport && this.socket._transport.url) {
-            return this.socket._transport.url.match('.*\\/websocket\\/\\d*\\/(.*)\\/websocket.*')[1];
-        } else {
-            return 'unsubscribed';
-        }
+        const url = this.socket?._transport?.url;
+        const match = url?.match('.*\\/websocket\\/\\d*\\/(.*)\\/websocket.*');
+        return match ? match[1] : 'unsubscribed';
     }
 }

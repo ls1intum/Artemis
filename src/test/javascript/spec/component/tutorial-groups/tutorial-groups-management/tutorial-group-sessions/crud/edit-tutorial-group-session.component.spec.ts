@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
-import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import {
@@ -19,6 +16,11 @@ import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupSessionFormComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
@@ -36,23 +38,25 @@ describe('EditTutorialGroupSessionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [EditTutorialGroupSessionComponent, LoadingIndicatorContainerStubComponent, TutorialGroupSessionFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TutorialGroupSessionService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
-                component = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
-                sessionService = TestBed.inject(TutorialGroupSessionService);
-                exampleSession = generateExampleTutorialGroupSession({});
-                exampleTutorialGroup = generateExampleTutorialGroup({});
-                component.course = course;
-                component.tutorialGroupSession = exampleSession;
-                component.tutorialGroup = exampleTutorialGroup;
-                component.initialize();
-                fixture.detectChanges();
-            });
+            imports: [OwlNativeDateTimeModule],
+            providers: [
+                MockProvider(TutorialGroupSessionService),
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
+        component = fixture.componentInstance;
+        activeModal = TestBed.inject(NgbActiveModal);
+        sessionService = TestBed.inject(TutorialGroupSessionService);
+        exampleSession = generateExampleTutorialGroupSession({});
+        exampleTutorialGroup = generateExampleTutorialGroup({});
+        component.course = course;
+        component.tutorialGroupSession = exampleSession;
+        component.tutorialGroup = exampleTutorialGroup;
+        component.initialize();
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -64,7 +68,7 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        const formStub: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
+        const formStub: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
         expect(formStub.formData).toEqual(component.formData);
     });
@@ -83,7 +87,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         const updatedStub = jest.spyOn(sessionService, 'update').mockReturnValue(of(updateResponse));
         const closeSpy = jest.spyOn(activeModal, 'close');
 
-        const sessionForm: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
+        const sessionForm: TutorialGroupSessionFormComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormComponent)).componentInstance;
 
         const formData = tutorialGroupSessionToTutorialGroupSessionFormData(changedSession, timeZone);
 

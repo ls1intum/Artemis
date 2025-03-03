@@ -6,10 +6,9 @@ import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { mockExercise, mockSourceTeams, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 describe('TeamsImportButtonComponent', () => {
     let comp: TeamsImportButtonComponent;
@@ -24,7 +23,7 @@ describe('TeamsImportButtonComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
+            imports: [MockModule(NgbModule), MockDirective(FeatureToggleDirective)],
             declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(TeamService), MockProvider(NgbModal)],
         }).compileComponents();

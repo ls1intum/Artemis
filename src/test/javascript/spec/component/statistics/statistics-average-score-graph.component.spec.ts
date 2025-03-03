@@ -1,18 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
-import { BarChartModule } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { provideRouter } from '@angular/router';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -78,9 +75,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [provideRouter([]), MockProvider(ArtemisNavigationUtilService), MockProvider(ChartExerciseTypeFilter), MockProvider(ChartCategoryFilter)],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

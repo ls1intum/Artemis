@@ -41,11 +41,13 @@ public abstract class ExerciseWithSubmissionsExportService {
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
-    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
+    private static final String EMBEDDED_FILE_MARKDOWN_SYNTAX_REGEX = "\\[.*] *\\(/api/core/files/markdown/.*\\)";
 
-    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"/api/files/markdown/.*\".*>";
+    private static final String EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT = "\\(/api/core/files/markdown/.* \".*\"\\)";
 
-    private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
+    private static final String EMBEDDED_FILE_HTML_SYNTAX_REGEX = "<img src=\"/api/core/files/markdown/.*\".*>";
+
+    private static final String API_MARKDOWN_FILE_PATH = "/api/core/files/markdown/";
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWithSubmissionsExportService.class);
 
@@ -129,7 +131,15 @@ public abstract class ExerciseWithSubmissionsExportService {
         for (String embeddedFile : embeddedFilesWithMarkdownSyntax) {
             // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
             String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
-            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
+            String filePath;
+
+            if (Pattern.compile(EMBEDDED_FILE_MARKDOWN_WITH_HOVERTEXT).matcher(lastPartOfMatchedString).matches()) {
+                filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(" "));
+            }
+            else {
+                filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
+            }
+
             constructFilenameAndCopyFile(exercise, exportErrors, embeddedFilesDir, filePath);
         }
     }

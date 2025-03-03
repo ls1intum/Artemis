@@ -3,7 +3,7 @@
     <hr class="my-2" />
     <div class="row h-100 m-0 gap-3">
         <div class="col-2 p-0 learning-paths-analytics-graph-selection-container">
-            <ng-container [ngTemplateOutlet]="radioTemplate" [ngTemplateOutletContext]="{ $implicit: CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS }"></ng-container>
+            <ng-container [ngTemplateOutlet]="radioTemplate" [ngTemplateOutletContext]="{ $implicit: CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS }" />
         </div>
         <div class="col p-0">
             @if (isLoading()) {

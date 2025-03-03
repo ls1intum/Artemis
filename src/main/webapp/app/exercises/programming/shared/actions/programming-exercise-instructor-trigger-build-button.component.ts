@@ -1,30 +1,26 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+
     // Icons
     faRedo = faRedo;
 
-    constructor(
-        submissionService: ProgrammingSubmissionService,
-        alertService: AlertService,
-        participationWebsocketService: ParticipationWebsocketService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-    ) {
-        super(submissionService, participationWebsocketService, alertService);
+    constructor() {
+        super();
         this.showForSuccessfulSubmissions = true;
         this.personalParticipation = false;
     }

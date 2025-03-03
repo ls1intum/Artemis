@@ -1,10 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-competency-rings',
     templateUrl: './competency-rings.component.html',
     styleUrls: ['./competency-rings.component.scss'],
+    imports: [NgbTooltip, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CompetencyRingsComponent {
     @Input() progress = 0;

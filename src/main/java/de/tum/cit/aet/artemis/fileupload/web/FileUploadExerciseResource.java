@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.fileupload.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportServi
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
@@ -107,14 +107,14 @@ public class FileUploadExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, CompetencyProgressApi competencyProgressApi) {
+            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -160,9 +160,9 @@ public class FileUploadExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
-        competencyProgressApi.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -196,7 +196,7 @@ public class FileUploadExerciseResource {
         importedFileUploadExercise.validateGeneralSettings();
 
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
-        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
+        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
 
     private boolean isFilePatternValid(FileUploadExercise exercise) {
@@ -287,7 +287,7 @@ public class FileUploadExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
         exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise)));
 
         return ResponseEntity.ok(updatedExercise);
     }
@@ -385,8 +385,8 @@ public class FileUploadExerciseResource {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exercise.getCourseViaExerciseGroupOrCourseMember(), null);
         }
 
-        File zipFile = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
-        return ResponseUtil.ok(zipFile);
+        Path zipFilePath = fileUploadSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
+        return ResponseUtil.ok(zipFilePath);
     }
 
     /**

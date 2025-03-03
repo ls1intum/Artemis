@@ -16,6 +16,10 @@ export class MockFileService {
         return of();
     };
 
+    createAttachmentFileUrl(downloadUrl: string, downloadName: string, encodeName: boolean) {
+        return 'attachments/' + downloadName.replace(' ', '-') + '.pdf';
+    }
+
     replaceLectureAttachmentPrefixAndUnderscores = (link: string) => link;
     replaceAttachmentPrefixAndUnderscores = (link: string) => link;
 }

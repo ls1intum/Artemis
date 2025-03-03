@@ -6,7 +6,7 @@
         </div>
         <div class="modal-body">
             <!-- info if announcement is created-->
-            @if (this.editType === EditType.CREATE && isCommunicationPage && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
+            @if (this.editType === EditType.CREATE && isCommunicationPage() && getAsChannel(posting.conversation)?.isAnnouncementChannel) {
                 <div class="alert alert-warning" jhiTranslate="artemisApp.metis.post.announcementHint"></div>
             }
             <!-- title -->
@@ -20,7 +20,7 @@
                 </div>
             </div>
             <!-- tags -->
-            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCommunicationPage && !posting.conversation) {
+            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCommunicationPage() && !posting.conversation) {
                 <div class="position-relative mb-3">
                     <div>
                         <label jhiTranslate="artemisApp.metis.post.tags"></label>
@@ -31,56 +31,36 @@
                     </div>
                 </div>
             }
-            <!-- top K similar posts, only shown if there are similar posts (i.e. not during updating a post), announcements will not be compared -->
-            @if (similarPosts.length > 0) {
-                <div class="mb-3">
-                    <div ngbAccordion>
-                        <div ngbAccordionItem>
-                            <div ngbAccordionHeader>
-                                <button ngbAccordionButton class="d-flex align-items-center justify-content-between">
-                                    <p class="my-2 ps-1">
-                                        {{ 'artemisApp.metis.post.similarPosts' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.metis.post.similarPostsTooltip" />
-                                    </p>
-                                </button>
-                            </div>
-                            <div ngbAccordionCollapse>
-                                <div ngbAccordionBody>
-                                    @for (post of similarPosts; track post; let i = $index) {
-                                        <div class="row">
-                                            <jhi-post [posting]="post" [previewMode]="true" [modalRef]="modalRef" />
-                                            @if (i < similarPosts.length - 1) {
-                                                <div class="post-separation-line"></div>
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-            <!-- content -->
             <div class="position-relative mb-1">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.content"></label>
                     <jhi-help-icon text="artemisApp.metis.post.contentTooltip" />
                 </div>
                 <div class="row mb-2">
-                    <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [suppressNewlineOnEnter]="false" />
+                    <jhi-posting-markdown-editor
+                        formControlName="content"
+                        [editorHeight]="editorHeight"
+                        [maxContentLength]="maxContentLength"
+                        [suppressNewlineOnEnter]="false"
+                        [isButtonLoading]="isLoading"
+                        [isFormGroupValid]="formGroup.valid"
+                        [editType]="editType"
+                    />
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button
-                jhi-posting-button
-                [buttonLoading]="isLoading"
-                [disabled]="isLoading || !formGroup.valid"
-                [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
-                id="save"
-                class="btn btn-sm btn-outline-secondary"
-                type="submit"
-            ></button>
-        </div>
+        @if (editType === EditType.UPDATE) {
+            <div class="modal-footer">
+                <button
+                    jhi-posting-button
+                    [buttonLoading]="isLoading"
+                    [disabled]="isLoading || !formGroup.valid"
+                    [buttonLabel]="'artemisApp.conversationsLayout.saveMessage' | artemisTranslate"
+                    class="btn btn-sm btn-outline-primary"
+                    id="save"
+                    type="submit"
+                ></button>
+            </div>
+        }
     </form>
 </ng-template>
