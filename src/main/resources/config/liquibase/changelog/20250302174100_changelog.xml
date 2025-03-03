@@ -33,6 +33,11 @@
             <where>jhi_link LIKE '%/api/files%'</where>
         </update>
 
+        <update tableName="competency">
+            <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
+            <where>description LIKE '%/api/files%'</where>
+        </update>
+
         <update tableName="complaint">
             <column name="complaint_text" valueComputed="REPLACE(complaint_text, '/api/files', '/api/core/files')"/>
             <where>complaint_text LIKE '%/api/files%'</where>
@@ -238,7 +243,7 @@
             <where>slide_image_path LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="standardized_competency"> TODO: other competencies?
+        <update tableName="standardized_competency">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
         </update>
