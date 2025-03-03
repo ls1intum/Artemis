@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExercise
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingPipelineExecutionDTO;
@@ -189,20 +188,6 @@ public class IrisRequestMockProvider {
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisRewritingPipelineExecutionDTO.class);
-                executionDTOConsumer.accept(dto);
-                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-            });
-        // @formatter:on
-    }
-
-    public void mockRunConcistencyCheckResponseAnd(Consumer<PyrisConsistencyCheckPipelineExecutionDTO> executionDTOConsumer) {
-        // @formatter:off
-        mockServer
-            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rewriting/faq/run"))
-            .andExpect(method(HttpMethod.POST))
-            .andRespond(request -> {
-                var mockRequest = (MockClientHttpRequest) request;
-                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisConsistencyCheckPipelineExecutionDTO.class);
                 executionDTOConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });

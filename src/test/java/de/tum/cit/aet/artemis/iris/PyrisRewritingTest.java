@@ -49,6 +49,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void callRewritingPipeline() throws Exception {
+        activateIrisFor(course1);
         irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
@@ -58,6 +59,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void callRewritingPipelineAsStudentShouldThrowForbidden() throws Exception {
+        activateIrisFor(course1);
         irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("", RewritingVariant.FAQ);
