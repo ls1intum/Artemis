@@ -71,7 +71,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testBuildConfigOnlyReturnsRestrictedSetOfInformation() throws Exception {
-        ProgrammingExerciseTheiaConfigDTO imageDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/theia-config", HttpStatus.OK,
+        ProgrammingExerciseTheiaConfigDTO imageDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/theia-config", HttpStatus.OK,
                 ProgrammingExerciseTheiaConfigDTO.class);
 
         // Count the number of fields in the record, this makes sure that only the expected fields are returned
