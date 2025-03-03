@@ -298,45 +298,69 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private groupPosts(): void {
+        // If there are no posts, clear groupedPosts and exit.
         if (!this.posts || this.posts.length === 0) {
             this.groupedPosts = [];
             return;
         }
 
-        const sortedPosts = this.posts.sort((a, b) => {
-            return a.creationDate!.valueOf() - b.creationDate!.valueOf();
+        // Sort posts by creation date.
+        const sortedPosts = [...this.posts].sort((a, b) => {
+            const aDate = (a as any).creationDateDayjs;
+            const bDate = (b as any).creationDateDayjs;
+            return aDate?.valueOf() - bDate?.valueOf();
         });
 
-        const groups: PostGroup[] = [];
-        let currentGroup: PostGroup = {
-            author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
-        };
-
-        for (let i = 1; i < sortedPosts.length; i++) {
-            const currentPost = sortedPosts[i];
-            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
-
-            let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentPost.creationDate && lastPostInGroup.creationDate) {
-                timeDiff = currentPost.creationDate.diff(lastPostInGroup.creationDate, 'minute');
-            }
-
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+        // Compute new grouping based on current posts.
+        const computedGroups: PostGroup[] = [];
+        let currentGroup: PostGroup | null = null;
+        sortedPosts.forEach((post) => {
+            if (!currentGroup) {
+                // Start new group if none exists.
+                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
             } else {
-                groups.push(currentGroup);
-                currentGroup = {
-                    author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
-                };
+                const lastPost = currentGroup.posts[currentGroup.posts.length - 1];
+                const currentDate = (post as any).creationDateDayjs;
+                const lastDate = (lastPost as any).creationDateDayjs;
+                const timeDiff = currentDate && lastDate ? currentDate.diff(lastDate, 'minute') : Number.MAX_SAFE_INTEGER;
+                // Group post if same author and within 5 minutes.
+                if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
+                    currentGroup.posts.push({ ...post, isConsecutive: true });
+                } else {
+                    computedGroups.push(currentGroup);
+                    currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                }
             }
+        });
+        if (currentGroup) {
+            computedGroups.push(currentGroup);
         }
 
-        groups.push(currentGroup);
-
-        this.groupedPosts = groups;
+        // Update existing groups in place if possible.
+        if (this.groupedPosts.length === computedGroups.length) {
+            computedGroups.forEach((group, i) => {
+                // If the group belongs to the same author, update its posts array in place.
+                if (this.groupedPosts[i].author?.id === group.author?.id) {
+                    // Replace entire posts array so that deletions are applied without recreating the group.
+                    this.groupedPosts[i].posts.splice(0, this.groupedPosts[i].posts.length, ...group.posts);
+                } else {
+                    // If group identity has changed, replace the group.
+                    this.groupedPosts[i] = group;
+                }
+            });
+        } else {
+            this.groupedPosts = computedGroups;
+        }
+        // Trigger Angular change detection.
         this.cdr.detectChanges();
+    }
+
+    private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
+        // Both groups are equal if neither has an author; otherwise, they are not
+        if (!groupA.author || !groupB.author) {
+            return !groupA.author && !groupB.author;
+        }
+        return groupA.author.id === groupB.author.id;
     }
 
     setPosts(): void {
@@ -418,8 +442,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     this.groupPosts();
                 }
             });
-        } else {
-            // No posts with forwarded messages
+            // Incrementally update the grouped posts.
             this.groupPosts();
         }
     }
