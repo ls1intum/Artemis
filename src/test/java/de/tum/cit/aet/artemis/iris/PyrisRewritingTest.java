@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
@@ -8,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -21,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextReques
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
+@Profile(PROFILE_IRIS)
 class PyrisRewritingTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "pyrisrewritingtest";
