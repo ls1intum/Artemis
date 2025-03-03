@@ -207,8 +207,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
 
         FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
         var file = new MockMultipartFile("file", "file.pdf", "application/json", "some data".getBytes());
-        request.postWithMultipartFile("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
-                HttpStatus.FAILED_DEPENDENCY);
+        request.postWithMultipartFile("/api/fileupload/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
+                FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
     }
 
     @Test
