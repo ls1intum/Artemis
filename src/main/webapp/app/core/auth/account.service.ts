@@ -379,6 +379,6 @@ export class AccountService implements IAccountService {
      * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
      */
     getToolToken(tool: string): Observable<string> {
-        return this.http.post<string>('api/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
+        return this.http.post<string>('api/core/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
     }
 }
