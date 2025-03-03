@@ -197,7 +197,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+                    this.navigateToCourseManagement();
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -223,7 +223,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.navigateToCourseManagement();
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -240,7 +240,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         if (this.attachment()) {
             this.attachmentService.delete(this.attachment()!.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+                    this.navigateToCourseManagement();
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
@@ -250,7 +250,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } else if (this.attachmentUnit()) {
             this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture!.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.navigateToCourseManagement();
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
