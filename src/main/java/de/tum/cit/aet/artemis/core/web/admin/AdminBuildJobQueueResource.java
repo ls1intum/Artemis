@@ -192,7 +192,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/{agentName}/pause} : Pause the specified build agent.
+     * {@code PUT /admin/agents/{agentName}/pause} : Pause the specified build agent.
      * This endpoint allows administrators to pause a specific build agent by its name.
      * Pausing a build agent will prevent it from picking up any new build jobs until it is resumed.
      *
@@ -212,7 +212,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/pause-all} : Pause all build agents.
+     * {@code PUT /admin/agents/pause-all} : Pause all build agents.
      * This endpoint allows administrators to pause all build agents.
      * Pausing all build agents will prevent them from picking up any new build jobs until they are resumed.
      *
@@ -231,7 +231,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/{agentName}/resume} : Resume the specified build agent.
+     * {@code PUT /admin/agents/{agentName}/resume} : Resume the specified build agent.
      * This endpoint allows administrators to resume a specific build agent by its name.
      * Resuming a build agent will allow it to pick up new build jobs again.
      *
@@ -251,7 +251,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/resume-all} : Resume all build agents.
+     * {@code PUT /admin/agents/resume-all} : Resume all build agents.
      * This endpoint allows administrators to resume all build agents.
      * Resuming all build agents will allow them to pick up new build jobs again.
      *
@@ -270,7 +270,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/clear-distributed-data} : Clear all distributed data.
+     * {@code PUT /admin/clear-distributed-data} : Clear all distributed data.
      * This endpoint allows administrators to clear all distributed data. See {@link SharedQueueManagementService#clearDistributedData()}.
      *
      * <p>
