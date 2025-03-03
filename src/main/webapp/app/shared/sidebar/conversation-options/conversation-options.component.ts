@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnI
 import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { faEllipsisVertical, faEye, faEyeSlash, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { catchError, mergeWith } from 'rxjs/operators';
@@ -58,8 +58,8 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     faEllipsisVertical = faEllipsisVertical;
     faHeartSolid = faHearthSolid;
     faHeartRegular = faHeartRegular;
-    faEye = faEye;
-    faEyeSlash = faEyeSlash;
+    faBoxArchive = faBoxArchive;
+    faBoxOpen = faBoxOpen;
     faVolumeXmark = faVolumeXmark;
     faVolumeUp = faVolumeUp;
     faGear = faGear;
@@ -79,7 +79,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
     }
 
-    onHiddenClicked(event: MouseEvent) {
+    onArchiveClicked(event: MouseEvent) {
         event.stopPropagation();
         if (!this.course.id || !this.conversation.id) {
             return;

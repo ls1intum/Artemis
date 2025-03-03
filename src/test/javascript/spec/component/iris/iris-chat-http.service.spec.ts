@@ -13,7 +13,6 @@ describe('Iris Chat Http Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), IrisChatHttpService],
         });
         service = TestBed.inject(IrisChatHttpService);

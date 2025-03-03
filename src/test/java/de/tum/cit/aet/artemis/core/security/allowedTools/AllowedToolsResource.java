@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/test/")
+@RequestMapping("api/core/test/")
 public class AllowedToolsResource {
 
     @GetMapping("testAllowedToolTokenScorpio")

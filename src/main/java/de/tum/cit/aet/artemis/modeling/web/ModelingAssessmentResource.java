@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/modeling/")
 public class ModelingAssessmentResource extends AssessmentResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);

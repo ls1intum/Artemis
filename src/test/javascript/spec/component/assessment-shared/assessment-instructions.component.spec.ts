@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
@@ -21,7 +20,6 @@ describe('AssessmentInstructionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 AssessmentInstructionsComponent,
                 MockComponent(ExpandableSectionComponent),

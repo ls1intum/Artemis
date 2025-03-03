@@ -5,8 +5,13 @@ import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { By } from '@angular/platform-browser';
 import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
     let component: ExamLiveAnnouncementCreateModalComponent;
@@ -16,8 +21,13 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [{ provide: NgbActiveModal, useValue: { dismiss: jest.fn() } }],
+            providers: [
+                { provide: NgbActiveModal, useValue: { dismiss: jest.fn() } },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamLiveAnnouncementCreateModalComponent);

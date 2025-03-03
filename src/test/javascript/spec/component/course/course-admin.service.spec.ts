@@ -17,14 +17,13 @@ import { provideHttpClient } from '@angular/common/http';
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
-    const resourceUrl = 'api/admin/courses';
+    const resourceUrl = 'api/core/admin/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

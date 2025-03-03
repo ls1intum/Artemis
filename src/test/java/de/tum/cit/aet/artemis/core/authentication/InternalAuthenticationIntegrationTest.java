@@ -147,7 +147,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         course1 = courseRepository.save(course1);
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
-        Set<String> updatedGroups = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
@@ -168,7 +168,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(exercises).isEmpty();
         jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
 
-        final var user = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
+        final var user = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(user).isNotNull();
         return user;
     }
@@ -239,7 +239,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
 
         var responseBody = new ObjectMapper().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
@@ -260,7 +260,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("tool", ToolTokenType.SCORPIO.toString());
 
-        var responseBody = request.performMvcRequest(post("/api/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
+        var responseBody = request.performMvcRequest(post("/api/core/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString();
 
         AuthenticationIntegrationTestHelper.toolTokenAssertions(tokenProvider, responseBody, initialLifetime, ToolTokenType.SCORPIO);
@@ -273,7 +273,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/logout", HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/logout", HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
@@ -284,7 +284,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/logout", HttpStatus.OK, httpHeaders);
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/logout", HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
@@ -302,7 +302,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
-        final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
+        final var response = request.putWithResponseBody("/api/core/admin/users", managedUserVM, User.class, HttpStatus.OK);
         final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();

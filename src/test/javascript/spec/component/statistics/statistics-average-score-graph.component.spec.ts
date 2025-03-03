@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -9,6 +8,8 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -74,8 +75,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [MockProvider(ArtemisNavigationUtilService)],
+            providers: [MockProvider(ArtemisNavigationUtilService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

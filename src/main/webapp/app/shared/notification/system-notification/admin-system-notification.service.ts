@@ -12,7 +12,7 @@ export class AdminSystemNotificationService {
     private http = inject(HttpClient);
     private systemNotificationService = inject(SystemNotificationService);
 
-    public resourceUrl = 'api/admin/system-notifications';
+    public resourceUrl = 'api/communication/admin/system-notifications';
 
     /**
      * Create a notification on the server using a POST request.

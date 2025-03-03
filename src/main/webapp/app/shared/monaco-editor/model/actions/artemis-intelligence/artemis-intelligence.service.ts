@@ -11,7 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
  */
 @Injectable({ providedIn: 'root' })
 export class ArtemisIntelligenceService {
-    public resourceUrl = 'api';
+    public resourceUrl = 'api/iris';
 
     private http = inject(HttpClient);
     private websocketService = inject(WebsocketService);
@@ -74,7 +74,7 @@ export class ArtemisIntelligenceService {
     consistencyCheck(exerciseId: number): Observable<string> {
         this.isLoadingConsistencyCheck.set(true);
         return new Observable<string>((observer) => {
-            this.http.post(`${this.resourceUrl}/iris/consistency-check/exercises/${exerciseId}`, null).subscribe({
+            this.http.post(`${this.resourceUrl}/consistency-check/exercises/${exerciseId}`, null).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/consistency-check/exercises/${exerciseId}`;
                     this.websocketService.subscribe(websocketTopic);

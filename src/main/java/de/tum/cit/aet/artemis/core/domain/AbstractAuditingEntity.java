@@ -46,10 +46,6 @@ public abstract class AbstractAuditingEntity extends DomainObject {
         return createdBy;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
     public Instant getCreatedDate() {
         return createdDate;
     }
@@ -62,15 +58,7 @@ public abstract class AbstractAuditingEntity extends DomainObject {
         return lastModifiedBy;
     }
 
-    public void setLastModifiedBy(String lastModifiedBy) {
-        this.lastModifiedBy = lastModifiedBy;
-    }
-
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
-    }
-
-    public void setLastModifiedDate(Instant lastModifiedDate) {
-        this.lastModifiedDate = lastModifiedDate;
     }
 }

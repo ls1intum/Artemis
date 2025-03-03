@@ -37,14 +37,14 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     async submitExample() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling-submissions/*/example-assessment`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/example-assessment`);
         await this.page.getByText('Save Example Assessment').click();
         const response = await responsePromise;
         expect(response.status()).toBe(200);
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling-submissions/*/result/*/assessment*`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/result/*/assessment*`);
         await super.submitWithoutInterception();
         const response = await responsePromise;
         expect(response.status()).toBe(200);

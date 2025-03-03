@@ -5,7 +5,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExercisePagingService extends ExercisePagingService<FileUploadExercise> {
-    private static readonly RESOURCE_URL = 'api/file-upload-exercises';
+    private static readonly RESOURCE_URL = 'api/fileupload/file-upload-exercises';
 
     constructor() {
         const http = inject(HttpClient);
