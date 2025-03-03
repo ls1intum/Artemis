@@ -33,8 +33,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 /**
  * REST controller for managing grade steps of a grading scale
@@ -58,12 +58,12 @@ public class GradeStepResource {
 
     private final UserRepository userRepository;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
@@ -71,7 +71,7 @@ public class GradeStepResource {
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -193,7 +193,7 @@ public class GradeStepResource {
             gradeStep = new GradeStep();
             gradeStep.setGradeName(gradingScale.getNoParticipationGradeOrDefault());
         }
-        else if (plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, user.getId()).stream()
+        else if (plagiarismCaseApi.isPresent() && plagiarismCaseApi.get().findByCourseIdAndStudentId(courseId, user.getId()).stream()
                 .anyMatch(plagiarismCase -> PlagiarismVerdict.PLAGIARISM.equals(plagiarismCase.getVerdict()))) {
             gradeStep = new GradeStep();
             gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());

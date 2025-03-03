@@ -111,8 +111,8 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -198,7 +198,7 @@ public class CourseService {
 
     private final Optional<TutorialGroupApi> tutorialGroupApi;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     private final ConversationRepository conversationRepository;
 
@@ -231,7 +231,7 @@ public class CourseService {
             ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            Optional<TutorialGroupApi> tutorialGroupApi, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
             Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
@@ -267,7 +267,7 @@ public class CourseService {
         this.participantScoreRepository = participantScoreRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.tutorialGroupApi = tutorialGroupApi;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.conversationRepository = conversationRepository;
         this.learningPathApi = learningPathApi;
         this.irisSettingsService = irisSettingsService;
@@ -338,8 +338,13 @@ public class CourseService {
      * @param userId    the user for which the plagiarism cases should be fetched.
      */
     public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
+        if (plagiarismCaseApi.isEmpty()) {
+            return;
+        }
+
+        PlagiarismCaseApi api = plagiarismCaseApi.get();
         Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
+        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = api.findByStudentIdAndExerciseIds(userId, exerciseIds);
         for (Exercise exercise : exercises) {
             // Add plagiarism cases to each exercise.
             Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()

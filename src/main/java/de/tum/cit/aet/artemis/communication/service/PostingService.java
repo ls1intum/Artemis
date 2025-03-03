@@ -108,7 +108,7 @@ public abstract class PostingService {
      * @param course            course the answer post belongs to
      * @param notification      notification for the update (can be null)
      */
-    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
+    public void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -127,7 +127,7 @@ public abstract class PostingService {
      * @param recipients     the recipients for this broadcast, can be null
      * @param mentionedUsers the users mentioned in the message, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
+    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
         Conversation postConversation = postDTO.post().getConversation();
         if (postConversation != null) {
@@ -197,7 +197,13 @@ public abstract class PostingService {
         return course;
     }
 
-    protected void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+    /**
+     * Ensures that user is allowed to communicate or message in the given course
+     *
+     * @param user   that wants to communicate or message
+     * @param course the course in which the user wants to communicate or message
+     */
+    public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
