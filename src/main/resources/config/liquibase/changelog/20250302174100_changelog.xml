@@ -118,12 +118,12 @@
             <where>problem_statement LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="exercise_hint"> <!-- this is not used anymore, shall we not migrate it? !-->
+        <update tableName="exercise_hint">
             <column name="content" valueComputed="REPLACE(content, '/api/files', '/api/core/files')"/>
             <where>content LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="exercise_hint"> <!-- this is not used anymore, shall we not migrate it? !-->
+        <update tableName="exercise_hint">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
         </update>
