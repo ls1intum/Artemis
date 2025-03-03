@@ -51,7 +51,7 @@
                                 <li class="list-group-item border-1">
                                     <span>
                                         <jhi-checklist-check
-                                            [checkAttribute]="exam().exerciseGroups && exam().exerciseGroups.length > 0"
+                                            [checkAttribute]="exam().exerciseGroups && exam().exerciseGroups!.length > 0"
                                             data-testid="check-least-one-exercise-group"
                                         />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastoneexercisegroup"></span>
@@ -64,7 +64,7 @@
                                             [checkAttribute]="
                                                 exam().exerciseGroups &&
                                                 countMandatoryExercises <= (exam().numberOfExercisesInExam ?? 0) &&
-                                                (exam().numberOfExercisesInExam ?? 0) <= exam().exerciseGroups.length
+                                                (exam().numberOfExercisesInExam ?? 0) <= exam().exerciseGroups!.length
                                             "
                                             data-testid="check-number-of-exercise-groups"
                                         />
@@ -354,7 +354,7 @@
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.editWorkingTime"></span>
                         </td>
                         <td>
-                            <jhi-exam-edit-working-time [(exam)]="exam" />
+                            <jhi-exam-edit-working-time [exam]="exam()" />
                         </td>
                     </tr>
                 </tbody>

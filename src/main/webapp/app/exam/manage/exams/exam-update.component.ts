@@ -79,7 +79,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     private componentActive = true;
     // Link to the component enabling the selection of exercise groups and exercises for import
-    examExerciseImportComponent = viewChild(ExamExerciseImportComponent);
+    examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
     public workingTimeConfirmationContent = viewChild<TemplateRef<any>>('workingTimeConfirmationContent');
 

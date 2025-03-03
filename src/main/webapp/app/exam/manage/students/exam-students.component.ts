@@ -55,7 +55,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
 
-    dataTable = viewChild(DataTableComponent);
+    dataTable = viewChild.required(DataTableComponent);
 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
