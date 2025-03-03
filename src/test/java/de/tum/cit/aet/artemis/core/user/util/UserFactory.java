@@ -90,7 +90,7 @@ public class UserFactory {
         user.setLangKey("en");
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
-        user.setIrisAcceptedTimestamp(ZonedDateTime.now());
+        user.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now());
         return user;
     }
 

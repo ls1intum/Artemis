@@ -1,5 +1,4 @@
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { ArtemisTestModule } from '../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -20,7 +19,6 @@ describe('ScienceService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: HttpClient, useClass: MockHttpService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
@@ -47,6 +45,6 @@ describe('ScienceService', () => {
         scienceService.logEvent(type);
         const event = new ScienceEventDTO();
         event.type = type;
-        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/science', event, { observe: 'response' });
+        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/atlas/science', event, { observe: 'response' });
     });
 });

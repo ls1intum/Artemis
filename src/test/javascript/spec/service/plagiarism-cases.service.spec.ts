@@ -72,7 +72,6 @@ describe('Plagiarism Cases Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(PlagiarismCasesService);
@@ -125,7 +124,7 @@ describe('Plagiarism Cases Service', () => {
     it('should get plagiarism cases for course and multiple exercises for student', fakeAsync(() => {
         service.getPlagiarismCaseInfosForStudent(1, [1, 2]).pipe(take(1)).subscribe();
 
-        httpMock.expectOne({ method: 'GET', url: 'api/courses/1/plagiarism-cases?exerciseId=1&exerciseId=2' });
+        httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/courses/1/plagiarism-cases?exerciseId=1&exerciseId=2' });
         tick();
     }));
 
@@ -169,7 +168,7 @@ describe('Plagiarism Cases Service', () => {
         fakeAsync(() => {
             const numberOfResultsExercise = 2;
             service.getNumberOfPlagiarismCasesForExercise(textExercise).subscribe((resp) => expect(resp).toEqual(numberOfResultsExercise));
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exercises/1/plagiarism-cases-count' });
+            const req = httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/courses/1/exercises/1/plagiarism-cases-count' });
             req.flush(numberOfResultsExercise);
             tick();
         }),

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -13,7 +12,7 @@ describe('TaxonomySelectComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule],
+            imports: [ReactiveFormsModule],
             declarations: [TaxonomySelectComponent, MockDirective(TranslateDirective)],
             providers: [],
         })

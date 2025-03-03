@@ -13,7 +13,6 @@ describe('Service Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [],
                 providers: [provideHttpClient(), provideHttpClientTesting()],
             });
 

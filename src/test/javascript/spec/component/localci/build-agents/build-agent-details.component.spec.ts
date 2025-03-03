@@ -4,7 +4,6 @@ import { BuildAgentsService } from 'app/localci/build-agents/build-agents.servic
 import { of, throwError } from 'rxjs';
 import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../../test.module';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';
@@ -15,6 +14,8 @@ import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -122,13 +123,14 @@ describe('BuildAgentDetailsComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(AlertService),
             ],
         }).compileComponents();

@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class BuildLogResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildLogResource.class);

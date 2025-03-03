@@ -19,7 +19,7 @@ export class TutorialGroupsService {
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/tutorialgroup';
 
     getUniqueCampusValues(courseId: number): Observable<HttpResponse<string[]>> {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });

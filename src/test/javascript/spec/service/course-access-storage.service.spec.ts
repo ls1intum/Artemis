@@ -9,7 +9,6 @@ describe('CourseAccessStorageService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 CourseAccessStorageService,
                 provideNgxWebstorage(withNgxWebstorageConfig({ separator: ':', caseSensitive: true }), withLocalStorage(), withSessionStorage()),

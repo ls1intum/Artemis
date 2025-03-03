@@ -15,9 +15,10 @@ import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tut
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../../../../test.module';
 import { TutorialGroupsImportButtonComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from '../../../../../../../../main/webapp/app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
@@ -36,7 +37,7 @@ describe('TutorialGroupsManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbDropdownModule, MockDirective(NgbTooltip)],
+            imports: [NgbDropdownModule, MockDirective(NgbTooltip)],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(TutorialGroupsService),
@@ -50,6 +51,7 @@ describe('TutorialGroupsManagementComponent', () => {
                     },
                     {},
                 ),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 

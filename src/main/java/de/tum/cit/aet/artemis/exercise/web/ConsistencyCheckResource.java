@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class ConsistencyCheckResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckResource.class);

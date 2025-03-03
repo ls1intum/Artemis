@@ -36,6 +36,7 @@ import {
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_REPLY_MESSAGE_TITLE,
     Notification,
+    PLAGIARISM_CASE_REPLY_TITLE,
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
@@ -74,7 +75,7 @@ export class NotificationService {
     private notificationSettingsService = inject(NotificationSettingsService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    public resourceUrl = 'api/notifications';
+    public resourceUrl = 'api/communication/notifications';
     notificationSubject: ReplaySubject<Notification[]>;
     singleNotificationSubject: Subject<Notification>;
     notifications: Notification[] = [];
@@ -317,6 +318,9 @@ export class NotificationService {
                 queryParams.messageId = target.id;
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (notification.title === PLAGIARISM_CASE_REPLY_TITLE) {
+                const routeComponents: RouteComponents = ['course-management', targetCourseId, target.entity, target.id];
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
             } else {
                 const routeComponents: RouteComponents = [target.mainPage, targetCourseId, target.entity, target.id];
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
@@ -646,7 +650,7 @@ export class NotificationService {
 
     private getMutedConversations(courses: Course[]) {
         if (courses.find((course) => course.courseInformationSharingConfiguration !== CourseInformationSharingConfiguration.DISABLED)) {
-            this.http.get<number[]>('api/muted-conversations', { observe: 'response' }).subscribe({
+            this.http.get<number[]>('api/communication/muted-conversations', { observe: 'response' }).subscribe({
                 next: (res: HttpResponse<number[]>) => {
                     this.mutedConversations.push(...res.body!);
                 },

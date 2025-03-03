@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -12,6 +11,9 @@ import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Router, provideRouter } from '@angular/router';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseRegistrationButtonComponent', () => {
     let fixture: ComponentFixture<CourseUnenrollmentModalComponent>;
@@ -26,9 +28,14 @@ describe('CourseRegistrationButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [provideRouter([]), MockProvider(CourseManagementService), MockProvider(AlertService)],
+            providers: [
+                provideRouter([]),
+                MockProvider(CourseManagementService),
+                MockProvider(AlertService),
+                MockProvider(NgbActiveModal),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {

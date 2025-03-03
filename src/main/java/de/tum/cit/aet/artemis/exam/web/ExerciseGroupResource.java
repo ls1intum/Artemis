@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exam/")
 public class ExerciseGroupResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
@@ -117,7 +117,7 @@ public class ExerciseGroupResource {
         Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().getLast();
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
     }
 
     /**

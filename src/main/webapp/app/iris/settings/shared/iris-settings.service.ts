@@ -13,14 +13,14 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 export class IrisSettingsService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api';
+    public resourceUrl = 'api/iris';
 
     /**
      * Get the global Iris settings
      */
     getGlobalSettings(): Observable<IrisGlobalSettings | undefined> {
         return this.http
-            .get<IrisGlobalSettings>(`${this.resourceUrl}/iris/global-iris-settings`, { observe: 'response' })
+            .get<IrisGlobalSettings>(`${this.resourceUrl}/global-iris-settings`, { observe: 'response' })
             .pipe(map((res: HttpResponse<IrisGlobalSettings>) => res.body ?? undefined));
     }
 
@@ -69,7 +69,7 @@ export class IrisSettingsService {
      * @param settings the settings to set
      */
     setGlobalSettings(settings: IrisGlobalSettings): Observable<HttpResponse<IrisGlobalSettings>> {
-        return this.http.put<IrisGlobalSettings>(`${this.resourceUrl}/admin/iris/global-iris-settings`, settings, { observe: 'response' });
+        return this.http.put<IrisGlobalSettings>(`${this.resourceUrl}/admin/global-iris-settings`, settings, { observe: 'response' });
     }
 
     /**
@@ -94,8 +94,6 @@ export class IrisSettingsService {
      * Get the available variants for a feature
      */
     getVariantsForFeature(feature: IrisSubSettingsType): Observable<IrisVariant[] | undefined> {
-        return this.http
-            .get<IrisVariant[]>(`${this.resourceUrl}/iris/variants/${feature}`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<IrisVariant[]>) => res.body ?? []));
+        return this.http.get<IrisVariant[]>(`${this.resourceUrl}/variants/${feature}`, { observe: 'response' }).pipe(map((res: HttpResponse<IrisVariant[]>) => res.body ?? []));
     }
 }

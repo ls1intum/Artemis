@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
@@ -8,7 +7,7 @@ import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
@@ -20,6 +19,9 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { EventEmitter } from '@angular/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextBlockAssessmentCardComponent;
@@ -27,7 +29,7 @@ describe('TextblockAssessmentCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
                 TextBlockAssessmentCardComponent,
                 TextBlockFeedbackEditorComponent,
@@ -38,7 +40,13 @@ describe('TextblockAssessmentCardComponent', () => {
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),
                 MockComponent(FaLayersComponent),
             ],
-            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(TextAssessmentAnalytics), MockProvider(TextAssessmentService)],
+            providers: [
+                MockProvider(StructuredGradingCriterionService),
+                MockProvider(TextAssessmentAnalytics),
+                MockProvider(TextAssessmentService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -134,7 +142,7 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.feedback = {
             type: FeedbackType.MANUAL,
         };
-        // @ts-ignore
+        //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.detectChanges();
@@ -147,7 +155,7 @@ describe('TextblockAssessmentCardComponent', () => {
             type: FeedbackType.MANUAL,
         };
         component.textBlockRef.selectable = false;
-        // @ts-ignore
+        //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
         fixture.detectChanges();

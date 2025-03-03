@@ -8,7 +8,6 @@ import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exer
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../test.module';
 import * as downloadUtil from 'app/shared/util/download.util';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -44,7 +43,6 @@ describe('QuizExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -79,7 +77,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined), fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz-exercises' });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -104,7 +102,7 @@ describe('QuizExercise Service', () => {
 
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.import(quizExercise, fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz-exercises/import/42' });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises/import/42' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -126,7 +124,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.update(1, expected, fileMap));
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz-exercises/1' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -148,7 +146,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.query());
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/quiz-exercises' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/quiz/quiz-exercises' });
         req.flush([returnedFromService]);
         expect((await result)?.body).toEqual([expected]);
     });

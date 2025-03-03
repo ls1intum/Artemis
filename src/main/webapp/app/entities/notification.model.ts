@@ -85,6 +85,8 @@ export const NEW_PLAGIARISM_CASE_STUDENT_TITLE = 'artemisApp.singleUserNotificat
 
 export const PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent';
 
+export const PLAGIARISM_CASE_REPLY_TITLE = 'artemisApp.singleUserNotification.title.plagiarismCaseReply';
+
 export const TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupRegistrationStudent';
 
 export const TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupDeregistrationStudent';

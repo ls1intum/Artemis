@@ -108,28 +108,28 @@ export class EntityTitleService {
         let resourceUrl = 'api/';
         switch (type) {
             case EntityType.COURSE:
-                resourceUrl += 'courses';
+                resourceUrl += 'core/courses';
                 break;
             case EntityType.EXERCISE:
-                resourceUrl += 'exercises';
+                resourceUrl += 'exercise/exercises';
                 break;
             case EntityType.LECTURE:
-                resourceUrl += 'lectures';
+                resourceUrl += 'lecture/lectures';
                 break;
             case EntityType.COMPETENCY:
-                resourceUrl += 'competencies';
+                resourceUrl += 'atlas/competencies';
                 break;
             case EntityType.DIAGRAM:
-                resourceUrl += 'apollon-diagrams';
+                resourceUrl += 'modeling/apollon-diagrams';
                 break;
             case EntityType.EXAM:
-                resourceUrl += 'exams';
+                resourceUrl += 'exam/exams';
                 break;
             case EntityType.ORGANIZATION:
-                resourceUrl += 'organizations';
+                resourceUrl += 'core/organizations';
                 break;
             case EntityType.TUTORIAL_GROUP:
-                resourceUrl += 'tutorial-groups';
+                resourceUrl += 'tutorialgroup/tutorial-groups';
                 break;
         }
 

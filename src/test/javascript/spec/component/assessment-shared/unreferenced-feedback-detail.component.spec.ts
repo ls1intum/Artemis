@@ -5,7 +5,8 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
-import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
@@ -15,8 +16,7 @@ describe('Unreferenced Feedback Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService)],
+            providers: [MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

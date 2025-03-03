@@ -269,7 +269,7 @@ public class LectureUtilService {
             catch (IOException ex) {
                 fail("Failed while copying test attachment files", ex);
             }
-            slide.setSlideImagePath("/api/files/temp/" + testFileName);
+            slide.setSlideImagePath("/api/core/files/temp/" + testFileName);
             slide.setAttachmentUnit(attachmentUnit);
             slideRepository.save(slide);
         }
@@ -301,7 +301,7 @@ public class LectureUtilService {
             catch (IOException ex) {
                 fail("Failed while copying test attachment files", ex);
             }
-            slide.setSlideImagePath("/api/files/temp/" + testFileName);
+            slide.setSlideImagePath("/api/core/files/temp/" + testFileName);
             slide.setAttachmentUnit(attachmentUnit);
             slideRepository.save(slide);
         }

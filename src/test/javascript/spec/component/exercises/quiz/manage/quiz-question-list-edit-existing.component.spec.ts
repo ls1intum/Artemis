@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
@@ -31,6 +30,10 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -106,9 +109,16 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, ArtemisTestModule, FormsModule],
+            imports: [CommonModule, FormsModule],
             declarations: [QuizQuestionListEditExistingComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(NgbModal), MockProvider(ChangeDetectorRef)],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(NgbModal),
+                MockProvider(ChangeDetectorRef),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         })
             .compileComponents()
             .then(() => {
