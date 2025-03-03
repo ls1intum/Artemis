@@ -55,4 +55,14 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void callRewritingPipelineAsStudentShouldThrowForbidden() throws Exception {
+        irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
+        });
+        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("", RewritingVariant.FAQ);
+        request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
+
+    }
+
 }
