@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 /**
  * Service implementation to check exam access.
@@ -48,8 +49,11 @@ public class ExamAccessService {
 
     private final StudentExamService studentExamService;
 
+    private final ExamDateService examDateService;
+
     public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
+            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService,
+            ExamDateService examDateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -57,6 +61,45 @@ public class ExamAccessService {
         this.courseRepository = courseRepository;
         this.examRegistrationService = examRegistrationService;
         this.studentExamService = studentExamService;
+        this.examDateService = examDateService;
+    }
+
+    /**
+     * Checks if the user is allowed to see the exam result if:
+     * - the current user is at least teaching assistant in the course
+     * - OR if the examExercise is not part of an exam
+     * - OR if the exam is a test exam
+     * - OR if the exam has not ended (including individual working time extensions)
+     * - OR if the exam has already ended and the results were published
+     * Otherwise, throws a {@link AccessForbiddenException}.
+     *
+     * @param examExercise         - Exercise that the result is requested for
+     * @param studentParticipation - used to retrieve the individual exam working time
+     * @param user                 - User that requests the result
+     * @throws ConflictException if examExercise does not belong to an exam
+     */
+    public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        if (!examExercise.isExamExercise()) {
+            throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(examExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            return;
+        }
+        Exam exam = examExercise.getExam();
+
+        if (!examDateService.isExerciseWorkingPeriodOver(examExercise, studentParticipation)) {
+            // students can always see their results during the exam.
+            return;
+        }
+        if (exam.isTestExam()) {
+            // results for test exams are always visible
+            return;
+        }
+        if (exam.resultsPublished()) {
+            return;
+        }
+        throw new AccessForbiddenException();
     }
 
     /**
