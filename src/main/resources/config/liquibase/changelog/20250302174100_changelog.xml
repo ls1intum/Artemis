@@ -198,7 +198,7 @@
             <where>verdict_message LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="post"> ToDO: check POSTING
+        <update tableName="post">
             <column name="content" valueComputed="REPLACE(content, '/api/files', '/api/core/files')"/>
             <where>content LIKE '%/api/files%'</where>
         </update>
