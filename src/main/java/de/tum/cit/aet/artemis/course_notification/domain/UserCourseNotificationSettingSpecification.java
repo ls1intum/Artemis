@@ -29,6 +29,9 @@ public class UserCourseNotificationSettingSpecification extends DomainObject {
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
+    @Column(name = "course_notification_type", nullable = false)
+    private Short courseNotificationType;
+
     @Column(name = "email", nullable = false)
     private boolean email;
 
@@ -100,6 +103,24 @@ public class UserCourseNotificationSettingSpecification extends DomainObject {
      */
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    /**
+     * Gets the course notification type associated with this setting.
+     *
+     * @return the course notification type
+     */
+    public Short getCourseNotificationType() {
+        return courseNotificationType;
+    }
+
+    /**
+     * Sets the course notification type associated with this setting.
+     *
+     * @param courseNotificationType the course notification type to set
+     */
+    public void setCourseNotificationType(Short courseNotificationType) {
+        this.courseNotificationType = courseNotificationType;
     }
 
     /**
