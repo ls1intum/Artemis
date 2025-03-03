@@ -18,6 +18,9 @@ export enum FeatureToggle {
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
     StudentCourseAnalyticsDashboard = 'StudentCourseAnalyticsDashboard',
+    NOTIFICATION_SETTINGS = 'NOTIFICATION_SETTINGS',
+    NOTIFICATION_OVERVIEW = 'NOTIFICATION_OVERVIEW',
+    MARK_UNREAD_CHATS = 'MARK_UNREAD_CHATS',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

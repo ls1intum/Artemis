@@ -39,6 +39,6 @@ public enum CommunicationFeature implements AbstractFeature {
     }
 
     public static CommunicationFeature[] getConfigurableFeatures() {
-        return new CommunicationFeature[] {};
+        return new CommunicationFeature[] { NOTIFICATION_SETTINGS, NOTIFICATION_OVERVIEW, MARK_UNREAD_CHATS };
     }
 }
