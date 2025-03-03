@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class BonusResource {
 
     private static final Logger log = LoggerFactory.getLogger(BonusResource.class);
@@ -140,7 +140,6 @@ public class BonusResource {
     @ManualConfig
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
-
         // TODO: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ApiNotPresentException(ExamAccessApi.class, PROFILE_CORE));
         api.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
@@ -192,7 +191,7 @@ public class BonusResource {
         gradingScaleRepository.save(bonusToGradingScale);
 
         filterBonusForResponse(savedBonus, false);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
+        return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 

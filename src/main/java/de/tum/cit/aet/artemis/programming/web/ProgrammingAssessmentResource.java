@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "programmingAssessment";

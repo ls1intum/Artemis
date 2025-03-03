@@ -70,7 +70,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class ExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseResource.class);

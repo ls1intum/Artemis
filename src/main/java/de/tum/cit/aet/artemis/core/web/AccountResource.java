@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessT
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";

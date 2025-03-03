@@ -98,7 +98,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/text/")
 public class TextExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);
@@ -241,7 +241,7 @@ public class TextExerciseResource {
 
         irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -544,7 +544,7 @@ public class TextExerciseResource {
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
+        return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
     /**

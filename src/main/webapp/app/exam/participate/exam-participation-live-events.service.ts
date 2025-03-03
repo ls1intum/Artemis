@@ -182,7 +182,7 @@ export class ExamParticipationLiveEventsService {
     }
 
     private fetchPreviousExamEvents() {
-        this.httpClient.get<ExamLiveEvent[]>(`/api/courses/${this.courseId}/exams/${this.examId}/student-exams/live-events`).subscribe((events: ExamLiveEvent[]) => {
+        this.httpClient.get<ExamLiveEvent[]>(`/api/exam/courses/${this.courseId}/exams/${this.examId}/student-exams/live-events`).subscribe((events: ExamLiveEvent[]) => {
             this.events = events;
             this.events.forEach((event) => {
                 event.createdDate = convertDateFromServer(event.createdDate)!;

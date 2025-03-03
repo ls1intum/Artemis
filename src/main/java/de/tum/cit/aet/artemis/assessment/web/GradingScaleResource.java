@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class GradingScaleResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradingScaleResource.class);
@@ -146,8 +146,8 @@ public class GradingScaleResource {
         updateCourseForGradingScale(gradingScale, course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/grading-scale/")).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
-                .body(savedGradingScale);
+        return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/grading-scale/"))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 
     private void validateGradingScale(Optional<GradingScale> existingGradingScale, GradingScale gradingScale) {
@@ -190,7 +190,7 @@ public class GradingScaleResource {
         gradingScale.setExam(exam);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/grading-scale/"))
+        return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/grading-scale/"))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
 

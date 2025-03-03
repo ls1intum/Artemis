@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class ParticipantScoreResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);

@@ -31,7 +31,7 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class SystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
