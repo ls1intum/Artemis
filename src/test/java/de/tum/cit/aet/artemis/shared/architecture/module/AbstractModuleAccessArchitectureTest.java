@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Controller;
 
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -28,8 +29,10 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
             @Override
             public void check(JavaClass origin, ConditionEvents events) {
-                List<Dependency> targetsInModule = origin.getDirectDependenciesFromSelf().stream()
-                        .filter(dependency -> resideInAPackage(getModuleWithSubpackage()).test(dependency.getTargetClass())).toList();
+                List<Dependency> targetsInModule = origin.getDirectDependenciesFromSelf().stream().filter(dependency -> {
+                    resideInAPackage(getModuleWithSubpackage());
+                    return DescribedPredicate.and().test(dependency.getTargetClass());
+                }).toList();
 
                 for (Dependency dependency : targetsInModule) {
                     JavaClass target = dependency.getTargetClass();
@@ -50,17 +53,20 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
             }
         };
 
-        classes().that().resideOutsideOfPackages(getModuleWithSubpackage(), getModuleApiDtoSubpackage()).should(onlyAllowedDependencies).check(productionClasses);
+        classes().that().resideOutsideOfPackages(getModuleWithSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should(onlyAllowedDependencies)
+                .check(productionClasses);
     }
 
     @Test
     void apiClassesShouldInheritFromAbstractApi() {
-        classes().that().resideOutsideOfPackages(getModuleApiSubpackage(), getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
+        classes().that().resideInAPackage(getModuleApiSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class)
+                .check(productionClasses);
     }
 
     @Test
     void apiClassesShouldBeAbstractOrAnnotatedWithController() {
-        classes().that().resideOutsideOfPackages(getModuleApiSubpackage(), getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
+        classes().that().resideInAPackage(getModuleApiSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController())
+                .check(productionClasses);
     }
 
     protected Set<Class<?>> getIgnoredClasses() {
