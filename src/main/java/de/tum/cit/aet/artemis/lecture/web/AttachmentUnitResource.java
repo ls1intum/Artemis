@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lecture/")
 public class AttachmentUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);

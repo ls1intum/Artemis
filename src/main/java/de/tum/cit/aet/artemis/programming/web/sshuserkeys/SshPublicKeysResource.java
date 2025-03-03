@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeySe
 
 @Profile(PROFILE_LOCALVC)
 @RestController
-@RequestMapping("api/ssh-settings/")
+@RequestMapping("api/programming/ssh-settings/")
 public class SshPublicKeysResource {
 
     private static final Logger log = LoggerFactory.getLogger(SshPublicKeysResource.class);

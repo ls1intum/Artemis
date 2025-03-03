@@ -166,7 +166,7 @@ describe('CoursesComponent', () => {
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-dashboard` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-dashboard` });
             component.ngOnInit();
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();

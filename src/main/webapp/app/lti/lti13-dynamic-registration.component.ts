@@ -39,7 +39,7 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
         }
 
         this.http
-            .post(`api/admin/lti13/dynamic-registration`, null, { observe: 'response', params: httpParams })
+            .post(`api/lti/admin/lti13/dynamic-registration`, null, { observe: 'response', params: httpParams })
             .subscribe({
                 next: () => {
                     this.registeredSuccessfully = true;

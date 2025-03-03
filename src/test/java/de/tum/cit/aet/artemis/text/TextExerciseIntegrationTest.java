@@ -155,8 +155,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void submitEnglishTextExercise() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This Submission is written in English", Language.ENGLISH, false);
-        request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
-        textSubmission = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
+        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class);
+        textSubmission = request.postWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class);
 
         Optional<TextSubmission> result = textSubmissionRepository.findById(textSubmission.getId());
         assertThat(result).isPresent();
@@ -173,7 +173,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var textBlocks = TextExerciseFactory.generateTextBlocks(submissionCount * submissionSize);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
     }
 
@@ -185,7 +185,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, now, now, now);
         Channel exerciseChannel = exerciseUtilService.addChannelToExercise(textExercise);
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -197,7 +197,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExerciseRepository.save(textExercise);
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
         verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
@@ -207,7 +207,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void deleteExamTextExercise() throws Exception {
         TextExercise textExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).isNotPresent();
     }
 
@@ -217,7 +217,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = new TextExercise();
         textExercise.setId(114213211L);
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -226,7 +226,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest
@@ -243,7 +243,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
         textExercise.setChannelName(channelName);
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
 
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
 
@@ -261,7 +261,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise_setExerciseTitleNull_badRequest() throws Exception {
         TextExercise textExercise = new TextExercise();
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -270,7 +270,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setId(null);
         textExercise.setDueDate(null);
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -280,7 +280,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseRepository.save(course);
         textExercise.setId(null);
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -294,7 +294,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
         textExercise.setChannelName("new-exam-text-exercise");
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNull(); // there should not be any channel for exam exercise
 
@@ -316,7 +316,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
         textExercise.setDueDate(someMoment);
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
         assertThat(exerciseGroup.getExercises()).doesNotContain(textExercise);
     }
 
@@ -326,7 +326,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        request.postWithResponseBody("/api/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -335,7 +335,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExercise.setCourse(exerciseGroup.getExam().getCourse());
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -343,14 +343,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(null);
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_InvalidMaxScore() throws Exception {
         textExercise.setMaxPoints(0.0);
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -359,7 +359,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -368,7 +368,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -386,7 +386,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         criterion.addStructuredGradingInstruction(gradingInstruction);
         textExercise.setGradingCriteria(Set.of(criterion));
-        TextExercise actualExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise actualExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(actualExercise.getGradingCriteria()).hasSize(1);
         GradingCriterion testCriterion = GradingCriterionUtil.findGradingCriterionByTitle(actualExercise, "Test");
@@ -421,7 +421,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
@@ -452,7 +452,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         textExercise.setDueDate(ZonedDateTime.now().plusHours(12));
-        request.put("/api/text-exercises", textExercise, HttpStatus.OK);
+        request.put("/api/text/text-exercises", textExercise, HttpStatus.OK);
 
         {
             final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
@@ -470,7 +470,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_setExerciseIdNull_created() throws Exception {
         textExercise.setId(null);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -488,7 +488,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         existingTextExercise.setCourse(newCourse);
 
         // Text exercise update with the new course should fail.
-        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text-exercises", existingTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text/text-exercises", existingTextExercise, TextExercise.class, HttpStatus.CONFLICT);
         assertThat(returnedTextExercise).isNull();
     }
 
@@ -498,7 +498,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -517,7 +517,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // update problem statement
         textExercise.setProblemStatement("New problem statement");
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
@@ -536,7 +536,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        request.putWithResponseBody("/api/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -545,7 +545,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -553,7 +553,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         textExercise.setCourse(null);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -563,7 +563,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -575,7 +575,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExercise.setExerciseGroup(null);
 
-        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -592,7 +592,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
@@ -619,7 +619,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(manualTextBlock, automaticTextBlock), (TextSubmission) exampleSubmission.getSubmission());
 
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSubmissions()).hasSize(1);
         ExampleSubmission newExampleSubmission = newTextExercise.getExampleSubmissions().iterator().next();
         var textBlocks = ((TextSubmission) newExampleSubmission.getSubmission()).getBlocks();
@@ -655,7 +656,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setReleaseDate(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
-        var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
 
         // There should not be created a channel for the imported exam exercise
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
@@ -673,7 +674,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -686,7 +687,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(course1);
         textExercise.setExerciseGroup(null);
         textExercise.setChannelName("test" + textExercise.getId());
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -699,7 +700,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(course1);
         textExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -711,7 +712,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseRepository.save(textExercise);
         textExercise.setExerciseGroup(exerciseGroup2);
 
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -723,7 +724,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(null);
 
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -739,7 +740,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise = textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
         textExercise.setChannelName("test-" + textExercise.getId());
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the response").isNull();
 
         TextExercise newTextExerciseFromDatabase = textExerciseRepository.findById(newTextExercise.getId()).orElseThrow();
@@ -749,7 +751,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllTextExercisesForCourse() throws Exception {
-        List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises", HttpStatus.OK, TextExercise.class);
+        List<TextExercise> textExercises = request.getList("/api/text/courses/" + course.getId() + "/text-exercises", HttpStatus.OK, TextExercise.class);
 
         assertThat(textExercises).as("text exercises for course were retrieved").hasSize(1);
     }
@@ -760,7 +762,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
 
-        request.getList("/api/courses/" + course.getId() + "/text-exercises", HttpStatus.FORBIDDEN, TextExercise.class);
+        request.getList("/api/text/courses/" + course.getId() + "/text-exercises", HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test
@@ -769,7 +771,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = new TextExercise();
         textExercise.setId(114213211L);
 
-        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND, TextExercise.class);
+        request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.NOT_FOUND, TextExercise.class);
     }
 
     @Test
@@ -782,7 +784,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         channel.setName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         channel.setExercise(textExercise);
         channelRepository.save(channel);
-        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+        TextExercise textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
 
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
     }
@@ -794,7 +796,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+        request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test
@@ -804,7 +806,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+        TextExercise textExerciseServer = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
         assertThat(textExerciseServer.getId()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
     }
@@ -814,7 +816,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void getTextExercise_isNotAtleastTeachingAssistantInCourse_forbidden() throws Exception {
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
-        request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
+        request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test
@@ -833,7 +835,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         feedback.setGradingInstruction(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> true).orElseThrow());
         feedbackRepository.save(feedback);
 
-        TextExercise receivedTextExercise = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
+        TextExercise receivedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
 
         assertThat(receivedTextExercise.isGradingInstructionFeedbackUsed()).isTrue();
     }
@@ -842,7 +844,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -857,15 +859,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseBaseTitle2 + "Master");
 
         final var searchText = pageableSearchUtilService.configureSearch(courseBaseTitle1);
-        final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchText));
+        final var resultText = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
         final var searchEssay = pageableSearchUtilService.configureSearch(courseBaseTitle2);
-        final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchEssay));
+        final var resultEssay = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
         final var searchNon = pageableSearchUtilService.configureSearch("No course has this name");
-        final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchNon));
+        final var resultNon = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -884,7 +886,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private void testCourseAndExamFilters(String courseTitle) throws Exception {
         textExerciseUtilService.addCourseWithOneReleasedTextExercise(courseTitle);
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(courseTitle + "-Morpork");
-        exerciseIntegrationTestService.testCourseAndExamFilters("/api/text-exercises", courseTitle);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/text/text-exercises", courseTitle);
     }
 
     @Test
@@ -910,7 +912,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var exerciseId = exercise.getId();
 
         final var searchTerm = pageableSearchUtilService.configureSearch(exerciseId.toString());
-        final var searchResult = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchTerm));
+        final var searchResult = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage().stream().filter(result -> result.getId() == exerciseId.intValue())).hasSize(1);
     }
 
@@ -919,7 +921,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testInstructorGetsOnlyResultsFromOwningExams() throws Exception {
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         final var search = pageableSearchUtilService.configureSearch("");
-        final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -934,15 +936,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise(exerciseBaseTitle2 + "Master");
 
         final var searchText = pageableSearchUtilService.configureSearch(exerciseBaseTitle1);
-        final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchText));
+        final var resultText = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
         final var searchEssay = pageableSearchUtilService.configureSearch(exerciseBaseTitle2);
-        final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchEssay));
+        final var resultEssay = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
         final var searchNon = pageableSearchUtilService.configureSearch("No exam has this name");
-        final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchNon));
+        final var resultNon = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -957,7 +959,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         courseRepository.save(otherInstructorsCourse);
 
         final var search = pageableSearchUtilService.configureSearch(courseTitle);
-        final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
+        final var result = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExercise.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -982,7 +984,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exerciseToBeImported.setMaxPoints(1.0);
         exerciseToBeImported.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 3));
 
-        exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
+        exerciseToBeImported = request.postWithResponseBody("/api/text/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class,
+                HttpStatus.CREATED);
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.TEAM);
@@ -1023,7 +1026,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exerciseToBeImported.setMaxPoints(1.0);
         exerciseToBeImported.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 3));
 
-        exerciseToBeImported = request.postWithResponseBody("/api/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class, HttpStatus.CREATED);
+        exerciseToBeImported = request.postWithResponseBody("/api/text/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class,
+                HttpStatus.CREATED);
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
@@ -1067,7 +1071,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), longText);
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), longText);
 
-        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(textExercise.getId());
@@ -1090,15 +1094,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
 
         var plagiarismStatusDto = new PlagiarismComparisonStatusDTO(CONFIRMED);
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
         assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.CONFIRMED);
 
         plagiarismStatusDto = new PlagiarismComparisonStatusDTO(DENIED);
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
         assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(DENIED);
 
         plagiarismStatusDto = new PlagiarismComparisonStatusDTO(NONE);
-        request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
         assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
 
@@ -1109,14 +1113,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), shortText);
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), shortText);
 
-        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismNoSubmissions() throws Exception {
-        var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
     }
 
@@ -1125,7 +1129,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testCheckPlagiarism_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, TextPlagiarismResult.class,
+        request.get("/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, TextPlagiarismResult.class,
                 plagiarismUtilService.getDefaultPlagiarismOptions());
     }
 
@@ -1134,21 +1138,21 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetPlagiarismResult() throws Exception {
         TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
 
-        var result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
+        var result = request.get("/api/text/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
         assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutResult() throws Exception {
-        var result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
+        var result = request.get("/api/text/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + 10000000 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        TextPlagiarismResult result = request.get("/api/text/text-exercises/" + 10000000 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
     }
 
@@ -1157,7 +1161,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetPlagiarismResult_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/text/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -1174,7 +1178,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradingCriteria.removeIf(criterion -> criterion != toUpdate);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise,
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise,
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedTextExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
@@ -1202,7 +1206,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exampleSubmissionSet.add(exampleSubmission);
         textExercise.setExampleSubmissions(exampleSubmissionSet);
 
-        request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise, TextExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise, TextExercise.class, HttpStatus.OK);
     }
 
     @Test
@@ -1217,7 +1221,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradingCriteria.removeIf(criterion -> criterion.getTitle() == null);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", textExercise,
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", textExercise,
                 TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria()).hasSize(2);
@@ -1231,7 +1235,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -1241,13 +1245,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseToBeConflicted.setId(123456789L);
         textExerciseRepository.save(textExerciseToBeConflicted);
 
-        request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate", textExerciseToBeConflicted, TextExercise.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", textExerciseToBeConflicted, TextExercise.class, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_notFound() throws Exception {
-        request.putWithResponseBody("/api/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/text/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1262,13 +1266,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setDueDate(baseTime.plusHours(3));
         textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
 
         textExercise.setReleaseDate(baseTime.plusHours(3));
         textExercise.setDueDate(null);
         textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1285,7 +1289,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         textExercise.setChannelName("test");
 
-        var result = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -1294,7 +1298,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        result = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        result = request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 
@@ -1335,7 +1339,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExercise.setCourse(course2);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        var importedTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var importedTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
 
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
@@ -1375,8 +1379,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(null);
         textExerciseRepository.save(textExercise);
 
-        CourseForDashboardDTO courseForDashboard = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
-                CourseForDashboardDTO.class);
+        CourseForDashboardDTO courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
 
@@ -1391,7 +1395,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         textExerciseRepository.save(textExercise);
 
-        courseForDashboard = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         textExerciseFromApi = textExerciseGetter.apply(course);
@@ -1402,7 +1406,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         textExerciseRepository.save(textExercise);
 
-        courseForDashboard = request.get("/api/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         textExerciseFromApi = textExerciseGetter.apply(course);

@@ -70,7 +70,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         var dataExport = prepareDataExportForDownload();
         dataExport.setUser(userForExport);
         dataExport = dataExportRepository.save(dataExport);
-        var dataExportFile = request.getFile("/api/data-exports/" + dataExport.getId(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        var dataExportFile = request.getFile("/api/core/data-exports/" + dataExport.getId(), HttpStatus.OK, new LinkedMultiValueMap<>());
         var dataExportAfterDownload = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFile).isNotNull();
         assertThat(dataExportAfterDownload.getDataExportState()).isEqualTo(DataExportState.DOWNLOADED);
@@ -103,7 +103,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
 
     }
 
@@ -116,7 +116,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
+        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.INTERNAL_SERVER_ERROR, Resource.class);
 
     }
 
@@ -130,14 +130,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setFilePath("not-existent");
         dataExport.setDataExportState(state);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+        request.get("/api/core/data-exports/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
 
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportIdNotExistent_notFound() throws Exception {
-        request.get("/api/data-exports/999999", HttpStatus.NOT_FOUND, Resource.class);
+        request.get("/api/core/data-exports/999999", HttpStatus.NOT_FOUND, Resource.class);
     }
 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -149,7 +149,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(state);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        var dataExportToDownload = request.get("/api/core/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isNull();
     }
 
@@ -162,7 +162,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(state);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
-        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        var dataExportToDownload = request.get("/api/core/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isEqualTo(dataExport.getId());
     }
 
@@ -172,7 +172,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExportRepository.deleteAll();
         initDataExport(DataExportState.DOWNLOADED);
         var expectedDataExport = initDataExport(DataExportState.EMAIL_SENT);
-        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        var dataExportToDownload = request.get("/api/core/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isEqualTo(expectedDataExport.getId());
         assertThat(dataExportToDownload.dataExportState()).isEqualTo(DataExportState.EMAIL_SENT);
     }
@@ -181,14 +181,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanDownload_noDataExport_dataExportIdNull() throws Exception {
         dataExportRepository.deleteAll();
-        var dataExportToDownload = request.get("/api/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
+        var dataExportToDownload = request.get("/api/core/data-exports/can-download", HttpStatus.OK, DataExportDTO.class);
         assertThat(dataExportToDownload.id()).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanDownloadSpecificExport_dataExportNotExistent_notFound() throws Exception {
-        request.get("/api/data-exports/999999/can-download", HttpStatus.NOT_FOUND, Boolean.class);
+        request.get("/api/core/data-exports/999999/can-download", HttpStatus.NOT_FOUND, Boolean.class);
 
     }
 
@@ -199,7 +199,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(DataExportState.REQUESTED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExport = dataExportRepository.save(dataExport);
-        var canDownload = request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.OK, Boolean.class);
+        var canDownload = request.get("/api/core/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.OK, Boolean.class);
         assertThat(canDownload).isFalse();
     }
 
@@ -207,7 +207,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanRequestDataExportIfNeverRequested() throws Exception {
         dataExportRepository.deleteAll();
-        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        var canRequest = request.get("/api/core/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
     }
 
@@ -219,7 +219,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        var canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        var canRequest = request.get("/api/core/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
     }
 
@@ -231,7 +231,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport.setUser(user2);
         dataExport = dataExportRepository.save(dataExport);
-        request.get("/api/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.FORBIDDEN, Boolean.class);
+        request.get("/api/core/data-exports/" + dataExport.getId() + "/can-download", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
     @Test
@@ -244,7 +244,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         // this is needed to fake the date used for @CreatedDate of the AbstractAuditingEntity
         auditingHandler.setDateTimeProvider(() -> Optional.of(ZonedDateTime.now().minusDays(15)));
         dataExportRepository.save(dataExport);
-        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        boolean canRequest = request.get("/api/core/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
 
     }
@@ -258,7 +258,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // created date is automatically set on save
         dataExportRepository.save(dataExport);
-        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        boolean canRequest = request.get("/api/core/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isFalse();
     }
 
@@ -270,14 +270,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         dataExportRepository.save(dataExport);
-        request.postWithResponseBody("/api/data-exports", null, RequestDataExportDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/core/data-exports", null, RequestDataExportDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanRequest_ifNoDataExport() throws Exception {
         dataExportRepository.deleteAll();
-        boolean canRequest = request.get("/api/data-exports/can-request", HttpStatus.OK, Boolean.class);
+        boolean canRequest = request.get("/api/core/data-exports/can-request", HttpStatus.OK, Boolean.class);
         assertThat(canRequest).isTrue();
     }
 
@@ -285,7 +285,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRequestingDataExportCreatesCorrectDataExportObject() throws Exception {
         dataExportRepository.deleteAll();
-        var dataExport = request.postWithResponseBody("/api/data-exports", null, RequestDataExportDTO.class, HttpStatus.OK);
+        var dataExport = request.postWithResponseBody("/api/core/data-exports", null, RequestDataExportDTO.class, HttpStatus.OK);
         assertThat(dataExport.dataExportState()).isEqualTo(DataExportState.REQUESTED);
         assertThat(dataExport.createdDate()).isNotNull();
     }
@@ -310,7 +310,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRequestForAnotherUserInstructor_forbidden() throws Exception {
-        request.post("/api/admin/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
+        request.post("/api/core/admin/data-exports/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -318,7 +318,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     void testRequestForAnotherUserAsAdmin_success() throws Exception {
         var usernameToRequest = TEST_PREFIX + "student1";
         dataExportRepository.deleteAll();
-        var response = request.postWithResponseBody("/api/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.OK);
+        var response = request.postWithResponseBody("/api/core/admin/data-exports/" + usernameToRequest, null, RequestDataExportDTO.class, HttpStatus.OK);
         assertThat(response.dataExportState()).isEqualTo(DataExportState.REQUESTED);
         assertThat(response.createdDate()).isNotNull();
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(response.id());

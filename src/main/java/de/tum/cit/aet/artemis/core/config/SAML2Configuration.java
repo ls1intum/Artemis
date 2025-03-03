@@ -70,14 +70,14 @@ public class SAML2Configuration {
         http
             // This filter chain is only applied if the URL matches
             // Else the request is filtered by {@link SecurityConfiguration}.
-            .securityMatcher("/api/public/saml2", "/saml2/**", "/login/**")
+            .securityMatcher("/api/core/public/saml2", "/saml2/**", "/login/**")
             // Needed for SAML to work properly
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
                 // to notify the client that a login is needed.
-                .requestMatchers("/api/public/saml2").permitAll()
+                .requestMatchers("/api/core/public/saml2").permitAll()
                 // Every other request must be authenticated. Any request triggers a SAML2
                 // authentication flow
                 .anyRequest().authenticated()

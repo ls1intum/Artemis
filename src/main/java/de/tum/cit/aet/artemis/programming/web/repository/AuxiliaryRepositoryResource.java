@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/auxiliary-repository/")
+@RequestMapping("api/programming/auxiliary-repository/")
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;

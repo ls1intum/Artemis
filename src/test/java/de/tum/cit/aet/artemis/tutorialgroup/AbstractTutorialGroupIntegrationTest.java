@@ -178,7 +178,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     // === Paths ===
     String getTutorialGroupsPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups";
+        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups";
     }
 
     String getTutorialGroupsPath(Long courseId, Long tutorialGroupId) {
@@ -186,7 +186,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups-configuration";
+        return "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups-configuration";
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {

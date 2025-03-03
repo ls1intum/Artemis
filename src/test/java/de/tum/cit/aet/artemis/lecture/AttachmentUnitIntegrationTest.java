@@ -92,7 +92,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("/api/files/temp/example.txt");
+        this.attachment.setLink("/api/core/files/temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
@@ -108,7 +108,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     private void testAllPreAuthorize() throws Exception {
         request.performMvcRequest(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
         request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/42", HttpStatus.FORBIDDEN, AttachmentUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/42", HttpStatus.FORBIDDEN, AttachmentUnit.class);
     }
 
     private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
@@ -129,7 +129,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
 
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lectures/" + lecture1.getId() + "/attachment-units/" + attachmentUnit.getId());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + attachmentUnit.getId());
         if (fileContent != null) {
             var filePart = createAttachmentUnitPdf();
             builder.file(filePart);
@@ -143,7 +143,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentUnitPdf();
 
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentUnitPart).file(attachmentPart)
+        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentUnitPart).file(attachmentPart)
                 .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
@@ -342,7 +342,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
 
         // 2. check the REST call
-        this.attachmentUnit = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
+        this.attachmentUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
         assertThat(this.attachmentUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
     }
@@ -355,8 +355,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
+        request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
     }
 }
