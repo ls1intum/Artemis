@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
@@ -175,7 +175,7 @@ public class CourseResource {
 
     private final ConductAgreementService conductAgreementService;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final Optional<AthenaApi> athenaApi;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
@@ -196,7 +196,7 @@ public class CourseResource {
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
-            Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<AthenaApi> athenaApi, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
@@ -216,7 +216,7 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaApi = athenaApi;
         this.examRepository = examRepository;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
@@ -333,7 +333,7 @@ public class CourseResource {
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
         if (athenaModuleAccessChanged && !courseUpdate.getRestrictedAthenaModulesAccess()) {
-            athenaModuleService.ifPresent(ams -> ams.revokeAccessToRestrictedFeedbackSuggestionModules(result));
+            athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
