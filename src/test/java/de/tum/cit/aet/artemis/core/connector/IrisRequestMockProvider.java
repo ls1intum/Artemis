@@ -1,3 +1,4 @@
+
 package de.tum.cit.aet.artemis.core.connector;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExercise
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.PyrisRewritingPipelineExecutionDTO;
@@ -179,7 +181,7 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockRunRewritingResponseAnd(Consumer<PyrisRewritingPipelineExecutionDTO> executionDTOConsumer) {
+    public void mockRunFaqRewritingResponse(Consumer<PyrisRewritingPipelineExecutionDTO> executionDTOConsumer) {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rewriting/faq/run"))
@@ -187,6 +189,20 @@ public class IrisRequestMockProvider {
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisRewritingPipelineExecutionDTO.class);
+                executionDTOConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
+    public void mockRunConcistencyCheckResponseAnd(Consumer<PyrisConsistencyCheckPipelineExecutionDTO> executionDTOConsumer) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rewriting/faq/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisConsistencyCheckPipelineExecutionDTO.class);
                 executionDTOConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });
@@ -322,4 +338,5 @@ public class IrisRequestMockProvider {
             .andRespond(withRawStatus(418));
         // @formatter:on
     }
+
 }
