@@ -464,25 +464,25 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
     void test_getParticipationSubmissionCount() throws Exception {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
-        int numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        int numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isZero();
 
         Submission submission1 = participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("first").type(SubmissionType.MANUAL));
         participationUtilService.addResultToParticipation(participation, submission1);
-        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
         Submission submission2 = participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("second").type(SubmissionType.MANUAL));
-        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isOne();
 
         participationUtilService.addResultToParticipation(participation, submission2);
 
-        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
 
         participationUtilService.addResultToParticipation(participation, submission2);
-        numberOfSubmissionsForSubmissionPolicy = request.get("/api/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
+        numberOfSubmissionsForSubmissionPolicy = request.get("/api/programming/participations/" + participation.getId() + "/submission-count", HttpStatus.OK, Integer.class);
         assertThat(numberOfSubmissionsForSubmissionPolicy).isEqualTo(2);
     }
 
@@ -517,11 +517,11 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
     }
 
     private String requestUrl() {
-        return "/api/programming-exercises/" + programmingExerciseId + "/submission-policy";
+        return "/api/programming/programming-exercises/" + programmingExerciseId + "/submission-policy";
     }
 
     private String requestUrlWrongId() {
-        return "/api/programming-exercises/" + Long.MAX_VALUE + "/submission-policy";
+        return "/api/programming/programming-exercises/" + Long.MAX_VALUE + "/submission-policy";
     }
 
     private String activate(boolean activate) {
