@@ -52,7 +52,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
-        request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/iris/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
     }
 
     @Test
@@ -61,7 +61,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("", RewritingVariant.FAQ);
-        request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/iris/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
 
     }
 
