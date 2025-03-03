@@ -1,6 +1,6 @@
-<div class="exam-status-wrapper" [ngClass]="course?.isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
+<div class="exam-status-wrapper" [ngClass]="course()?.isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
     <!-- 1. Exam preparation -->
-    @if (course?.isAtLeastInstructor) {
+    @if (course()?.isAtLeastInstructor) {
         <div class="status-step">
             <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
             <div class="d-flex justify-content-center header-icon">
@@ -17,7 +17,7 @@
                     <li class="d-flex align-items-center">
                         <span
                             jhiTranslate="artemisApp.examStatus.preparation.configureExercises"
-                            [translateValues]="{ amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }"
+                            [translateValues]="{ amount: exam().exerciseGroups ? exam().exerciseGroups.length : 0 }"
                         ></span>
                         @if (configuredExercises) {
                             <fa-icon [icon]="faCheckCircle" class="check" />
@@ -28,11 +28,11 @@
                     </li>
                     @if (isTestExam) {
                         <li class="d-flex align-items-center">
-                            @if (maxPointExercises === exam.examMaxPoints) {
-                                <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam.examMaxPoints }}</span>
+                            @if (maxPointExercises === exam().examMaxPoints) {
+                                <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam().examMaxPoints }}</span>
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
-                            @if (maxPointExercises !== exam.examMaxPoints) {
+                            @if (maxPointExercises !== exam().examMaxPoints) {
                                 <span jhiTranslate="artemisApp.examStatus.preparation.testExam.maxPointsWrong" [translateValues]="{ points: maxPointExercises }"></span>
                                 <fa-icon [icon]="faTimes" class="cross" />
                             }
@@ -40,7 +40,7 @@
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span jhiTranslate="artemisApp.examStatus.preparation.registerStudents" [translateValues]="{ registered: exam.numberOfExamUsers }"></span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.registerStudents" [translateValues]="{ registered: exam().numberOfExamUsers }"></span>
                             @if (registeredStudents) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
@@ -61,7 +61,7 @@
                                     jhiTranslate="artemisApp.examStatus.preparation.registered"
                                     [translateValues]="{
                                         generated: numberOfGeneratedStudentExams,
-                                        total: exam.numberOfExamUsers,
+                                        total: exam().numberOfExamUsers,
                                     }"
                                 ></span>
                             }
@@ -114,7 +114,7 @@
         <div class="status-step-content">
             <div class="text-center mb-1">
                 <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h6>
-                <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
+                <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>
             </div>
             <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             @if (examConductionState === examConductionStateEnum.ERROR) {
@@ -122,14 +122,14 @@
                     <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}conductionSuspended"></h6>
                 </div>
             }
-            @if (course?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR) {
+            @if (course()?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR) {
                 <ol>
                     <li>
-                        <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam.workingTime! | artemisDurationFromSeconds: true }} </span>
+                        <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam().workingTime! | artemisDurationFromSeconds: true }} </span>
                     </li>
                     @if (isTestExam) {
                         <li>
-                            <span> {{ 'artemisApp.examStatus.conduction.testExam.numberOfStudents' | artemisTranslate }}: {{ exam.numberOfExamUsers }} </span>
+                            <span> {{ 'artemisApp.examStatus.conduction.testExam.numberOfStudents' | artemisTranslate }}: {{ exam().numberOfExamUsers }} </span>
                         </li>
                     }
                     <li>
@@ -206,13 +206,13 @@
                         }
                         <li class="d-flex align-items-center">
                             <span>{{ 'artemisApp.examStatus.correction.publishResultDate' | artemisTranslate }}: </span>
-                            @if (exam.publishResultsDate) {
+                            @if (exam().publishResultsDate) {
                                 <b>
-                                    {{ exam.publishResultsDate | artemisDate }}
+                                    {{ exam().publishResultsDate | artemisDate }}
                                     <fa-icon [icon]="faCheckCircle" class="check" />
                                 </b>
                             }
-                            @if (!exam.publishResultsDate) {
+                            @if (!exam().publishResultsDate) {
                                 <b class="unset" jhiTranslate="artemisApp.examStatus.correction.notSet"></b>
                             }
                             <br />

@@ -36,7 +36,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
     exercise = model.required<ProgrammingExercise>();
     previousSubmission = model<ProgrammingSubmission>();
     currentSubmission = model<ProgrammingSubmission>();
-    studentParticipation = model.required<ProgrammingExerciseStudentParticipation>();
+    studentParticipation = model<ProgrammingExerciseStudentParticipation>();
     submissions = model<ProgrammingSubmission[]>();
     cachedDiffReports = input<Map<string, ProgrammingExerciseGitDiffReport>>(new Map<string, ProgrammingExerciseGitDiffReport>());
     cachedDiffReportsChange = output<Map<string, ProgrammingExerciseGitDiffReport>>();
