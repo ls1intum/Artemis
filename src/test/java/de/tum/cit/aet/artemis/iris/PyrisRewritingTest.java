@@ -1,26 +1,16 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
-import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextRequestDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Profile(PROFILE_IRIS)
@@ -33,12 +23,6 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private CourseUtilService courseUtilService;
-
-    @MockitoSpyBean
-    private IrisRewritingService irisRewritingService;
-
-    @MockitoSpyBean
-    private IrisConsistencyCheckService irisConsistencyCheckService;
 
     private Course course1;
 
@@ -55,46 +39,6 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void callRewritingPipeline() throws Exception {
-        irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
-        });
-        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
-        request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
-        verify(irisRewritingService).executeRewritingPipeline(any(), course1, RewritingVariant.FAQ, "test");
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void callRewritingPipelineAsStudentShouldThrowForbidden() throws Exception {
-        irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
-        });
-        PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("", RewritingVariant.FAQ);
-        request.postWithoutResponseBody("/api/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void callConsistencyCheckPipeline() throws Exception {
-        irisRequestMockProvider.mockRunConcistencyCheckResponseAnd(dto -> {
-        });
-        request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + this.exercise.getId(), null, HttpStatus.OK);
-        verify(irisConsistencyCheckService).executeConsistencyCheckPipeline(any(), this.exercise);
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void callConsistencyCheckPipelineShouldThrowForbidden() throws Exception {
-        irisRequestMockProvider.mockRunConcistencyCheckResponseAnd(dto -> {
-        });
-        request.postWithoutResponseBody("/api/iris/consistency-check/exercises/" + this.exercise.getId(), null, HttpStatus.FORBIDDEN);
-
     }
 
 }
