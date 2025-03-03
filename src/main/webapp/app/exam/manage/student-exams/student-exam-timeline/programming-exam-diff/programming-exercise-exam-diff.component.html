@@ -1,31 +1,31 @@
 <h4 class="exercise-title">
-    {{ exercise.title }}
+    {{ exercise().title }}
     <span
-        >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
-        @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+        >[{{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
+        @if (exercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise().includedInOverallScore" />
         }
     </span>
 </h4>
 <jhi-commits-info
     class="mb-2"
-    [currentSubmissionHash]="currentSubmission?.commitHash"
-    [previousSubmissionHash]="previousSubmission?.commitHash"
-    [participationId]="studentParticipation?.id"
-    [submissions]="submissions"
-    [exerciseProjectKey]="exercise?.projectKey"
+    [currentSubmissionHash]="currentSubmission()?.commitHash"
+    [previousSubmissionHash]="previousSubmission()?.commitHash"
+    [participationId]="studentParticipation()?.id"
+    [submissions]="submissions()"
+    [exerciseProjectKey]="exercise()?.projectKey"
 />
-@if (exercise?.gitDiffReport) {
+@if (exercise()?.gitDiffReport) {
     <div>
         <dt>
             <span
                 jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsCurrentSubmissionLabel"
-                [translateValues]="{ currentCommitHash: currentSubmission?.commitHash }"
+                [translateValues]="{ currentCommitHash: currentSubmission()?.commitHash }"
             ></span>
-            @if (previousSubmission) {
+            @if (previousSubmission()) {
                 <span
                     jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsPreviousSubmissionLabel"
-                    [translateValues]="{ previousCommitHash: previousSubmission?.commitHash }"
+                    [translateValues]="{ previousCommitHash: previousSubmission()?.commitHash }"
                 ></span>
             } @else {
                 <span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatBetweenSubmissionsTemplateLabel"></span>

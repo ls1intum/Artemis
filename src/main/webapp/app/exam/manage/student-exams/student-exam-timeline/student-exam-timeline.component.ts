@@ -127,12 +127,17 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent | undefined;
         if (activeProgrammingComponent) {
-            activeProgrammingComponent.studentParticipation = this.currentExercise!.studentParticipations![0];
-            activeProgrammingComponent.exercise = this.currentExercise!;
-            activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
-            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!);
-            activeProgrammingComponent.submissions = this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id);
-            activeProgrammingComponent.exerciseIdSubject.next(this.currentExercise!.id!);
+            activeProgrammingComponent.studentParticipation.update(() => this.currentExercise!.studentParticipations![0]);
+            activeProgrammingComponent.exercise.update(() => this.currentExercise!);
+            activeProgrammingComponent.currentSubmission.update(() => this.currentSubmission as ProgrammingSubmission);
+            activeProgrammingComponent.previousSubmission.update(() => this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!));
+            activeProgrammingComponent.submissions.update(() =>
+                this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id),
+            );
+            activeProgrammingComponent.exerciseIdSubject.update((subject) => {
+                subject.next(this.currentExercise!.id!);
+                return subject;
+            });
         }
     }
 
