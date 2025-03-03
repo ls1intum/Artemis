@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/entities/exam/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
@@ -55,7 +55,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
 
-    @ViewChild(DataTableComponent) dataTable: DataTableComponent;
+    dataTable = viewChild(DataTableComponent);
 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
@@ -178,9 +178,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             }),
             tap((users) => {
                 setTimeout(() => {
-                    for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
+                    for (let i = 0; i < this.dataTable().typeaheadButtons.length; i++) {
                         const isAlreadyInCourseGroup = this.allRegisteredUsers.map((user) => user.id).includes(users[i].id);
-                        const button = this.dataTable.typeaheadButtons[i];
+                        const button = this.dataTable().typeaheadButtons[i];
                         const hasIcon = button.querySelector('fa-icon');
                         if (!hasIcon) {
                             button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
