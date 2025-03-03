@@ -180,7 +180,7 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockRunFaqRewritingResponse(Consumer<PyrisRewritingPipelineExecutionDTO> executionDTOConsumer) {
+    public void mockRewritingPipelineResponse(Consumer<PyrisRewritingPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/rewriting/faq/run"))
@@ -188,7 +188,7 @@ public class IrisRequestMockProvider {
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisRewritingPipelineExecutionDTO.class);
-                executionDTOConsumer.accept(dto);
+                responseConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });
         // @formatter:on

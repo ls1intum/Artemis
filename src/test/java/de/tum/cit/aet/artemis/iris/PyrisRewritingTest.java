@@ -14,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.iris.service.IrisRewritingService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisRewriteTextRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.rewriting.RewritingVariant;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -28,6 +29,9 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private IrisRewritingService irisRewritingService;
 
     private Course course1;
 
@@ -50,7 +54,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void callRewritingPipeline() throws Exception {
         activateIrisFor(course1);
-        irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
+        irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("test", RewritingVariant.FAQ);
         request.postWithoutResponseBody("/api/iris/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.OK);
@@ -60,7 +64,7 @@ class PyrisRewritingTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void callRewritingPipelineAsStudentShouldThrowForbidden() throws Exception {
         activateIrisFor(course1);
-        irisRequestMockProvider.mockRunFaqRewritingResponse(dto -> {
+        irisRequestMockProvider.mockRewritingPipelineResponse(dto -> {
         });
         PyrisRewriteTextRequestDTO requestDTO = new PyrisRewriteTextRequestDTO("", RewritingVariant.FAQ);
         request.postWithoutResponseBody("/api/iris/courses/" + course1.getId() + "/rewrite-text", requestDTO, HttpStatus.FORBIDDEN);
