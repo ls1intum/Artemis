@@ -10,7 +10,6 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Controller;
 
-import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaModifier;
@@ -29,10 +28,8 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
             @Override
             public void check(JavaClass origin, ConditionEvents events) {
-                List<Dependency> targetsInModule = origin.getDirectDependenciesFromSelf().stream().filter(dependency -> {
-                    resideInAPackage(getModuleWithSubpackage());
-                    return DescribedPredicate.and().test(dependency.getTargetClass());
-                }).toList();
+                List<Dependency> targetsInModule = origin.getDirectDependenciesFromSelf().stream()
+                        .filter(dependency -> resideInAPackage(getModuleWithSubpackage()).and().test(dependency.getTargetClass())).toList();
 
                 for (Dependency dependency : targetsInModule) {
                     JavaClass target = dependency.getTargetClass();
