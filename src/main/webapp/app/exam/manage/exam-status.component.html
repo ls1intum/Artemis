@@ -17,7 +17,7 @@
                     <li class="d-flex align-items-center">
                         <span
                             jhiTranslate="artemisApp.examStatus.preparation.configureExercises"
-                            [translateValues]="{ amount: exam().exerciseGroups ? exam().exerciseGroups.length : 0 }"
+                            [translateValues]="{ amount: exam().exerciseGroups ? exam().exerciseGroups!.length : 0 }"
                         ></span>
                         @if (configuredExercises) {
                             <fa-icon [icon]="faCheckCircle" class="check" />
