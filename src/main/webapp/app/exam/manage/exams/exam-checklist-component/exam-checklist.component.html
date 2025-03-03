@@ -1,4 +1,4 @@
-@if (exam?.course?.isAtLeastInstructor) {
+@if (exam()?.course?.isAtLeastInstructor) {
     <div>
         <h2>
             <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam ? 'testExam.' : '' }}title"></span>
@@ -51,7 +51,7 @@
                                 <li class="list-group-item border-1">
                                     <span>
                                         <jhi-checklist-check
-                                            [checkAttribute]="exam.exerciseGroups && exam.exerciseGroups.length > 0"
+                                            [checkAttribute]="exam().exerciseGroups && exam().exerciseGroups.length > 0"
                                             data-testid="check-least-one-exercise-group"
                                         />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastoneexercisegroup"></span>
@@ -62,9 +62,9 @@
                                         <!-- assert amount mandatory exercises <= number in settings <= amount total exercises -->
                                         <jhi-checklist-check
                                             [checkAttribute]="
-                                                exam.exerciseGroups &&
-                                                countMandatoryExercises <= (exam.numberOfExercisesInExam ?? 0) &&
-                                                (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length
+                                                exam().exerciseGroups &&
+                                                countMandatoryExercises <= (exam().numberOfExercisesInExam ?? 0) &&
+                                                (exam().numberOfExercisesInExam ?? 0) <= exam().exerciseGroups.length
                                             "
                                             data-testid="check-number-of-exercise-groups"
                                         />
@@ -98,10 +98,10 @@
                             </ul>
                             <hr />
                             <!-- Exercise Group table -->
-                            <jhi-exam-checklist-exercisegroup-table [quizExamMaxPoints]="exam.quizExamMaxPoints ?? 0" [exerciseGroups]="exam.exerciseGroups || []" />
+                            <jhi-exam-checklist-exercisegroup-table [quizExamMaxPoints]="exam().quizExamMaxPoints ?? 0" [exerciseGroups]="exam().exerciseGroups || []" />
                         </td>
                         <td>
-                            <a type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups-table">
+                            <a type="submit" [routerLink]="getExamRoutesByIdentifier()('exercise-groups')" class="btn btn-primary" id="exercises-button-groups-table">
                                 <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
                             </a>
@@ -125,7 +125,7 @@
                             </ul>
                         </td>
                         <td>
-                            <a [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info">
+                            <a [routerLink]="getExamRoutesByIdentifier()('test-runs')" class="btn btn-info">
                                 <fa-icon [icon]="faUser" />
                                 <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                             </a>
@@ -143,18 +143,21 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.numberOfExamUsers && exam.numberOfExamUsers! > 0" data-testid="check-least-one-student" />
+                                            <jhi-checklist-check
+                                                [checkAttribute]="!!exam().numberOfExamUsers && exam().numberOfExamUsers! > 0"
+                                                data-testid="check-least-one-student"
+                                            />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastonestudent"></span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.studentsregistered"></span>
-                                        <span> {{ exam.numberOfExamUsers }} </span>
+                                        <span> {{ exam().numberOfExamUsers }} </span>
                                     </li>
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info" data-testid="students-button-register">
+                                <a [routerLink]="getExamRoutesByIdentifier()('students')" class="btn btn-info" data-testid="students-button-register">
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -178,7 +181,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary" data-testid="student-exams-button-generate">
+                                <a [routerLink]="getExamRoutesByIdentifier()('student-exams')" class="btn btn-primary" data-testid="student-exams-button-generate">
                                     <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                 </a>
@@ -205,7 +208,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary" data-testid="student-exams-button-prepare-start">
+                                <a [routerLink]="getExamRoutesByIdentifier()('student-exams')" class="btn btn-primary" data-testid="student-exams-button-prepare-start">
                                     <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                 </a>
@@ -246,7 +249,7 @@
                             }
                         </td>
                         <td>
-                            <a id="editButton_table" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                            <a id="editButton_table" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
                                 <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                             </a>
                         </td>
@@ -259,8 +262,8 @@
         <b
             jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
             [translateValues]="{
-                from: exam.startDate! | artemisDate,
-                to: exam.endDate! | artemisDate,
+                from: exam().startDate! | artemisDate,
+                to: exam().endDate! | artemisDate,
             }"
         ></b>
         <div class="table-responsive">
@@ -291,9 +294,9 @@
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.conductExam"></span>
                             <hr />
                             <!-- Display number of registered students -->
-                            @if (exam.numberOfExamUsers) {
+                            @if (exam().numberOfExamUsers) {
                                 <div>
-                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }} {{ exam.numberOfExamUsers! }}</span>
+                                    <span>{{ 'artemisApp.examManagement.checklist.textitems.studentsregistered' | artemisTranslate }} {{ exam().numberOfExamUsers! }}</span>
                                     <hr />
                                 </div>
                             }
@@ -336,7 +339,7 @@
                             }
                         </td>
                         <td>
-                            <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                            <a [routerLink]="getExamRoutesByIdentifier()('student-exams')" class="btn btn-primary">
                                 <fa-icon [icon]="faEye" />
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                             </a>
@@ -365,7 +368,7 @@
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.createAnnouncement"></span>
                         </td>
                         <td>
-                            <jhi-exam-live-announcement-create-button [exam]="exam" />
+                            <jhi-exam-live-announcement-create-button [exam]="exam()" />
                         </td>
                     </tr>
                 </tbody>
@@ -450,7 +453,7 @@
                                 <br />
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary">
+                                <a [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')" class="btn btn-primary">
                                     <fa-icon [icon]="faThList" />
                                     <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                 </a>
@@ -468,10 +471,10 @@
                                     <li class="list-group-item border-1">
                                         <span>
                                             <li class="list-group-item border-1">
-                                                <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" data-testid="check-publishing-date-set" />
+                                                <jhi-checklist-check [checkAttribute]="!!exam().publishResultsDate" data-testid="check-publishing-date-set" />
                                                 <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pulishingdateset"></span>
                                             </li>
-                                            @if (exam.publishResultsDate) {
+                                            @if (exam().publishResultsDate) {
                                                 <hr />
                                                 <div class="table-responsive">
                                                     <table class="table table-striped">
@@ -501,7 +504,7 @@
                                                                 </th>
                                                                 <th>
                                                                     <button
-                                                                        [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')"
+                                                                        [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')"
                                                                         class="btn btn-primary"
                                                                         id="tutor-exam-dashboard-button_table_assessment_check"
                                                                         [disabled]="!isExamOver || isLoading || (isExamOver && !existsUnfinishedAssessments)"
@@ -580,7 +583,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a id="editButton_publish" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                                <a id="editButton_publish" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
                                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                                 </a>
                             </td>
@@ -596,20 +599,20 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewStart" data-testid="check-start-date-review-set" />
+                                            <jhi-checklist-check [checkAttribute]="!!exam().examStudentReviewStart" data-testid="check-start-date-review-set" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.startdatereviewset"></span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd" data-testid="check-end-date-review-set" />
+                                            <jhi-checklist-check [checkAttribute]="!!exam().examStudentReviewEnd" data-testid="check-end-date-review-set" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.enddatereviewset"></span>
                                         </span>
                                     </li>
                                 </ul>
                             </td>
                             <td>
-                                <a id="editButton_review" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning">
+                                <a id="editButton_review" [routerLink]="getExamRoutesByIdentifier()('edit')" class="btn btn-warning">
                                     <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="entity.action.edit"></span>
                                 </a>
                             </td>
@@ -641,7 +644,7 @@
                                 <br />
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
+                                <a [routerLink]="getExamRoutesByIdentifier()('assessment-dashboard')" class="btn btn-primary" id="tutor-exam-dashboard-button_table_complaints">
                                     <fa-icon [icon]="faThList" />
                                     <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                                 </a>
@@ -656,7 +659,7 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.exportResults"></span>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info" id="scores-button_publish_result">
+                                <a [routerLink]="getExamRoutesByIdentifier()('scores')" class="btn btn-info" id="scores-button_publish_result">
                                     <fa-icon [icon]="faEye" />
                                     <span jhiTranslate="entity.action.scores"></span>
                                 </a>
