@@ -442,8 +442,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     this.groupPosts();
                 }
             });
-        // Incrementally update the grouped posts.
-        this.groupPosts();
+            // Incrementally update the grouped posts.
+            this.groupPosts();
+        }
     }
 
     fetchNextPage() {
