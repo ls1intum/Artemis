@@ -55,14 +55,10 @@ public class IrisRewritingResource {
     @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/rewrite-text")
     public ResponseEntity<Void> rewriteText(@RequestBody PyrisRewriteTextRequestDTO request, @PathVariable Long courseId) {
-        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         var rewritingService = irisRewritingService.orElseThrow();
-        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         rewritingService.executeRewritingPipeline(user, course, request.variant(), request.toBeRewritten());
-        log.debug("REST request to rewrite text: {}", request.toBeRewritten());
         return ResponseEntity.ok().build();
     }
 
