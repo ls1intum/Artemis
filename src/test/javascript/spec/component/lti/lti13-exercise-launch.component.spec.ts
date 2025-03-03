@@ -9,8 +9,11 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import 'jest-extended';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -31,7 +34,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
         window.sessionStorage.setItem('state', 'state');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -39,6 +41,8 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
             ],
         })
             .compileComponents()

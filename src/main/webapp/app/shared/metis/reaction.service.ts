@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<Reaction>;
 export class ReactionService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/courses/';
+    public resourceUrl = 'api/communication/courses/';
 
     /**
      * creates a reaction

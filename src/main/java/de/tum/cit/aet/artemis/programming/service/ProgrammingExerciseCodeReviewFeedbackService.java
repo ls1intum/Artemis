@@ -162,7 +162,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setCredits(individualFeedbackItem.credits());
                         return feedback;
                     }).sorted(Comparator.comparing(Feedback::getCredits, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
-            ;
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());

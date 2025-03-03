@@ -1,13 +1,12 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { UrlSegment } from '@angular/router';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Subject, of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../test.module';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
@@ -35,17 +34,24 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../../../main/webapp/app/shared/constants/input.constants';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { ProgrammingExerciseInstructionAnalysisService } from '../../../../../main/webapp/app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
     const route = {
-        snapshot: { paramMap: convertToParamMap({ courseId: '1' }) },
+        snapshot: { paramMap: convertToParamMap({ courseId: '123' }) },
         url: {
             pipe: () => ({
                 subscribe: () => {},
@@ -66,11 +72,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
+            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);

@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/communication/admin/")
 public class AdminSystemNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);

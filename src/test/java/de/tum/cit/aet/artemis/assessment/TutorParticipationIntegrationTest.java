@@ -92,7 +92,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         for (Exercise exercise : new Exercise[] { textExercise, modelingExercise }) {
             exercise.setTitle("exercise name");
             exerciseRepository.save(exercise);
-            path = "/api/exercises/" + exercise.getId() + "/assess-example-submission";
+            path = "/api/assessment/exercises/" + exercise.getId() + "/assess-example-submission";
         }
 
         textBlockIds = new ArrayList<>();
@@ -128,7 +128,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
 
-        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -149,7 +149,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
 
-        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -170,7 +170,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         exampleSubmissionService.save(exampleSubmission);
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
-        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -190,7 +190,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         exampleSubmissionService.save(exampleSubmission);
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
-        var path = "/api/exercises/" + textExercise.getId() + "/assess-example-submission";
+        var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
         request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -228,7 +228,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             resultService.addFeedbackToResult(result, List.of(feedback), true);
         }
 
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
         return exampleSubmission;
     }
 
@@ -242,7 +242,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             result.setExampleResult(true);
             resultRepository.save(result);
         }
-        request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
         return exampleSubmission;
     }
 }

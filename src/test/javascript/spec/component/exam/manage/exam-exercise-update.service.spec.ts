@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../../test.module';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { TestBed } from '@angular/core/testing';
 
@@ -8,7 +7,6 @@ describe('Exam Exercise Update Service Tests', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [ExamExerciseUpdateService],
-            imports: [ArtemisTestModule],
         });
 
         service = TestBed.inject(ExamExerciseUpdateService);

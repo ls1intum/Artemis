@@ -122,7 +122,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
-import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationService;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -130,7 +130,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
@@ -167,7 +167,7 @@ public class CourseResource {
 
     private final FileService fileService;
 
-    private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
+    private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
@@ -194,7 +194,7 @@ public class CourseResource {
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
+            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
@@ -211,7 +211,7 @@ public class CourseResource {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
-        this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
+        this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathApi = learningPathApi;
@@ -347,8 +347,8 @@ public class CourseResource {
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
-        if (timeZoneChanged) {
-            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+        if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
+            tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }
         return ResponseEntity.ok(result);
     }
@@ -1122,7 +1122,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /api/courses/:courseId/members/search: Searches for members of a course
+     * GET /courses/:courseId/members/search: Searches for members of a course
      *
      * @param courseId    id of the course
      * @param loginOrName the search term to search login and names by

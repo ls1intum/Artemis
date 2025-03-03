@@ -14,7 +14,7 @@ export class VideoUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/lecture';
 
     create(videoUnit: VideoUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient

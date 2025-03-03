@@ -89,7 +89,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseExportImportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);

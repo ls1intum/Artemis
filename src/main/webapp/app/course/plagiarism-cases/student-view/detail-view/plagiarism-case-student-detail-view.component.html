@@ -96,12 +96,14 @@
                     }
                 </div>
             </section>
-            <section>
-                <h3 class="mt-5" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
-                <div class="container-fluid">
-                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="true" />
-                </div>
-            </section>
+            @if (isAfterDueDate) {
+                <section>
+                    <h3 class="mt-5" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
+                    <div class="container-fluid">
+                        <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="true" />
+                    </div>
+                </section>
+            }
         </div>
     </div>
 }

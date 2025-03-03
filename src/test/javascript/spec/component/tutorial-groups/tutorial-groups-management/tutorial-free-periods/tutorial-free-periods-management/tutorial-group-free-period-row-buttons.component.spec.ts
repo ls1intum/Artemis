@@ -16,7 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
-import { ArtemisTestModule } from '../../../../../test.module';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -28,7 +29,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 TutorialGroupFreePeriodRowButtonsComponent,
                 MockPipe(ArtemisDatePipe),
@@ -37,7 +37,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(NgbModal)],
+            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(NgbModal), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

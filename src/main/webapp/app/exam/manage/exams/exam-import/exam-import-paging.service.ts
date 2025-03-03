@@ -12,11 +12,7 @@ type EntityResponseType = SearchResult<Exam>;
 export class ExamImportPagingService extends PagingService<Exam> {
     private http = inject(HttpClient);
 
-    private static readonly RESOURCE_URL = 'api/exams';
-
-    constructor() {
-        super();
-    }
+    private static readonly RESOURCE_URL = 'api/exam/exams';
 
     /**
      * Method to get (possible) exams for import from the server

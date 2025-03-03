@@ -18,7 +18,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
@@ -31,6 +31,7 @@ import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
 import { PostingReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -77,16 +78,23 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
 
     isAnswerPost = true;
+    course: Course;
 
     // Icons
     faBookmark = faBookmark;
 
     readonly faPencilAlt = faPencilAlt;
+    readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     static activeDropdownPost: AnswerPostComponent | null = null;
     mayEdit = false;
     mayDelete = false;
+
+    constructor() {
+        super();
+        this.course = this.metisService.getCourse();
+    }
 
     ngOnInit() {
         super.ngOnInit();

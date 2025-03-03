@@ -2,12 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
@@ -18,8 +17,9 @@ describe('ExerciseImportWrapperComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(ExerciseImportTabsComponent), MockComponent(ExerciseImportComponent), FormsModule],
+            imports: [MockComponent(ExerciseImportTabsComponent), MockComponent(ExerciseImportComponent), FormsModule],
             declarations: [ExerciseImportWrapperComponent, MockDirective(TranslateDirective)],
+            providers: [MockProvider(NgbActiveModal)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseImportWrapperComponent);

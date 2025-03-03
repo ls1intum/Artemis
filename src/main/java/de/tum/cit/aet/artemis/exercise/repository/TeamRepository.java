@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -138,11 +137,6 @@ public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
         List<Pair<User, Team>> conflicts = findStudentTeamConflicts(exercise, team);
         if (!conflicts.isEmpty()) {
             throw new StudentsAlreadyAssignedException(conflicts);
-        }
-        // audit information is normally updated automatically but since changes in the many-to-many relationships are not registered,
-        // we need to trigger the audit explicitly by modifying a column of the team entity itself
-        if (team.getId() != null) {
-            team.setLastModifiedDate(Instant.now());
         }
         team.setExercise(exercise);
         team = save(team);

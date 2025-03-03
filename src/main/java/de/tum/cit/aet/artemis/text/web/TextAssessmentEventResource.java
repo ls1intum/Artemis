@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/text/")
 public class TextAssessmentEventResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextAssessmentEventResource.class);
@@ -89,7 +89,7 @@ public class TextAssessmentEventResource {
         // Save the event if it is valid. All other requests are considered bad requests.
         if (isTextAssessmentAnalyticsEnabled() && validateEvent(event)) {
             textAssessmentEventRepository.save(event);
-            return ResponseEntity.created(new URI("/api/admin/event-insights/text-assessment/events/" + event.getCourseId())).build();
+            return ResponseEntity.created(new URI("/api/text/admin/event-insights/text-assessment/events/" + event.getCourseId())).build();
         }
         // TODO: this is not really nice, because the reason for the bad request is not given
         return ResponseEntity.badRequest().build();
