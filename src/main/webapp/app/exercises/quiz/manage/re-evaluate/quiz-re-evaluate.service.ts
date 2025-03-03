@@ -8,7 +8,7 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 export class QuizReEvaluateService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/quiz-exercises/';
+    private resourceUrl = 'api/quiz/quiz-exercises/';
 
     reevaluate(quizExercise: QuizExercise, files: Map<string, Blob>) {
         const copy = this.convert(quizExercise);

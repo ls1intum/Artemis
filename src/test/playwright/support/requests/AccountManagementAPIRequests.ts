@@ -15,11 +15,11 @@ export class AccountManagementAPIRequests {
      * As a workaround, we fetch all SSH public keys and delete the test SSH key based on the label.
      * */
     async deleteSshPublicKey() {
-        const publicKeysResponse = await this.page.request.get(`${BASE_API}/ssh-settings/public-keys`);
+        const publicKeysResponse = await this.page.request.get(`${BASE_API}/programming/ssh-settings/public-keys`);
         const publicKeys = await publicKeysResponse.json();
         for (const publicKey of publicKeys) {
             if (publicKey.label === this.PLAYWRIGHT_SSH_LABEL) {
-                await this.page.request.delete(`${BASE_API}/ssh-settings/public-key/${publicKey.id}`);
+                await this.page.request.delete(`${BASE_API}/programming/ssh-settings/public-key/${publicKey.id}`);
             }
         }
     }

@@ -322,7 +322,7 @@ async function setupSSHCredentials(context: BrowserContext, sshAlgorithm: SshEnc
     await page.goto('user-settings/ssh');
     await page.getByTestId('addNewSshKeyButton').click();
     await page.getByTestId('sshKeyField').fill(sshKey!);
-    const responsePromise = page.waitForResponse(`${BASE_API}/ssh-settings/public-key`);
+    const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-key`);
     await page.getByTestId('saveSshKeyButton').click();
     await responsePromise;
     await page.close();

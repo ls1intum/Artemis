@@ -25,7 +25,7 @@
                     class="form-control"
                     title="score"
                     type="number"
-                    min="1"
+                    min="0"
                     [max]="MAX_POINTS"
                     [(ngModel)]="question.points"
                     (ngModelChange)="questionUpdated.emit()"

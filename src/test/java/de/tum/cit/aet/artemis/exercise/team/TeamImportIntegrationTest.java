@@ -55,7 +55,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private static final String REGISTRATION_NUMBER_PREFIX = "tii";
 
     private String fromExerciseEndpointUrl() {
-        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
+        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
     }
 
     private String importFromExerciseUrl(Exercise exercise, TeamImportStrategyType importStrategyType) {
@@ -75,7 +75,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     private String fromListEndpointUrl() {
-        return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-list";
+        return "/api/exercise/exercises/" + destinationExercise.getId() + "/teams/import-from-list";
     }
 
     private String importFromListUrl(TeamImportStrategyType importStrategyType) {

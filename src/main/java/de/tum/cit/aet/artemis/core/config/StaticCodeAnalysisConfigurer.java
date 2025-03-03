@@ -100,6 +100,7 @@ public class StaticCodeAnalysisConfigurer {
         map.put(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP));
         map.put(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY));
         map.put(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift());
+        map.put(ProgrammingLanguage.TYPESCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
 
         languageToDefaultCategories = Collections.unmodifiableMap(map);
     }

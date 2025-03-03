@@ -15,7 +15,7 @@ import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
     let service: LectureService;
-    const resourceUrl = 'api/lectures';
+    const resourceUrl = 'api/lecture/lectures';
     let expectedResult: any;
     let elemDefault: Lecture;
 
@@ -151,7 +151,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/lectures?withLectureUnits=0`,
+                url: `api/lecture/courses/${courseId}/lectures?withLectureUnits=0`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -168,7 +168,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lectures/import/${lectureId}?courseId=${courseId}`,
+                url: `${resourceUrl}/import/${lectureId}?courseId=${courseId}`,
                 method: 'POST',
             });
 
@@ -185,7 +185,7 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/lectures-with-slides`,
+                url: `api/lecture/courses/${courseId}/lectures-with-slides`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -233,7 +233,7 @@ describe('Lecture Service', () => {
         it('should send a POST request to ingest lectures and return an OK response', () => {
             const courseId = 123;
             const lectureId = 456;
-            const expectedUrl = `api/courses/123/ingest?lectureId=456`;
+            const expectedUrl = `api/lecture/courses/123/ingest?lectureId=456`;
             const expectedStatus = 200;
 
             service.ingestLecturesInPyris(courseId, lectureId).subscribe((response) => {

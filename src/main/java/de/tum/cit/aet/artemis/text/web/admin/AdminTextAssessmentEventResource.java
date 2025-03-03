@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/text/admin/")
 public class AdminTextAssessmentEventResource {
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;
