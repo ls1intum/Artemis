@@ -98,6 +98,11 @@
             <where>end_text LIKE '%/api/files%'</where>
         </update>
 
+        <update tableName="exam">
+            <column name="start_text" valueComputed="REPLACE(start_text, '/api/files', '/api/core/files')"/>
+            <where>start_text LIKE '%/api/files%'</where>
+        </update>
+
         <update tableName="exam_user">
             <column name="signing_image_path" valueComputed="REPLACE(signing_image_path, '/api/files', '/api/core/files')"/>
             <where>signing_image_path LIKE '%/api/files%'</where>
