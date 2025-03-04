@@ -9,7 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * This annotation is used to enforce that the user is an admin.
- * It should only be used with endpoints starting with {@code /api/admin/}
+ * It should only be used with endpoints starting with {@code /api/<module-name>/admin/}
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

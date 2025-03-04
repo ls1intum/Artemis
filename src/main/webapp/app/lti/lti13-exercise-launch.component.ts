@@ -55,7 +55,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
-            .post<LtiLaunchResponse>('api/public/lti13/auth-login', requestBody.toString(), {
+            .post<LtiLaunchResponse>('api/lti/public/lti13/auth-login', requestBody.toString(), {
                 headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded'),
             })
             .subscribe({
