@@ -17,7 +17,14 @@ describe('ArtemisIntelligenceService', () => {
         const mockWebsocketService = {
             subscribe: jest.fn(),
             unsubscribe: jest.fn(),
-            receive: jest.fn().mockReturnValue(new BehaviorSubject({ result: 'Rewritten Text' })),
+            receive: jest.fn().mockReturnValue(
+                new BehaviorSubject({
+                    result: 'Rewritten Text',
+                    inconsistencies: ['Your rewritten text is inconsistent with the text rewritten text'],
+                    suggestions: ['Make it consistent'],
+                    improvement: 'rewritten Text',
+                }),
+            ),
         };
 
         TestBed.configureTestingModule({
@@ -45,6 +52,9 @@ describe('ArtemisIntelligenceService', () => {
 
             service.rewrite(toBeRewritten, rewritingVariant, courseId).subscribe((rewrittenText) => {
                 expect(rewrittenText).toBe('Rewritten Text');
+                expect(rewrittenText.inconsistencies).toEqual(['Your rewritten text is inconsistent with the text rewritten text']);
+                expect(rewrittenText.suggestions).toEqual(['Make it consistent']);
+                expect(rewrittenText.improvement).toBe('rewritten Text');
             });
 
             const req = httpMock.expectOne({
