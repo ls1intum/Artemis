@@ -80,8 +80,8 @@ public class ParticipationFilterService {
             var latestResult = submission.getLatestResult();
             if (latestResult != null) {
                 results = Set.of(latestResult);
+                // avoid circular reference when converting to JSON later
                 latestResult.setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
                 if (isStudent) {
                     latestResult.filterSensitiveInformation();
                 }
