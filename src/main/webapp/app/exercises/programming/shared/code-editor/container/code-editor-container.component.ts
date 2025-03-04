@@ -25,10 +25,8 @@ import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,

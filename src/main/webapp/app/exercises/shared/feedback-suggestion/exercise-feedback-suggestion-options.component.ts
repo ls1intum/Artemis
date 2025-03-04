@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, inject, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -9,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FormsModule } from '@angular/forms';
-
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',

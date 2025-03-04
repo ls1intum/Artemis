@@ -12,11 +12,11 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/core/util/alert.service';
 
-
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;
+    let alertService: AlertService;
     const fileName = 'testFile';
     const codeLine = 1;
 
@@ -136,15 +136,43 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
     });
 
-    it('should not display credits and icons for non-graded feedback suggestions', () => {
+    it('should display credits and icons for positive preliminary feedback', () => {
         comp.feedback = {
             type: FeedbackType.AUTOMATIC,
-            text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            credits: 1.5,
         } as Feedback;
         fixture.detectChanges();
 
         const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).toBeNull();
+        expect(badgeElement.nativeElement.textContent).toContain('1.5P');
+        expect(badgeElement.nativeElement.classList).toContain('bg-success');
+    });
+
+    it('should display credits and icons for negative preliminary feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            credits: -1.5,
+        } as Feedback;
+        fixture.detectChanges();
+
+        const badgeElement = fixture.debugElement.query(By.css('.badge'));
+        expect(badgeElement.nativeElement.textContent).toContain('-1.5P');
+        expect(badgeElement.nativeElement.classList).toContain('bg-danger');
+    });
+
+    it('should display credits and icons for neutral preliminary feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            credits: 0,
+        } as Feedback;
+        fixture.detectChanges();
+
+        const badgeElement = fixture.debugElement.query(By.css('.badge'));
+        expect(badgeElement.nativeElement.textContent).toContain('0P');
+        expect(badgeElement.nativeElement.classList).toContain('bg-warning');
     });
 
     it('should display credits and icons for graded feedback', () => {

@@ -560,7 +560,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         return this.repositoryFileService.createFolder(folderName);
     };
 
-    reopenFeedback = (item: TreeviewItem<string>): void => {
+    reopenFeedback = (item: TreeViewItem<string>): void => {
         this.onReopenFeedback.emit(item.value);
     };
 

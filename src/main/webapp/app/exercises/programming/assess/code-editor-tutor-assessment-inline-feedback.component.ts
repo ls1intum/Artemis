@@ -18,10 +18,7 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unrefere
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { LocalStorageService } from 'ngx-webstorage';
-import { LocalStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/core/util/alert.service';
-
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -45,6 +42,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
+
+    private alertService = inject(AlertService);
 
     @Input()
     get feedback(): Feedback {

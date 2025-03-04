@@ -21,6 +21,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -34,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         FaIconComponent,
         NgStyle,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExercisePreliminaryFeedbackOptionsComponent,
         AsyncPipe,
         ArtemisTranslatePipe,
     ],
