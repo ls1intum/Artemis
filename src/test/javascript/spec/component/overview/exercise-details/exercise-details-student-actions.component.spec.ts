@@ -31,7 +31,7 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_THEIA } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
@@ -63,9 +63,17 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         teamMode: true,
         studentAssignedTeamIdComputed: true,
     };
-    const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
+    const teamExerciseWithTeamAssigned = {
+        ...teamExerciseWithoutTeamAssigned,
+        studentAssignedTeamId: team.id,
+        allowOfflineIde: true,
+    } as ProgrammingExercise;
 
-    const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as ProgrammingExerciseStudentParticipation;
+    const testRunParticipation = {
+        id: 2,
+        initializationState: InitializationState.INITIALIZED,
+        testRun: true,
+    } as ProgrammingExerciseStudentParticipation;
 
     const testRunExercise = {
         id: 45,
@@ -108,7 +116,12 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 router = debugElement.injector.get(Router) as unknown as MockRouter;
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+                getProfileInfoSub.mockReturnValue(
+                    of({
+                        inProduction: false,
+                        sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+                    } as ProfileInfo),
+                );
 
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
                 resumeStub = jest.spyOn(courseExerciseService, 'resumeProgrammingExercise');
@@ -226,7 +239,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             allowOfflineIde: true,
             studentParticipations: [] as StudentParticipation[],
         } as ProgrammingExercise;
-        const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
+        const initPart = {
+            id: 2,
+            initializationState: InitializationState.INITIALIZED,
+            testRun: true,
+        } as StudentParticipation;
 
         comp.exercise = exercise;
 
@@ -298,10 +315,23 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     }));
 
     it('should correctly resume programming participation', () => {
-        const inactiveParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INACTIVE };
-        const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
-        const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
-        comp.exercise = { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise;
+        const inactiveParticipation: ProgrammingExerciseStudentParticipation = {
+            id: 1,
+            initializationState: InitializationState.INACTIVE,
+        };
+        const activeParticipation: ProgrammingExerciseStudentParticipation = {
+            id: 1,
+            initializationState: InitializationState.INITIALIZED,
+        };
+        const practiceParticipation: ProgrammingExerciseStudentParticipation = {
+            id: 2,
+            testRun: true,
+            initializationState: InitializationState.INACTIVE,
+        };
+        comp.exercise = {
+            id: 3,
+            studentParticipations: [inactiveParticipation, practiceParticipation],
+        } as ProgrammingExercise;
         comp.updateParticipations();
 
         resumeStub.mockReturnValue(of(activeParticipation));
@@ -312,7 +342,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('should show correct buttons in exam mode', fakeAsync(() => {
-        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
+        const exercise = {
+            type: ExerciseType.PROGRAMMING,
+            allowOfflineIde: false,
+            allowOnlineEditor: true,
+        } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
         comp.exercise = exercise;
         comp.examMode = true;
@@ -342,9 +376,16 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     }));
 
     it('should show correct buttons in exam mode, including code button', fakeAsync(() => {
-        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
+        const exercise = {
+            type: ExerciseType.PROGRAMMING,
+            allowOfflineIde: false,
+            allowOnlineEditor: true,
+        } as ProgrammingExercise;
         exercise.studentParticipations = [
-            { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
+            {
+                initializationState: InitializationState.INITIALIZED,
+                repositoryUri: 'https://clone-me.git',
+            } as ProgrammingExerciseStudentParticipation,
         ];
         comp.exercise = exercise;
         comp.examMode = true;
@@ -377,7 +418,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should disable start exercise button before start date %s',
         fakeAsync((type: ExerciseType) => {
-            comp.exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
+            comp.exercise = {
+                type,
+                releaseDate: dayjs().subtract(1, 'hour'),
+                startDate: dayjs().add(1, 'hour'),
+            } as ProgrammingExercise;
 
             fixture.detectChanges();
             tick();
@@ -401,12 +446,30 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         it.each([
             [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, true],
-            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [] as StudentParticipation[] } as QuizExercise, false],
             [
-                { type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise,
+                {
+                    type: ExerciseType.QUIZ,
+                    quizBatches: [{ started: true }],
+                    studentParticipations: [] as StudentParticipation[],
+                } as QuizExercise,
                 false,
             ],
-            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
+            [
+                {
+                    type: ExerciseType.QUIZ,
+                    quizBatches: [{ started: true }],
+                    studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }],
+                } as QuizExercise,
+                false,
+            ],
+            [
+                {
+                    type: ExerciseType.QUIZ,
+                    quizBatches: [{ started: true }],
+                    studentParticipations: [{ initializationState: InitializationState.FINISHED }],
+                } as QuizExercise,
+                false,
+            ],
         ])('should determine if quiz is not started', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
             comp.ngOnInit();
@@ -426,37 +489,61 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it.each([
         [
-            { studentParticipations: [{ initializationState: InitializationState.INITIALIZED }], type: ExerciseType.TEXT, dueDate: dayjs().add(1, 'day') } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
+                type: ExerciseType.TEXT,
+                dueDate: dayjs().add(1, 'day'),
+            } as Exercise,
             true,
             'openTextEditor',
             false,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.INITIALIZED }], type: ExerciseType.TEXT, dueDate: dayjs().subtract(1, 'day') } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
+                type: ExerciseType.TEXT,
+                dueDate: dayjs().subtract(1, 'day'),
+            } as Exercise,
             false,
             undefined,
             undefined,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.INITIALIZED }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
+                type: ExerciseType.TEXT,
+                dueDate: undefined,
+            } as Exercise,
             true,
             'openTextEditor',
             false,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.FINISHED }], type: ExerciseType.TEXT, dueDate: dayjs().add(1, 'day') } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.FINISHED }],
+                type: ExerciseType.TEXT,
+                dueDate: dayjs().add(1, 'day'),
+            } as Exercise,
             true,
             'openTextEditor',
             false,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.FINISHED }], type: ExerciseType.TEXT, dueDate: dayjs().subtract(1, 'day') } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.FINISHED }],
+                type: ExerciseType.TEXT,
+                dueDate: dayjs().subtract(1, 'day'),
+            } as Exercise,
             true,
             'viewSubmissions',
             true,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.FINISHED }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.FINISHED }],
+                type: ExerciseType.TEXT,
+                dueDate: undefined,
+            } as Exercise,
             true,
             'openTextEditor',
             false,
@@ -472,7 +559,11 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             true,
         ],
         [
-            { studentParticipations: [{ initializationState: InitializationState.FINISHED, results: [{ rated: true }] }], type: ExerciseType.TEXT, dueDate: undefined } as Exercise,
+            {
+                studentParticipations: [{ initializationState: InitializationState.FINISHED, results: [{ rated: true }] }],
+                type: ExerciseType.TEXT,
+                dueDate: undefined,
+            } as Exercise,
             true,
             'viewResults',
             true,
@@ -578,5 +669,65 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.detectChanges();
 
         expect(comp.theiaEnabled).toBe(expectedVisibility);
+    });
+
+    it('should display the request feedback button for modeling exercises when Athena is enabled and before due date', () => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(
+            of({
+                activeProfiles: [PROFILE_ATHENA],
+            } as ProfileInfo),
+        );
+
+        const exercise = { type: ExerciseType.TEXT } as ProgrammingExercise;
+        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        comp.exercise = exercise;
+        comp.examMode = false;
+        comp.beforeDueDate = true;
+        comp.updateParticipations();
+
+        fixture.detectChanges();
+
+        const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+        expect(feedbackButton).not.toBeNull();
+    });
+
+    it('should display the request feedback button for modeling exercises when Athena is enabled and before due date', () => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(
+            of({
+                activeProfiles: [PROFILE_ATHENA],
+            } as ProfileInfo),
+        );
+
+        const exercise = { type: ExerciseType.MODELING } as ProgrammingExercise;
+        exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        comp.exercise = exercise;
+        comp.examMode = false;
+        comp.beforeDueDate = true;
+        comp.updateParticipations();
+
+        fixture.detectChanges();
+
+        const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+        expect(feedbackButton).not.toBeNull();
+    });
+
+    it('should display the request feedback button for programming exercises with graded participation', () => {
+        const exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
+        exercise.studentParticipations = [
+            {
+                initializationState: InitializationState.INITIALIZED,
+                repositoryUri: 'https://clone-me.git',
+            } as ProgrammingExerciseStudentParticipation,
+        ];
+        comp.exercise = exercise;
+        comp.examMode = false;
+        comp.updateParticipations();
+
+        fixture.detectChanges();
+
+        const feedbackButton = fixture.debugElement.query(By.css('jhi-request-feedback-button'));
+        expect(feedbackButton).not.toBeNull();
     });
 });
