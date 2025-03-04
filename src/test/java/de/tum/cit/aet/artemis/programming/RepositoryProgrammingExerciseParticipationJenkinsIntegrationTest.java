@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "repoprogexpartjenk";
 

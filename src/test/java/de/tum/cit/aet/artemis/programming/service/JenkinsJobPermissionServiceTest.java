@@ -16,11 +16,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermission;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsUtils;
 
-class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "jenkinsjobpermservice";
 
@@ -29,13 +29,11 @@ class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenk
     @BeforeEach
     void initTestCase() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         mockedJenkinsJobPermissionsUtils = mockStatic(JenkinsJobPermissionsUtils.class);
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedJenkinsJobPermissionsUtils.close();
     }

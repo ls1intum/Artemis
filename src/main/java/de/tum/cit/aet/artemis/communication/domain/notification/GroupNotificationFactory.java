@@ -17,7 +17,6 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ILLEG
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_ANNOUNCEMENT_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
@@ -166,11 +165,6 @@ public class GroupNotificationFactory {
                 textIsPlaceholder = false;
                 priority = HIGH;
             }
-            case PROGRAMMING_REPOSITORY_LOCKS -> {
-                title = NotificationConstants.PROGRAMMING_REPOSITORY_LOCKS_TITLE;
-                text = notificationText;
-                textIsPlaceholder = false;
-            }
             case PROGRAMMING_BUILD_RUN_UPDATE -> {
                 title = NotificationConstants.PROGRAMMING_BUILD_RUN_UPDATE_TITLE;
                 text = notificationText;
@@ -221,7 +215,7 @@ public class GroupNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { EXERCISE_RELEASED, EXERCISE_PRACTICE, QUIZ_EXERCISE_STARTED, EXERCISE_UPDATED, PROGRAMMING_TEST_CASES_CHANGED,
-            NEW_MANUAL_FEEDBACK_REQUEST, DUPLICATE_TEST_CASE, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE, ILLEGAL_SUBMISSION })
+            NEW_MANUAL_FEEDBACK_REQUEST, DUPLICATE_TEST_CASE, PROGRAMMING_BUILD_RUN_UPDATE, ILLEGAL_SUBMISSION })
     public static String[] createPlaceholderExerciseNotification(String courseTitle, String exerciseTitle) {
         return new String[] { courseTitle, exerciseTitle };
     }

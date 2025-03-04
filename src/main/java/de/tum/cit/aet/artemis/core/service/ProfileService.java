@@ -58,15 +58,6 @@ public class ProfileService {
     // VC & CI profiles
 
     /**
-     * Checks if the gitlabci or jenkins profile is active
-     *
-     * @return true if the gitlabci or jenkins profile is active, false otherwise
-     */
-    public boolean isGitlabCiOrJenkinsActive() {
-        return isProfileActive("gitlabci") || isJenkinsActive();
-    }
-
-    /**
      * Checks if the jenkins profile is active
      *
      * @return true if the jenkins profile is active, false otherwise

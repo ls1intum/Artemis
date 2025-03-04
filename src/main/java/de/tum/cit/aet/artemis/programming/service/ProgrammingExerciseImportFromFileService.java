@@ -116,7 +116,7 @@ public class ProgrammingExerciseImportFromFileService {
             importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
             newProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a local CI setup.
-            if (profileService.isGitlabCiOrJenkinsActive()) {
+            if (profileService.isJenkinsActive()) {
                 importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
             }
             // TODO: we need to create the build configuration

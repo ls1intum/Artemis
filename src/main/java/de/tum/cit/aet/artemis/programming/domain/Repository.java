@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 /**
  * This class represents repositories cloned from the VC system to Artemis to then be used in the online editor.
  * These repositories are cloned from the remote VCS and are saved in the folder defined in the application properties at artemis.repo-clone-path.
- * Note: This class does not represent local VCS repositories. The local VCS is treated as a remote VCS in code (like GitLab) and is represented by the
+ * Note: This class does not represent local VCS repositories. The local VCS is treated as a remote VCS in code and is represented by the
  * {@link LocalVCRepositoryUri} class.
  * Its repositories are saved as bare repositories in the folder defined in the application properties at artemis.version-control.local-vcs-repo-path.
  */

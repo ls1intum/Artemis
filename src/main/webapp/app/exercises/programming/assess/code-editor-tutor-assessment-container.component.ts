@@ -127,7 +127,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     loadingInitialSubmission = true;
     highlightDifferences = false;
 
-    localVCEnabled = false;
+    localVCEnabled = true;
     isAtLeastEditor = false;
 
     unreferencedFeedback: Feedback[] = [];

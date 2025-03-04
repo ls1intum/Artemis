@@ -10,7 +10,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
@@ -94,8 +94,7 @@ export class CodeButtonComponent implements OnInit {
     sshTemplateUrl?: string;
     versionControlUrl: string;
 
-    localVCEnabled = signal<boolean>(false);
-    gitlabVCEnabled = false;
+    localVCEnabled = signal<boolean>(true);
 
     copyEnabled = false;
     doesUserHaveSSHkeys = false;
@@ -169,8 +168,6 @@ export class CodeButtonComponent implements OnInit {
             }
 
             this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
-            this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
-
             this.configureTooltips(profileInfo);
         });
 
@@ -185,7 +182,7 @@ export class CodeButtonComponent implements OnInit {
     public useSshUrl() {
         this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
 
-        this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
+        this.copyEnabled = this.doesUserHaveSSHkeys;
         this.storeToLocalStorage();
     }
 
@@ -331,7 +328,7 @@ export class CodeButtonComponent implements OnInit {
      * @return repository uri with username of current user inserted
      */
     private repositoryUriForTeam(url: string) {
-        // (https://)(gitlab.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(gitlab.ase.in.tum.de/...-team1.git)
+        // (https://)(artemis.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(artemis.ase.in.tum.de/...-team1.git)
         return url.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 

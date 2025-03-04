@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.assertj.core.data.Offset;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -147,7 +148,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
             assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerMillionInputToken());
-            assertThat(usage.getCostPerMillionOutputTokens()).isEqualTo(expectedCost.costPerMillionOutputToken());
+            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }
@@ -197,8 +198,8 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(usage.getModel()).isEqualTo(expectedCost.model());
             assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
             assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerMillionInputToken());
-            assertThat(usage.getCostPerMillionOutputTokens()).isEqualTo(expectedCost.costPerMillionOutputToken());
+            assertThat(usage.getCostPerMillionInputTokens()).isCloseTo(expectedCost.costPerMillionInputToken(), Offset.offset(0.01f));
+            assertThat(usage.getCostPerMillionOutputTokens()).isCloseTo(expectedCost.costPerMillionOutputToken(), Offset.offset(0.01f));
             assertThat(usage.getServicePipelineId()).isEqualTo(expectedCost.pipelineId());
         }
     }

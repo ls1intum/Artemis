@@ -16,10 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
-class JenkinsInternalUriServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class JenkinsInternalUriServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private VcsRepositoryUri vcsRepositoryUri;
 

@@ -78,7 +78,7 @@ You can see the structure of the saml2 configuration in the following:
     # String used for the SAML2 login button. E.g. 'Shibboleth Login'
     info.saml2.button-label: 'SAML2 Login'
     # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-    # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
+    # services such as Jenkins. This allows the users to use password-based Git workflows.
     # Enabled the password reset function in Artemis.
     info.saml2.enable-password: true
 

@@ -387,7 +387,7 @@ Timestamper configuration, use the following value for both formats:
 
        '<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '
 
-.. figure:: jenkins-gitlab/timestamper_config.png
+.. figure:: jenkins/timestamper_config.png
    :align: center
 
 Server Notification Plugin
@@ -404,7 +404,7 @@ You can download the current release of the plugin
 Jenkins → System Configuration → Plugins*) and install the downloaded file under the
 *Advanced settings* tab under *Deploy Plugin*
 
-.. figure:: jenkins-gitlab/jenkins_custom_plugin.png
+.. figure:: jenkins/jenkins_custom_plugin.png
    :align: center
 
 Jenkins Credentials
@@ -542,7 +542,7 @@ Go to `Manage Jenkins` → `Nodes` → `Built-In Node` → `Configure`
 
 Configure your master node like this  (adjust the number of executors, if needed). Make sure to add the docker label.
 
-   .. figure:: jenkins-gitlab/jenkins_local_node.png
+   .. figure:: jenkins/jenkins_local_node.png
       :align: center
 
       Jenkins local node
@@ -615,7 +615,7 @@ Add agent in Jenkins:
 
     - Passphrase: <the previously entered passphrase> (you can leave it blank if none has been specified)
 
-   .. figure:: jenkins-gitlab/alternative_jenkins_node_credentials.png
+   .. figure:: jenkins/alternative_jenkins_node_credentials.png
       :align: center
 
 3. Go to Manage Jenkins → Nodes → New Node
@@ -624,7 +624,7 @@ Add agent in Jenkins:
 
     - Check 'Permanent Agent'
 
-   .. figure:: jenkins-gitlab/alternative_jenkins_node_setup.png
+   .. figure:: jenkins/alternative_jenkins_node_setup.png
       :align: center
 
 4. Node settings:
@@ -647,7 +647,7 @@ Add agent in Jenkins:
 
     - Availability: Keep this agent online as much as possible
 
-   .. figure:: jenkins-gitlab/alternative_jenkins_node.png
+   .. figure:: jenkins/alternative_jenkins_node.png
       :align: center
 
 5. Save the new node
@@ -681,7 +681,7 @@ Prerequisites:
 
 7. Add a new secret in Jenkins, enter private key you just generated and add the passphrase, if set:
 
-   .. figure:: jenkins-gitlab/jenkins_ssh_credentials.png
+   .. figure:: jenkins/jenkins_ssh_credentials.png
       :align: center
 
       Jenkins SSH Credentials
@@ -704,7 +704,7 @@ Prerequisites:
    Save it.
 
 
-   .. figure:: jenkins-gitlab/jenkins_node.png
+   .. figure:: jenkins/jenkins_node.png
       :align: center
 
       Add a Jenkins node
@@ -716,7 +716,7 @@ Prerequisites:
     This ensures that the docker tasks are not executed on the master agent but on the remote agent.
 
 
-   .. figure:: jenkins-gitlab/jenkins_master_node.png
+   .. figure:: jenkins/jenkins_master_node.png
       :align: center
 
       Adjust Jenkins master node settings
@@ -768,7 +768,7 @@ This section explains the changes required in Jenkins in order to set up build p
 6. You are finished. If you want to fine-tune permissions assigned to teaching assistants and/or instructors,
    you can change them within the ``JenkinsJobPermission.java`` file.
 
-.. figure:: jenkins-gitlab/jenkins_authorization_permissions.png
+.. figure:: jenkins/jenkins_authorization_permissions.png
     :align: center
 
 

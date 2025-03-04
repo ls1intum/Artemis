@@ -414,26 +414,6 @@ export class ExamManagementService {
     }
 
     /**
-     * Unlock all the programming exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the programming exercises should be unlocked
-     * @returns number of exercises for which the repositories were unlocked
-     */
-    unlockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/unlock-all-repositories`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Lock all the programming exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the programming exercises should be locked
-     * @returns number of exercises for which the repositories were locked
-     */
-    lockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/lock-all-repositories`, {}, { observe: 'response' });
-    }
-
-    /**
      * Save the exercise groups of an exam in the given order.
      * @param courseId The course id.
      * @param examId The exam id.

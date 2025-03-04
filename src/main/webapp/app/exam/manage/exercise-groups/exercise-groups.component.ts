@@ -86,8 +86,8 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
-    localVCEnabled = false;
-    localCIEnabled = false;
+    localVCEnabled = true;
+    localCIEnabled = true;
 
     // Icons
     faPlus = faPlus;

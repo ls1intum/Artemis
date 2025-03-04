@@ -58,7 +58,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         String defaultBranchName;
         try {
-            defaultBranchName = LocalVCService.getDefaultBranchOfRepository(repository.getDirectory().toPath().toString());
+            defaultBranchName = LocalVCService.getDefaultBranch(repository.getDirectory().toPath().toString());
         }
         catch (LocalVCInternalException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");

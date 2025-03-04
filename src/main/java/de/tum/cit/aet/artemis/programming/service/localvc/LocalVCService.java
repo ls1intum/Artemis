@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -30,13 +29,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -45,7 +42,6 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 
 /**
  * Implementation of VersionControlService for the local VC server.
@@ -71,35 +67,6 @@ public class LocalVCService extends AbstractVersionControlService {
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         super(gitService, uriService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository,
                 programmingExerciseBuildConfigRepository);
-    }
-
-    @Override
-    public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
-        // For GitLab, users are added to the respective repository to allow them to fetch from there and push to it
-        // if the exercise allows for usage of an offline IDE.
-        // For local VCS, users are allowed to access the repository by default if they have access to the repository URI.
-        // Instead, the LocalVCFetchFilter and LocalVCPushFilter block requests if offline IDE usage is not allowed.
-    }
-
-    @Override
-    public void addMemberToRepository(VcsRepositoryUri repositoryUri, User user, VersionControlRepositoryPermission permissions) {
-        // Members cannot be added to a local repository. Authenticated users have access by default and are authorized in the LocalVCFetchFilter and LocalVCPushFilter.
-    }
-
-    @Override
-    public void removeMemberFromRepository(VcsRepositoryUri repositoryUri, User user) {
-        // Members cannot be removed from a local repository.
-        // Authorization is checked in the LocalVCFetchFilter and LocalVCPushFilter.
-    }
-
-    @Override
-    protected void addWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName) {
-        // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
-    }
-
-    @Override
-    protected void addAuthenticatedWebHook(VcsRepositoryUri repositoryUri, String notificationUrl, String webHookName, String secretToken) {
-        // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
     /**
@@ -152,11 +119,6 @@ public class LocalVCService extends AbstractVersionControlService {
         return new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
     }
 
-    @Override
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) {
-        // Not implemented for local VC. All checks for whether a student can access a repository are conducted in the LocalVCFetchFilter and LocalVCPushFilter.
-    }
-
     /**
      * Get the default branch of the repository
      *
@@ -167,7 +129,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
-        return getDefaultBranchOfRepository(localVCRepositoryUri);
+        return getDefaultBranch(localVCRepositoryUri);
     }
 
     /**
@@ -177,9 +139,9 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
-    public static String getDefaultBranchOfRepository(LocalVCRepositoryUri localVCRepositoryUri) {
+    public static String getDefaultBranch(LocalVCRepositoryUri localVCRepositoryUri) {
         String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
-        return getDefaultBranchOfRepository(localRepositoryPath);
+        return getDefaultBranch(localRepositoryPath);
     }
 
     /**
@@ -189,7 +151,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      * @throws LocalVCInternalException if the default branch cannot be determined
      */
-    public static String getDefaultBranchOfRepository(String localRepositoryPath) {
+    public static String getDefaultBranch(String localRepositoryPath) {
         Map<String, Ref> remoteRepositoryRefs;
         try {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
@@ -204,12 +166,6 @@ public class LocalVCService extends AbstractVersionControlService {
         }
 
         throw new LocalVCInternalException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
-    }
-
-    @Override
-    public void unprotectBranch(VcsRepositoryUri repositoryUri, String branch) {
-        // Not implemented. It is not needed for local VC for the current use
-        // case, because the main branch is unprotected by default.
     }
 
     /**
@@ -237,7 +193,7 @@ public class LocalVCService extends AbstractVersionControlService {
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         try {
-            // Instead of defining a project like would be done for GitLab, just create a directory that will contain all repositories.
+            // Create a directory that will contain all repositories.
             Path projectPath = Path.of(localVCBasePath, projectKey);
             Files.createDirectories(projectPath);
             log.debug("Created folder for local git project at {}", projectPath);
@@ -260,12 +216,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @throws LocalVCInternalException if the repository could not be created
      */
     @Override
-    public void createRepository(String projectKey, String repositorySlug, String parentProjectKey) {
-        createRepository(projectKey, repositorySlug);
-    }
-
-    private void createRepository(String projectKey, String repositorySlug) {
-
+    public void createRepository(String projectKey, String repositorySlug) {
         LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
 
         Path remoteDirPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath);

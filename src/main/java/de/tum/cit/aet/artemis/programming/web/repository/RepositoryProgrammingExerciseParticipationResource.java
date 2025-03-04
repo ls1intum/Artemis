@@ -173,7 +173,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            return versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+            return versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
         }
         else {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);

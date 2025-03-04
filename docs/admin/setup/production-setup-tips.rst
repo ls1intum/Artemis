@@ -103,39 +103,6 @@ Nginx Configuration Templates
 There are some placeholders in the following configurations.
 Replace them with your setup specific values.
 
-GitLab
-^^^^^^
-
-::
-
-   server {
-       listen 443 ssl http2;
-       server_name your.gitlab.domain;
-       ssl_session_cache shared:GitLabSSL:10m;
-       include /etc/nginx/common/common_ssl.conf;
-       add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
-       add_header X-Frame-Options DENY;
-       add_header Referrer-Policy same-origin;
-       client_max_body_size 10m;
-       client_body_buffer_size 1m;
-
-       location / {
-           proxy_pass              http://localhost:<your exposed GitLab HTTP port (default 80)>;
-           proxy_read_timeout      300;
-           proxy_connect_timeout   300;
-           proxy_http_version      1.1;
-           proxy_redirect          http://         https://;
-
-           proxy_set_header    Host                $http_host;
-           proxy_set_header    X-Real-IP           $remote_addr;
-           proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
-           proxy_set_header    X-Forwarded-Proto   $scheme;
-
-           gzip off;
-       }
-   }
-
-
 .. _jenkins-1:
 
 Jenkins

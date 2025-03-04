@@ -25,7 +25,6 @@ public class VcsRepositoryUri {
 
     /**
      * Initializes a new instance of the {@link VcsRepositoryUri} class based on a specified URI string.
-     * The URI string should represent a complete URI to a VCS repository, e.g. https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username
      *
      * @param uriSpecString The URI string to be parsed into a URI.
      * @throws URISyntaxException If the provided string does not form a valid URI.
@@ -106,7 +105,7 @@ public class VcsRepositoryUri {
      * For URLs pointing to remote git repositories, we use the whole path
      * <p>
      * Examples:
-     * https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username --> FTCSCAGRADING1/ftcscagrading1-username
+     * https://username@artemistest.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username --> FTCSCAGRADING1/ftcscagrading1-username
      * file:C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950 --> studentOriginRepo1644180397872264950
      * file:/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205/ --> studentTeamOriginRepo420037178325056205
      *

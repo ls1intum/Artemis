@@ -368,18 +368,6 @@ describe('ProgrammingExercise Service', () => {
         req.flush({ body: 'something' });
     });
 
-    it.each(['unlock', 'lock'])('should unlock all repositories', (lockUnlock) => {
-        const exerciseId = 1;
-        if (lockUnlock === 'unlock') {
-            service.unlockAllRepositories(exerciseId).subscribe();
-        } else {
-            service.lockAllRepositories(exerciseId).subscribe();
-        }
-        const url = `${resourceUrl}/${exerciseId}/${lockUnlock}-all-repositories`;
-        const req = httpMock.expectOne({ method: 'POST', url });
-        req.flush({ body: 'something' });
-    });
-
     it('export instructor repository', fakeAsync(() => {
         const exerciseId = 1;
         service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();

@@ -2,13 +2,14 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.glassfish.jersey.uri.UriComponent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -86,7 +87,7 @@ public class LtiDeepLinkingService {
 
         uriComponentsBuilder.queryParam("jwt", jwt);
         uriComponentsBuilder.queryParam("id", lti13DeepLinkingResponse.deploymentId());
-        uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(returnUrl, UriComponent.Type.QUERY_PARAM));
+        uriComponentsBuilder.queryParam("deepLinkUri", URLEncoder.encode(returnUrl, StandardCharsets.UTF_8));
 
         return uriComponentsBuilder.build().toUriString();
 

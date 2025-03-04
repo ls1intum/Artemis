@@ -63,7 +63,7 @@ with the value ``tcp://localhost:2375`` as shown above.
 If you are running Artemis inside of a docker container, use ``tcp://host.docker.internal:2375`` instead.
 Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
 
-When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin". If this does not work, refer to the guide for the :ref:`Jenkins and GitLab Setup` to manually create an admin user in the database.
+When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin".
 You can then use that admin user to create further users in Artemis' internal user management system.
 
 .. _Configure Build Management:

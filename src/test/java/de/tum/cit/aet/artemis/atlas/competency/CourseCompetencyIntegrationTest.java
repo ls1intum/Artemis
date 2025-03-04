@@ -7,10 +7,10 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.glassfish.jersey.internal.util.Producer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -55,7 +55,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     }
 
     private Result createExerciseParticipationSubmissionAndResult(Exercise exercise, StudentParticipation studentParticipation, double pointsOfExercise,
-            double bonusPointsOfExercise, long scoreAwarded, boolean rated, Producer<Submission> submissionConstructor, int numberOfSubmissions) {
+            double bonusPointsOfExercise, long scoreAwarded, boolean rated, Supplier<Submission> submissionConstructor, int numberOfSubmissions) {
         if (!exercise.getMaxPoints().equals(pointsOfExercise)) {
             exercise.setMaxPoints(pointsOfExercise);
         }
@@ -67,7 +67,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         Submission submission = null;
 
         for (int i = 0; i < numberOfSubmissions; i++) {
-            submission = submissionConstructor.call();
+            submission = submissionConstructor.get();
             submission.setType(SubmissionType.MANUAL);
             submission.setParticipation(studentParticipation);
             submission = submissionRepository.save(submission);

@@ -46,7 +46,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private final String hostname = "localhost";
 
-    private final int port = 7921;
+    private final int port = 1235;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

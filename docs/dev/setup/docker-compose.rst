@@ -50,19 +50,15 @@ In the directory ``docker/`` you can find the following *docker compose* files f
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
 * ``artemis-prod-postgres.yml``: **Artemis-Prod-Postgres** Setup containing the production build of Artemis and
   a PostgreSQL DB
-* ``gitlab-gitlabci.yml``: **GitLab-GitLabCI** Setup containing a GitLab and GitLabCI instance
-* ``gitlab-jenkins.yml``: **GitLab-Jenkins** Setup containing a GitLab and Jenkins instance
-  (see `Gitlab Server Quickstart Guide <#gitlab-server-quickstart>`__ for the configuration of this setup)
 * ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
 * ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 * ``nginx.yml``: **Nginx** Setup containing a preconfigured Nginx instance
 * ``postgres.yml``: **Postgres** Setup containing a PostgreSQL DB instance
 
-Three example commands to run such setups:
+Example command to run such setups:
 
 .. code:: bash
 
-  docker compose -f docker/mysql.yml -f docker/gitlab-jenkins.yml up
   docker compose -f docker/artemis-dev-postgres.yml up
 
 .. tip::
@@ -78,7 +74,6 @@ is defined in the following files:
 * ``mysql.yml``: **MySQL DB Service**
 * ``nginx.yml``: **Nginx Service**
 * ``postgres.yml``: **PostgreSQL DB Service**
-* ``gitlab.yml``: **GitLab Service**
 * ``jenkins.yml``: **Jenkins Service**
 
 For testing mails or SAML logins, you can append the following services to any setup with an Artemis container:
@@ -156,8 +151,7 @@ Other useful commands
 - Stop, remove containers and volumes: ``docker compose down -v``
 - Remove Artemis-related volumes/state: ``docker volume rm artemis-data artemis-mysql-data``
 
-  This is helpful in setups where you just want to delete the state of Artemis
-  but not of Jenkins and GitLab for instance.
+  This is helpful in setups where you just want to delete the state of Artemis.
 - Stop a service: ``docker compose stop <name of the service>`` (restart via
   ``docker compose start <name of the service>``)
 - Restart a service: ``docker compose restart <name of the service>``

@@ -66,7 +66,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     commitHash: string | undefined;
 
     routerLink: string;
-    localVCEnabled = false;
+    localVCEnabled = true;
     isInCourseManagement = false;
 
     ngOnInit() {

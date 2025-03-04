@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,7 +78,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
@@ -112,8 +110,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
         "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}",
-        "artemis.version-control.build-agent-use-ssh=true", "info.contact=test@localhost", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:7921/",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localcilocalvc" })
+        "artemis.version-control.build-agent-use-ssh=true", "info.contact=test@localhost", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_localci", "artemis.version-control.ssh-port=1235" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -406,11 +404,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         // Not implemented for local VC and local CI
     }
@@ -451,11 +444,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
@@ -472,11 +460,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Override
     public void resetMockProvider() {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void verifyMocks() {
         // Not implemented for local VC and local CI
     }
 
@@ -562,11 +545,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
         // Not implemented for local VC and local CI
     }
@@ -597,17 +575,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey1, Set<User> users) throws Exception {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException {
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
         // Not implemented for local VC and local CI
     }
 

@@ -125,32 +125,6 @@
                                 </button>
                             </span>
                         }
-                        @if (programmingExercise.isAtLeastInstructor && !localVCEnabled) {
-                            <button
-                                id="unlockAllRepositoriesButton"
-                                class="btn btn-danger btn-sm me-1"
-                                (click)="handleUnlockAllRepositories()"
-                                [disabled]="lockingOrUnlockingRepositories"
-                            >
-                                @if (lockingOrUnlockingRepositories) {
-                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                }
-                                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
-                                <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories"></span>
-                            </button>
-                            <button
-                                id="lockAllRepositoriesButton"
-                                class="btn btn-danger btn-sm me-1"
-                                (click)="handleLockAllRepositories()"
-                                [disabled]="lockingOrUnlockingRepositories"
-                            >
-                                @if (lockingOrUnlockingRepositories) {
-                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                }
-                                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
-                                <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories"></span>
-                            </button>
-                        }
                         @if (programmingExercise.isAtLeastEditor) {
                             <button
                                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"

@@ -33,7 +33,6 @@ import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
@@ -178,12 +177,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         else {
             return new HttpEntity<>(e.getMessage());
         }
-    }
-
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleGitlabException(GitLabException ex, NativeWebRequest request) {
-        final var problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ex.getMessage()).build();
-        return create(ex, problem, request);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

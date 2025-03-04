@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
 /**

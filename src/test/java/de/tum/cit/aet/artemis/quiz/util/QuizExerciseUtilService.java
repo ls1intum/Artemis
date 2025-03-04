@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -82,7 +82,7 @@ public class QuizExerciseUtilService {
     private TeamRepository teamRepo;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examTestRepository;
 
     @Autowired
     private QuizBatchRepository quizBatchRepository;
@@ -253,7 +253,7 @@ public class QuizExerciseUtilService {
 
         Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
         QuizExerciseFactory.addQuestionsToQuizExercise(quizExercise);

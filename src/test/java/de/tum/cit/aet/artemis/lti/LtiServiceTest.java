@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class LtiServiceTest {
@@ -55,9 +54,6 @@ class LtiServiceTest {
 
     @Mock
     private JWTCookieService jwtCookieService;
-
-    @Mock
-    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     @Mock
     private Optional<CIUserManagementService> optionalCIUserManagementService;
@@ -78,8 +74,7 @@ class LtiServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, optionalVcsUserManagementService,
-                optionalCIUserManagementService);
+        ltiService = new LtiService(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, optionalCIUserManagementService);
         Course course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);

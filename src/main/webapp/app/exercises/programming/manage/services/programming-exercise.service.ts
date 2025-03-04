@@ -413,22 +413,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Unlock all the student repositories of the given exercise so that student can perform commits
-     * @param exerciseId of the particular programming exercise
-     */
-    unlockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Lock all the student repositories of the given exercise so that student can perform commits
-     * @param exerciseId of the particular programming exercise
-     */
-    lockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
-    }
-
-    /**
      * Exports the solution, template or test repository for a given exercise.
      * @param exerciseId
      * @param repositoryType

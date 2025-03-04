@@ -3,11 +3,6 @@
     <actions/>
     <description></description>
     <keepDependencies>false</keepDependencies>
-    <properties>
-        <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin">
-            <gitLabConnection>LS1 GitLab</gitLabConnection>
-        </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
-    </properties>
     <scm class="org.jenkinsci.plugins.multiplescms.MultiSCM" plugin="multiple-scms">
         <scms>
             <hudson.plugins.git.GitSCM plugin="git">
@@ -56,31 +51,6 @@
     <disabled>false</disabled>
     <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
     <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
-    <triggers>
-        <com.dabsquared.gitlabjenkins.GitLabPushTrigger plugin="gitlab-plugin">
-            <spec></spec>
-            <triggerOnPush>true</triggerOnPush>
-            <triggerOnMergeRequest>false</triggerOnMergeRequest>
-            <triggerOnPipelineEvent>false</triggerOnPipelineEvent>
-            <triggerOnAcceptedMergeRequest>false</triggerOnAcceptedMergeRequest>
-            <triggerOnClosedMergeRequest>false</triggerOnClosedMergeRequest>
-            <triggerOnApprovedMergeRequest>false</triggerOnApprovedMergeRequest>
-            <triggerOpenMergeRequestOnPush>never</triggerOpenMergeRequestOnPush>
-            <triggerOnNoteRequest>false</triggerOnNoteRequest>
-            <noteRegex>Jenkins please retry a build</noteRegex>
-            <ciSkip>true</ciSkip>
-            <skipWorkInProgressMergeRequest>true</skipWorkInProgressMergeRequest>
-            <setBuildDescription>true</setBuildDescription>
-            <branchFilterType>All</branchFilterType>
-            <includeBranchesSpec></includeBranchesSpec>
-            <excludeBranchesSpec></excludeBranchesSpec>
-            <sourceBranchRegex></sourceBranchRegex>
-            <targetBranchRegex></targetBranchRegex>
-            <secretToken>{#secretPushToken}</secretToken>
-            <pendingBuildName></pendingBuildName>
-            <cancelPendingBuildsOnUpdate>false</cancelPendingBuildsOnUpdate>
-        </com.dabsquared.gitlabjenkins.GitLabPushTrigger>
-    </triggers>
     <concurrentBuild>false</concurrentBuild>
     <builders>
         <hudson.tasks.Shell>

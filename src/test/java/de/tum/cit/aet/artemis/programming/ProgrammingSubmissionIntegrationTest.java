@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
-import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,7 +10,6 @@ import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -39,7 +37,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -50,13 +47,12 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
-class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
 
@@ -88,7 +84,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
     }
 
@@ -396,7 +391,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
@@ -463,94 +457,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllProgrammingSubmissionsAsUserForbidden() throws Exception {
         request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNotifyPush_invalidParticipation() throws Exception {
-        StudentParticipation studentParticipation = new StudentParticipation();
-        studentParticipation = studentParticipationRepository.save(studentParticipation);
-
-        String url = "/api/programming/public/programming-submissions/" + studentParticipation.getId();
-        request.post(url, "test", HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        doThrow(ContinuousIntegrationException.class).when(versionControlService).getLastCommitDetails(any());
-        String url = "/api/programming/public/programming-submissions/" + participation.getId();
-        request.post(url, "test", HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNotifyPush_commitIsDifferentBranch() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-
-        Commit mockCommit = mock(Commit.class);
-        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
-        doReturn("branch").when(versionControlService).getDefaultBranchOfRepository(any());
-        doReturn("another-branch").when(mockCommit).branch();
-
-        String url = "/api/programming/public/programming-submissions/" + participation.getId();
-        request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNotifyPush_isSetupCommit() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-
-        Commit mockCommit = mock(Commit.class);
-        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
-        doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
-
-        doReturn("default-branch").when(mockCommit).branch();
-        doReturn(artemisGitName).when(mockCommit).authorName();
-        doReturn(artemisGitEmail).when(mockCommit).authorEmail();
-        doReturn(SETUP_COMMIT_MESSAGE).when(mockCommit).message();
-
-        String url = "/api/programming/public/programming-submissions/" + participation.getId();
-        request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
-
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testNotifyPush_studentCommitUpdatesSubmissionCount() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-
-        String buildPlanName = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
-        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), buildPlanName, false);
-        jenkinsRequestMockProvider.mockTriggerBuild(exercise.getProjectKey(), buildPlanName, false);
-
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-
-        Commit mockCommit = mock(Commit.class);
-        doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
-        doReturn("default-branch").when(versionControlService).getDefaultBranchOfRepository(any());
-
-        doReturn("hash1").when(mockCommit).commitHash();
-        doReturn("default-branch").when(mockCommit).branch();
-        doReturn("Student 1").when(mockCommit).authorName();
-        doReturn("student@tum.de").when(mockCommit).authorEmail();
-        doReturn("my nice little solution").when(mockCommit).message();
-
-        String url = "/api/programming/public/programming-submissions/" + participation.getId();
-        // no request body needed since the commit information are mocked above
-        request.postWithoutLocation(url, "test", HttpStatus.OK, null);
-
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
-                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 1));
-
-        // second push
-        doReturn("hash2").when(mockCommit).commitHash();
-        request.postWithoutLocation(url, "test", HttpStatus.OK, null);
-
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq(NEW_SUBMISSION_TOPIC),
-                argThat(arg -> arg instanceof SubmissionDTO submissionDTO && submissionDTO.participation().submissionCount() == 2));
     }
 
     @Test
