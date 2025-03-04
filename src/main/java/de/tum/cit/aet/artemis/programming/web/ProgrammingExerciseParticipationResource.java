@@ -522,7 +522,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return true if the results should be hidden, false otherwise
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getProgrammingExercise().isExamExercise()) {
+        if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
             User student = participation.getStudent()
                     .orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
             var studentExam = studentExamRepository.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())

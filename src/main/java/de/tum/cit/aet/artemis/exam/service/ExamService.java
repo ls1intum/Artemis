@@ -562,6 +562,7 @@ public class ExamService {
     public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
+
         if (!(exercise instanceof QuizExercise)) {
             // Note: quiz exercises are filtered below
             exercise.filterSensitiveInformation();

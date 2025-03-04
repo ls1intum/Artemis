@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,16 @@ public class ExamDateService {
     public ExamDateService(ExamRepository examRepository, StudentExamRepository studentExamRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
+    }
+
+    /**
+     * Returns if the exam is over by checking if the exam end date has passed.
+     *
+     * @param exam the exam
+     * @return true if the exam is over
+     */
+    public boolean isExamOver(Exam exam) {
+        return exam.getEndDate().isBefore(ZonedDateTime.now());
     }
 
     /**
@@ -99,8 +110,11 @@ public class ExamDateService {
         if (studentParticipation.isTestRun()) {
             return false;
         }
+        // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
+        // For test exams, we aim to find the latest student exam.
+        // For real exams, we aim to find the only existing student exam.
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByIdDesc(exam.getId(), studentParticipation.getParticipant().getId());
 
-        var optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
         if (optionalStudentExam.isPresent()) {
             StudentExam studentExam = optionalStudentExam.get();
             return Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.isEnded();
