@@ -3,6 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20250302174100" author="ole-ve">
+        <!-- Columns that potentially reference the full URL (<artemis-domain-name>/api/files/... -->
         <update tableName="answer_option">
             <column name="explanation" valueComputed="REPLACE(explanation, '/api/files', '/api/core/files')"/>
             <where>explanation LIKE '%/api/files%'</where>
@@ -28,11 +29,6 @@
             <where>note LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="attachment">
-            <column name="jhi_link" valueComputed="REPLACE(jhi_link, '/api/files', '/api/core/files')"/>
-            <where>jhi_link LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="competency">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
@@ -54,11 +50,6 @@
         </update>
 
         <update tableName="course">
-            <column name="course_icon" valueComputed="REPLACE(course_icon, '/api/files', '/api/core/files')"/>
-            <where>course_icon LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="course">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
         </update>
@@ -71,11 +62,6 @@
         <update tableName="course">
             <column name="registration_confirmation_message" valueComputed="REPLACE(registration_confirmation_message, '/api/files', '/api/core/files')"/>
             <where>registration_confirmation_message LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="drag_item">
-            <column name="picture_file_path" valueComputed="REPLACE(picture_file_path, '/api/files', '/api/core/files')"/>
-            <where>picture_file_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="drag_item">
@@ -101,16 +87,6 @@
         <update tableName="exam">
             <column name="start_text" valueComputed="REPLACE(start_text, '/api/files', '/api/core/files')"/>
             <where>start_text LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="exam_user">
-            <column name="signing_image_path" valueComputed="REPLACE(signing_image_path, '/api/files', '/api/core/files')"/>
-            <where>signing_image_path LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="exam_user">
-            <column name="student_image_path" valueComputed="REPLACE(student_image_path, '/api/files', '/api/core/files')"/>
-            <where>student_image_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="exercise">
@@ -143,11 +119,6 @@
             <where>text LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="file_upload">
-            <column name="path" valueComputed="REPLACE(path, '/api/files', '/api/core/files')"/>
-            <where>path LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="grading_instruction">
             <column name="feedback" valueComputed="REPLACE(feedback, '/api/files', '/api/core/files')"/>
             <where>feedback LIKE '%/api/files%'</where>
@@ -156,11 +127,6 @@
         <update tableName="grading_instruction">
             <column name="instruction_description" valueComputed="REPLACE(instruction_description, '/api/files', '/api/core/files')"/>
             <where>instruction_description LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="jhi_user">
-            <column name="image_url" valueComputed="REPLACE(image_url, '/api/files', '/api/core/files')"/>
-            <where>image_url LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="knowledge_area">
@@ -214,11 +180,6 @@
         </update>
 
         <update tableName="quiz_question">
-            <column name="background_file_path" valueComputed="REPLACE(background_file_path, '/api/files', '/api/core/files')"/>
-            <where>discriminator = 'DD' AND background_file_path LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="quiz_question">
             <column name="explanation" valueComputed="REPLACE(explanation, '/api/files', '/api/core/files')"/>
             <where>explanation LIKE '%/api/files%'</where>
         </update>
@@ -243,11 +204,6 @@
             <where>text LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="slide">
-            <column name="slide_image_path" valueComputed="REPLACE(slide_image_path, '/api/files', '/api/core/files')"/>
-            <where>slide_image_path LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="standardized_competency">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
@@ -256,11 +212,6 @@
         <update tableName="submission">
             <column name="explanation_text" valueComputed="REPLACE(explanation_text, '/api/files', '/api/core/files')"/>
             <where>discriminator = 'M' AND explanation_text LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="submission">
-            <column name="file_path" valueComputed="REPLACE(file_path, '/api/files', '/api/core/files')"/>
-            <where>discriminator = 'F' AND file_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="submission">
@@ -287,5 +238,58 @@
             <column name="status_explanation" valueComputed="REPLACE(status_explanation, '/api/files', '/api/core/files')"/>
             <where>status_explanation LIKE '%/api/files%'</where>
         </update>
+
+        <!-- Columns whose values are prefixed with /api/files -->
+
+        <update tableName="attachment">
+            <column name="jhi_link" valueComputed="REPLACE(jhi_link, '/api/files/', '/')"/>
+            <where>jhi_link LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="course">
+            <column name="course_icon" valueComputed="REPLACE(course_icon, '/api/files/', '/')"/>
+            <where>course_icon LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="drag_item">
+            <column name="picture_file_path" valueComputed="REPLACE(picture_file_path, '/api/files/', '/')"/>
+            <where>picture_file_path LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="exam_user">
+            <column name="signing_image_path" valueComputed="REPLACE(signing_image_path, '/api/files/', '/')"/>
+            <where>signing_image_path LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="exam_user">
+            <column name="student_image_path" valueComputed="REPLACE(student_image_path, '/api/files/', '/')"/>
+            <where>student_image_path LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="file_upload">
+            <column name="path" valueComputed="REPLACE(path, '/api/files/', '/')"/>
+            <where>path LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="jhi_user">
+            <column name="image_url" valueComputed="REPLACE(image_url, '/api/files/', '/')"/>
+            <where>image_url LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="quiz_question">
+            <column name="background_file_path" valueComputed="REPLACE(background_file_path, '/api/files/', '/')"/>
+            <where>discriminator = 'DD' AND background_file_path LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="slide">
+            <column name="slide_image_path" valueComputed="REPLACE(slide_image_path, '/api/files/', '/')"/>
+            <where>slide_image_path LIKE '%/api/files%'</where>
+        </update>
+
+        <update tableName="submission">
+            <column name="file_path" valueComputed="REPLACE(file_path, '/api/files/', '/')"/>
+            <where>discriminator = 'F' AND file_path LIKE '%/api/files%'</where>
+        </update>
+
     </changeSet>
 </databaseChangeLog>

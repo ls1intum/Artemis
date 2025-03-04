@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
@@ -192,12 +193,13 @@ public class FileResource {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
         var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
-        String responsePath = filePathInformation.publicPath().toString();
+        String publicPath = filePathInformation.publicPath().toString();
 
-        fileUploadService.createFileUpload(responsePath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
+        fileUploadService.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
                 FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
+        String responsePath = getResponsePathFromPublicPathString(publicPath);
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
 
         return ResponseEntity.created(new URI(responsePath)).body(responseBody);
@@ -218,15 +220,16 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var publicPath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        Path responsePath = getResponsePathFromPublicPath(publicPath);
 
-        var fileUpload = fileUploadService.findByPath("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var fileUpload = fileUploadService.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(responsePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
         }
 
-        return buildFileResponse(path, filename, true);
+        return buildFileResponse(responsePath, filename, true);
     }
 
     /**
@@ -656,6 +659,23 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private Path getResponsePathFromPublicPath(@NotNull Path publicPath) {
+        // fail-safe to raise awareness if the public path is not correct (should not happen)
+        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
+            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
+        }
+        // ToDo: syntactical sugar
+        return Path.of(ARTEMIS_FILE_PATH_PREFIX, publicPath.toString());
+    }
+
+    private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
+        // fail-safe to raise awareness if the public path is not correct (should not happen)
+        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
+            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
+        }
+        return ARTEMIS_FILE_PATH_PREFIX + publicPath;
     }
 
     private Path getActualPathFromPublicPathString(@NotNull String publicPath) {
