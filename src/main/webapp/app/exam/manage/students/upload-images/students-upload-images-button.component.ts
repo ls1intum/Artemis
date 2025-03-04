@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -8,10 +8,11 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-student-upload-images-button',
+
     template: `
         <jhi-button
             [btnType]="ButtonType.PRIMARY"
-            [btnSize]="buttonSize"
+            [btnSize]="buttonSize()"
             [icon]="faUpload"
             [title]="'artemisApp.exam.examUsers.uploadImage'"
             (onClick)="openUploadImagesDialog($event)"
@@ -25,11 +26,11 @@ export class StudentsUploadImagesButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
-    @Input() courseId: number;
-    @Input() exam: Exam;
-    @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
+    courseId = input.required<number>();
+    exam = input.required<Exam>();
+    buttonSize = input<ButtonSize>(ButtonSize.MEDIUM);
 
-    @Output() finish: EventEmitter<void> = new EventEmitter();
+    finish = output<void>();
 
     // Icons
     faPlus = faPlus;
@@ -42,8 +43,8 @@ export class StudentsUploadImagesButtonComponent {
     openUploadImagesDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(StudentsUploadImagesDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.courseId = this.courseId;
-        modalRef.componentInstance.exam = this.exam;
+        modalRef.componentInstance.courseId = this.courseId();
+        modalRef.componentInstance.exam = this.exam();
         modalRef.result.then(
             () => this.finish.emit(),
             () => {},

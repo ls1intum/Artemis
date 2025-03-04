@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, OnChanges, input } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -19,13 +19,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, TranslateDirective, RouterLink, ArtemisTranslatePipe],
 })
 export class StudentExamDetailTableRowComponent implements OnChanges {
-    @Input() exercise: Exercise;
-    @Input() examId: number;
-    @Input() isTestRun: boolean;
-    @Input() course: Course;
-    @Input() busy: boolean;
-    @Input() studentExam: StudentExam;
-    @Input() achievedPointsPerExercise: { [exerciseId: number]: number };
+    exercise = input.required<Exercise>();
+    examId = input.required<number>();
+    isTestRun = input.required<boolean>();
+    course = input.required<Course>();
+    busy = input.required<boolean>();
+    studentExam = input.required<StudentExam>();
+    achievedPointsPerExercise = input.required<{
+        [exerciseId: number]: number;
+    }>();
 
     courseId: number;
     studentParticipation: StudentParticipation;
@@ -39,8 +41,8 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     faFolderOpen = faFolderOpen;
 
     ngOnChanges() {
-        if (this.exercise.studentParticipations?.[0]) {
-            this.studentParticipation = this.exercise.studentParticipations![0];
+        if (this.exercise().studentParticipations?.[0]) {
+            this.studentParticipation = this.exercise().studentParticipations![0];
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             if (this.studentParticipation.submissions?.length! > 0) {
                 this.submission = this.studentParticipation.submissions![0];
@@ -50,8 +52,8 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 this.result = this.studentParticipation.results![0];
             }
         }
-        if (this.course && this.course.id) {
-            this.courseId = this.course.id!;
+        if (this.course() && this.course().id) {
+            this.courseId = this.course().id!;
         }
     }
 
@@ -75,7 +77,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 exercise.id!,
                 this.studentParticipation?.id,
                 submission.id!,
-                this.examId,
+                this.examId(),
                 exercise.exerciseGroup?.id,
                 resultId,
             );

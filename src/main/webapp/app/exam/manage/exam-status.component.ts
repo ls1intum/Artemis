@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -38,10 +38,8 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
     private websocketService = inject(WebsocketService);
 
-    @Input()
-    public exam: Exam;
-    @Input()
-    public course?: Course;
+    public exam = input.required<Exam>();
+    public course = input.required<Course>();
 
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
@@ -79,21 +77,21 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     faCircleExclamation = faCircleExclamation;
 
     ngOnInit() {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
+        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.websocketService.subscribe(submittedTopic);
         this.websocketService.receive(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
+        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
     }
 
     ngOnChanges() {
-        this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
+        this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
             this.examChecklist = examStats;
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
-            this.isTestExam = this.exam.testExam!;
+            this.isTestExam = this.exam().testExam!;
 
-            if (this.course?.isAtLeastInstructor) {
+            if (this.course()?.isAtLeastInstructor) {
                 // Step 1:
                 this.setExamPreparation();
             }
@@ -113,9 +111,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
+        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.websocketService.unsubscribe(submittedTopic);
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
+        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
         this.websocketService.unsubscribe(startedTopic);
     }
 
@@ -124,17 +122,17 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      * @returns boolean indicating whether configuration is finished
      */
     private areAllExercisesConfigured(): boolean {
-        const atLeastOneGroup = this.examChecklistService.checkAtLeastOneExerciseGroup(this.exam);
-        const numberOfExercisesEqual = this.examChecklistService.checkNumberOfExerciseGroups(this.exam);
-        const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
-        const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
+        const atLeastOneGroup = this.examChecklistService.checkAtLeastOneExerciseGroup(this.exam());
+        const numberOfExercisesEqual = this.examChecklistService.checkNumberOfExerciseGroups(this.exam());
+        const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
+        const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         let examPointsReachable;
         if (this.isTestExam) {
             // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
-            this.maxPointExercises = this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam);
-            examPointsReachable = this.exam.examMaxPoints === this.maxPointExercises;
+            this.maxPointExercises = this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam());
+            examPointsReachable = this.exam().examMaxPoints === this.maxPointExercises;
         } else {
-            examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
+            examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam());
         }
 
         return atLeastOneGroup && noEmptyExerciseGroup && numberOfExercisesEqual && maximumPointsEqual && examPointsReachable;
@@ -170,9 +168,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         // The ERROR-State should only be visible to Instructors, as editors & TAs have no access to the required data to determine if the preparation is finished
-        if (this.course?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
+        if (this.course()?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
-        } else if (this.examAlreadyEnded() && ((this.course && !this.course.isAtLeastInstructor) || this.examPreparationFinished)) {
+        } else if (this.examAlreadyEnded() && ((this.course() && !this.course().isAtLeastInstructor) || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
@@ -185,7 +183,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      * Sets the reviewState according to the current situation
      */
     private setReviewState(): void {
-        if (!this.exam.examStudentReviewEnd) {
+        if (!this.exam().examStudentReviewEnd) {
             this.examReviewState = ExamReviewState.UNSET;
         } else if (this.isExamReviewPlanned()) {
             this.examReviewState = ExamReviewState.PLANNED;
@@ -202,9 +200,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     private setCorrectionState(): void {
         if (this.examReviewState === ExamReviewState.RUNNING) {
             this.examCorrectionState = ExamReviewState.RUNNING;
-        } else if (!this.exam.publishResultsDate || this.examReviewState === ExamReviewState.UNSET) {
+        } else if (!this.exam().publishResultsDate || this.examReviewState === ExamReviewState.UNSET) {
             this.examCorrectionState = ExamReviewState.UNSET;
-        } else if (this.exam.publishResultsDate && this.examReviewState === ExamReviewState.PLANNED) {
+        } else if (this.exam().publishResultsDate && this.examReviewState === ExamReviewState.PLANNED) {
             this.examCorrectionState = ExamReviewState.PLANNED;
         } else if (this.examReviewState === ExamReviewState.FINISHED && this.allComplaintsResolved()) {
             this.examCorrectionState = ExamReviewState.FINISHED;
@@ -223,9 +221,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
         // For test exam, only the exerciseConfiguration needs to be performed by the instructor
         if (!this.isTestExam) {
             // Step 1.2
-            this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam);
+            this.registeredStudents = this.examChecklistService.checkAtLeastOneRegisteredStudent(this.exam());
             // Step 1.3:
-            this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist) && this.registeredStudents;
+            this.generatedStudentExams = this.examChecklistService.checkAllExamsGenerated(this.exam(), this.examChecklist) && this.registeredStudents;
             // Step 1.4:
             this.preparedExerciseStart = !!this.examChecklist.allExamExercisesAllStudentsPrepared && this.generatedStudentExams;
         } else {
@@ -241,23 +239,26 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      * Indicates whether the exam already started
      */
     private examAlreadyStarted(): boolean {
-        return this.exam.startDate! && this.exam.startDate.isBefore(dayjs());
+        const exam = this.exam();
+        return exam.startDate! && exam.startDate.isBefore(dayjs());
     }
 
     /**
      * Indicates whether the exam is already finished
      */
     private examAlreadyEnded(): boolean {
-        return this.exam.endDate! && this.exam.endDate.isBefore(dayjs());
+        const exam = this.exam();
+        return exam.endDate! && exam.endDate.isBefore(dayjs());
     }
 
     /**
      * Indicates whether exam review is already running
      */
     private isExamReviewRunning(): boolean {
+        const exam = this.exam();
         return (
-            ((!this.exam.examStudentReviewStart && this.exam.examStudentReviewEnd && this.exam.examStudentReviewEnd.isAfter(dayjs())) ||
-                (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isBefore(dayjs()) && this.exam.examStudentReviewEnd!.isAfter(dayjs()))) ??
+            ((!exam.examStudentReviewStart && exam.examStudentReviewEnd && exam.examStudentReviewEnd.isAfter(dayjs())) ||
+                (exam.examStudentReviewStart && exam.examStudentReviewStart.isBefore(dayjs()) && exam.examStudentReviewEnd!.isAfter(dayjs()))) ??
             false
         );
     }
@@ -266,7 +267,8 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      * Indicates whether exam review is planned
      */
     private isExamReviewPlanned(): boolean {
-        return (this.exam.examStudentReviewStart && this.exam.examStudentReviewStart.isAfter(dayjs())) ?? false;
+        const exam = this.exam();
+        return (exam.examStudentReviewStart && exam.examStudentReviewStart.isAfter(dayjs())) ?? false;
     }
 
     /**

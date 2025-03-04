@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
@@ -8,6 +8,6 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     imports: [TranslateDirective, ArtemisDurationFromSecondsPipe],
 })
 export class WorkingTimeChangeComponent {
-    @Input() oldWorkingTime: number;
-    @Input() newWorkingTime: number;
+    oldWorkingTime = input.required<number>();
+    newWorkingTime = input.required<number>();
 }

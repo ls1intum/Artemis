@@ -73,6 +73,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      * Initialize the exam
      */
     ngOnInit(): void {
+        this.getExamRoutesByIdentifier = this.getExamRoutesByIdentifier.bind(this);
         this.route.data.subscribe(({ exam }) => {
             scrollToTopOfPage();
             this.exam = exam;
