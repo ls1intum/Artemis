@@ -364,9 +364,13 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * The name of the profile for integration independent tests
+     */
+    public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
+
+    /**
      * The InfoContributor's detail key for the Theia Portal URL
      */
-
     public static final String THEIA_PORTAL_URL = "theiaPortalURL";
 
     /**

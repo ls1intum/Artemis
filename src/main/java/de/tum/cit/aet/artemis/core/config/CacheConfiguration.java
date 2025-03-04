@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
@@ -176,8 +177,7 @@ public class CacheConfiguration {
     @Bean(name = "hazelcastInstance")
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         // ========================= TESTING ONLY =========================
-        // disabled atm, breaks tests using the FileService, e.g. QuizExerciseIntegrationTest
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_INDEPENDENT))) {
             // try to avoid that parallel test executions interfere with each other
             Config testConfig = new Config();
             testConfig.setInstanceName(instanceName);
