@@ -111,7 +111,22 @@
                 "deletePagesQuestion": "Möchtest du die ausgewählten Seiten wirklich löschen?",
                 "deleteAllPagesQuestion": "Möchtest du wirklich alle Seiten löschen? Dies führt zur Löschung des Anhangs.",
                 "confirmCancelEditing": "Abbruchvorgang bestätigen",
-                "cancelEditingQuestion": "Möchten Sie wirklich gehen, ohne Ihre Änderungen zu speichern?"
+                "cancelEditingQuestion": "Möchten Sie wirklich gehen, ohne Ihre Änderungen zu speichern?",
+                "thumbnailGrid": {
+                    "showPage": "Seite {{ param }} anzeigen",
+                    "hiddenUntil": "Diese Seite ist ausgeblendet bis:",
+                    "showPageConfirmation": "Möchtest du diese Seite anzeigen?",
+                    "forever": "IMMER"
+                },
+                "dateBox": {
+                    "hidePage": "Seite {{ param }} ausblenden",
+                    "hideForever": "Für immer ausblenden",
+                    "selectDate": "Datum auswählen",
+                    "selectExercise": "Übung auswählen",
+                    "noExercises": "Keine Übungen verfügbar",
+                    "exerciseTypeTitle": "{{ param }} Übungen",
+                    "dateError": "Die ausgewählten Daten dürfen nicht in der Vergangenheit liegen."
+                }
             }
         }
     }
