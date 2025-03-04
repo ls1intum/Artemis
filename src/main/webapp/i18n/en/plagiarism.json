@@ -9,7 +9,7 @@
             "warning": "Confirmation/Denial of plagiarism will be lost when refreshing the page.",
             "inspection": "Plagiarism Inspection",
             "plagiarism": "Plagiarism",
-            "teamModeDisabled": "Plagiarism Detection for Team Mode not available.",
+            "teamModeDisabled": "Notification/Verdict not available for Team Mode",
             "back": "Back",
             "empty": "There are no results.",
             "notFound": "No plagiarism found",
