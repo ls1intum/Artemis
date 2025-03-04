@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.atlas.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Set;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -29,4 +31,11 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCourse(Course course);
+
+    @Query("""
+                 SELECT clp
+                 FROM CourseLearnerProfile clp, User u
+                 WHERE u.login = :login AND u.learnerProfile = clp.learnerProfile
+            """)
+    Set<CourseLearnerProfile> findAllByLogin(@Param("login") String login);
 }

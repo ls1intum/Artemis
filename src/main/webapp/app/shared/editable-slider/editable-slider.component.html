@@ -1,0 +1,9 @@
+<div class="fs-5 my-3">
+    <div class="row align-items-end">
+        <div class="col">{{ title() }}</div>
+        <div class="col-md-auto float-end">
+            <jhi-edit-process [(editStateTransition)]="editStateTransition" [disabled]="disabled()" />
+        </div>
+    </div>
+    <jhi-double-slider [editStateTransition]="editStateTransition()" [currentValue]="currentValue()" [(initialValue)]="initialValue" [min]="min()" [max]="max()" />
+</div>
