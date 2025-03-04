@@ -1,7 +1,7 @@
 <div class="d-flex flex-column gap-1 working-time-control">
     <div class="d-flex flex-column gap-1">
         @if (durationLabelText()) {
-            <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText()"></label>
+            <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText()!"></label>
         }
         <div class="input-group">
             <input
@@ -50,7 +50,7 @@
     @if (exam() && relative()) {
         <div class="d-flex flex-column gap-1">
             @if (relativeLabelText()) {
-                <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText()"></label>
+                <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText()!"></label>
             }
             <div class="input-group">
                 <input
