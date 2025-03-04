@@ -393,6 +393,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             // results are never relevant before quiz has ended => return null
             return null;
         }
+
         else {
             return participation.getResults();
         }
