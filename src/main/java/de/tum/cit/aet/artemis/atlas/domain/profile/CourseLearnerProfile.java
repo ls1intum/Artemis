@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CourseLearnerProfile extends DomainObject {
 
+    public static final String ENTITY_NAME = "courseLearnerProfile";
+
     @ManyToOne
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;

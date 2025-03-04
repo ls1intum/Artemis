@@ -1,0 +1,57 @@
+<div class="row">
+    <h2 class="col" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
+    <select class="form-select col-auto w-auto" (change)="courseChanged($event)">
+        <option value="-1" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.selectCourse" selected></option>
+        @for (course of courses; track course.id) {
+            <option value="{{ course.id }}">{{ course.title }}</option>
+        }
+    </select>
+</div>
+<hr />
+<span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br />
+<div class="d-flex align-items-center my-2">
+    <span class="dot background-color ms-1 me-2"></span>
+    <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.initialState"></span>
+    <span class="dot bg-primary ms-3 me-2"></span>
+    <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.currentState">artemisApp.learnerProfile.courseLearnerProfile</span>
+</div>
+<div>
+    <div class="row row-cols-2 gx-5 align-items-end">
+        <div class="col">
+            <jhi-editable-slider
+                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus')"
+                [min]="1"
+                [max]="5"
+                [(initialValue)]="aimForGradeOrBonus"
+                [currentValue]="aimForGradeOrBonus()"
+                [(editStateTransition)]="aimForGradeOrBonusState"
+                (initialValueChange)="updateAimForGradeOrBonus($event)"
+                [disabled]="disabled"
+            />
+        </div>
+        <div class="col">
+            <jhi-editable-slider
+                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment')"
+                [min]="1"
+                [max]="5"
+                [(initialValue)]="timeInvestment"
+                [currentValue]="timeInvestment()"
+                [(editStateTransition)]="timeInvestmentState"
+                (initialValueChange)="updateTimeInvestment($event)"
+                [disabled]="disabled"
+            />
+        </div>
+        <div class="col align-items-end">
+            <jhi-editable-slider
+                [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity')"
+                [min]="1"
+                [max]="5"
+                [(initialValue)]="repetitionIntensity"
+                [currentValue]="repetitionIntensity()"
+                [(editStateTransition)]="repetitionIntensityState"
+                (initialValueChange)="updateRepetitionIntensity($event)"
+                [disabled]="disabled"
+            />
+        </div>
+    </div>
+</div>
