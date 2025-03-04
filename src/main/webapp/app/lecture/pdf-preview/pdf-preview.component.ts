@@ -146,7 +146,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                             this.currentPdfBlob.set(blob);
                             this.currentPdfUrl.set(URL.createObjectURL(blob));
                         },
-                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                        error: (error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                        },
                     });
             } else {
                 this.isPdfLoading.set(false);
@@ -406,9 +408,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Toggles visibility of selected pages
-     */
     /**
      * Toggles visibility of selected pages by updating the hiddenPages map
      */
