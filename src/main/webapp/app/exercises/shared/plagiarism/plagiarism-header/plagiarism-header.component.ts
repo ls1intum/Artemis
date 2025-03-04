@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -8,24 +8,26 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule],
 })
 export class PlagiarismHeaderComponent {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private modalService = inject(NgbModal);
+
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
-
-    constructor(
-        private plagiarismCasesService: PlagiarismCasesService,
-        private modalService: NgbModal,
-    ) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.

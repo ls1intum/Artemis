@@ -10,7 +10,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-competency-graph-modal',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FontAwesomeModule, CompetencyGraphComponent, TranslateDirective],
     templateUrl: './competency-graph-modal.component.html',
@@ -22,6 +21,7 @@ export class CompetencyGraphModalComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
 
+    readonly name = input<string>();
     readonly learningPathId = input.required<number>();
 
     readonly isLoading = signal<boolean>(false);
@@ -29,13 +29,10 @@ export class CompetencyGraphModalComponent {
     private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
 
     constructor() {
-        effect(
-            () => {
-                const learningPathId = this.learningPathId();
-                untracked(() => this.loadCompetencyGraph(learningPathId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const learningPathId = this.learningPathId();
+            untracked(() => this.loadCompetencyGraph(learningPathId));
+        });
     }
 
     private async loadCompetencyGraph(learningPathId: number): Promise<void> {
@@ -54,12 +51,13 @@ export class CompetencyGraphModalComponent {
         this.activeModal.close();
     }
 
-    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number): void {
+    static openCompetencyGraphModal(modalService: NgbModal, learningPathId: number, name: string | undefined): void {
         const modalRef = modalService.open(CompetencyGraphModalComponent, {
             size: 'xl',
             backdrop: 'static',
             windowClass: 'competency-graph-modal',
         });
         modalRef.componentInstance.learningPathId = signal<number>(learningPathId);
+        modalRef.componentInstance.name = signal<string | undefined>(name);
     }
 }

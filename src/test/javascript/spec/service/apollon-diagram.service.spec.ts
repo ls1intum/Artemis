@@ -5,7 +5,7 @@ import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
-const resourceUrl = 'api';
+const resourceUrl = 'api/modeling';
 
 describe('ApollonDiagramService', () => {
     let courseId: number;
@@ -14,7 +14,6 @@ describe('ApollonDiagramService', () => {
     let httpTestingController: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
         })
             .compileComponents()

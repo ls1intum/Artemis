@@ -1,25 +1,26 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
     templateUrl: './programming-exercise-trigger-build-button.component.html',
+    imports: [ButtonComponent],
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
+    private alertService = inject(AlertService);
     @Input() triggerLastGraded = false;
 
     // Icons
     faRedo = faRedo;
 
-    constructor(submissionService: ProgrammingSubmissionService, alertService: AlertService, participationWebsocketService: ParticipationWebsocketService) {
-        super(submissionService, participationWebsocketService, alertService);
+    constructor() {
+        super();
         this.personalParticipation = true;
     }
 

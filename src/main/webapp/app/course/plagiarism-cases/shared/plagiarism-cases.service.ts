@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -15,10 +15,10 @@ export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
-    private resourceUrl = 'api/courses';
-    private resourceUrlExercises = 'api/exercises';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api/plagiarism/courses';
+    private resourceUrlExercises = 'api/plagiarism/exercises';
 
     /* Instructor */
 

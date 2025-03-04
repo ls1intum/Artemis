@@ -1,8 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../../test.module';
-import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.component';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
@@ -45,8 +44,6 @@ describe('SshUserSettingsComponent', () => {
             error: jest.fn(),
         };
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [SshUserSettingsComponent, TranslatePipeMock],
             providers: [
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },

@@ -15,7 +15,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <argLine>-Dfile.encoding=UTF-8</argLine>
         <kotlin.version>1.9.23</kotlin.version>
-        <teamscale.version>33.1.2</teamscale.version>
+        <teamscale.version>34.2.1</teamscale.version>
 	</properties>
     <dependencies>
         <dependency>

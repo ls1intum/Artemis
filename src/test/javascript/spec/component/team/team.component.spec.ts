@@ -1,30 +1,23 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { Router, RouterModule } from '@angular/router';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { TeamParticipationTableComponent } from 'app/exercises/shared/team/team-participation-table/team-participation-table.component';
-import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
-import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
 import { TeamComponent } from 'app/exercises/shared/team/team.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { Exercise } from '../../../../../main/webapp/app/entities/exercise.model';
 import { Team } from '../../../../../main/webapp/app/entities/team.model';
 import { mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { ArtemisTestModule } from '../../test.module';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('TeamComponent', () => {
     let comp: TeamComponent;
@@ -39,24 +32,17 @@ describe('TeamComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule), MockModule(NgxDatatableModule), MockModule(RouterModule)],
-            declarations: [
-                TeamComponent,
-                MockComponent(TeamUpdateButtonComponent),
-                MockComponent(TeamDeleteButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(TeamParticipationTableComponent),
-                MockComponent(DataTableComponent),
-                MockComponent(AssessmentWarningComponent),
-            ],
             providers: [
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
-                MockProvider(AccountService),
                 TeamService,
-                MockProvider(TranslateService),
                 ExerciseService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

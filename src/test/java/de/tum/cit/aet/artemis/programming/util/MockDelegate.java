@@ -89,8 +89,6 @@ public interface MockDelegate {
 
     void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
 
-    void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception;
-
     void mockCreateGroupInUserManagement(String groupName) throws Exception;
 
     void mockDeleteGroupInUserManagement(String groupName) throws Exception;
@@ -108,6 +106,8 @@ public interface MockDelegate {
     void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception;
 
     void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) throws Exception;
+
+    void mockGetBuildPlanConfig(String projectKey, String planName) throws Exception;
 
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
 
@@ -132,4 +132,6 @@ public interface MockDelegate {
     void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
 
     void mockUserExists(String username) throws Exception;
+
+    void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException;
 }

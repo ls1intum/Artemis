@@ -1,13 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { By } from '@angular/platform-browser';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { MockActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
@@ -17,9 +23,14 @@ describe('FileUploadExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [FileUploadExamSummaryComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FileUploadSubmissionComponent)],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .compileComponents()
             .then(() => {

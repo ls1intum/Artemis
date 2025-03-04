@@ -49,7 +49,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void guidedTourSettingsIsInitiallyNull() throws Exception {
-        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/core/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isEmpty();
     }
 
@@ -57,10 +57,10 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1")
     void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
-        Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/core/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).hasSize(2);
 
-        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/core/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).hasSize(2);
     }
 
@@ -68,10 +68,10 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationIndependent
     @WithMockUser(username = TEST_PREFIX + "student1")
     void deleteGuidedTourSetting() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
-        request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
-        request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);
+        request.putWithResponseBody("/api/core/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
+        request.delete("/api/core/guided-tour-settings/new_tour", HttpStatus.OK);
 
-        User user = request.get("/api/public/account", HttpStatus.OK, User.class);
+        User user = request.get("/api/core/public/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).hasSize(1);
     }
 }

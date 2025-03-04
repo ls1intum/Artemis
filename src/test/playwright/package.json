@@ -4,15 +4,15 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "@playwright/test": "1.49.1",
+        "@playwright/test": "1.50.1",
         "cross-env": "7.0.3",
         "dayjs": "1.11.13",
         "dotenv": "16.4.7",
         "junit-merge": "2.0.0",
-        "npm-check-updates": "17.1.12",
+        "npm-check-updates": "17.1.14",
         "npm-run-all": "4.1.5",
         "simple-git": "3.27.0",
-        "uuid": "11.0.3"
+        "uuid": "11.0.5"
     },
     "scripts": {
         "playwright:test": "npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-reports",
@@ -23,6 +23,7 @@
         "playwright:setup-local": "npx playwright install --with-deps chromium",
         "playwright:init": "playwright test init",
         "merge-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
-        "update": "ncu -i --format group"
+        "update": "ncu -i --format group",
+        "pretest": "tsc --incremental -p tsconfig.json"
     }
 }

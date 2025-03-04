@@ -14,6 +14,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
+import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
@@ -28,13 +29,39 @@ import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
     styleUrls: ['./example-modeling-submission.component.scss'],
+    imports: [
+        TranslateDirective,
+        HelpIconComponent,
+        FormsModule,
+        FaIconComponent,
+        ModelingEditorComponent,
+        ModelingAssessmentComponent,
+        UnreferencedFeedbackComponent,
+        CollapsableAssessmentInstructionsComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
+    private exerciseService = inject(ExerciseService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     @ViewChild(ModelingAssessmentComponent, { static: false })
@@ -106,16 +133,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     faCodeBranch = faCodeBranch;
     faChalkboardTeacher = faChalkboardTeacher;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private tutorParticipationService: TutorParticipationService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private navigationUtilService: ArtemisNavigationUtilService,
-    ) {
+    constructor() {
         effect(() => {
             // Update highlighted elements as soon as current theme changes
             const highlightColor = this.highlightColor();

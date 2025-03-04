@@ -5,9 +5,14 @@ import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 /**
  * An abstract component intended for cases where a resource needs to be imported from one course into another.
@@ -21,8 +26,7 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    standalone: true,
-    imports: [ArtemisSharedCommonModule],
+    imports: [NgbPagination, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',
 })
@@ -37,9 +41,9 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly alertService = inject(AlertService);
     private readonly pagingService = inject(PagingService);
 
-    readonly columns = input.required<Column<T>[]>();
+    columns = input.required<Column<T>[]>();
     readonly columnBaseTranslationKey = input.required<string>();
-    readonly disabledIds = input<number[]>([]);
+    disabledIds = input<number[]>([]);
     readonly numberOfColumns = computed(() => this.columns().length + 2);
 
     readonly onRowSelection = output<T>();

@@ -1,10 +1,11 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ModalConfirmAutofocusComponent', () => {
     let fixture: ComponentFixture<ModalConfirmAutofocusComponent>;
@@ -12,9 +13,7 @@ describe('ModalConfirmAutofocusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ModalConfirmAutofocusComponent, TranslatePipeMock],
-            providers: [MockProvider(NgbActiveModal)],
+            providers: [MockPipe(ArtemisTranslatePipe), MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {

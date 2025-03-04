@@ -50,7 +50,10 @@
                             <ul class="list-unstyled">
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="exam.exerciseGroups && exam.exerciseGroups.length > 0" />
+                                        <jhi-checklist-check
+                                            [checkAttribute]="exam.exerciseGroups && exam.exerciseGroups.length > 0"
+                                            data-testid="check-least-one-exercise-group"
+                                        />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastoneexercisegroup"></span>
                                     </span>
                                 </li>
@@ -63,6 +66,7 @@
                                                 countMandatoryExercises <= (exam.numberOfExercisesInExam ?? 0) &&
                                                 (exam.numberOfExercisesInExam ?? 0) <= exam.exerciseGroups.length
                                             "
+                                            data-testid="check-number-of-exercise-groups"
                                         />
                                         <span
                                             jhiTranslate="{{
@@ -75,19 +79,19 @@
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="allGroupsContainExercise" />
+                                        <jhi-checklist-check [checkAttribute]="allGroupsContainExercise" data-testid="check-each-exercise-group-has-exercises" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.eachexercisegroup"></span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="pointsExercisesEqual" />
+                                        <jhi-checklist-check [checkAttribute]="pointsExercisesEqual" data-testid="check-points-in-exercise-groups-equal" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pointsexercisegroupequal"></span>
                                     </span>
                                 </li>
                                 <li class="list-group-item border-1">
                                     <span>
-                                        <jhi-checklist-check [checkAttribute]="totalPoints" />
+                                        <jhi-checklist-check [checkAttribute]="totalPoints" data-testid="check-total-points-possible" />
                                         <span jhiTranslate="artemisApp.examManagement.checklist.textitems.totalpointspossible"></span>
                                     </span>
                                 </li>
@@ -139,7 +143,7 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.numberOfExamUsers && exam.numberOfExamUsers! > 0" />
+                                            <jhi-checklist-check [checkAttribute]="!!exam.numberOfExamUsers && exam.numberOfExamUsers! > 0" data-testid="check-least-one-student" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.leastonestudent"></span>
                                         </span>
                                     </li>
@@ -150,7 +154,7 @@
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info">
+                                <a [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info" data-testid="students-button-register">
                                     <fa-icon [icon]="faUser" />
                                     <span jhiTranslate="artemisApp.examManagement.students"></span>
                                 </a>
@@ -167,14 +171,14 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="allExamsGenerated" />
+                                            <jhi-checklist-check [checkAttribute]="allExamsGenerated" data-testid="check-all-exams-generated" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allexamsgenerated"></span>
                                         </span>
                                     </li>
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary" data-testid="student-exams-button-generate">
                                     <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                 </a>
@@ -191,14 +195,17 @@
                                 <ul class="list-unstyled">
                                     @if (examChecklist) {
                                         <li class="list-group-item border-1">
-                                            <jhi-checklist-check [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated" />
+                                            <jhi-checklist-check
+                                                [checkAttribute]="!!examChecklist.allExamExercisesAllStudentsPrepared && this.allExamsGenerated"
+                                                data-testid="check-all-exercises-prepared"
+                                            />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.allExercisesPrepared"></span>
                                         </li>
                                     }
                                 </ul>
                             </td>
                             <td>
-                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary">
+                                <a [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-primary" data-testid="student-exams-button-prepare-start">
                                     <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                                 </a>
@@ -461,7 +468,7 @@
                                     <li class="list-group-item border-1">
                                         <span>
                                             <li class="list-group-item border-1">
-                                                <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" />
+                                                <jhi-checklist-check [checkAttribute]="!!exam.publishResultsDate" data-testid="check-publishing-date-set" />
                                                 <span jhiTranslate="artemisApp.examManagement.checklist.textitems.pulishingdateset"></span>
                                             </li>
                                             @if (exam.publishResultsDate) {
@@ -487,7 +494,10 @@
                                                                     <span jhiTranslate="artemisApp.examManagement.checklist.textitems.checkUnfinishedAssessments"></span>
                                                                 </th>
                                                                 <th>
-                                                                    <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnfinishedAssessments)" />
+                                                                    <jhi-checklist-check
+                                                                        [checkAttribute]="!isExamOver || (isExamOver && !existsUnfinishedAssessments)"
+                                                                        data-testid="check-unfinished-assessments"
+                                                                    />
                                                                 </th>
                                                                 <th>
                                                                     <button
@@ -509,7 +519,10 @@
                                                                     @if (isEvaluatingQuizExercises) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
-                                                                        <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnassessedQuizzes)" />
+                                                                        <jhi-checklist-check
+                                                                            [checkAttribute]="!isExamOver || (isExamOver && !existsUnassessedQuizzes)"
+                                                                            data-testid="check-unassessed-quizzes"
+                                                                        />
                                                                     }
                                                                 </th>
                                                                 <th>
@@ -536,7 +549,10 @@
                                                                     @if (isAssessingUnsubmittedExams) {
                                                                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                                                     } @else {
-                                                                        <jhi-checklist-check [checkAttribute]="!isExamOver || (isExamOver && !existsUnsubmittedExercises)" />
+                                                                        <jhi-checklist-check
+                                                                            [checkAttribute]="!isExamOver || (isExamOver && !existsUnsubmittedExercises)"
+                                                                            data-testid="check-unsubmitted-exercises"
+                                                                        />
                                                                     }
                                                                 </th>
                                                                 <th>
@@ -580,13 +596,13 @@
                                 <ul class="list-unstyled">
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewStart" />
+                                            <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewStart" data-testid="check-start-date-review-set" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.startdatereviewset"></span>
                                         </span>
                                     </li>
                                     <li class="list-group-item border-1">
                                         <span>
-                                            <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd" />
+                                            <jhi-checklist-check [checkAttribute]="!!exam.examStudentReviewEnd" data-testid="check-end-date-review-set" />
                                             <span jhiTranslate="artemisApp.examManagement.checklist.textitems.enddatereviewset"></span>
                                         </span>
                                     </li>

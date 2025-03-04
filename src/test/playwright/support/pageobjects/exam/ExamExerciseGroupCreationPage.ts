@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { AdditionalData, COURSE_BASE, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
+import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
 import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -27,25 +27,43 @@ export class ExamExerciseGroupCreationPage {
         await titleField.fill(title);
     }
 
+    async setMandatoryBox(checked: boolean) {
+        if (checked) {
+            await this.getMandatoryBoxLocator().check();
+        } else {
+            await this.getMandatoryBoxLocator().uncheck();
+        }
+    }
+
     async isMandatoryBoxShouldBeChecked() {
-        await this.page.locator('#isMandatory').isChecked();
+        await this.getMandatoryBoxLocator().isChecked();
+    }
+
+    private getMandatoryBoxLocator() {
+        return this.page.locator('#isMandatory');
     }
 
     async clickSave(): Promise<ExerciseGroup> {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/exercise-groups`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         const response = await responsePromise;
         return response.json();
     }
 
     async update() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/exercise-groups`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         await responsePromise;
     }
 
-    async addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<PlaywrightExercise> {
-        const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData);
+    async addGroupWithExercise(
+        exam: Exam,
+        exerciseType: ExerciseType,
+        additionalData: AdditionalData = {},
+        isMandatory?: boolean,
+        exerciseTemplate?: any,
+    ): Promise<PlaywrightExercise> {
+        const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, isMandatory, exerciseTemplate);
         let exercise = { ...response!, additionalData };
         if (exerciseType == ExerciseType.QUIZ) {
             const quiz = response as QuizExercise;
@@ -61,11 +79,18 @@ export class ExamExerciseGroupCreationPage {
         return exercise;
     }
 
-    async handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: ExerciseType, additionalData: AdditionalData): Promise<Exercise | undefined> {
-        const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam);
+    async handleAddGroupWithExercise(
+        exam: Exam,
+        title: string,
+        exerciseType: ExerciseType,
+        additionalData: AdditionalData,
+        isMandatory?: boolean,
+        exerciseTemplate?: any,
+    ): Promise<Exercise | undefined> {
+        const exerciseGroup = await this.examAPIRequests.addExerciseGroupForExam(exam, 'Group ' + generateUUID(), isMandatory);
         switch (exerciseType) {
             case ExerciseType.TEXT:
-                return await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title);
+                return await this.exerciseAPIRequests.createTextExercise({ exerciseGroup }, title, exerciseTemplate);
             case ExerciseType.MODELING:
                 return await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
             case ExerciseType.QUIZ:

@@ -1,24 +1,25 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { KeyValuePipe } from '@angular/common';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
-import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
-    standalone: true,
-    imports: [ArtemisSharedLibsModule],
+    imports: [FormsModule, KeyValuePipe, TranslateDirective],
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {
+    private theiaService = inject(TheiaService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     programmingLanguage?: ProgrammingLanguage;
     theiaImages = {};
-
-    constructor(private theiaService: TheiaService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if ((changes.programmingExerciseCreationConfig || changes.programmingExercise) && this.shouldReloadTemplate()) {

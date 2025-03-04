@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -7,15 +7,24 @@ import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
+import { GitDiffReportComponent } from 'app/exercises/programming/git-diff-report/git-diff-report.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-commit-details-view',
     templateUrl: './commit-details-view.component.html',
+    imports: [GitDiffReportComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private route = inject(ActivatedRoute);
+
     report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
-    participationId?: number;
+    repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
     commitHash: string;
     isTemplate = false;
 
@@ -25,7 +34,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    repositoryType?: string;
+    repositoryType: RepositoryType;
 
     repoFilesSubscription: Subscription;
     participationRepoFilesAtLeftCommitSubscription: Subscription;
@@ -33,12 +42,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
 
     paramSub: Subscription;
     participationSub: Subscription;
-
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnDestroy(): void {
         this.repoFilesSubscription?.unsubscribe();
@@ -56,9 +59,9 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe((params) => {
             this.exerciseId = Number(params['exerciseId']);
-            this.participationId = isNaN(Number(params['participationId'])) ? undefined : Number(params['participationId']);
+            this.repositoryId = Number(params['repositoryId']);
             this.commitHash = params['commitHash'];
-            this.repositoryType = params['repositoryType'] || undefined;
+            this.repositoryType = params['repositoryType'] ?? 'USER';
             this.retrieveAndHandleCommits();
         });
     }
@@ -71,10 +74,15 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private retrieveAndHandleCommits() {
         let commitInfoSubscription;
-        if (this.repositoryType) {
+
+        if (this.repositoryType === RepositoryType.TEMPLATE || this.repositoryType === RepositoryType.SOLUTION || this.repositoryType === RepositoryType.TESTS) {
             commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
-        } else if (this.participationId) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId);
+        }
+        if (this.repositoryType === RepositoryType.AUXILIARY) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!);
+        }
+        if (this.repositoryType === RepositoryType.USER) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId!);
         }
         if (!commitInfoSubscription) {
             return;
@@ -110,7 +118,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      */
     private getDiffReport() {
         this.repoFilesSubscription = this.programmingExerciseService
-            .getDiffReportForCommits(this.exerciseId, this.participationId, this.previousCommit.hash!, this.currentCommit.hash!, this.repositoryType)
+            .getDiffReportForCommits(this.exerciseId, this.repositoryId, this.previousCommit.hash!, this.currentCommit.hash!, this.repositoryType)
             .subscribe((report) => {
                 this.handleNewReport(report!);
             });
@@ -125,8 +133,8 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         this.report = report;
         this.report.leftCommitHash = this.previousCommit.hash;
         this.report.rightCommitHash = this.currentCommit.hash;
-        this.report.participationIdForLeftCommit = this.participationId;
-        this.report.participationIdForRightCommit = this.participationId;
+        this.report.participationIdForLeftCommit = this.repositoryId;
+        this.report.participationIdForRightCommit = this.repositoryId;
         this.fetchParticipationRepoFiles();
     }
 

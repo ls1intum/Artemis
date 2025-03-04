@@ -54,4 +54,9 @@ export class MockPostService {
     computeSimilarityScoresWithCoursePosts(post: Post, courseId: number): Observable<HttpResponse<Post[]>> {
         return of({ body: [metisPostExerciseUser1] }) as Observable<HttpResponse<Post[]>>;
     }
+
+    getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
+        const sourcePosts = metisCoursePosts.filter((post) => postIds.includes(post.id!));
+        return of(sourcePosts);
+    }
 }

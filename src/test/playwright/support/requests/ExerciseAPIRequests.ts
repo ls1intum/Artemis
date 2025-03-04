@@ -17,9 +17,6 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import {
-    BASE_API,
-    COURSE_BASE,
-    EXERCISE_BASE,
     Exercise,
     ExerciseMode,
     ExerciseType,
@@ -201,11 +198,11 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`${BASE_API}/repository/${repositoryId}/files?commit=yes`, { data });
+        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
     }
 
     async createProgrammingExerciseFile(repositoryId: number, filename: string) {
-        return await this.page.request.post(`${BASE_API}/repository/${repositoryId}/file?file=${filename}`);
+        return await this.page.request.post(`api/programming/repository/${repositoryId}/file?file=${filename}`);
     }
 
     /**
@@ -213,10 +210,16 @@ export class ExerciseAPIRequests {
      *
      * @param body - An object containing either the course or exercise group the exercise will be added to.
      * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param exerciseTemplate - The template for the text exercise
+     * (optional, default: textExerciseTemplate - default template).
      */
-    async createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()): Promise<TextExercise> {
+    async createTextExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Text ' + generateUUID(),
+        exerciseTemplate: any = textExerciseTemplate,
+    ): Promise<TextExercise> {
         const template = {
-            ...textExerciseTemplate,
+            ...exerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
         };
@@ -268,9 +271,10 @@ export class ExerciseAPIRequests {
      *
      * @param exerciseId - The ID of the text exercise for which the submission is made.
      * @param text - The text content of the submission.
+     * @param createNewSubmission - Whether to create a new submission or update an existing one (optional, default: true).
      */
     async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
-        const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;
+        const url = `api/text/exercises/${exerciseId}/text-submissions`;
         const data = { submissionExerciseType: 'text', text };
 
         if (createNewSubmission) {
@@ -314,7 +318,7 @@ export class ExerciseAPIRequests {
      * @param file - The file content of the submission.
      */
     async makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
-        await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/file-upload-submissions`, {
+        await this.page.request.post(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, {
             data: { submissionExerciseType: 'file-upload', file },
         });
     }
@@ -383,7 +387,7 @@ export class ExerciseAPIRequests {
      * @param participation - The participation data for the submission.
      */
     async makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
-        return this.page.request.put(`${EXERCISE_BASE}/${exerciseID}/modeling-submissions`, {
+        return this.page.request.put(`api/modeling/exercises/${exerciseID}/modeling-submissions`, {
             data: {
                 ...modelingExerciseSubmissionTemplate,
                 id: participation.submissions![0].id,
@@ -498,7 +502,7 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
     }
 
     /**
@@ -519,7 +523,7 @@ export class ExerciseAPIRequests {
             ...multipleChoiceSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
+        await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
     }
 
     /**
@@ -551,7 +555,7 @@ export class ExerciseAPIRequests {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
+        await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
     }
 
     /**
@@ -561,7 +565,7 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipation> representing the student participation.
      */
     async getExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        const response = await this.page.request.get(`${EXERCISE_BASE}/${exerciseId}/participation`);
+        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participation`);
         return response.json();
     }
 
@@ -572,7 +576,7 @@ export class ExerciseAPIRequests {
      * @returns APIResponse representing the API request response.
      */
     async startExerciseParticipation(exerciseId: number) {
-        return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/participations`);
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/participations`);
     }
 
     private async updateProgrammingExerciseTestCaseVisibility(
@@ -630,6 +634,6 @@ export class ExerciseAPIRequests {
             students,
             owner: tutor,
         };
-        return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/teams`, { data: team });
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: team });
     }
 }

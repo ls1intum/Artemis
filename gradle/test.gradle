@@ -3,6 +3,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
+
+    jvmArgs += "-javaagent:${configurations.mockitoAgent.asPath}"
+
     // a collection to track failedTests
     ext.failedTests = []
 
@@ -45,17 +48,39 @@ tasks.withType(Test).configureEach {
     }
 }
 
+// Allow using in jacoco.gradle
+ext {
+    includedTestTags = System.getProperty("includeTags")
+    includedTags = !includedTestTags ? new String[]{} : includedTestTags.split(",") as String[]
+    includedModulesTag = System.getProperty("includeModules")
+    includedModules = !includedModulesTag ? new String[]{} : includedModulesTag.split(",") as String[]
+
+    runAllTests = includedTags.size() == 0 && includedModules.size() == 0
+    BasePath = "de/tum/cit/aet/artemis"
+}
+
 
 // Execute the test cases: ./gradlew test
 // Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+// Execute tests only for specific modules: ./gradlew test -DincludeModules="atlas". Using this flag, "includeTags" will be ignored.
 test {
-    if (System.getProperty("includeTags")) {
-        useJUnitPlatform {
-            includeTags System.getProperty("includeTags")
+    if (runAllTests) {
+        useJUnitPlatform()
+        exclude "**/*IT*", "**/*IntTest*"
+    } else if (includedModules.size() == 0) {
+        // not running all tests, but not module-specific ones -> use tags
+        useJUnitPlatform() {
+            includeTags includedTags
         }
     } else {
         useJUnitPlatform()
-        exclude "**/*IT*", "**/*IntTest*"
+        // Always execute "shared"-folder when executing module-specifc tests
+        includedModules += "shared"
+        filter { testFilter ->
+            includedModules.each { val ->
+                testFilter.includeTestsMatching("de.tum.cit.aet.artemis.$val.*")
+            }
+        }
     }
     testClassesDirs = testing.suites.test.sources.output.classesDirs
     classpath = testing.suites.test.sources.runtimeClasspath
@@ -68,59 +93,5 @@ test {
     maxHeapSize = "6g" // maximum heap size
 }
 
-tasks.register("testReport", TestReport) {
-    destinationDirectory = layout.buildDirectory.file("reports/tests").get().asFile
-    testResults.from(test)
-}
-
-apply plugin: "jacoco"
-
-jacoco {
-    toolVersion = "0.8.12"
-}
-
-private excludedClassFilesForReport(classDirectories) {
-    classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it,
-            exclude: [
-                "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
-                "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
-                "**/gradle-wrapper.jar/**"
-            ]
-        )
-    }))
-}
-
-jacocoTestReport {
-    reports {
-        xml.required = true
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-
-jacocoTestCoverageVerification {
-    violationRules {
-        rule {
-            limit {
-                counter = "INSTRUCTION"
-                value = "COVEREDRATIO"
-                // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.891
-            }
-            limit {
-                counter = "CLASS"
-                value = "MISSEDCOUNT"
-                // TODO: in the future the following value should become less than 10
-                maximum = 55
-            }
-        }
-    }
-    // we want to ignore some generated files in the domain folders
-    afterEvaluate {
-        excludedClassFilesForReport(classDirectories)
-    }
-}
-check.dependsOn jacocoTestCoverageVerification
+// Dynamic generation of jacoco test report generation-/coverage verification-tasks (per-module)
+apply from: "gradle/jacoco.gradle"

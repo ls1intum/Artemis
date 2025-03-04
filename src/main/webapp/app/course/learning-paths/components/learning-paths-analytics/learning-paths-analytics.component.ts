@@ -9,7 +9,6 @@ import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-learning-paths-analytics',
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [CompetencyGraphComponent, TranslateDirective, CommonModule],
     templateUrl: './learning-paths-analytics.component.html',
@@ -29,13 +28,10 @@ export class LearningPathsAnalyticsComponent {
     readonly valueSelection = signal<CompetencyGraphNodeValueType>(CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS);
 
     constructor() {
-        effect(
-            () => {
-                const courseId = this.courseId();
-                untracked(() => this.loadInstructionCompetencyGraph(courseId));
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            const courseId = this.courseId();
+            untracked(() => this.loadInstructionCompetencyGraph(courseId));
+        });
     }
 
     private async loadInstructionCompetencyGraph(courseId: number): Promise<void> {

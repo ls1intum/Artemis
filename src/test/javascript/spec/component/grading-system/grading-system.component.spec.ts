@@ -1,15 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
-import { NgModel } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
-import { ActivatedRoute, Params, RouterModule } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
@@ -20,15 +16,10 @@ describe('Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([])],
-            declarations: [
-                GradingSystemComponent,
-                MockDirective(NgModel),
-                MockComponent(DocumentationButtonComponent),
-                MockComponent(GradingSystemInfoModalComponent),
-                MockPipe(ArtemisTranslatePipe),
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
             .then(() => {

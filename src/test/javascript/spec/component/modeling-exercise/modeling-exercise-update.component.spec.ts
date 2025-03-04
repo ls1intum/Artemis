@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
-import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { ArtemisTestModule } from '../../test.module';
+import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+
 import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -27,6 +27,8 @@ import { NgModel } from '@angular/forms';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -40,14 +42,17 @@ describe('ModelingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbPagination)],
+            imports: [MockComponent(NgbPagination)],
             declarations: [ModelingExerciseUpdateComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: Router, useClass: MockRouter },
                 MockProvider(TranslateService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(ModelingExerciseUpdateComponent, '')

@@ -39,18 +39,22 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
             FROM LongFeedbackText longFeedback
                 LEFT JOIN FETCH longFeedback.feedback feedback
                 LEFT JOIN FETCH feedback.result result
-                LEFT JOIN FETCH result.participation
+                LEFT JOIN FETCH result.submission
             WHERE longFeedback.feedback.id = :feedbackId
             """)
     Optional<LongFeedbackText> findWithFeedbackAndResultAndParticipationByFeedbackId(@Param("feedbackId") final Long feedbackId);
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     @Query("""
             DELETE FROM LongFeedbackText longFeedback
             WHERE longFeedback.feedback.id IN :feedbackIds
             """)
     void deleteByFeedbackIds(@Param("feedbackIds") List<Long> feedbackIds);
+
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteByFeedbackId(final Long feedbackId);
 
     default LongFeedbackText findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(final Long feedbackId) {
         return getValueElseThrow(findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId), feedbackId);

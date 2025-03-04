@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Course } from 'app/entities/course.model';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ActivatedRoute } from '@angular/router';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('Header Course Component', () => {
     let fixture: ComponentFixture<HeaderCourseComponent>;
@@ -26,11 +24,12 @@ describe('Header Course Component', () => {
         description: 'a'.repeat(100),
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, CommonModule, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
-            declarations: [HeaderCourseComponent],
-            providers: [MockProvider(Router)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -86,9 +85,6 @@ describe('Header Course Component', () => {
     it('should not display manage button but go to student view button in course management', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = true;
-        const router = TestBed.inject(Router);
-        const urlSpy = jest.spyOn(router, 'url', 'get');
-        urlSpy.mockReturnValue('/course-management/some-path');
 
         fixture.detectChanges();
 
@@ -102,9 +98,6 @@ describe('Header Course Component', () => {
     it('should not display manage button to student', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = false;
-        const router = TestBed.inject(Router);
-        const urlSpy = jest.spyOn(router, 'url', 'get');
-        urlSpy.mockReturnValue('/some-url');
 
         fixture.detectChanges();
 

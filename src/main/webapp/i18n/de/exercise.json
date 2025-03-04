@@ -177,7 +177,8 @@
             "allowFeedbackSuggestionsTooltip": "Athena wird Feedbackvorschläge generieren, die Tutoren beim Bewerten von Einreichungen verwenden können.",
             "allowFeedbackRequests": "Automatische vorläufige Feedbackanfragen",
             "allowFeedbackRequestsTooltip": "Studierende können vor dem Abgabetermin Feedback anfordern. Die Anfragen werden von Athena bearbeitet.",
-            "submissionAlreadyHasAthenaResult": "Für diese Abgabe liegt bereits ein KI-Ergebnis vor. Bitte reiche eine neue Abgabe ein, bevor du erneut einreichst.",
+            "submissionAlreadyHasAthenaResult": "Für diese Abgabe liegt bereits ein KI-Ergebnis vor. Bitte reiche eine neue Abgabe ein, bevor du erneut KI-Feedback anfragst.",
+            "noAthenaFeedbackOnEmptySubmission": "Du kannst kein KI-Feedback für eine leere Abgabe anfordern.",
             "startError": "<strong>Uh oh! Etwas ist schiefgelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
             "name": "Name",
             "studentId": "Login",
@@ -242,7 +243,8 @@
                         "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\"!",
                         "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\"!",
                         "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt.",
-                        "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\"."
+                        "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\".",
+                        "DART": "Der Package-Name muss ein kleingeschriebener Dart-Identifier sein, z.B. \"exercise01\"."
                     }
                 },
                 "points": {

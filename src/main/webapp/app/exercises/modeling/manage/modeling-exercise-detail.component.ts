@@ -1,8 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
+import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercises/shared/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
@@ -25,12 +27,25 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html',
+    imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
+    private eventManager = inject(EventManager);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private route = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    private statisticsService = inject(StatisticsService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+
     readonly documentationType: DocumentationType = 'Model';
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
@@ -51,17 +66,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     isAdmin = false;
     isApollonProfileActive = false;
-
-    constructor(
-        private eventManager: EventManager,
-        private modelingExerciseService: ModelingExerciseService,
-        private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private alertService: AlertService,
-        private statisticsService: StatisticsService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit() {
         this.isAdmin = this.accountService.isAdmin();

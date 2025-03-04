@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,6 +10,13 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { debounceTime, repeat, switchMap } from 'rxjs/operators';
+import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type LectureUnitDTOS = {
     unitName: string;
@@ -28,8 +35,15 @@ export type LectureUnitInformationDTO = {
     selector: 'jhi-attachment-units',
     templateUrl: './attachment-units.component.html',
     styleUrls: [],
+    imports: [LectureUnitLayoutComponent, TranslateDirective, FormsModule, FormDateTimePickerComponent, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class AttachmentUnitsComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+
     lectureId: number;
     courseId: number;
     isLoading: boolean;
@@ -54,13 +68,7 @@ export class AttachmentUnitsComponent implements OnInit {
     //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
     readonly MINUTES_UNTIL_DELETION = 29;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-    ) {
+    constructor() {
         this.file = this.router.getCurrentNavigation()?.extras?.state?.file;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {

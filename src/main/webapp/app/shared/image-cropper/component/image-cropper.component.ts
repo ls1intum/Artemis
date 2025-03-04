@@ -12,6 +12,7 @@ import {
     Output,
     SimpleChanges,
     ViewChild,
+    inject,
 } from '@angular/core';
 import { DomSanitizer, SafeStyle, SafeUrl } from '@angular/platform-browser';
 import { OutputFormat } from '../interfaces/cropper-options.interface';
@@ -26,18 +27,24 @@ import { Dimensions } from 'app/shared/image-cropper/interfaces/dimensions.inter
 import { ImageTransform } from 'app/shared/image-cropper/interfaces/image-transform.interface';
 import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-position.interface';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+import { captureException } from '@sentry/angular';
 
 // Note: this component and all files in the image-cropper folder were taken from https://github.com/Mawi137/ngx-image-cropper because the framework was not maintained anymore
 // Note: Partially adapted to fit Artemis needs
 
 @Component({
-    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'image-cropper',
     templateUrl: './image-cropper.component.html',
     styleUrls: ['./image-cropper.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ImageCropperComponent implements OnChanges, OnInit {
+    private cropService = inject(CropService);
+    private cropperPositionService = inject(CropperPositionService);
+    private loadImageService = inject(LoadImageService);
+    private sanitizer = inject(DomSanitizer);
+    private changeDetector = inject(ChangeDetectorRef);
+
     settings = new CropperSettings();
     setImageMaxSizeRetries = 0;
     moveStart: MoveStart;
@@ -98,13 +105,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     @Output() cropperReady = new EventEmitter<Dimensions>();
     @Output() loadImageFailed = new EventEmitter<void>();
 
-    constructor(
-        private cropService: CropService,
-        private cropperPositionService: CropperPositionService,
-        private loadImageService: LoadImageService,
-        private sanitizer: DomSanitizer,
-        private changeDetector: ChangeDetectorRef,
-    ) {
+    constructor() {
         this.reset();
     }
 
@@ -253,8 +254,8 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     }
 
     private loadImageError(error: Error): void {
-        console.error(error);
         this.loadImageFailed.emit();
+        captureException(error);
     }
 
     imageLoadedInView(): void {

@@ -1,25 +1,24 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedModule } from '../../../../../main/webapp/app/shared/shared.module';
-import { ArtemisSharedComponentModule } from '../../../../../main/webapp/app/shared/components/shared-component.module';
 import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';
-import { ArtemisMarkdownModule } from '../../../../../main/webapp/app/shared/markdown.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;
@@ -27,21 +26,21 @@ describe('AdminImportStandardizedCompetenciesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbCollapseMocksModule],
-            declarations: [
-                AdminImportStandardizedCompetenciesComponent,
+            providers: [
                 MockPipe(HtmlForMarkdownPipe),
                 KnowledgeAreaTreeStubComponent,
                 MockComponent(ButtonComponent),
                 MockComponent(StandardizedCompetencyDetailComponent),
-                MockModule(ArtemisSharedModule),
-                MockModule(ArtemisSharedComponentModule),
-                MockModule(ArtemisMarkdownModule),
                 MockModule(FontAwesomeModule),
                 MockComponent(StandardizedCompetencyDetailComponent),
                 MockComponent(KnowledgeAreaTreeComponent),
+                MockProvider(AlertService),
+                { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-            providers: [{ provide: Router, useClass: MockRouter }, MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

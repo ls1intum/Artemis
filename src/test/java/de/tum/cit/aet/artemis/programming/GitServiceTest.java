@@ -293,10 +293,24 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         var map = gitService.listFilesAndFolders(localRepo);
 
+        assertThat(map).hasSize(5).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4 + ".jar"), localRepo), FileType.FILE)
+                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+    }
+
+    @Test
+    void testListFilesAndFoldersAndOmitBinary() {
+        Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
+
+        var map = gitService.listFilesAndFolders(localRepo, true);
+
         assertThat(map).hasSize(4).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
-                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
+                .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER)
+                .doesNotContainKey(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4 + ".jar"), localRepo));
     }
 
     @Test
@@ -305,7 +319,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
         var fileList = gitService.listFiles(localRepo);
 
-        assertThat(fileList).hasSize(3).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
+        assertThat(fileList).hasSize(4).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
                 .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo))
                 .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo))
                 .doesNotContain(new File(localRepo.getLocalPath().toFile(), localRepo));

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { Observable } from 'rxjs';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
@@ -9,14 +9,14 @@ import { Imprint } from 'app/entities/imprint.model';
     providedIn: 'root',
 })
 export class LegalDocumentService {
-    private resourceUrlPublicPrivacyStatement = 'api/public/privacy-statement';
-    private resourceUrlPublicImprint = 'api/public/imprint';
-    private resourceUrlImprintForUpdate = 'api/admin/imprint-for-update';
-    private resourceUrlPrivacyStatementForUpdate = 'api/admin/privacy-statement-for-update';
-    private resourceUrlImprintUpdate = 'api/admin/imprint';
-    private resourceUrlPrivacyStatementUpdate = 'api/admin/privacy-statement';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrlPublicPrivacyStatement = 'api/core/public/privacy-statement';
+    private resourceUrlPublicImprint = 'api/core/public/imprint';
+    private resourceUrlImprintForUpdate = 'api/core/admin/imprint-for-update';
+    private resourceUrlPrivacyStatementForUpdate = 'api/core/admin/privacy-statement-for-update';
+    private resourceUrlImprintUpdate = 'api/core/admin/imprint';
+    private resourceUrlPrivacyStatementUpdate = 'api/core/admin/privacy-statement';
 
     getPrivacyStatement(language: LegalDocumentLanguage): Observable<PrivacyStatement> {
         return this.getRequestToResource(language, LegalDocumentType.PRIVACY_STATEMENT) as Observable<PrivacyStatement>;

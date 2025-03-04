@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -30,7 +30,6 @@ describe('FeedbackDetailChannelModalComponent', () => {
             errorCategory: 'StudentError',
         } as any);
         fixture.componentInstance.isConfirmModalOpen.set(false);
-        fixture.componentRef.setInput('groupFeedback', false);
         fixture.detectChanges();
     });
 
@@ -58,7 +57,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: true,
             isAnnouncementChannel: false,
         });
 
@@ -83,14 +82,14 @@ describe('FeedbackDetailChannelModalComponent', () => {
                 isHidden: undefined,
                 isMember: undefined,
                 isMuted: undefined,
-                isPublic: true,
+                isPublic: false,
                 lastMessageDate: undefined,
                 lastReadDate: undefined,
                 name: 'channel',
                 numberOfMembers: undefined,
                 subType: undefined,
                 subTypeReferenceId: undefined,
-                topic: undefined,
+                topic: 'FeedbackDiscussion',
                 tutorialGroupId: undefined,
                 tutorialGroupTitle: undefined,
                 type: 'channel',
@@ -107,7 +106,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: false,
             isAnnouncementChannel: false,
         });
 
@@ -133,7 +132,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         component.form.setValue({
             name: 'channel',
             description: 'channelDescription',
-            isPublic: true,
+            isPrivate: true,
             isAnnouncementChannel: false,
         });
 

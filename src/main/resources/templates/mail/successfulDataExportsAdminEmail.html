@@ -2,11 +2,11 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="#{email.successfulDataExportCreationsAdmin.title}">Data exports created</title>
-    <th:block th:replace="mail/notification/fragments :: headMetaDataAndIconLink"/>
-    <th:block th:replace="mail/notification/fragments :: css"/>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
 </head>
 <body>
-<th:block th:replace="mail/notification/fragments :: header"/>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
 <!-- Message Body Start -->
 <div id="message-body">
     <p th:text="#{email.successfulDataExportCreationsAdmin.text}">Successful data exports</p>

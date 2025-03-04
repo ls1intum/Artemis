@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.util.Optional;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -46,7 +48,7 @@ public class VcsAccessLogService {
      * @param ipAddress               The ip address of the user accessing the repository
      */
     @Async
-    public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
+    public void saveAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
         log.debug("Storing access operation for user {}", user);
 
@@ -63,44 +65,60 @@ public class VcsAccessLogService {
      */
     @Async
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
-            entry.setCommitHash(commitHash);
-            vcsAccessLogRepository.save(entry);
-        });
+        var vcsAccessLog = vcsAccessLogRepository.findNewestByParticipationId(participation.getId());
+        if (vcsAccessLog.isPresent()) {
+            vcsAccessLog.get().setCommitHash(commitHash);
+            vcsAccessLogRepository.save(vcsAccessLog.get());
+        }
     }
 
     /**
-     * Updates the repository action type of the newest log entry. This method is not Async, as it should already be called from an @Async context
+     * Updates the commit hash of the newest log entry
      *
-     * @param participation        The participation to which the repository belongs to
-     * @param repositoryActionType The repositoryActionType which should get set for the newest access log entry
+     * @param localVCRepositoryUri The localVCRepositoryUri of the participation to which vcsAccessLog belongs to
+     * @param repositoryActionType The repository action type to which the vcsAccessLog should get updated to
      */
-    public void updateRepositoryActionType(ProgrammingExerciseParticipation participation, RepositoryActionType repositoryActionType) {
-        vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
-            entry.setRepositoryActionType(repositoryActionType);
-            vcsAccessLogRepository.save(entry);
-        });
+    @Async
+    public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
+        var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        var vcsAccessLog = vcsAccessLogRepository.findNewestByRepositoryUri(repositoryURL);
+        if (vcsAccessLog.isPresent()) {
+            vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
+            vcsAccessLogRepository.save(vcsAccessLog.get());
+        }
     }
 
     /**
-     * Stores the log for a push from the code editor.
+     * Saves an vcsAccessLog
+     *
+     * @param vcsAccessLog The vcsAccessLog to save
+     */
+    @Async
+    public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
+        vcsAccessLogRepository.save(vcsAccessLog);
+    }
+
+    /**
+     * Creates a preliminary access log for a push from the code editor, and returns it
      *
      * @param repo            The repository to which the push is executed
      * @param user            The user submitting the change
      * @param participationId The id of the participation belonging to the repository
+     * @return an Optional containing the preliminary VcsAccessLog, if one was created
      * @throws GitAPIException if an error occurs while retrieving the git log
      */
-    public void storeCodeEditorAccessLog(Repository repo, User user, Long participationId) throws GitAPIException {
+    public Optional<VcsAccessLog> createPreliminaryCodeEditorAccessLog(Repository repo, User user, Long participationId) throws GitAPIException {
         try (Git git = new Git(repo)) {
             String lastCommitHash = git.log().setMaxCount(1).call().iterator().next().getName();
             var participation = participationRepository.findById(participationId);
             if (participation.isPresent() && participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation) {
                 log.debug("Storing access operation for user {}", user);
 
-                VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) programmingParticipation, user.getName(), user.getEmail(), RepositoryActionType.WRITE,
-                        AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null);
-                vcsAccessLogRepository.save(accessLogEntry);
+                return Optional.of(new VcsAccessLog(user, (Participation) programmingParticipation, user.getName(), user.getEmail(), RepositoryActionType.WRITE,
+                        AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null));
             }
         }
+        return Optional.empty();
     }
+
 }

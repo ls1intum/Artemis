@@ -1,20 +1,20 @@
-import { ArtemisTestModule } from '../../test.module';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { NgModel, ReactiveFormsModule } from '@angular/forms';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency, CompetencyLearningObjectLink } from 'app/entities/competency.model';
 import { of, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockProvider } from 'ng-mocks';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
@@ -24,8 +24,6 @@ describe('CompetencySelection', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
-            declarations: [CompetencySelectionComponent, MockComponent(FaIconComponent), MockDirective(NgModel)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -35,10 +33,11 @@ describe('CompetencySelection', () => {
                         },
                     } as any as ActivatedRoute,
                 },
-                {
-                    provide: Router,
-                    useClass: MockRouter,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(CourseStorageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

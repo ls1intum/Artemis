@@ -1,26 +1,27 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Location } from '@angular/common';
+import { SidebarCardItemComponent } from '../sidebar-card-item/sidebar-card-item.component';
 
 @Component({
     selector: 'jhi-large-sidebar-card',
     templateUrl: './sidebar-card-large.component.html',
     styleUrls: ['./sidebar-card-large.component.scss'],
+    imports: [RouterLink, RouterLinkActive, SidebarCardItemComponent],
 })
 export class SidebarCardLargeComponent {
+    private sidebarEventService = inject(SidebarEventService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private location = inject(Location);
+
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
     /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
-    constructor(
-        private sidebarEventService: SidebarEventService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private location: Location,
-    ) {}
 
     emitStoreAndRefresh(itemId: number | string) {
         this.sidebarEventService.emitSidebarCardEvent(itemId);

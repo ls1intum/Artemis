@@ -4,25 +4,24 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Submission } from 'app/entities/submission.model';
-import { ArtemisTestModule } from '../test.module';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
+import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 
 describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
-    const resourceUrlParticipations = 'api/programming-exercise-participations/';
-    const resourceUrl = 'api/programming-exercise/';
+    const resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
+    const resourceUrl = 'api/programming/programming-exercise/';
 
     let titleSpy: jest.SpyInstance;
     let accessRightsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         })
             .compileComponents()
             .then(() => {

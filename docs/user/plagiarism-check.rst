@@ -301,8 +301,12 @@ the student can dispute the case within the period configured by the instructor.
     :width: 500
 .. |student-notification| image:: plagiarism-check/instructor/student-notification.png
     :width: 500
+.. Diagram created with the Apollon VSCode extension (https://marketplace.visualstudio.com/items?itemName=TUMAET.apollon-vscode)
+   Respective .apollon file is plagiarism-check/instructor/instructors-workflow.apollon
 .. |instructors-workflow| image:: plagiarism-check/instructor/instructors-workflow.png
     :width: 700
+.. Diagram created with the Apollon VSCode extension (https://marketplace.visualstudio.com/items?itemName=TUMAET.apollon-vscode)
+   Respective .apollon file is plagiarism-check/tutor/tutor-workflow.apollon
 .. |tutor-workflow| image:: plagiarism-check/tutor/tutor-workflow.png
     :width: 700
 .. |run-settings| image:: plagiarism-check/tutor/running-check-settings.png
@@ -311,6 +315,8 @@ the student can dispute the case within the period configured by the instructor.
     :width: 1000
 .. |student-plagiarism-case-navigation| image:: plagiarism-check/student/plagiarism-case-navigation.png
     :width: 1000
+.. Diagram created with the Apollon VSCode extension (https://marketplace.visualstudio.com/items?itemName=TUMAET.apollon-vscode)
+   Respective .apollon file is plagiarism-check/student/student-workflow.apollon
 .. |student-workflow| image:: plagiarism-check/student/student-workflow.png
     :width: 700
 .. |run-results| image:: plagiarism-check/results/run-results.png

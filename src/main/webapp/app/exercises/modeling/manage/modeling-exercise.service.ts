@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -15,13 +15,15 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
-    public resourceUrl = 'api/modeling-exercises';
-    public adminResourceUrl = 'api/admin/modeling-exercises';
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-    ) {
+    public resourceUrl = 'api/modeling/modeling-exercises';
+    public adminResourceUrl = 'api/modeling/admin/modeling-exercises';
+
+    constructor() {
+        const exerciseService = this.exerciseService;
+
         this.exerciseService = exerciseService;
     }
 
@@ -83,7 +85,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
-            .post('api/apollon/convert-to-pdf', { model }, { observe: 'response', responseType: 'blob' })
+            .post('api/modeling/apollon/convert-to-pdf', { model }, { observe: 'response', responseType: 'blob' })
             .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 

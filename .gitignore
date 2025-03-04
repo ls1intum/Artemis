@@ -220,3 +220,4 @@ data-exports/
 # Supporting scripts config
 ##############################
 /supporting_scripts/**/*.ini
+/legal

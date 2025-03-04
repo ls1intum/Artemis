@@ -1,16 +1,25 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faExclamationCircle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { Subject } from 'rxjs';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizPoolMappingQuestionListComponent } from './quiz-pool-mapping-question-list.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-quiz-pool-mapping',
     templateUrl: './quiz-pool-mapping.component.html',
     styleUrls: ['./quiz-pool-mapping.component.scss'],
+    imports: [CdkDropListGroup, FaIconComponent, TranslateDirective, QuizPoolMappingQuestionListComponent, DeleteButtonDirective, NgStyle],
 })
 export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
+    private alertService = inject(AlertService);
+
     @Input() quizGroups: QuizGroup[] = [];
     @Input() quizQuestions: QuizQuestion[] = [];
     @Input() disabled = false;
@@ -28,13 +37,11 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(private alertService: AlertService) {}
-
     ngOnInit(): void {
         this.handleUpdate();
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
         this.handleUpdate();
     }
 

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ICER_PAPER_FLAG;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -171,6 +173,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
         var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
+
+        // TODO TW: This "feature" is only temporary for a paper.
+        if (StringUtils.contains(exercise.getProblemStatement(), ICER_PAPER_FLAG)) {
+            if (chatSession.getUser().getId() % 3 == 0) {
+                variant = "chat-gpt-wrapper";
+            }
+        }
+
         pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession, event);
     }
 
@@ -310,7 +320,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The current Iris session
      */
     public IrisExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, sendInitialMessageIfCreated);
     }
@@ -331,7 +341,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     public IrisExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         return createSessionInternal(exercise, user, sendInitialMessage);

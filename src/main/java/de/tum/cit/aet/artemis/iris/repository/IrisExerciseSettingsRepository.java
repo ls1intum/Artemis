@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 public interface IrisExerciseSettingsRepository extends ArtemisJpaRepository<IrisExerciseSettings, Long> {
 
     @Query("""
-            SELECT EXISTS(s)
+            SELECT COUNT(s) > 0
             FROM IrisExerciseSettings s
             WHERE s.exercise.id = :exerciseId
                 AND s.irisTextExerciseChatSettings.enabled = TRUE

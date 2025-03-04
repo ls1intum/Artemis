@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-text-unit/create-text-unit.component';
-import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
@@ -11,27 +10,24 @@ import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
-
-@Component({ selector: 'jhi-text-unit-form', template: '' })
-class TextUnitFormStubComponent {
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
-}
-
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
-class LectureUnitLayoutStubComponent {
-    @Input() isLoading = false;
-}
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('CreateTextUnitComponent', () => {
     let createTextUnitComponentFixture: ComponentFixture<CreateTextUnitComponent>;
     let createTextUnitComponent: CreateTextUnitComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [],
-            declarations: [TextUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateTextUnitComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),
@@ -39,6 +35,9 @@ describe('CreateTextUnitComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: {
+                            paramMap: convertToParamMap({ courseId: 1 }),
+                        },
                         parent: {
                             parent: {
                                 paramMap: of({
@@ -63,14 +62,20 @@ describe('CreateTextUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                createTextUnitComponentFixture = TestBed.createComponent(CreateTextUnitComponent);
-                createTextUnitComponent = createTextUnitComponentFixture.componentInstance;
-            });
+        }).compileComponents();
+
+        createTextUnitComponentFixture = TestBed.createComponent(CreateTextUnitComponent);
+        createTextUnitComponent = createTextUnitComponentFixture.componentInstance;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {
@@ -109,7 +114,7 @@ describe('CreateTextUnitComponent', () => {
         createTextUnitComponentFixture.detectChanges();
         tick();
 
-        const textUnitForm: TextUnitFormStubComponent = createTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
+        const textUnitForm: TextUnitFormComponent = createTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit(formDate);
 
         createTextUnitComponentFixture.whenStable().then(() => {

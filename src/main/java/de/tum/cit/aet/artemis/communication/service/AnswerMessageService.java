@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
@@ -209,6 +211,10 @@ public class AnswerMessageService extends PostingService {
         answerPostRepository.deleteById(answerMessageId);
         preparePostForBroadcast(updatedMessage);
 
+        // Delete all connected saved posts
+        var savedPosts = savedPostRepository.findSavedPostByPostIdAndPostType(answerMessageId, PostingType.ANSWER);
+        savedPostRepository.deleteAll(savedPosts);
+
         broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
@@ -228,6 +234,10 @@ public class AnswerMessageService extends PostingService {
      */
     public AnswerPost findById(Long answerMessageId) {
         return answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
+    }
+
+    public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
+        return answerPostRepository.findByIdIn(answerMessageIds);
     }
 
     /**

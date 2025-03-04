@@ -1,9 +1,8 @@
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -36,12 +35,15 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -65,7 +67,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterModule.forRoot([textEditorRoute[0]])],
+            imports: [RouterModule.forRoot([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
@@ -81,7 +83,6 @@ describe('TextEditorComponent', () => {
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(RatingComponent),
-                MockDirective(NgModel),
                 MockDirective(TranslateDirective),
             ],
             providers: [
@@ -92,6 +93,9 @@ describe('TextEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -311,6 +315,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should receive submission from team', () => {
+        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
         comp.textExercise = {
             id: 1,
             studentParticipations: [] as StudentParticipation[],
@@ -329,6 +334,27 @@ describe('TextEditorComponent', () => {
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('abc');
+    });
+
+    it('should receive empty submission from team', () => {
+        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
+        comp.textExercise = {
+            id: 1,
+            studentParticipations: [] as StudentParticipation[],
+        } as TextExercise;
+        const submission = {
+            id: 1,
+            participation: {
+                id: 1,
+                exercise: { id: 1 } as Exercise,
+                submissions: [] as Submission[],
+            } as Participation,
+        } as TextSubmission;
+        // @ts-ignore
+        jest.spyOn(comp, 'updateParticipation');
+        comp.onReceiveSubmissionFromTeam(submission);
+        expect(comp['updateParticipation']).toHaveBeenCalledOnce();
+        expect(comp.answer).toBe('');
     });
 
     it('should set latest submission if submissionId is undefined in updateParticipation', () => {

@@ -1,34 +1,32 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "es2022",
-        "module": "es2020",
+        "target": "es2024",
+        "module": "es2022",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "sourceMap": true,
         "emitDecoratorMetadata": true,
-        "downlevelIteration": true,
         "declaration": false,
         "experimentalDecorators": true,
         "removeComments": true,
         "strict": false,
         "noImplicitReturns": false,
+        "noUnusedLocals": true,
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
         "strictNullChecks": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
-        "allowSyntheticDefaultImports": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2022", "dom"],
+        "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
         "baseUrl": "./",
         "paths": {
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true,
-        "ignoreDeprecations": "5.0"
+        "importHelpers": true
     },
     "angularCompilerOptions": {
         "genDir": "build/resources/main/aot",

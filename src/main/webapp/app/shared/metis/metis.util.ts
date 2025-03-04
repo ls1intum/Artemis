@@ -53,6 +53,7 @@ export interface PostContextFilter {
     pagingEnabled?: boolean;
     page?: number;
     pageSize?: number;
+    pinnedOnly?: boolean;
 }
 
 /**

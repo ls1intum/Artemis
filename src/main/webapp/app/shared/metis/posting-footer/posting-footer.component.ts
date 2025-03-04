@@ -7,6 +7,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
+import { AnswerPostComponent } from '../answer-post/answer-post.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 interface PostGroup {
     author: User | undefined;
@@ -16,6 +18,7 @@ interface PostGroup {
 @Component({
     selector: 'jhi-posting-footer',
     templateUrl: './posting-footer.component.html',
+    imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe],
 })
 export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     lastReadDate = input<dayjs.Dayjs | undefined>();
@@ -43,8 +46,8 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     courseId!: number;
     groupedAnswerPosts: PostGroup[] = [];
 
-    protected metisService: MetisService = inject(MetisService);
-    protected changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
+    private metisService = inject(MetisService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
@@ -61,7 +64,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     }
 
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
+        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef()?.clear();
     }
 
     /**
@@ -90,18 +93,10 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             return;
         }
 
-        const sortedAnswerPosts = this.sortedAnswerPosts()
-            .slice()
-            .reverse()
-            .map((post) => {
-                (post as any).creationDateDayjs = post.creationDate ? dayjs(post.creationDate) : undefined;
-                return post;
-            });
+        const sortedAnswerPosts = this.sortedAnswerPosts().slice().reverse();
 
         const sortedPosts = sortedAnswerPosts.sort((a, b) => {
-            const aDate = (a as any).creationDateDayjs;
-            const bDate = (b as any).creationDateDayjs;
-            return aDate?.valueOf() - bDate?.valueOf();
+            return a.creationDate!.valueOf() - b.creationDate!.valueOf();
         });
 
         const groups: PostGroup[] = [];
@@ -114,12 +109,9 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             const currentPost = sortedPosts[i];
             const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
 
-            const currentDate = (currentPost as any).creationDateDayjs;
-            const lastDate = (lastPostInGroup as any).creationDateDayjs;
-
             let timeDiff = Number.MAX_SAFE_INTEGER;
-            if (currentDate && lastDate) {
-                timeDiff = currentDate.diff(lastDate, 'minute');
+            if (currentPost.creationDate && lastPostInGroup.creationDate) {
+                timeDiff = currentPost.creationDate.diff(lastPostInGroup.creationDate, 'minute');
             }
 
             if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
@@ -165,7 +157,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         this.createAnswerPostModalComponent?.close();
     }
 
-    protected postsTrackByFn(index: number, post: Post): number {
+    protected postsTrackByFn(_index: number, post: Post): number {
         return post.id!;
     }
 }

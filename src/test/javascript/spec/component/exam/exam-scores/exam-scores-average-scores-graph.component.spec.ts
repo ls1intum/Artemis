@@ -1,20 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterModule } from '@angular/router';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
@@ -55,8 +52,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule), RouterModule.forRoot([])],
-            declarations: [ExamScoresAverageScoresGraphComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            imports: [BrowserAnimationsModule, RouterModule.forRoot([])],
             providers: [
                 MockProvider(CourseManagementService, {
                     find: () => {
@@ -70,16 +66,14 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
                 }),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamScoresAverageScoresGraphComponent);
-                component = fixture.componentInstance;
-                navigateToExerciseMock = jest.spyOn(component, 'navigateToExercise').mockImplementation();
+        }).compileComponents();
 
-                component.averageScores = returnValue;
-                fixture.detectChanges();
-            });
+        fixture = TestBed.createComponent(ExamScoresAverageScoresGraphComponent);
+        component = fixture.componentInstance;
+        navigateToExerciseMock = jest.spyOn(component, 'navigateToExercise').mockImplementation();
+
+        fixture.componentRef.setInput('averageScores', returnValue);
+        fixture.detectChanges();
     });
 
     it('should set ngx data objects and bar colors correctly', () => {
@@ -99,8 +93,9 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
     });
 
     const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: NgxChartsSingleSeriesDataEntry[]) => {
-        component.averageScores.averagePoints = averagePoints;
-        component.averageScores.averagePercentage = averagePoints * 10;
+        component.averageScores().averagePoints = averagePoints;
+        component.averageScores().averagePercentage = averagePoints * 10;
+
         expectedColorDomain[0] = newColor;
         expectedData[0].value = averagePoints * 10;
         component.ngxColor.domain = [];
@@ -146,7 +141,10 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     it('should look up absolute value', () => {
         const roundAndPerformLocalConversionSpy = jest.spyOn(component, 'roundAndPerformLocalConversion');
-        component.course = { accuracyOfScores: 2 };
+        const updatedCourse = {
+            accuracyOfScores: 2,
+        };
+        fixture.componentRef.setInput('course', updatedCourse);
         component.lookup['test'] = { absoluteValue: 40 };
 
         const result = component.lookupAbsoluteValue('test');

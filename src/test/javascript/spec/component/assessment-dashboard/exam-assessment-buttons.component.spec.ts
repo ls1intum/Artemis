@@ -18,8 +18,9 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamAssessmentButtons', () => {
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;
@@ -92,6 +93,7 @@ describe('ExamAssessmentButtons', () => {
             },
         },
         { provide: AccountService, useClass: MockAccountService },
+        { provide: TranslateService, useClass: MockTranslateService },
     ];
 
     beforeEach(() => {
@@ -115,8 +117,7 @@ describe('ExamAssessmentButtons', () => {
         studentExamOne.user = studentOne;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ExamAssessmentButtonsComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
+            declarations: [MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers,
         })
             .compileComponents()

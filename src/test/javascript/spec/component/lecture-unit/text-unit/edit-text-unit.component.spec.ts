@@ -1,46 +1,42 @@
 import dayjs from 'dayjs/esm';
 
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
-import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-text-unit/edit-text-unit.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/core/util/alert.service';
-
-@Component({ selector: 'jhi-text-unit-form', template: '' })
-class TextUnitFormStubComponent {
-    @Input() isEditMode = false;
-    @Input() formData: TextUnitFormData;
-    @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
-}
-
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
-class LectureUnitLayoutStubComponent {
-    @Input() isLoading = false;
-}
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('EditTextUnitComponent', () => {
-    let editTextUnitComponentFixture: ComponentFixture<EditTextUnitComponent>;
+    let fixture: ComponentFixture<EditTextUnitComponent>;
     let editTextUnitComponent: EditTextUnitComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [TextUnitFormStubComponent, LectureUnitLayoutStubComponent, EditTextUnitComponent],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),
-                { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
                     useValue: {
+                        snapshot: {
+                            paramMap: convertToParamMap({ courseId: 1 }),
+                        },
                         paramMap: of({
                             get: () => {
                                 return { textUnitId: 1 };
@@ -57,28 +53,34 @@ describe('EditTextUnitComponent', () => {
                         },
                     },
                 },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                editTextUnitComponentFixture = TestBed.createComponent(EditTextUnitComponent);
-                editTextUnitComponent = editTextUnitComponentFixture.componentInstance;
-                const alertService = TestBed.inject(AlertService);
-                jest.spyOn(alertService, 'error').mockReturnValue({ message: '' } as Alert);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(EditTextUnitComponent);
+        editTextUnitComponent = fixture.componentInstance;
+        const alertService = TestBed.inject(AlertService);
+        jest.spyOn(alertService, 'error').mockReturnValue({ message: '' } as Alert);
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should initialize', fakeAsync(() => {
-        editTextUnitComponentFixture.detectChanges();
+        fixture.detectChanges();
         tick();
         expect(editTextUnitComponent).not.toBeNull();
     }));
 
-    it('should set form data correctly', () => {
+    it('should set form data correctly', async () => {
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
         const textUnitService = TestBed.inject(TextUnitService);
 
         const originalTextUnit: TextUnit = new TextUnit();
@@ -93,20 +95,20 @@ describe('EditTextUnitComponent', () => {
         });
 
         const findByIdStub = jest.spyOn(textUnitService, 'findById').mockReturnValue(of(response));
+        fixture.detectChanges();
+        const textUnitFormComponent: TextUnitFormComponent = fixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
 
-        const textUnitFormStubComponent: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
-
-        editTextUnitComponentFixture.detectChanges();
-        return editTextUnitComponentFixture.whenStable().then(() => {
+        fixture.detectChanges();
+        return fixture.whenStable().then(() => {
             expect(findByIdStub).toHaveBeenCalledOnce();
             expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
             expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
             expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
-            expect(textUnitFormStubComponent.formData).toEqual(editTextUnitComponent.formData);
+            expect(textUnitFormComponent.formData()).toEqual(editTextUnitComponent.formData);
         });
     });
 
-    it('should send PUT request upon form submission and navigate', fakeAsync(() => {
+    it('should send PUT request upon form submission and navigate', async () => {
         const router: Router = TestBed.inject(Router);
         const textUnitService = TestBed.inject(TextUnitService);
 
@@ -141,17 +143,16 @@ describe('EditTextUnitComponent', () => {
         const updatedStub = jest.spyOn(textUnitService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        editTextUnitComponentFixture.detectChanges();
-        tick();
+        fixture.detectChanges();
 
-        const textUnitForm: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
+        const textUnitForm: TextUnitFormComponent = fixture.debugElement.query(By.directive(TextUnitFormComponent)).componentInstance;
         textUnitForm.formSubmitted.emit(formDate);
 
-        return editTextUnitComponentFixture.whenStable().then(() => {
+        return fixture.whenStable().then(() => {
             expect(findByIdStub).toHaveBeenCalledOnce();
             expect(updatedStub).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
             navigateSpy.mockRestore();
         });
-    }));
+    });
 });

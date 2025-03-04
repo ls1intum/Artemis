@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
@@ -7,6 +7,9 @@ import { Course } from 'app/entities/course.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/exercises/modeling/shared/modeling.component';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
+import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ModelingExplanationEditorComponent } from '../shared/modeling-explanation-editor.component';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -19,8 +22,11 @@ export interface DropInfo {
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
+    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
@@ -49,7 +55,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     firstCorrectionRoundColor = '#3e8acc';
     secondCorrectionRoundColor = '#ffa561';
 
-    constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {
+    constructor() {
         super();
     }
 

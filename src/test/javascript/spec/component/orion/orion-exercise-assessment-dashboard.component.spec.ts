@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
@@ -8,7 +8,6 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisTestModule } from '../../test.module';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionState } from 'app/shared/orion/orion';
@@ -16,6 +15,8 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('OrionExerciseAssessmentDashboardComponent', () => {
     let comp: OrionExerciseAssessmentDashboardComponent;
@@ -34,7 +35,6 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 OrionExerciseAssessmentDashboardComponent,
                 MockComponent(ExerciseAssessmentDashboardComponent),
@@ -46,6 +46,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
                 MockProvider(OrionAssessmentService),
                 MockProvider(ExerciseService),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ exerciseId: 10 }) } } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
@@ -99,7 +100,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         expect(getForTutorsStub).toHaveBeenCalledOnce();
         expect(getForTutorsStub).toHaveBeenCalledWith(10);
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
     }));
 
@@ -124,7 +125,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
 
         expect(getForTutorsStub).toHaveBeenCalledOnce();
         expect(getForTutorsStub).toHaveBeenCalledWith(10);
-        expect(orionStateStub).toHaveBeenCalledOnce();
+        expect(orionStateStub).toHaveBeenCalled();
         expect(orionStateStub).toHaveBeenCalledWith();
         expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');

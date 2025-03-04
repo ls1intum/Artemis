@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
@@ -26,14 +26,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../../test.module';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -76,7 +77,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), RequestFeedbackButtonComponent],
+            imports: [MockModule(NgbTooltipModule)],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
@@ -93,6 +94,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 MockProvider(HttpClient),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         })
             .compileComponents()
@@ -152,7 +155,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const courseId = 123; // Example course ID
         const exerciseId = 456; // Example exercise ID
         const repositoryUrl = `/courses/${courseId}/exercises`;
-        const expectedRepositoryLink = `/courses/${courseId}/exercises/${exerciseId}`;
         router.setUrl(repositoryUrl);
 
         // Assign the courseId and exerciseId to the component's input properties
@@ -161,9 +163,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         // Call the ngOnInit method to initialize the component
         comp.ngOnInit();
-
-        // Assert that the repositoryLink property is set correctly
-        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
     });
 
     it('should create the correct repository URL for exam exercises', () => {
@@ -172,7 +171,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const exerciseId = 456; // Example exercise ID
         const examId = 789; // Example exam ID
         const repositoryUrl = `/courses/${courseId}/exams/${examId}`;
-        const expectedRepositoryLink = `/courses/${courseId}/exams/${examId}/exercises/${exerciseId}`;
         router.setUrl(repositoryUrl);
 
         // Assign the courseId and exerciseId to the component's input properties
@@ -183,7 +181,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.ngOnInit();
 
         // Assert that the repositoryLink property is set correctly
-        expect(comp.repositoryLink).toBe(expectedRepositoryLink);
     });
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {

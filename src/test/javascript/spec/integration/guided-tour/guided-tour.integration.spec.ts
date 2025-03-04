@@ -1,49 +1,29 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ArtemisTestModule } from '../../test.module';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { CoursesComponent } from 'app/overview/courses.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
-import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
-import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
-import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { User } from 'app/core/user/user.model';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { CourseCardComponent } from 'app/overview/course-card.component';
-import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
-import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { PieChartModule } from '@swimlane/ngx-charts';
-import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { RouterModule } from '@angular/router';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -58,85 +38,48 @@ describe('Guided tour integration', () => {
     let guidedTourService: GuidedTourService;
     let exerciseService: ExerciseService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                RouterModule.forRoot([
-                    {
-                        path: 'courses',
-                        component: MockComponent(CoursesComponent),
-                    },
-                ]),
-                MockModule(PieChartModule),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
-                NgbDropdownMocksModule,
-            ],
-            declarations: [
-                CourseCardComponent,
-                GuidedTourComponent,
-                NavbarComponent,
-                FooterComponent,
-                NotificationSidebarComponent,
-                MockHasAnyAuthorityDirective,
-                MockComponent(CourseCardHeaderComponent),
-                MockComponent(CourseRegistrationComponent),
-                MockComponent(CourseExerciseRowComponent),
-                MockComponent(LoadingNotificationComponent),
-                MockComponent(CoursesComponent),
-                MockComponent(SecuredImageComponent),
-                MockComponent(SystemNotificationComponent),
-                // Component can not be mocked at the moment https://github.com/help-me-mom/ng-mocks/issues/8634
-                ThemeSwitchComponent,
-                MockComponent(DocumentationButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(SafeResourceUrlPipe),
-                MockPipe(FindLanguageFromKeyPipe),
-                MockDirective(ActiveMenuDirective),
-                MockDirective(TranslateDirective),
-                MockComponent(JhiConnectionWarningComponent),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockDirective(NgbCollapse)],
+            declarations: [GuidedTourComponent],
             providers: [
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: MetisService, useClass: MockMetisService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: AccountService, useClass: MockAccountService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
-                courseCardComponentFixture = TestBed.createComponent(CourseCardComponent);
-                navBarComponentFixture = TestBed.createComponent(NavbarComponent);
-                footerComponentFixture = TestBed.createComponent(FooterComponent);
+        }).compileComponents();
 
-                guidedTourComponent = guidedTourComponentFixture.componentInstance;
-                navBarComponent = navBarComponentFixture.componentInstance;
-                courseCardComponent = courseCardComponentFixture.componentInstance;
+        guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
+        courseCardComponentFixture = TestBed.createComponent(CourseCardComponent);
+        navBarComponentFixture = TestBed.createComponent(NavbarComponent);
+        footerComponentFixture = TestBed.createComponent(FooterComponent);
 
-                guidedTourService = TestBed.inject(GuidedTourService);
-                exerciseService = TestBed.inject(ExerciseService);
+        guidedTourComponent = guidedTourComponentFixture.componentInstance;
+        navBarComponent = navBarComponentFixture.componentInstance;
+        courseCardComponent = courseCardComponentFixture.componentInstance;
 
-                jest.spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').mockImplementation(() => {
-                    navBarComponent.currAccount = user;
-                });
+        guidedTourService = TestBed.inject(GuidedTourService);
+        exerciseService = TestBed.inject(ExerciseService);
 
-                jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').mockReturnValue(of());
-                jest.spyOn(exerciseService, 'getNextExercisesForDays').mockReturnValue([]);
-                jest.spyOn(guidedTourService, 'init').mockImplementation();
-                jest.spyOn<any, any>(guidedTourService, 'updateGuidedTourSettings').mockReturnValue(of());
-                jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
-                jest.spyOn<any, any>(guidedTourService, 'checkSelectorValidity').mockReturnValue(true);
-                jest.spyOn<any, any>(guidedTourService, 'enableTour').mockImplementation(() => {
-                    guidedTourService['availableTourForComponent'] = courseOverviewTour;
-                    guidedTourService.currentTour = courseOverviewTour;
-                });
-            });
+        jest.spyOn(navBarComponentFixture.componentInstance, 'ngOnInit').mockImplementation(() => {
+            navBarComponent.currAccount = user;
+        });
+
+        jest.spyOn<any, any>(guidedTourComponent, 'subscribeToDotChanges').mockReturnValue(of());
+        jest.spyOn(exerciseService, 'getNextExercisesForDays').mockReturnValue([]);
+        jest.spyOn(guidedTourService, 'init').mockImplementation();
+        jest.spyOn<any, any>(guidedTourService, 'updateGuidedTourSettings').mockReturnValue(of());
+        jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
+        jest.spyOn<any, any>(guidedTourService, 'checkSelectorValidity').mockReturnValue(true);
+        jest.spyOn<any, any>(guidedTourService, 'enableTour').mockImplementation(() => {
+            guidedTourService['availableTourForComponent'] = courseOverviewTour;
+            guidedTourService.currentTour = courseOverviewTour;
+        });
     });
 
     function startGuidedTour() {
@@ -147,6 +90,7 @@ describe('Guided tour integration', () => {
         guidedTourService['startTour']();
 
         guidedTourComponentFixture.detectChanges();
+        navBarComponentFixture.detectChanges();
         expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).not.toBeNull();
     }
 

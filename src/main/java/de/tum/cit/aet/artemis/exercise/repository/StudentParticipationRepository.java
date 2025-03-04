@@ -218,20 +218,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessorFeedbacksTestCases(@Param("exerciseId") long exerciseId,
             @Param("testRun") boolean testRun);
 
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
-            WHERE p.exercise.id = :exerciseId
-                AND p.student.id = :studentId
-                AND p.testRun = :testRun
-            """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(@Param("exerciseId") long exerciseId,
-            @Param("studentId") long studentId, @Param("testRun") boolean testRun);
-
     /**
      * Get all participations for an exercise with each manual and latest results (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
@@ -1275,7 +1261,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
                         WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
                         ELSE 'Student Error'
-                    END
+                    END,
+                    f.hasLongFeedbackText
                 )
                 FROM ProgrammingExerciseStudentParticipation p
                 INNER JOIN p.results r ON r.id = (
@@ -1300,7 +1287,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
                                 ELSE 'Student Error'
                             END IN (:filterErrorCategories))
-                GROUP BY f.detailText, f.testCase.testName
+                GROUP BY f.detailText, f.testCase.testName, f.hasLongFeedbackText
                 HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
@@ -1388,21 +1375,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 ORDER BY p.student.firstName ASC
             """)
     List<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackIds(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds);
-
-    @Query("""
-                SELECT f.id
-                FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.results r ON r.id = (
-                    SELECT MAX(pr.id)
-                    FROM p.results pr
-                    WHERE pr.participation.id = p.id
-                )
-                INNER JOIN r.feedbacks f
-                WHERE p.exercise.id = :exerciseId
-                      AND p.testRun = FALSE
-                ORDER BY p.student.firstName ASC
-            """)
-    List<Long> findAffectedStudentsByFeedbackIds2(@Param("exerciseId") long exerciseId);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.

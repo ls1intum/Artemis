@@ -1,13 +1,9 @@
 import dayjs from 'dayjs/esm';
-import { NgModel } from '@angular/forms';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
     let comp: ProgrammingExerciseTestScheduleDatePickerComponent;
@@ -23,29 +19,21 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule)],
-            declarations: [
-                ProgrammingExerciseTestScheduleDatePickerComponent,
-                MockDirective(NgModel),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTranslatePipe),
-            ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseTestScheduleDatePickerComponent);
-                comp = fixture.componentInstance;
+            imports: [OwlNativeDateTimeModule],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
 
-                comp.selectedDate = selectedDate;
-                comp.startAt = startAt;
-                comp.min = min;
-                comp.max = max;
-                comp.label = label;
-                comp.tooltipText = tooltipText;
-                comp.readOnly = readOnly;
-                fixture.detectChanges();
-            });
+        fixture = TestBed.createComponent(ProgrammingExerciseTestScheduleDatePickerComponent);
+        comp = fixture.componentInstance;
+
+        comp.selectedDate = selectedDate;
+        comp.startAt = startAt;
+        comp.min = min;
+        comp.max = max;
+        comp.label = label;
+        comp.tooltipText = tooltipText;
+        comp.readOnly = readOnly;
+        fixture.detectChanges();
     });
 
     it('should not change date when value is reference-equal to selected date', () => {

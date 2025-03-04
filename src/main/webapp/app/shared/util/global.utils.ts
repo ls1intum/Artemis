@@ -77,8 +77,9 @@ export const matchRegexWithLineNumbers = (multiLineText: string, regex: RegExp):
  * Use alert service to show the error message from the error response
  * @param alertService the service used to show the exception messages to the user
  * @param error the error response that's status is used to determine the error message
+ * @param disableTranslation whether the error message should be translated
  */
-export const onError = (alertService: AlertService, error: HttpErrorResponse) => {
+export const onError = (alertService: AlertService, error: HttpErrorResponse, disableTranslation: boolean = true) => {
     switch (error.status) {
         case 400:
             alertService.error('error.http.400');
@@ -100,7 +101,7 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse) =>
             alertService.addAlert({
                 type: AlertType.DANGER,
                 message: error.message,
-                disableTranslation: true,
+                disableTranslation: disableTranslation,
             });
             break;
     }

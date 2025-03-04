@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -73,7 +72,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
             throw new LocalVCInternalException("Could not create local VC Repository URI", e);
         }
 
-        var urlPath = Paths.get(this.uri.getPath());
+        var urlPath = Path.of(this.uri.getPath());
 
         // Find index of "git" in the path. This is needed in case the base URL contains a path.
         final var startIndex = getGitPartStartIndex(urlString, urlPath);
@@ -101,10 +100,10 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      *
      * Examples:
      * <ul>
-     * <li>Correct URL: "https://artemis.cit.tum.de/git/projectKey/repositorySlug.git" - Returns 1 as "git" is at index 1.</li>
-     * <li>Incorrect URL: "https://artemis.cit.tum.de/projectKey/repositorySlug.git" - Throws LocalVCInternalException because the "git" segment is missing.</li>
-     * <li>Incorrect URL: "https://artemis.cit.tum.de/git/projectKey" - Throws LocalVCInternalException because there are not enough segments after "git".</li>
-     * <li>Incorrect URL: "https://artemis.cit.tum.de/git/projectKey/repositorySlug" - Throws LocalVCInternalException because the repository slug does not end with ".git".</li>
+     * <li>Correct URL: "https://artemis.tum.de/git/projectKey/repositorySlug.git" - Returns 1 as "git" is at index 1.</li>
+     * <li>Incorrect URL: "https://artemis.tum.de/projectKey/repositorySlug.git" - Throws LocalVCInternalException because the "git" segment is missing.</li>
+     * <li>Incorrect URL: "https://artemis.tum.de/git/projectKey" - Throws LocalVCInternalException because there are not enough segments after "git".</li>
+     * <li>Incorrect URL: "https://artemis.tum.de/git/projectKey/repositorySlug" - Throws LocalVCInternalException because the repository slug does not end with ".git".</li>
      * </ul>
      *
      * @param urlString The full URL string being analyzed, provided for context in error messages.
@@ -147,14 +146,14 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * </p>
      * <ul>
      * <li>
-     * Input: Local repository path - {@code Paths.get("/local/path/projectX/my-repo/.git")}
-     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
-     * Output: {@code https://artemis.cit.tum.de/git/projectX/my-repo.git}
+     * Input: Local repository path - {@code Path.of("/local/path/projectX/my-repo/.git")}
+     * and Local VC server URL - {@code new URI("https://artemis.tum.de").getURL()}
+     * Output: {@code https://artemis.tum.de/git/projectX/my-repo.git}
      * </li>
      * <li>
-     * Input: Remote repository path - {@code Paths.get("/remote/path/projectY/my-repo")}
-     * and Local VC server URL - {@code new URI("https://artemis.cit.tum.de").getURL()}
-     * Output: {@code https://artemis.cit.tum.de/git/projectY/my-repo.git}
+     * Input: Remote repository path - {@code Path.of("/remote/path/projectY/my-repo")}
+     * and Local VC server URL - {@code new URI("https://artemis.tum.de").getURL()}
+     * Output: {@code https://artemis.tum.de/git/projectY/my-repo.git}
      * </li>
      * </ul>
      *
@@ -291,6 +290,6 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The relative Path to the repository, which includes the project key and repository slug with a ".git" suffix.
      */
     public Path getRelativeRepositoryPath() {
-        return Paths.get(projectKey, repositorySlug + ".git");
+        return Path.of(projectKey, repositorySlug + ".git");
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -39,15 +40,19 @@ public class UserScheduleService {
 
     private final ScheduledExecutorService scheduler;
 
+    private final Optional<LearnerProfileApi> learnerProfileApi;
+
     // Used for tracking and canceling the non-activated accounts that will be cleaned up.
     // The key of the map is the user id.
     private final Map<Long, ScheduledFuture<?>> nonActivatedAccountsFutures = new ConcurrentHashMap<>();
 
-    public UserScheduleService(UserRepository userRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager) {
+    public UserScheduleService(UserRepository userRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, CacheManager cacheManager,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.cacheManager = cacheManager;
         this.scheduler = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -114,6 +119,7 @@ public class UserScheduleService {
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
+        learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
     }
 
     /**

@@ -38,11 +38,10 @@ import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
-import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
+type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
@@ -50,9 +49,14 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [ArtemisSharedModule, ArtemisProgrammingManualAssessmentModule, MonacoEditorComponent, CodeEditorHeaderComponent],
+    imports: [
+        MonacoEditorComponent,
+        CodeEditorHeaderComponent,
+        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
+        CodeEditorTutorAssessmentInlineFeedbackComponent,
+        TranslateDirective,
+    ],
     providers: [RepositoryFileService],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorMonacoComponent implements OnChanges {
@@ -128,19 +132,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
     annotationsArray: Array<Annotation> = [];
 
     constructor() {
-        effect(
-            () => {
-                this.feedbackInternal.set(this.feedbacks());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.feedbackInternal.set(this.feedbacks());
+        });
 
-        effect(
-            () => {
-                this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
+        });
 
         effect(() => {
             const annotations = this.buildAnnotations();
@@ -157,6 +155,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
+            const previousFileName: string | undefined = changes.selectedFile?.previousValue;
+            // we save the old scrollTop before switching to another file
+            if (previousFileName && this.fileSession()[previousFileName]) {
+                this.fileSession()[previousFileName].scrollTop = this.editor().getScrollTop();
+            }
             await this.selectFileInEditor(this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
@@ -196,7 +199,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
                     this.onError.emit('loadingFailed');
                 }
             }
-            this.fileSession.set({ ...this.fileSession(), [fileName]: { code: fileContent, loadingError, cursor: { column: 0, lineNumber: 0 } } });
+            this.fileSession.set({
+                ...this.fileSession(),
+                [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
+            });
         }
 
         const code = this.fileSession()[fileName].code;
@@ -204,17 +210,26 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
         // Since fetching the file may take some time, we need to check if the file is still selected.
         if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
-            this.editor().changeModel(fileName, code);
-            this.editor().setPosition(this.fileSession()[fileName].cursor);
+            this.switchToSelectedFile(fileName, code);
         }
         this.loadingCount.set(this.loadingCount() - 1);
+    }
+
+    switchToSelectedFile(selectedFileName: string, code: string): void {
+        this.editor().changeModel(selectedFileName, code);
+        this.editor().setPosition(this.fileSession()[selectedFileName].cursor);
+        this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
     }
 
     onFileTextChanged(text: string): void {
         if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
             const previousText = this.fileSession()[this.selectedFile()!].code;
+            const previousScrollTop = this.fileSession()[this.selectedFile()!].scrollTop;
             if (previousText !== text) {
-                this.fileSession.set({ ...this.fileSession(), [this.selectedFile()!]: { code: text, loadingError: false, cursor: this.editor().getPosition() } });
+                this.fileSession.set({
+                    ...this.fileSession(),
+                    [this.selectedFile()!]: { code: text, loadingError: false, scrollTop: previousScrollTop, cursor: this.editor().getPosition() },
+                });
                 this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
             }
         }
@@ -358,7 +373,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
@@ -405,7 +420,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false } });
+            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } });
         }
         this.setBuildAnnotations(this.annotationsArray);
     }

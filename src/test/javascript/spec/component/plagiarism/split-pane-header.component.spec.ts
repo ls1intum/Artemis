@@ -1,19 +1,11 @@
 import { EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgModel } from '@angular/forms';
-import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
-import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
-import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 import { Subject } from 'rxjs';
-import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { By } from '@angular/platform-browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('SplitPaneHeaderComponent', () => {
     let comp1: SplitPaneHeaderComponent;
@@ -29,16 +21,6 @@ describe('SplitPaneHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [
-                SplitPaneHeaderComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgModel),
-                MockComponent(PlagiarismDetailsComponent),
-                MockComponent(PlagiarismRunDetailsComponent),
-                MockComponent(PlagiarismSidebarComponent),
-                MockComponent(TextSubmissionViewerComponent),
-            ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

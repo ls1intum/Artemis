@@ -35,7 +35,9 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSe
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisFaqIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
@@ -112,6 +114,8 @@ public class IrisSettingsService {
         initializeIrisCourseChatSettings(settings);
         initializeIrisLectureIngestionSettings(settings);
         initializeIrisCompetencyGenerationSettings(settings);
+        initializeIrisLectureChatSettings(settings);
+        initializeIrisFaqIngestionSettings(settings);
 
         irisSettingsRepository.save(settings);
     }
@@ -150,14 +154,38 @@ public class IrisSettingsService {
         settings.setIrisLectureIngestionSettings(irisLectureIngestionSettings);
     }
 
+    private void initializeIrisLectureChatSettings(IrisGlobalSettings settings) {
+        var irisLectureChatSettings = settings.getIrisLectureChatSettings();
+        irisLectureChatSettings = initializeSettings(irisLectureChatSettings, IrisLectureChatSubSettings::new);
+        settings.setIrisLectureChatSettings(irisLectureChatSettings);
+    }
+
     private void initializeIrisCompetencyGenerationSettings(IrisGlobalSettings settings) {
         var irisCompetencyGenerationSettings = settings.getIrisCompetencyGenerationSettings();
         irisCompetencyGenerationSettings = initializeSettings(irisCompetencyGenerationSettings, IrisCompetencyGenerationSubSettings::new);
         settings.setIrisCompetencyGenerationSettings(irisCompetencyGenerationSettings);
     }
 
+    /**
+     * Get the combined Iris settings for a course.
+     * Combines the global settings with the course settings.
+     *
+     * @return The combined Iris settings for the course
+     */
     public IrisGlobalSettings getGlobalSettings() {
         return irisSettingsRepository.findGlobalSettingsElseThrow();
+    }
+
+    /**
+     * This method initializes the Iris faq settings for a course.
+     *
+     * @param settings The course settings
+     * @return The combined Iris settings for the course
+     */
+    private void initializeIrisFaqIngestionSettings(IrisGlobalSettings settings) {
+        var irisFaqIngestionSubSettings = settings.getIrisFaqIngestionSettings();
+        irisFaqIngestionSubSettings = initializeSettings(irisFaqIngestionSubSettings, IrisFaqIngestionSubSettings::new);
+        settings.setIrisFaqIngestionSettings(irisFaqIngestionSubSettings);
     }
 
     /**
@@ -242,6 +270,12 @@ public class IrisSettingsService {
             null,
             GLOBAL
         ));
+        existingSettings.setIrisLectureChatSettings(irisSubSettingsService.update(
+            existingSettings.getIrisLectureChatSettings(),
+            settingsUpdate.getIrisLectureChatSettings(),
+            null,
+            GLOBAL
+        ));
         existingSettings.setIrisTextExerciseChatSettings(irisSubSettingsService.update(
             existingSettings.getIrisTextExerciseChatSettings(),
             settingsUpdate.getIrisTextExerciseChatSettings(),
@@ -263,6 +297,12 @@ public class IrisSettingsService {
         existingSettings.setIrisCompetencyGenerationSettings(irisSubSettingsService.update(
             existingSettings.getIrisCompetencyGenerationSettings(),
             settingsUpdate.getIrisCompetencyGenerationSettings(),
+            null,
+            GLOBAL
+        ));
+        existingSettings.setIrisFaqIngestionSettings(irisSubSettingsService.update(
+            existingSettings.getIrisFaqIngestionSettings(),
+            settingsUpdate.getIrisFaqIngestionSettings(),
             null,
             GLOBAL
         ));
@@ -304,10 +344,22 @@ public class IrisSettingsService {
             parentSettings.irisCourseChatSettings(),
             COURSE
         ));
+        existingSettings.setIrisLectureChatSettings(irisSubSettingsService.update(
+            existingSettings.getIrisLectureChatSettings(),
+            settingsUpdate.getIrisLectureChatSettings(),
+            parentSettings.irisLectureChatSettings(),
+            COURSE
+        ));
         existingSettings.setIrisLectureIngestionSettings(irisSubSettingsService.update(
             existingSettings.getIrisLectureIngestionSettings(),
             settingsUpdate.getIrisLectureIngestionSettings(),
             parentSettings.irisLectureIngestionSettings(),
+            COURSE
+        ));
+        existingSettings.setIrisFaqIngestionSettings(irisSubSettingsService.update(
+            existingSettings.getIrisFaqIngestionSettings(),
+            settingsUpdate.getIrisFaqIngestionSettings(),
+            parentSettings.irisFaqIngestionSettings(),
             COURSE
         ));
         existingSettings.setIrisCompetencyGenerationSettings(irisSubSettingsService.update(
@@ -585,7 +637,9 @@ public class IrisSettingsService {
             irisSubSettingsService.combineTextExerciseChatSettings(settingsList, false),
             irisSubSettingsService.combineCourseChatSettings(settingsList, false),
             irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, false),
-            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false)
+            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false),
+            irisSubSettingsService.combineLectureChatSettings(settingsList, false),
+            irisSubSettingsService.combineFaqIngestionSubSettings(settingsList, false)
         );
         // @formatter:on
     }
@@ -611,7 +665,9 @@ public class IrisSettingsService {
             irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
             irisSubSettingsService.combineCourseChatSettings(settingsList, minimal),
             irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
-            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal)
+            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
+            irisSubSettingsService.combineLectureChatSettings(settingsList, minimal),
+            irisSubSettingsService.combineFaqIngestionSubSettings(settingsList, minimal)
         );
         // @formatter:on
     }
@@ -638,7 +694,9 @@ public class IrisSettingsService {
             irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
             irisSubSettingsService.combineCourseChatSettings(settingsList, minimal),
             irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
-            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal)
+            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
+            irisSubSettingsService.combineLectureChatSettings(settingsList, minimal),
+            irisSubSettingsService.combineFaqIngestionSubSettings(settingsList, minimal)
         );
         // @formatter:on
     }
@@ -665,10 +723,12 @@ public class IrisSettingsService {
         var settings = new IrisCourseSettings();
         settings.setCourse(course);
         settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.setIrisLectureChatSettings(new IrisLectureChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
         settings.setIrisCourseChatSettings(new IrisCourseChatSubSettings());
         settings.setIrisLectureIngestionSettings(new IrisLectureIngestionSubSettings());
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
+        settings.setIrisFaqIngestionSettings(new IrisFaqIngestionSubSettings());
         return settings;
     }
 
@@ -746,6 +806,8 @@ public class IrisSettingsService {
             case COURSE_CHAT -> settings.irisCourseChatSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
             case LECTURE_INGESTION -> settings.irisLectureIngestionSettings().enabled();
+            case LECTURE_CHAT -> settings.irisLectureChatSettings().enabled();
+            case FAQ_INGESTION -> settings.irisFaqIngestionSettings().enabled();
         };
     }
 

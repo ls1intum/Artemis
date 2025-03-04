@@ -59,7 +59,7 @@ Server Selection
 
 After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
 
-* TUM: https://artemis.cit.tum.de
+* TUM: https://artemis.tum.de
 * CodeAbility: https://artemis.codeability.uibk.ac.at
 * KIT: https://artemis.praktomat.cs.kit.edu
 
@@ -170,7 +170,7 @@ Server Selection
 
 After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
 
-* TUM: https://artemis.cit.tum.de
+* TUM: https://artemis.tum.de
 * CodeAbility: https://artemis.codeability.uibk.ac.at
 * KIT: https://artemis.praktomat.cs.kit.edu
 * Hochschule Munich: https://artemis.cs.hm.edu/

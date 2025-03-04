@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -13,9 +13,9 @@ export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingSystemService {
-    public resourceUrl = 'api/courses';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api/assessment/courses';
 
     /**
      * Store a new grading scale for course on the server
@@ -146,7 +146,7 @@ export class GradingSystemService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
 
-        return this.http.get<SearchResult<GradingScale>>('api/grading-scales', {
+        return this.http.get<SearchResult<GradingScale>>('api/assessment/grading-scales', {
             params,
             observe: 'response',
         });

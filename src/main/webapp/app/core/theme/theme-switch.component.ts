@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
@@ -8,6 +7,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -18,9 +18,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, CommonModule, ArtemisSharedModule, NgbModule, FontAwesomeModule],
+    imports: [TranslateModule, NgbModule, FontAwesomeModule, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
 })
 export class ThemeSwitchComponent implements OnInit {
     protected readonly faSync = faSync;

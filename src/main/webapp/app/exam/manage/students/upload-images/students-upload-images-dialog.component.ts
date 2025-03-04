@@ -1,5 +1,5 @@
-import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
-import { NgForm } from '@angular/forms';
+import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,6 +9,11 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 class NotFoundExamUserType {
     numberOfUsersNotFound: number;
@@ -19,8 +24,13 @@ class NotFoundExamUserType {
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FaIconComponent, NgClass, ArtemisTranslatePipe],
 })
 export class StudentsUploadImagesDialogComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
@@ -43,12 +53,6 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
     faArrowRight = faArrowRight;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private examManagementService: ExamManagementService,
-    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

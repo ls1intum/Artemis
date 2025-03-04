@@ -94,7 +94,7 @@ export class EmojiAction extends TextEditorAction {
 
         this.insertTextAtPosition(editor, position, emoji);
 
-        const newPosition = new TextEditorPosition(position.getLineNumber(), position.getColumn() + 2);
+        const newPosition = new TextEditorPosition(position.getLineNumber(), position.getColumn() + emoji.length);
         editor.setPosition(newPosition);
         editor.focus();
     }

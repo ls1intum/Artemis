@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -13,9 +13,9 @@ export type SubmissionExportOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionExportService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api';
 
     /**
      * Exports submissions to the server by their participant identifiers
@@ -33,11 +33,11 @@ export class SubmissionExportService {
     getExerciseUrl(exerciseType: ExerciseType, exerciseId: number) {
         switch (exerciseType) {
             case ExerciseType.TEXT:
-                return 'text-exercises/' + exerciseId;
+                return 'text/text-exercises/' + exerciseId;
             case ExerciseType.MODELING:
-                return 'modeling-exercises/' + exerciseId;
+                return 'modeling/modeling-exercises/' + exerciseId;
             case ExerciseType.FILE_UPLOAD:
-                return 'file-upload-exercises/' + exerciseId;
+                return 'fileupload/file-upload-exercises/' + exerciseId;
             default:
                 throw Error('Export not implemented for exercise type ' + exerciseType);
         }

@@ -19,6 +19,7 @@ import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag
         />
     `,
     providers: [],
+    imports: [DragAndDropQuestionEditComponent],
 })
 export class ReEvaluateDragAndDropQuestionComponent {
     /**
@@ -48,8 +49,6 @@ export class ReEvaluateDragAndDropQuestionComponent {
     questionMoveDown = new EventEmitter<void>();
 
     fileMap = new Map<string, { path?: string; file: File }>();
-
-    constructor() {}
 
     /**
      * Add the given file to the fileMap for later upload.

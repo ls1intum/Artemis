@@ -1,24 +1,22 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
+import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -28,19 +26,17 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
+            imports: [OwlNativeDateTimeModule, CommonCourseCompetencyFormComponent, MockComponent(MarkdownEditorMonacoComponent)],
             declarations: [],
-            providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideModule(ArtemisMarkdownEditorModule, {
-                remove: { exports: [MarkdownEditorMonacoComponent] },
-                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
-            })
-            .compileComponents()
-            .then(() => {
-                competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
-                competencyFormComponent = competencyFormComponentFixture.componentInstance;
-            });
+            providers: [MockProvider(CourseCompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
+        }).compileComponents();
+
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+        competencyFormComponentFixture = TestBed.createComponent(CompetencyFormComponent);
+        competencyFormComponent = competencyFormComponentFixture.componentInstance;
+
         translateService = TestBed.inject(TranslateService);
     });
 
@@ -55,8 +51,8 @@ describe('CompetencyFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         // stubbing competency service for asynchronous validator
-        const competencyService = TestBed.inject(CompetencyService);
-        const getAllTitlesSpy = jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
+        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        const getAllTitlesSpy = jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: ['test'], status: 200 })));
 
         const competencyOfResponse: Competency = { id: 1, title: 'test' };
 
@@ -65,7 +61,7 @@ describe('CompetencyFormComponent', () => {
             status: 200,
         });
 
-        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(response));
+        jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(response));
 
         competencyFormComponentFixture.detectChanges();
 
@@ -156,9 +152,9 @@ describe('CompetencyFormComponent', () => {
     });
 
     it('validator should verify title is unique', fakeAsync(() => {
-        const competencyService = TestBed.inject(CompetencyService);
         const existingTitles = ['nameExisting'];
-        jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
+        const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        jest.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
         competencyFormComponent.isEditMode = true;
         competencyFormComponent.formData.title = 'initialName';
 

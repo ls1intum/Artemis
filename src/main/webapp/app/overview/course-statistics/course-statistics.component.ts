@@ -1,8 +1,8 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
@@ -25,6 +25,13 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
 import { Subject, Subscription } from 'rxjs';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ExerciseScoresChartComponent } from '../visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { KeyValuePipe } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -92,8 +99,32 @@ enum ChartBarTitle {
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
     styleUrls: ['../course-overview.scss'],
+    imports: [
+        NgbDropdown,
+        NgbDropdownToggle,
+        FaIconComponent,
+        TranslateDirective,
+        NgbDropdownMenu,
+        DocumentationButtonComponent,
+        PieChartModule,
+        NgbTooltip,
+        RouterLink,
+        ExerciseScoresChartComponent,
+        BarChartModule,
+        KeyValuePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+    controlsRendered = new EventEmitter<void>();
+    private courseStorageService = inject(CourseStorageService);
+    private scoresStorageService = inject(ScoresStorageService);
+    private translateService = inject(TranslateService);
+    private route = inject(ActivatedRoute);
+    private gradingSystemService = inject(GradingSystemService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    categoryFilter = inject(ChartCategoryFilter);
+
     readonly documentationType: DocumentationType = 'Statistics';
 
     courseId: number;
@@ -213,16 +244,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         subject: new Subject<TemplateRef<any>>(),
     };
 
-    constructor(
-        private courseStorageService: CourseStorageService,
-        private scoresStorageService: ScoresStorageService,
-        private translateService: TranslateService,
-        private route: ActivatedRoute,
-        private gradingSystemService: GradingSystemService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        public categoryFilter: ChartCategoryFilter,
-    ) {}
-
     ngOnInit() {
         // Note: due to lazy loading and router outlet, we use parent 2x here
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
@@ -261,6 +282,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         // Send our controls template to parent so it will be rendered in the top bar
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);
+            this.controlsRendered.emit();
         }
     }
 

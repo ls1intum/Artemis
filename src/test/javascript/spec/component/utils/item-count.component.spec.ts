@@ -10,7 +10,6 @@ describe('ItemCountComponent test', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), TranslateDirective],
-            declarations: [ItemCountComponent],
         })
             .compileComponents()
             .then(() => {

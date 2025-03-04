@@ -28,6 +28,4 @@ export class CourseManagementDetailViewDto {
 
     // LLM Stats
     currentTotalLlmCostInEur: number;
-
-    constructor() {}
 }

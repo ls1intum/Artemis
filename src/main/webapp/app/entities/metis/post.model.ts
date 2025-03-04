@@ -5,18 +5,17 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 
 export class Post extends Posting {
     public title?: string;
-    public visibleForStudents?: boolean;
     public answers?: AnswerPost[];
     public tags?: string[];
     public plagiarismCase?: PlagiarismCase;
     public displayPriority?: DisplayPriority;
     public resolved?: boolean;
-    public isConsecutive?: boolean = false;
+    public forwardedPosts?: Post[] = [];
+    public forwardedAnswerPosts?: AnswerPost[] = [];
 
     constructor() {
         super();
         // set default values
-        this.visibleForStudents = true;
         this.displayPriority = DisplayPriority.NONE;
     }
 }

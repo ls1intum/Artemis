@@ -2,19 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe } from 'ng-mocks';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { User } from 'app/core/user/user.model';
-import { ArtemisTestModule } from '../../test.module';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import dayjs from 'dayjs/esm';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AlertService } from 'app/core/util/alert.service';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;
@@ -34,19 +31,13 @@ describe('VcsAccessTokensSettingsComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [
-                VcsAccessTokensSettingsComponent,
-                TranslatePipeMock,
-                MockPipe(ArtemisDatePipe),
-                MockComponent(ButtonComponent),
-                MockComponent(FormDateTimePickerComponent),
-            ],
+            imports: [OwlNativeDateTimeModule],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
+                provideHttpClient(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(VcsAccessTokensSettingsComponent);

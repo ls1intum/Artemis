@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
 
@@ -21,9 +21,11 @@ export class ArtemisServerDateService implements ServerDateService {
     recentClientDates: dayjs.Dayjs[];
     http: HttpClient;
 
-    constructor(http: HttpClient) {
+    constructor() {
+        const http = inject(HttpClient);
+
         this.http = http;
-        this.resourceUrl = 'api/public/time';
+        this.resourceUrl = 'api/core/public/time';
         this.recentOffsets = new Array<number>();
         this.recentClientDates = new Array<dayjs.Dayjs>();
     }

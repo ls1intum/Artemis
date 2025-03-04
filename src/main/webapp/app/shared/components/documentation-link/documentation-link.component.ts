@@ -12,7 +12,6 @@ export type DocumentationType = keyof typeof DocumentationLinks;
 
 @Component({
     selector: 'jhi-documentation-link',
-    standalone: true,
     templateUrl: './documentation-link.component.html',
     imports: [TranslateDirective],
 })

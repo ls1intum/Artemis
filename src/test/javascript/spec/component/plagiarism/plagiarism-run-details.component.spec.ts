@@ -1,15 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
 import { SimpleChange } from '@angular/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { BarChartModule } from '@swimlane/ngx-charts';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ArtemisTestModule } from '../../test.module';
 import { Range } from 'app/shared/util/utils';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;
@@ -24,9 +19,7 @@ describe('Plagiarism Run Details', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [PlagiarismRunDetailsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(PlagiarismInspectorService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismRunDetailsComponent);

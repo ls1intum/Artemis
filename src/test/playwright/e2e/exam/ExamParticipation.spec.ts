@@ -260,7 +260,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Exam announcements', { tag: '@slow' }, () => {
+    test.describe('Exam announcements', () => {
         let exam: Exam;
         const students = [studentOne, studentTwo];
         let exercise: Exercise;
@@ -278,42 +278,46 @@ test.describe('Exam participation', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        test('Instructor sends an announcement message and all participants receive it', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
-            await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(exam.id!);
+        test(
+            'Instructor sends an announcement message and all participants receive it',
+            { tag: '@slow' },
+            async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+                await login(instructor);
+                await navigationBar.openCourseManagement();
+                await courseManagement.openExamsOfCourse(course.id!);
+                await examManagement.openExam(exam.id!);
 
-            const studentPages = [];
+                const studentPages = [];
 
-            for (const student of [studentOne, studentTwo]) {
-                const studentContext = await browser.newContext();
-                const studentPage = await studentContext.newPage();
-                studentPages.push(studentPage);
+                for (const student of [studentOne, studentTwo]) {
+                    const studentContext = await browser.newContext();
+                    const studentPage = await studentContext.newPage();
+                    studentPages.push(studentPage);
 
-                await Commands.login(studentPage, student);
-                await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
-                const examStartEnd = new ExamStartEndPage(studentPage);
-                await examStartEnd.startExam(false);
-            }
+                    await Commands.login(studentPage, student);
+                    await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                    const examStartEnd = new ExamStartEndPage(studentPage);
+                    await examStartEnd.startExam(false);
+                }
 
-            const announcement = 'Important announcement!';
-            await examManagement.openAnnouncementDialog();
-            const announcementTypingTime = dayjs();
-            await examManagement.typeAnnouncementMessage(announcement);
-            await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
-            await examManagement.sendAnnouncement();
+                const announcement = 'Important announcement!';
+                await examManagement.openAnnouncementDialog();
+                const announcementTypingTime = dayjs();
+                await examManagement.typeAnnouncementMessage(announcement);
+                await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
+                await examManagement.sendAnnouncement();
 
-            for (const studentPage of studentPages) {
-                const modalDialog = new ModalDialogBox(studentPage);
-                await modalDialog.checkDialogTime(announcementTypingTime);
-                await modalDialog.checkDialogMessage(announcement);
-                await modalDialog.checkDialogAuthor(instructor.username);
-                await modalDialog.closeDialog();
-            }
-        });
+                for (const studentPage of studentPages) {
+                    const modalDialog = new ModalDialogBox(studentPage);
+                    await modalDialog.checkDialogTime(announcementTypingTime);
+                    await modalDialog.checkDialogMessage(announcement);
+                    await modalDialog.checkDialogAuthor(instructor.username);
+                    await modalDialog.closeDialog();
+                }
+            },
+        );
 
-        test('Instructor changes working time and all participants are informed', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+        test('Instructor changes working time and all participants are informed', { tag: '@slow' }, async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
             await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExamsOfCourse(course.id!);
@@ -354,7 +358,7 @@ test.describe('Exam participation', () => {
         test(
             'Instructor changes problem statement and all participants are informed',
             { tag: '@fast' },
-            async ({ browser, login, navigationBar, courseManagement, examManagement, examExerciseGroups, editExam, textExerciseCreation }) => {
+            async ({ browser, login, navigationBar, courseManagement, examManagement, examExerciseGroups, examDetails, textExerciseCreation }) => {
                 await login(instructor);
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExamsOfCourse(course.id!);
@@ -375,7 +379,7 @@ test.describe('Exam participation', () => {
                     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
                 }
 
-                await editExam.openExerciseGroups();
+                await examDetails.openExerciseGroups();
                 await examExerciseGroups.clickEditExercise(exercise.exerciseGroup!.id!, exercise.id!);
 
                 const problemStatementText = textExerciseTemplate.problemStatement;

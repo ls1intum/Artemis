@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router, RouterStateSnapshot } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -8,10 +8,8 @@ import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupManagementResolve implements Resolve<Course> {
-    constructor(
-        private service: CourseManagementService,
-        private router: Router,
-    ) {}
+    private service = inject(CourseManagementService);
+    private router = inject(Router);
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         return this.service.find(route.params['courseId']).pipe(

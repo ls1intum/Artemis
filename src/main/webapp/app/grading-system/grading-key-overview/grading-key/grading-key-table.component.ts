@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -11,26 +11,30 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
 import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
     styleUrls: ['../grading-key-overview.scss'],
+    imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
 })
 export class GradingKeyTableComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private gradingSystemService = inject(GradingSystemService);
+    private bonusService = inject(BonusService);
+    private scoresStorageService = inject(ScoresStorageService);
+
     readonly faChevronLeft = faChevronLeft;
 
     readonly GradeEditMode = GradeEditMode;
 
     @Input() studentGradeOrBonusPointsOrGradeBonus?: string;
     @Input() forBonus?: boolean;
-
-    constructor(
-        private route: ActivatedRoute,
-        private gradingSystemService: GradingSystemService,
-        private bonusService: BonusService,
-        private scoresStorageService: ScoresStorageService,
-    ) {}
 
     plagiarismGrade: string;
     noParticipationGrade: string;

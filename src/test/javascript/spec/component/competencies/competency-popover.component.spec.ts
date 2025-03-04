@@ -8,6 +8,8 @@ import { By } from '@angular/platform-browser';
 import { Component } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-statistics',
@@ -35,7 +37,7 @@ describe('CompetencyPopoverComponent', () => {
                 ]),
             ],
             declarations: [CompetenciesPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             schemas: [],
         })
             .compileComponents()

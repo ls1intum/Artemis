@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { Exercise } from 'app/entities/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
@@ -22,9 +22,9 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
  */
 @Injectable({ providedIn: 'root' })
 export class EntityTitleService {
-    private readonly titleSubjects = new Map<string, { subject: Subject<string>; timeout?: ReturnType<typeof setTimeout> }>();
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private readonly titleSubjects = new Map<string, { subject: Subject<string>; timeout?: ReturnType<typeof setTimeout> }>();
 
     /**
      * Returns an observable that will provide the title of the entity.
@@ -108,28 +108,28 @@ export class EntityTitleService {
         let resourceUrl = 'api/';
         switch (type) {
             case EntityType.COURSE:
-                resourceUrl += 'courses';
+                resourceUrl += 'core/courses';
                 break;
             case EntityType.EXERCISE:
-                resourceUrl += 'exercises';
+                resourceUrl += 'exercise/exercises';
                 break;
             case EntityType.LECTURE:
-                resourceUrl += 'lectures';
+                resourceUrl += 'lecture/lectures';
                 break;
             case EntityType.COMPETENCY:
-                resourceUrl += 'competencies';
+                resourceUrl += 'atlas/competencies';
                 break;
             case EntityType.DIAGRAM:
-                resourceUrl += 'apollon-diagrams';
+                resourceUrl += 'modeling/apollon-diagrams';
                 break;
             case EntityType.EXAM:
-                resourceUrl += 'exams';
+                resourceUrl += 'exam/exams';
                 break;
             case EntityType.ORGANIZATION:
-                resourceUrl += 'organizations';
+                resourceUrl += 'core/organizations';
                 break;
             case EntityType.TUTORIAL_GROUP:
-                resourceUrl += 'tutorial-groups';
+                resourceUrl += 'tutorialgroup/tutorial-groups';
                 break;
         }
 

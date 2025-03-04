@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { finalize } from 'rxjs';
+import { combineLatest, finalize } from 'rxjs';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -12,26 +13,22 @@ import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-config
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { combineLatest } from 'rxjs';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { ArtemisSharedComponentModule } from '../../../shared/components/shared-component.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
-import { ArtemisSharedPipesModule } from '../../../shared/pipes/shared-pipes.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
     templateUrl: './edit-course-lti-configuration.component.html',
-    standalone: true,
     imports: [
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        ArtemisSharedComponentModule,
-        ArtemisSharedModule,
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
@@ -42,7 +39,11 @@ import { ArtemisSharedPipesModule } from '../../../shared/pipes/shared-pipes.mod
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
-        ArtemisSharedPipesModule,
+        RemoveKeysPipe,
+        ItemCountComponent,
+        HelpIconComponent,
+        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
+        HasAnyAuthorityDirective,
     ],
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {

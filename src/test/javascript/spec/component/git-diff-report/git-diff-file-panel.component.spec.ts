@@ -1,13 +1,14 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-line-stat.component';
 import { ProgrammingExerciseGitDiffEntry } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { GitDiffFilePanelComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel.component';
-import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffFileComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file.component';
 import { GitDiffFilePanelTitleComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel-title.component';
 import { MonacoDiffEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('GitDiffFilePanelComponent', () => {
     let comp: GitDiffFilePanelComponent;
@@ -16,7 +17,7 @@ describe('GitDiffFilePanelComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             // TODO: We cannot mock GitDiffFileComponent because of https://github.com/help-me-mom/ng-mocks/issues/8634.
-            imports: [ArtemisTestModule, GitDiffFileComponent],
+            imports: [GitDiffFileComponent],
             declarations: [
                 GitDiffFilePanelComponent,
                 MockComponent(GitDiffFilePanelTitleComponent),
@@ -27,9 +28,8 @@ describe('GitDiffFilePanelComponent', () => {
                 MockDirective(NgbAccordionHeader),
                 MockDirective(NgbAccordionButton),
                 MockDirective(NgbAccordionCollapse),
-                MockDirective(NgbAccordionBody),
             ],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffFilePanelComponent);
         comp = fixture.componentInstance;

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,7 +22,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
@@ -136,9 +139,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // when
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         // then
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         var participants = assertParticipants(chat.getId(), 1, loginNameWithoutPrefix);
@@ -170,6 +174,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectCreateForbidden(channelDTO);
 
@@ -188,6 +193,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(TEST_PREFIX);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         expectUpdateForbidden(1L, channelDTO);
 
@@ -233,6 +239,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+        channelDTO.setIsCourseWide(false);
 
         // then
         expectCreateForbidden(channelDTO);
@@ -254,7 +261,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
         // when
         userUtilService.changeUser(testPrefix + "instructor2");
-        request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
+        request.delete("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
     }
@@ -274,7 +281,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // when
         userUtilService.changeUser(testPrefix + "instructor2");
-        request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.BAD_REQUEST);
+        request.delete("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.BAD_REQUEST);
         // then
         assertThat(channelRepository.findById(channel.getId())).isNotEmpty();
         verifyNoParticipantTopicWebsocketSent();
@@ -291,7 +298,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
         // when
-        request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
+        request.delete("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
     }
@@ -338,27 +345,27 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // then
         // every instructor automatically has moderation rights for every channel
         userUtilService.changeUser(testPrefix + "instructor2");
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         resetWebsocketMock();
         // The channel name can not be modified if it matches another existing channel
         updateDTO.setName(channelForDuplicateCheck.getName());
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // channel moderators can also update the channel
         updateDTO.setName(TEST_PREFIX + "3");
         updateDTO.setDescription("new description2");
         updateDTO.setTopic("new topic2");
         userUtilService.changeUser(testPrefix + "tutor1");
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         // The channel name can not be modified if it matches another existing channel
         updateDTO.setName(channelForDuplicateCheck.getName());
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
@@ -380,7 +387,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "instructor2");
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, true);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
@@ -517,8 +524,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         testGrantRevokeChannelModeratorRoleWorks(channel, false);
 
         // note: you can NOT revoke the channel moderator role of the creator to guarantee that there is always at least one channel moderator
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-moderator", List.of(testPrefix + "instructor1"),
-                HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-moderator",
+                List.of(testPrefix + "instructor1"), HttpStatus.BAD_REQUEST);
         assertUsersAreChannelModerators(channel.getId(), "instructor1");
 
         // cleanup
@@ -531,7 +538,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
 
-        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/channels/" + channel.getId() + "/grant-channel-moderator",
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/grant-channel-moderator",
                 List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
 
         assertUsersAreChannelModerators(channel.getId(), "student1", "student2");
@@ -543,7 +550,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
 
-        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/channels/" + channel.getId() + "/revoke-channel-moderator",
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/revoke-channel-moderator",
                 List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
 
         assertUserAreNotChannelModerators(channel.getId(), "student1", "student2");
@@ -622,7 +629,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         params.add("addAllTutors", String.valueOf(true));
         params.add("addAllInstructors", String.valueOf(true));
 
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var allStudentLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
         var allTutorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
@@ -681,7 +688,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "student1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "student1"), HttpStatus.OK);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "student1"),
+                HttpStatus.OK);
         assertUserAreNotConversationMembers(channel.getId(), "student1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "student1");
@@ -698,7 +706,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel, TEST_PREFIX);
         // then
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "instructor1"),
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "instructor1"),
                 HttpStatus.BAD_REQUEST);
         assertUsersAreConversationMembers(channel.getId(), "instructor1");
         verifyNoParticipantTopicWebsocketSent();
@@ -715,7 +723,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "student1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"), HttpStatus.OK);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"),
+                HttpStatus.OK);
         assertUsersAreConversationMembers(channel.getId(), "student1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, channel.getId(), "student1");
@@ -733,7 +742,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "student1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"), HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"),
+                HttpStatus.FORBIDDEN);
         assertUserAreNotConversationMembers(channel.getId(), "student1");
 
         // cleanup
@@ -748,7 +758,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "instructor2");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "instructor2"), HttpStatus.OK);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "instructor2"),
+                HttpStatus.OK);
         assertUsersAreConversationMembers(channel.getId(), "instructor2");
 
         // cleanup
@@ -768,7 +779,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "student1");
-        var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        var channels = request.getList("/api/communication/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
         assertThat(channels.stream().map(ChannelDTO::getId).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
                 privateChannelWhereMember.getId());
 
@@ -792,7 +803,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + "instructor2");
-        var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        var channels = request.getList("/api/communication/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
         assertThat(channels.stream().map(ChannelDTO::getId).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
                 privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
 
@@ -824,7 +835,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         userUtilService.changeUser(testPrefix + userLogin);
-        var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/public-overview", HttpStatus.OK, ChannelIdAndNameDTO.class);
+        var channels = request.getList("/api/communication/courses/" + exampleCourseId + "/channels/public-overview", HttpStatus.OK, ChannelIdAndNameDTO.class);
         assertThat(channels).hasSize(5);
         assertThat(channels.stream().map(ChannelIdAndNameDTO::id).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
                 courseWideChannelWhereMember.getId(), courseWideChannelWhereNotMember.getId(), visibleLectureChannel.getId());
@@ -857,7 +868,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // switch to student1
         userUtilService.changeUser(testPrefix + "student1");
 
-        Channel exerciseChannel = request.get("/api/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
+        Channel exerciseChannel = request.get("/api/communication/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
         assertThat(exerciseChannel.getExercise()).isNull();
 
@@ -872,7 +883,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
 
-        Channel returnedLectureChannel = request.get("/api/courses/" + course.getId() + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
+        Channel returnedLectureChannel = request.get("/api/communication/courses/" + course.getId() + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
 
         assertThat(returnedLectureChannel).isNotNull();
         assertThat(returnedLectureChannel.getId()).isEqualTo(lectureChannel.getId());
@@ -887,7 +898,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
                 ZonedDateTime.now().plusDays(1));
         Channel exerciseChannel = exerciseUtilService.addChannelToExercise(exercise);
 
-        Channel returnedExerciseChannel = request.get("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
+        Channel returnedExerciseChannel = request.get("/api/communication/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
 
         assertThat(returnedExerciseChannel).isNotNull();
         assertThat(returnedExerciseChannel.getId()).isEqualTo(exerciseChannel.getId());
@@ -912,7 +923,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         userUtilService.changeUser(testPrefix + "student1");
 
-        Channel lectureChannel = request.get("/api/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
+        Channel lectureChannel = request.get("/api/communication/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
         assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
         assertThat(lectureChannel.getLecture()).isNull();
 
@@ -931,10 +942,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
 
         try {
             request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
@@ -955,10 +967,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setIsCourseWide(false);
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
 
         ChannelDTO response = null;
         try {
@@ -976,7 +989,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void markAllChannelsAsRead() throws Exception {
+    void shouldMarkAllChannelsAsReadWhenCallingResource() throws Exception {
         // ensure there exist at least two channel with unread messages in the course
         createChannel(true, "channel1");
         createChannel(true, "channel2");
@@ -990,13 +1003,36 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         });
 
         User instructor1 = userTestRepository.getUser();
-        request.postWithoutLocation("/api/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
         updatedChannels.forEach(channel -> {
-            var conversationParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
-            await().untilAsserted(() -> assertThat(conversationParticipant.get().getUnreadMessagesCount()).isZero()); // async db call, so we need to wait
+            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+                var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+                assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
+            });
         });
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldToggleChannelPrivacy() throws Exception {
+        var initialChannel = createChannel(true, TEST_PREFIX + "togglePrivacy");
+        assertThat(initialChannel.getIsPublic()).isTrue();
+
+        // Toggle privacy
+        MultiValueMap<String, String> emptyParams = new LinkedMultiValueMap<>();
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + initialChannel.getId() + "/toggle-privacy", HttpStatus.OK, emptyParams);
+        var updatedChannelStep1 = channelRepository.findByIdElseThrow(initialChannel.getId());
+        assertThat(updatedChannelStep1.getIsPublic()).isFalse();
+
+        // Toggle privacy again
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + initialChannel.getId() + "/toggle-privacy", HttpStatus.OK, emptyParams);
+        var updatedChannelStep2 = channelRepository.findByIdElseThrow(initialChannel.getId());
+        assertThat(updatedChannelStep2.getIsPublic()).isTrue();
+
+        // cleanup
+        conversationRepository.deleteById(initialChannel.getId());
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {
@@ -1008,7 +1044,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
             this.archiveChannel(channel.getId());
         }
         var postfix = shouldArchive ? "/archive" : "/unarchive";
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, HttpStatus.OK, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, HttpStatus.OK, new LinkedMultiValueMap<>());
         this.assertChannelProperties(channel.getId(), channel.getName(), channel.getTopic(), channel.getDescription(), isPublicChannel, shouldArchive);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
@@ -1025,8 +1061,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         }
         var postfix = shouldRegister ? "/register" : "/deregister";
 
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
-                HttpStatus.OK);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix,
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
         if (shouldRegister) {
             assertUsersAreConversationMembers(channel.getId(), "student1", "student2");
         }
@@ -1057,8 +1093,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         }
         var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
 
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
-                HttpStatus.OK);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix,
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
         if (shouldGrant) {
             assertUsersAreChannelModerators(channel.getId(), "student1", "student2");
         }
@@ -1079,7 +1115,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
             this.archiveChannel(channel.getId());
         }
         var postfix = shouldArchive ? "/archive" : "/unarchive";
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, HttpStatus.FORBIDDEN,
+                new LinkedMultiValueMap<>());
         this.assertChannelProperties(channel.getId(), channel.getName(), channel.getTopic(), channel.getDescription(), isPublicChannel, !shouldArchive);
         verifyNoParticipantTopicWebsocketSent();
         resetWebsocketMock();
@@ -1088,31 +1125,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private void expectGrantRevokeChannelModeratorRoleForbidden(ChannelDTO channel, boolean shouldGrant) throws Exception {
         // prepare channel in db
         var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
-                HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix,
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.FORBIDDEN);
     }
 
     private void expectRegisterDeregisterForbidden(ChannelDTO channel, boolean shouldRegister) throws Exception {
         // prepare channel in db
         var postfix = shouldRegister ? "/register" : "/deregister";
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
-                HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix,
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.FORBIDDEN);
     }
 
     private void expectCreateBadRequest(ChannelDTO channelDTO) throws Exception {
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     private void expectCreateForbidden(ChannelDTO channelDTO) throws Exception {
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
     }
 
     private void expectDeleteForbidden(Long channelId) throws Exception {
-        request.delete("/api/courses/" + exampleCourseId + "/channels/" + channelId, HttpStatus.FORBIDDEN);
+        request.delete("/api/communication/courses/" + exampleCourseId + "/channels/" + channelId, HttpStatus.FORBIDDEN);
     }
 
     private void expectUpdateForbidden(Long channelId, ChannelDTO updateDTO) throws Exception {
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channelId, updateDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channelId, updateDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
     }
 
     private void assertChannelProperties(Long channelId, String name, String topic, String description, Boolean isPublic, Boolean isArchived) {

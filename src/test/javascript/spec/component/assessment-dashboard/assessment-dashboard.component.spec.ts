@@ -1,11 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, RouterModule, UrlSegment, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
-import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
@@ -17,30 +13,24 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
-import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { Course } from 'app/entities/course.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgModel } from '@angular/forms';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -140,28 +130,15 @@ describe('AssessmentDashboardInformationComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule)],
-            declarations: [
-                AssessmentDashboardComponent,
-                MockComponent(TutorLeaderboardComponent),
-                MockComponent(TutorParticipationGraphComponent),
-                MockComponent(AssessmentDashboardInformationComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockComponent(SecondCorrectionEnableButtonComponent),
-                MockPipe(HtmlForMarkdownPipe),
-                MockDirective(SortDirective),
-                MockDirective(NgModel),
-                MockComponent(NotReleasedTagComponent),
-                MockPipe(ArtemisTimeAgoPipe),
-                MockDirective(MockHasAnyAuthorityDirective),
-                MockComponent(ExamAssessmentButtonsComponent),
-                MockComponent(DocumentationButtonComponent),
-            ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

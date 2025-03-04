@@ -8,12 +8,15 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
@@ -23,6 +26,7 @@ import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -57,6 +61,9 @@ public class AthenaFeedbackSuggestionsService {
     private final AthenaDTOConverterService athenaDTOConverterService;
 
     private final LLMTokenUsageService llmTokenUsageService;
+
+    @Value("${artemis.athena.allowed-feedback-requests:10}")
+    private int allowedFeedbackRequests;
 
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
@@ -196,5 +203,38 @@ public class AthenaFeedbackSuggestionsService {
 
         llmTokenUsageService.saveLLMTokenUsage(llmRequests, LLMServiceType.ATHENA,
                 (llmTokenUsageBuilder -> llmTokenUsageBuilder.withCourse(courseId).withExercise(exercise.getId()).withUser(userId)));
+    }
+
+    /**
+     * Checks if the number of Athena results for the given participation exceeds
+     * the allowed threshold and throws an exception if the limit is reached.
+     *
+     * @param participation the student participation to check
+     * @throws BadRequestAlertException if the maximum number of Athena feedback requests is exceeded
+     */
+    public void checkRateLimitOrThrow(StudentParticipation participation) {
+        List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+
+        long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
+
+        if (countOfSuccessfulRequests >= this.allowedFeedbackRequests) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
+        }
+    }
+
+    /**
+     * Ensures that the submission does not already have an Athena-generated result.
+     * Throws an exception if Athena result already exists.
+     *
+     * @param submission the student's submission to validate
+     * @throws BadRequestAlertException if an Athena result is already present for the submission
+     */
+    public void checkLatestSubmissionHasNoAthenaResultOrThrow(Submission submission) {
+        Result latestResult = submission.getLatestResult();
+
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA) {
+            log.debug("Submission ID: {} already has an Athena result. Skipping feedback generation.", submission.getId());
+            throw new BadRequestAlertException("Submission already has an Athena result", "submission", "submissionAlreadyHasAthenaResult", true);
+        }
     }
 }

@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { faEllipsisVertical, faEye, faEyeSlash, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { catchError, mergeWith } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
@@ -20,6 +20,9 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -27,8 +30,15 @@ import { NotificationService } from 'app/shared/notification/notification.servic
     styleUrls: ['./conversation-options.component.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, NgbDropdownButtonItem, ArtemisTranslatePipe],
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+    private notificationService = inject(NotificationService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+
     private ngUnsubscribe = new Subject<void>();
 
     favorite$ = new Subject<boolean>();
@@ -48,19 +58,11 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     faEllipsisVertical = faEllipsisVertical;
     faHeartSolid = faHearthSolid;
     faHeartRegular = faHeartRegular;
-    faEye = faEye;
-    faEyeSlash = faEyeSlash;
+    faBoxArchive = faBoxArchive;
+    faBoxOpen = faBoxOpen;
     faVolumeXmark = faVolumeXmark;
     faVolumeUp = faVolumeUp;
     faGear = faGear;
-
-    constructor(
-        public conversationService: ConversationService,
-        private metisService: MetisService,
-        private notificationService: NotificationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
 
@@ -77,7 +79,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
     }
 
-    onHiddenClicked(event: MouseEvent) {
+    onArchiveClicked(event: MouseEvent) {
         event.stopPropagation();
         if (!this.course.id || !this.conversation.id) {
             return;

@@ -1,4 +1,4 @@
-import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
+import { Injectable, Renderer2, RendererFactory2, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,17 +11,18 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
+    private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
+    private titleService = inject(Title);
+    private router = inject(Router);
+    private sessionStorage = inject(SessionStorageService);
+
     private renderer: Renderer2;
     private _language: BehaviorSubject<string>;
 
-    constructor(
-        private translateService: TranslateService,
-        private localeConversionService: LocaleConversionService,
-        private titleService: Title,
-        private router: Router,
-        rootRenderer: RendererFactory2,
-        private sessionStorage: SessionStorageService,
-    ) {
+    constructor() {
+        const rootRenderer = inject(RendererFactory2);
+
         this._language = new BehaviorSubject<string>(this.translateService.currentLang);
         this.renderer = rootRenderer.createRenderer(document.querySelector('html'), null);
         this.init();

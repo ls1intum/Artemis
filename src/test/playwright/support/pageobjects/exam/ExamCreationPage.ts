@@ -2,7 +2,6 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { clearTextField, enterDate } from '../../utils';
-import { COURSE_BASE } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
@@ -49,6 +48,27 @@ export class ExamCreationPage {
      */
     async setEndDate(date: dayjs.Dayjs) {
         await enterDate(this.page, '#endDate', date);
+    }
+
+    /**
+     * @param date the date when the exam results will be published
+     */
+    async setPublishResultsDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#publishResultsDate', date);
+    }
+
+    /**
+     * @param date the date when the exam student review starts
+     */
+    async setStudentReviewStartDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examStudentReviewStart', date);
+    }
+
+    /**
+     * @param date the date when the exam student review ends
+     */
+    async setStudentReviewEndDate(date: dayjs.Dayjs) {
+        await enterDate(this.page, '#examStudentReviewEnd', date);
     }
 
     /**
@@ -114,7 +134,7 @@ export class ExamCreationPage {
      * @returns Response object.
      */
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams`);
         await this.page.locator('#save-exam').click();
         return await responsePromise;
     }
@@ -124,7 +144,7 @@ export class ExamCreationPage {
      * @returns Response object.
      */
     async update() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams`);
         await this.page.locator('#save-exam').click();
         return await responsePromise;
     }

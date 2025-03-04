@@ -1,24 +1,11 @@
-import { Page, expect } from '@playwright/test';
-import { clearTextField, drag, enterDate } from '../../../utils';
-import { Dayjs } from 'dayjs';
+import { expect } from '@playwright/test';
+import { clearTextField, drag } from '../../../utils';
 import { QUIZ_EXERCISE_BASE } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
+import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
-export class QuizExerciseCreationPage {
-    private readonly page: Page;
+export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     private readonly DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT = 4;
-
-    constructor(page: Page) {
-        this.page = page;
-    }
-
-    async setTitle(title: string) {
-        await this.page.locator('#field_title').fill(title);
-    }
-
-    async setVisibleFrom(date: Dayjs) {
-        await enterDate(this.page, '#pick-releaseDate', date);
-    }
 
     async addMultipleChoiceQuestion(title: string, points = 1) {
         await this.page.locator('#quiz-add-mc-question').click();
@@ -76,9 +63,9 @@ export class QuizExerciseCreationPage {
         const boundingBox = await element?.boundingBox();
 
         expect(boundingBox, { message: 'Could not get bounding box of element' }).not.toBeNull();
-        await this.page.mouse.move(boundingBox.x + 800, boundingBox.y + 10);
+        await this.page.mouse.move(boundingBox!.x + 800, boundingBox!.y + 10);
         await this.page.mouse.down();
-        await this.page.mouse.move(boundingBox.x + 1000, boundingBox.y + 150);
+        await this.page.mouse.move(boundingBox!.x + 1000, boundingBox!.y + 150);
         await this.page.mouse.up();
 
         await this.createDragAndDropItem('Rick Astley');

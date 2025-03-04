@@ -340,7 +340,8 @@
                 "button": "Show exam summary{{countdown}}"
             },
             "saveExercise": "Save exercise",
-            "exerciseSaved": "Exercise saved"
+            "exerciseSaved": "Exercise saved",
+            "reloadWarning": "You are about to reload the page. All unsaved changes will be lost. Are you sure you want to continue?"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

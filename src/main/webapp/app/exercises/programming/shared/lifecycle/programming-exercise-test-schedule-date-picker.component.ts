@@ -1,8 +1,13 @@
 import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-test-schedule-date-picker',
@@ -15,6 +20,7 @@ import { faCalendarCheck, faCalendarMinus, faCalendarPlus } from '@fortawesome/f
         },
     ],
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
+    imports: [TranslateDirective, HelpIconComponent, FormsModule, OwlDateTimeModule, FaIconComponent, ArtemisDatePipe],
 })
 export class ProgrammingExerciseTestScheduleDatePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;

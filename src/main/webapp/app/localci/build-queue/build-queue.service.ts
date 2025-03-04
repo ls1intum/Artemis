@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -10,11 +10,12 @@ import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.comp
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
-    public resourceUrl = 'api';
-    public adminResourceUrl = 'api/admin';
+    private http = inject(HttpClient);
+
+    public resourceUrl = 'api/programming';
+    public adminResourceUrl = 'api/core/admin';
     nestedDtoKey = 'pageable';
 
-    constructor(private http: HttpClient) {}
     /**
      * Get all build jobs of a course in the queue
      * @param courseId
@@ -185,6 +186,18 @@ export class BuildQueueService {
         return this.http.get<BuildJobStatistics>(`${this.resourceUrl}/courses/${courseId}/build-job-statistics`, { params: { span } }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get build job statistics for course ${courseId}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Get all build jobs of a course in the queue
+     * @param buildJobId
+     */
+    getBuildJobLogs(buildJobId: string): Observable<string> {
+        return this.http.get(`${this.resourceUrl}/build-log/${buildJobId}`, { responseType: 'text' }).pipe(
+            catchError(() => {
+                return throwError(() => new Error('artemisApp.buildQueue.logs.errorFetchingLogs'));
             }),
         );
     }

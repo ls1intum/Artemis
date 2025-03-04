@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,25 +23,23 @@ export type BuildArtifact = {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
-    public resourceUrl = 'api/participations';
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-        private accountService: AccountService,
-    ) {}
+    public resourceUrl = 'api/exercise/participations';
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);
         return this.http
-            .put<StudentParticipation>(`api/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
+            .put<StudentParticipation>(`api/exercise/exercises/${exercise.id}/participations`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     updateIndividualDueDates(exercise: Exercise, participations: StudentParticipation[]): Observable<EntityArrayResponseType> {
         const copies = participations.map((participation) => this.convertParticipationForServer(participation, exercise));
         return this.http
-            .put<StudentParticipation[]>(`api/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
+            .put<StudentParticipation[]>(`api/exercise/exercises/${exercise.id}/participations/update-individual-due-date`, copies, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
     }
 
@@ -62,7 +60,7 @@ export class ParticipationService {
      */
     findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<StudentParticipation>(`api/exercises/${exerciseId}/participation`, { observe: 'response' })
+            .get<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participation`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
@@ -72,14 +70,14 @@ export class ParticipationService {
      */
     startQuizParticipation(quizExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .post<StudentParticipation>(`api/quiz-exercises/${quizExerciseId}/start-participation`, {}, { observe: 'response' })
+            .post<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/start-participation`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
     findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResults });
         return this.http
-            .get<StudentParticipation[]>(`api/exercises/${exerciseId}/participations`, {
+            .get<StudentParticipation[]>(`api/exercise/exercises/${exerciseId}/participations`, {
                 params: options,
                 observe: 'response',
             })
@@ -93,7 +91,7 @@ export class ParticipationService {
 
     deleteForGuidedTour(participationId: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
-        return this.http.delete<void>(`api/guided-tour/participations/${participationId}`, { params: options, observe: 'response' });
+        return this.http.delete<void>(`api/exercise/guided-tour/participations/${participationId}`, { params: options, observe: 'response' });
     }
 
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
@@ -118,7 +116,7 @@ export class ParticipationService {
     }
 
     getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
-        return this.http.get<{ [key: string]: string }>(`${this.resourceUrl}/${participationId}/results/build-job-ids`);
+        return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
     }
 
     protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {

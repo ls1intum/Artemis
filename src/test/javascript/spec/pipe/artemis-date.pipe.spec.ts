@@ -13,13 +13,12 @@ describe('ArtemisDatePipe', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ArtemisDatePipe],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [ArtemisDatePipe, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
                 translateService = TestBed.inject(TranslateService);
-                pipe = new ArtemisDatePipe(translateService);
+                pipe = TestBed.inject(ArtemisDatePipe);
             });
     });
 

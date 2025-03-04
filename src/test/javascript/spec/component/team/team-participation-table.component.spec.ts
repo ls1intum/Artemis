@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -16,15 +14,9 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { Router, RouterModule } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { Router } from '@angular/router';
+import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 
 describe('TeamParticipationTableComponent', () => {
     let comp: TeamParticipationTableComponent;
@@ -155,15 +147,6 @@ describe('TeamParticipationTableComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), MockModule(RouterModule), MockModule(NgbModule)],
-            declarations: [
-                TeamParticipationTableComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(TranslateDirective),
-                MockComponent(AssessmentWarningComponent),
-                MockComponent(DataTableComponent),
-            ],
             providers: [
                 MockProvider(TranslateService),
                 { provide: TeamService, useClass: MockTeamService },

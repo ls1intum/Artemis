@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -14,19 +14,34 @@ import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
+import { ComplaintRequestComponent } from 'app/complaints/request/complaint-request.component';
+import { ComplaintResponseComponent } from 'app/complaints/response/complaint-response.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-complaint-student-view',
     templateUrl: './complaints-student-view.component.html',
     styleUrls: ['../complaints.scss'],
+    imports: [TranslateDirective, FaIconComponent, ComplaintsFormComponent, ComplaintRequestComponent, ComplaintResponseComponent, ArtemisTranslatePipe],
 })
 export class ComplaintsStudentViewComponent implements OnInit {
+    private cdr = inject(ChangeDetectorRef);
+    private complaintService = inject(ComplaintService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() result?: Result;
     @Input() exam: Exam;
     // flag to indicate exam test run. Default set to false.
     @Input() testRun = false;
+
+    @ViewChild('complaintScrollpoint') complaintScrollpoint: ElementRef;
 
     submission: Submission;
     complaint: Complaint;
@@ -45,13 +60,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     // Icons
     faInfoCircle = faInfoCircle;
-
-    constructor(
-        private complaintService: ComplaintService,
-        private serverDateService: ArtemisServerDateService,
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-    ) {}
 
     /**
      * Loads the number of allowed complaints and feedback requests
@@ -148,5 +156,21 @@ export class ComplaintsStudentViewComponent implements OnInit {
             return this.serverDateService.now().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd));
         }
         return false;
+    }
+
+    /**
+     * Function to set complaint type (which opens the complaint form) and scrolls to the complaint form
+     */
+    openComplaintForm(complainType: ComplaintType): void {
+        this.formComplaintType = complainType;
+        this.cdr.detectChanges(); // Wait for the view to update
+        this.scrollToComplaint();
+    }
+
+    /**
+     * Function to scroll to the complaint form
+     */
+    private scrollToComplaint(): void {
+        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
@@ -25,14 +25,14 @@ const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureTog
 
 @Injectable({ providedIn: 'root' })
 export class FeatureToggleService {
+    private websocketService = inject(WebsocketService);
+    private http = inject(HttpClient);
+
     private readonly TOPIC = `/topic/management/feature-toggles`;
     private subject: BehaviorSubject<ActiveFeatureToggles>;
     private subscriptionInitialized = false;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private http: HttpClient,
-    ) {
+    constructor() {
         this.subject = new BehaviorSubject<ActiveFeatureToggles>(defaultActiveFeatureState);
     }
 
@@ -104,7 +104,7 @@ export class FeatureToggleService {
      * Setter method for the state of a feature toggle.
      */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
-        const url = '/api/admin/feature-toggle';
+        const url = '/api/core/admin/feature-toggle';
         const toggleParam = { [featureToggle]: active };
         return this.http.put(url, toggleParam);
     }
