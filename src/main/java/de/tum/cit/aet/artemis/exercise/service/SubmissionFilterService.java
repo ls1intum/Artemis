@@ -11,8 +11,10 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -66,9 +68,9 @@ public class SubmissionFilterService {
     }
 
     private boolean isProgrammingSubmissionRelevantForCourseDashboard(ProgrammingSubmission programmingSubmission, boolean ignoreAssessmentDueDate) {
-        var latestResult = programmingSubmission.getLatestResult();
-        var participation = (StudentParticipation) programmingSubmission.getParticipation();
-        var exercise = participation.getExercise();
+        Result latestResult = programmingSubmission.getLatestResult();
+        Participation participation = programmingSubmission.getParticipation();
+        Exercise exercise = participation.getExercise();
 
         // if the result is missing from this submission, we still consider it valid for the dashboard if it was created
         // during the allowed timeframe of the exercise (or participation, if the participant has a different due date)
@@ -96,7 +98,7 @@ public class SubmissionFilterService {
          * Sometimes we cannot show the last submission because the assessment due date has not yet passed,
          * but we should still show the student the last automatically determined score, i.e. the first result.
          */
-        var firstResult = programmingSubmission.getFirstResult();
+        Result firstResult = programmingSubmission.getFirstResult();
         if (firstResult != null && !firstResult.isManual()) {
             programmingSubmission.setResults(List.of(firstResult));
             return true;
@@ -105,9 +107,9 @@ public class SubmissionFilterService {
     }
 
     private boolean isNonProgrammingSubmissionRelevantForCourseDashboard(Submission submission, boolean ignoreAssessmentDueDate) {
-        var exercise = submission.getParticipation().getExercise();
-        var result = submission.getLatestResult();
-        var isAssessmentPeriodOverOrIgnored = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(exercise);
+        Exercise exercise = submission.getParticipation().getExercise();
+        Result result = submission.getLatestResult();
+        boolean isAssessmentPeriodOverOrIgnored = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(exercise);
         return result != null && Boolean.TRUE.equals(result.isRated()) && isAssessmentPeriodOverOrIgnored;
     }
 
@@ -124,7 +126,7 @@ public class SubmissionFilterService {
     }
 
     private boolean isQuizSubmissionRelevantForCourseDashboard(QuizSubmission quizSubmission) {
-        var participation = (StudentParticipation) quizSubmission.getParticipation();
+        Participation participation = quizSubmission.getParticipation();
         QuizExercise exercise = (QuizExercise) participation.getExercise();
         // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam,
         // therefore we can only use them if this exercise is not part of an exam
@@ -134,7 +136,7 @@ public class SubmissionFilterService {
             return false;
         }
         else {
-            var result = quizSubmission.getLatestResult();
+            Result result = quizSubmission.getLatestResult();
             return result != null && Boolean.TRUE.equals(result.isRated()) && result.isAssessmentComplete();
         }
     }

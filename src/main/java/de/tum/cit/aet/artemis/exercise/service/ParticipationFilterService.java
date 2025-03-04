@@ -76,8 +76,8 @@ public class ParticipationFilterService {
         Set<Result> results = Set.of();
 
         if (optionalSubmission.isPresent()) {
-            var submission = optionalSubmission.get();
-            var latestResult = submission.getLatestResult();
+            Submission submission = optionalSubmission.get();
+            Result latestResult = submission.getLatestResult();
             if (latestResult != null) {
                 results = Set.of(latestResult);
                 // avoid circular reference when converting to JSON later
