@@ -53,7 +53,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
         attachment = LectureFactory.generateAttachment(null);
-        attachment.setLink("/api/core/files/temp/example.txt");
+        attachment.setLink("temp/example.txt");
 
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);

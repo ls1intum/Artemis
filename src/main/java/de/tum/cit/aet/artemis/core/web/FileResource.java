@@ -666,7 +666,6 @@ public class FileResource {
         if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
             throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
         }
-        // ToDo: syntactical sugar
         return Path.of(ARTEMIS_FILE_PATH_PREFIX, publicPath.toString());
     }
 

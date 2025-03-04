@@ -96,7 +96,6 @@ public class FileService implements DisposableBean {
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
-    // ToDo: Remove prefixes from this class
     private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
 
     public static final String DEFAULT_FILE_SUBPATH = "temp/";

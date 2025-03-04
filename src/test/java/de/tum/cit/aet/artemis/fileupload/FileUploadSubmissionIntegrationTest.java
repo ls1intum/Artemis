@@ -140,7 +140,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
 
         if (differentFilePath) {
-            submission.setFilePath("/api/core/files/file-upload-exercises/1/submissions/1/file1.png");
+            submission.setFilePath("file-upload-exercises/1/submissions/1/file1.png");
         }
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
 
@@ -692,7 +692,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteSubmission() {
-        submittedFileUploadSubmission.setFilePath("/api/core/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         fileUploadSubmissionRepository.delete(submittedFileUploadSubmission);
         assertThat(fileUploadSubmissionRepository.findAll()).doesNotContain(submittedFileUploadSubmission);
@@ -701,7 +701,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOnDeleteSubmission() {
-        submittedFileUploadSubmission.setFilePath("/api/core/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }

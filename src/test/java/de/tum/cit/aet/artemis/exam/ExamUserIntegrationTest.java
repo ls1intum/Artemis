@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -186,7 +187,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(exam.getExamUsers()).hasSize(4);
         for (ExamUser examUser : exam.getExamUsers()) {
             assertThat(examUser.getStudentImagePath()).isNotNull();
-            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
 
         // reupload the same file, should not change anything
@@ -314,7 +316,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(signedUsers).hasSize(1);
         for (var user : signedUsers) {
             assertThat(user.getSigningImagePath()).isNotNull();
-            assertThat(request.getFile(user.getSigningImagePath(), HttpStatus.OK)).isNotEmpty();
+            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, user.getSigningImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
     }
 
