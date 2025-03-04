@@ -5,13 +5,15 @@ import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { AsyncPipe, NgStyle } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-exercise-preliminary-feedback-options',
     standalone: true,
-    imports: [ArtemisSharedCommonModule, ArtemisSharedComponentModule],
+    imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
     templateUrl: './exercise-preliminary-feedback-options.component.html',
 })
 export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnChanges {

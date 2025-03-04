@@ -138,7 +138,7 @@
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                         </a>
                     }
-                    @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
+                    @if (gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
                         <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons" />
                     }
                     <!--                    </ng-container>-->

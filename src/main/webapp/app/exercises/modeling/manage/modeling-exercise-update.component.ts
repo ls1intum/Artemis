@@ -47,6 +47,9 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import {
+    ExercisePreliminaryFeedbackOptionsComponent
+} from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -70,6 +73,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         CustomMinDirective,
         CustomMaxDirective,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExercisePreliminaryFeedbackOptionsComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
