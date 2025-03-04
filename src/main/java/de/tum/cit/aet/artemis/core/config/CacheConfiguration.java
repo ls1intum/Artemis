@@ -129,9 +129,9 @@ public class CacheConfiguration {
      */
     @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void connectToAllMembers() {
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return;
-        }
+        // if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        // return;
+        // }
         if (registration == null) {
             return;
         }
@@ -176,7 +176,8 @@ public class CacheConfiguration {
     @Bean(name = "hazelcastInstance")
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         // ========================= TESTING ONLY =========================
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        // disabled atm, breaks tests using the FileService, e.g. QuizExerciseIntegrationTest
+        if (false && env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             // try to avoid that parallel test executions interfere with each other
             Config testConfig = new Config();
             testConfig.setInstanceName(instanceName);
