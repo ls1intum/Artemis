@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 /**
+ * ToDo: Add javadoc for the remaining states, and explain the states better
  * The InitializationState enumeration.
  * UNINITIALIZED:
  * INITIALIZED: The participation is set up for submissions from the student

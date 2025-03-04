@@ -132,7 +132,7 @@ public class ResultResource {
                 false);
 
         final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        final List<Result> results = resultService.resultsForExercise(exercise, participations, withSubmissions);
+        final List<Result> results = resultService.resultsForExercise(participations, withSubmissions);
         final List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = results.stream().map(result -> resultRepository.calculatePointsPerGradingCriterion(result, course))
                 .toList();
 

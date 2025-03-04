@@ -1022,7 +1022,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
-        User student1 = userUtilService.getUserByLogin(userPrefix + "student1");
+        User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
         Course course = courseUtilService.createCourse();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -1031,7 +1031,7 @@ public class CourseTestService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
 
         programmingExerciseRepository.save(programmingExercise);
-        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
+        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student3");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
         StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
@@ -1039,7 +1039,7 @@ public class CourseTestService {
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
         StudentParticipation practiceParticipation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
-                student1);
+                student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
         Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
