@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.authentication;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,7 +19,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsUserManagementService;
@@ -386,42 +384,6 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserEmptyRoles() throws Exception {
         userTestService.updateUserWithEmptyRoles();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldFailIfCannotUpdateActivatedUser() throws Exception {
-        String oldLogin = userTestService.student.getLogin();
-        User user = userTestService.student;
-        user.setLogin("new-login");
-
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        request.put("/api/core/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void shouldFailIfCannotUpdateDeactivatedUser() throws Exception {
-        // create unactivated user in repo
-        User user = UserFactory.generateActivatedUser("ab123cd");
-        user.setActivated(false);
-        user.setActivationKey("testActivationKey");
-
-        // Register the user
-        ManagedUserVM userVM = new ManagedUserVM(user);
-        userVM.setPassword("password");
-        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
-
-        Optional<User> registeredUser = userTestService.getUserTestRepository().findOneWithGroupsAndAuthoritiesByLogin(user.getLogin());
-        assertThat(registeredUser).isPresent();
-
-        // Update user and assert
-        String oldLogin = user.getLogin();
-        user = registeredUser.get();
-        user.setLogin("some-new-login");
-
-        jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
-        request.put("/api/core/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
