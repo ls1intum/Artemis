@@ -61,6 +61,11 @@ public class ParticipationFilterService {
 
     /**
      * Filters the student participation for display in the student dashboard.
+     * <p>
+     * Ensures that sensitive information (e.g. the assessing tutor) is removed.
+     * Additionally, this only keeps the latest submission and its most recent visible result.
+     * For example, in case the exercise uses a manual assessment and the assessment publication date has not yet passed,
+     * only the last automatic result is kept since the newer one should not yet be visible to the student.
      *
      * @param participation the participation that contains the exercise and should be filtered
      * @param isStudent     used to determine if further filtering is needed.
