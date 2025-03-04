@@ -145,7 +145,7 @@ describe('CourseLearnerProfileComponent', () => {
     }
 
     function validateUpdate(course: number, profile: CourseLearnerProfileDTO) {
-        const req = httpTesting.expectOne(`api/atlas/learner-profiles/course-learner-profiles/${course}`, 'Request to put new Profile');
+        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${course}`, 'Request to put new Profile');
         req.flush(profile);
         expect(putUpdatedCourseLearnerProfileSpy).toHaveBeenCalled();
         expect(putUpdatedCourseLearnerProfileSpy.mock.calls[0][0]).toEqual(profile);
@@ -153,7 +153,7 @@ describe('CourseLearnerProfileComponent', () => {
     }
 
     function validateError(course: number, profile: CourseLearnerProfileDTO) {
-        const req = httpTesting.expectOne(`api/atlas/learner-profiles/course-learner-profiles/${course}`, 'Request to put new Profile');
+        const req = httpTesting.expectOne(`api/atlas/course-learner-profiles/${course}`, 'Request to put new Profile');
         req.flush(errorBody, {
             headers: errorHeaders,
             status: 400,
