@@ -66,6 +66,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     initialHiddenPages = signal<Set<number>>(new Set());
     hiddenPages = signal<Set<number>>(new Set());
+    isSaving = signal<boolean>(false);
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -181,6 +182,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Updates the existing attachment file or creates a student version of the attachment with hidden files.
      */
     async updateAttachmentWithFile(): Promise<void> {
+        this.isSaving.set(true);
         const pdfFileName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
         const pdfFile = new File([this.currentPdfBlob()!], `${pdfFileName}.pdf`, { type: 'application/pdf' });
 
@@ -196,10 +198,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
                 next: () => {
+                    this.isSaving.set(false);
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                     this.navigateToCourseManagement();
                 },
                 error: (error) => {
+                    this.isSaving.set(false);
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
@@ -222,10 +226,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                 next: () => {
+                    this.isSaving.set(false);
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                     this.navigateToCourseManagement();
                 },
                 error: (error) => {
+                    this.isSaving.set(false);
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
