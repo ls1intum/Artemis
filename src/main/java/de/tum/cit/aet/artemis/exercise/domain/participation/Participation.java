@@ -291,8 +291,8 @@ public abstract class Participation extends DomainObject implements Participatio
         return attempt;
     }
 
-    public void setAttempt(int index) {
-        this.attempt = index;
+    public void setAttempt(int attempt) {
+        this.attempt = attempt;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
