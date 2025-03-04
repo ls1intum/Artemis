@@ -384,6 +384,21 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        var response = request.get("/api/atlas/learning-path/" + learningPath.getId(), HttpStatus.OK, LearningPathInformationDTO.class);
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(learningPath.getId());
+        assertThat(response.progress()).isEqualTo(learningPath.getProgress());
+        assertThat(response.user()).isNotNull();
+        assertThat(response.user().login()).isEqualTo(student.getLogin());
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var otherStudent = userTestRepository.findOneByLogin(STUDENT2_OF_COURSE).orElseThrow();
@@ -607,6 +622,20 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationMultipleLearningObjects() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+
+        TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[0], false);
+        TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[0], false);
+
+        var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        verifyNavigationResult(result, List.of(textUnit), List.of(secondTextUnit, thirdTextUnit), List.of(secondTextUnit, thirdTextUnit));
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationDoesNotLeakUnreleasedLearningObjects() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
@@ -650,6 +679,24 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
             assertThat(actualObject).isNotNull();
             assertThat(actualObject.type()).isEqualTo(getLearningObjectType(expectedObject));
             assertThat(actualObject.id()).isEqualTo(expectedObject.getId());
+        }
+    }
+
+    private void verifyNavigationResult(LearningPathNavigationDTO result, List<LearningObject> expectedPredecessors, List<LearningObject> expectedCurrents,
+            List<LearningObject> expectedSuccessors) {
+        verifyNavigationObjectResult(expectedPredecessors, result.predecessorLearningObject());
+        verifyNavigationObjectResult(expectedCurrents, result.currentLearningObject());
+        verifyNavigationObjectResult(expectedSuccessors, result.successorLearningObject());
+    }
+
+    private void verifyNavigationObjectResult(List<LearningObject> expectedObjects, LearningPathNavigationObjectDTO actualObject) {
+        if (expectedObjects.isEmpty()) {
+            assertThat(actualObject).isNull();
+        }
+        else {
+            assertThat(actualObject).isNotNull();
+            assertThat(expectedObjects).anyMatch(expectedObject -> actualObject.type() == getLearningObjectType(expectedObject));
+            assertThat(expectedObjects).anyMatch(expectedObject -> actualObject.id() == expectedObject.getId());
         }
     }
 
@@ -718,12 +765,12 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         var result = request.getList("/api/atlas/learning-path/" + learningPath.getId() + "/competencies/" + competencies[0].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, true, competencies[0].getId()));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textUnit, false, true, competencies[0].getId()));
 
         result = request.getList("/api/atlas/learning-path/" + learningPath.getId() + "/competencies/" + competencies[1].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
 
-        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false, competencies[1].getId()));
+        assertThat(result).containsExactly(LearningPathNavigationObjectDTO.of(textExercise, false, false, competencies[1].getId()));
     }
 
     @Test
@@ -750,13 +797,13 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         assertThat(result).hasSize(d);
         assertThat(result.subList(0, a)).containsExactlyInAnyOrderElementsOf(
-                completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true, competencies[4].getId())).toList());
+                completedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, true, competencies[4].getId())).toList());
         assertThat(result.subList(a, b)).containsExactlyInAnyOrderElementsOf(
-                finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, true, competencies[4].getId())).toList());
+                finishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, true, competencies[4].getId())).toList());
         assertThat(result.subList(b, c)).containsExactlyInAnyOrderElementsOf(
-                uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, competencies[4].getId())).toList());
+                uncompletedLectureUnits.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, false, competencies[4].getId())).toList());
         assertThat(result.subList(c, d)).containsExactlyInAnyOrderElementsOf(
-                unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, competencies[4].getId())).toList());
+                unfinishedExercises.stream().map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, false, competencies[4].getId())).toList());
     }
 
     void testGetCompetencyProgressForLearningPath() throws Exception {
