@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
@@ -22,7 +22,7 @@ export class ExamEditWorkingTimeDialogComponent {
     private activeModal = inject(NgbActiveModal);
     private examManagementService = inject(ExamManagementService);
 
-    exam = input.required<Exam>();
+    exam: Exam;
     examChange = output<Exam>();
 
     isLoading: boolean;
@@ -35,7 +35,7 @@ export class ExamEditWorkingTimeDialogComponent {
     workingTimeSeconds = 0;
 
     get oldWorkingTime() {
-        return examWorkingTime(this.exam());
+        return examWorkingTime(this.exam);
     }
 
     get newWorkingTime() {
@@ -49,7 +49,7 @@ export class ExamEditWorkingTimeDialogComponent {
     confirmUpdateWorkingTime(): void {
         if (!this.isWorkingTimeChangeValid) return;
         this.isLoading = true;
-        this.examManagementService.updateWorkingTime(this.exam().course!.id!, this.exam().id!, this.workingTimeSeconds).subscribe({
+        this.examManagementService.updateWorkingTime(this.exam.course!.id!, this.exam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
                 this.isLoading = false;
                 if (res.body) {

@@ -22,10 +22,10 @@
         </div>
         <hr />
         <div>
-            <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam().title }"></p>
+            <p jhiTranslate="artemisApp.examManagement.editWorkingTime.question" [translateValues]="{ title: exam.title }"></p>
             <jhi-confirm-entity-name
                 confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
-                [entityName]="exam().title!"
+                [entityName]="exam.title!"
                 [disabled]="isLoading"
                 name="confirmEntityName"
                 ngModel
