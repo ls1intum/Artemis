@@ -143,6 +143,7 @@
                     }
                     <!--                    </ng-container>-->
                 }
+
                 <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
                 @if (
                     (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&

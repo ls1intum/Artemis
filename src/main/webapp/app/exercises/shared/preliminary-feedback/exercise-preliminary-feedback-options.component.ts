@@ -6,15 +6,15 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AsyncPipe, NgStyle } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { AsyncPipe, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-exercise-preliminary-feedback-options',
     standalone: true,
-    templateUrl: './exercise-preliminary-feedback-options.component.html',
     imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
+    templateUrl: './exercise-preliminary-feedback-options.component.html',
 })
 export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnChanges {
     @Input() exercise: Exercise;

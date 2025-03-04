@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20250106004831" author="undernagruzez">
+    <changeSet id="20250304004831" author="undernagruzez">
         <addColumn tableName="exercise">
             <column name="preliminary_feedback_module" type="varchar(255)"/>
         </addColumn>

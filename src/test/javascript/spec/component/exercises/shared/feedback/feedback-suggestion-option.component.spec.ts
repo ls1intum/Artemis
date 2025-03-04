@@ -96,7 +96,7 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(style).toEqual({});
     });
 
-    it('should toggle feedback suggestions and set the module for any exercise', () => {
+    it('should toggle feedback suggestions and set the module for any exercise type', () => {
         const modules = ['Module1', 'Module2'];
         component.availableAthenaModules = modules;
         component.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;

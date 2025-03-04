@@ -72,8 +72,6 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
             showTestNamesToStudents: true,
             includeTestsIntoExampleSolution: true,
         });
-
-        athenaService = TestBed.inject(AthenaService);
     });
 
     afterEach(() => {

@@ -1,4 +1,4 @@
-import { Component, Input, inject, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     standalone: true,
-    templateUrl: './exercise-feedback-suggstion-options.component.html',
+    templateUrl: './exercise-feedback-suggestion-options.component.html',
     imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
