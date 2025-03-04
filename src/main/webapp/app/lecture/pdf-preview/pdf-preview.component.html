@@ -12,26 +12,28 @@
                 </h4>
             </div>
             <div class="d-flex-end text-end">
-                @if (hiddenPages()!.size > 0) {
+                @if (attachmentUnit()) {
+                    @if (hiddenPages()!.size > 0) {
+                        <button
+                            (click)="toggleVisibility('show', selectedPages())"
+                            class="btn btn-success text-truncate"
+                            aria-label="Hide selected pages"
+                            [disabled]="isPdfLoading() || selectedPages().size === 0"
+                        >
+                            <fa-icon [icon]="faEye" />
+                            <span jhiTranslate="artemisApp.attachment.pdfPreview.showPageButton"></span>
+                        </button>
+                    }
                     <button
-                        (click)="toggleVisibility('show', selectedPages())"
-                        class="btn btn-success text-truncate"
+                        (click)="toggleVisibility('hide', selectedPages())"
+                        class="btn btn-primary text-truncate"
                         aria-label="Hide selected pages"
                         [disabled]="isPdfLoading() || selectedPages().size === 0"
                     >
-                        <fa-icon [icon]="faEye" />
-                        <span jhiTranslate="artemisApp.attachment.pdfPreview.showPageButton"></span>
+                        <fa-icon [icon]="faEyeSlash" />
+                        <span jhiTranslate="artemisApp.attachment.pdfPreview.hidePageButton"></span>
                     </button>
                 }
-                <button
-                    (click)="toggleVisibility('hide', selectedPages())"
-                    class="btn btn-primary text-truncate"
-                    aria-label="Hide selected pages"
-                    [disabled]="isPdfLoading() || selectedPages().size === 0"
-                >
-                    <fa-icon [icon]="faEyeSlash" />
-                    <span jhiTranslate="artemisApp.attachment.pdfPreview.hidePageButton"></span>
-                </button>
                 <button
                     type="button"
                     class="btn btn-danger"
