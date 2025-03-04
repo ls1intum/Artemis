@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.course_notification.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +39,12 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
             AND us.status <> 2
             """)
     Page<CourseNotification> findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(@Param("userId") Long userId, @Param("courseId") Long courseId, Pageable pageable);
+
+    /**
+     * Find all course notifications that are past the specified deletion date.
+     *
+     * @param date deletion date to query for
+     * @return list of course notifications that should be deleted
+     */
+    List<CourseNotification> findByDeletionDateBefore(ZonedDateTime date);
 }

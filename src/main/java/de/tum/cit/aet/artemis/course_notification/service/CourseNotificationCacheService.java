@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
@@ -37,6 +38,17 @@ public class CourseNotificationCacheService {
 
     public CourseNotificationCacheService(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
+    }
+
+    /**
+     * Invalidates all course notification cache entries.
+     */
+    protected void clearCourseNotificationCache() {
+        Cache cache = cacheManager.getCache(USER_COURSE_NOTIFICATION_CACHE);
+        if (cache != null) {
+            cache.clear();
+            log.info("Cache '{}' has been cleared", USER_COURSE_NOTIFICATION_CACHE);
+        }
     }
 
     /**
