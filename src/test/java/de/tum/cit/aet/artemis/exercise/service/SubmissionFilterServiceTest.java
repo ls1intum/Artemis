@@ -257,7 +257,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    void shouldFindProgrammingSubmission_beforeAssessmentDueDate() {
+    void shouldFindLatestAutomaticProgrammingSubmission_beforeAssessmentDueDate() {
         var programmingExercise = exerciseByType.get(ExerciseType.PROGRAMMING);
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
 
@@ -266,16 +266,19 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var submissionWithManualAssessment = new ProgrammingSubmission();
         submissionWithManualAssessment.setId(2L);
         var firstResult = new Result().rated(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+
         var secondResult = new Result().rated(true).score(1.0).completionDate(ZonedDateTime.now().plusHours(1)).assessmentType(AssessmentType.AUTOMATIC);
+        var retriggeredSecondResult = new Result().rated(true).score(1.0).completionDate(ZonedDateTime.now().plusHours(1).plusMinutes(30)).assessmentType(AssessmentType.AUTOMATIC);
         var secondResultWithManualAssessment = new Result().score(2.0).rated(true).completionDate(ZonedDateTime.now().plusHours(2)).assessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         submissionWithoutManualAssessment.setResults(List.of(firstResult));
-        submissionWithManualAssessment.setResults(List.of(secondResult, secondResultWithManualAssessment));
+        submissionWithManualAssessment.setResults(List.of(secondResult, retriggeredSecondResult, secondResultWithManualAssessment));
         Set<Submission> submissions = Set.of(submissionWithoutManualAssessment, submissionWithManualAssessment);
         submissions.forEach(s -> s.setParticipation(new StudentParticipation().exercise(programmingExercise)));
         var submission = submissionFilterService.getLatestSubmissionWithResult(submissions, false);
-        assertThat(submission).isPresent();
-        assertThat(submission.get()).isEqualTo(submissionWithManualAssessment);
+        assertThat(submission).isPresent().get().isEqualTo(submissionWithManualAssessment);
+        assertThat(submission.get().getResults()).hasSize(1);
+        assertThat(submission.get().getResults().getFirst()).isEqualTo(retriggeredSecondResult);
     }
 
     @Test

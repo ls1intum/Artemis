@@ -92,15 +92,15 @@ public class SubmissionFilterService {
             return true;
         }
         /*
-         * The last submission of manually graded programming exercises can contain multiple results:
-         * -> The first result is automatic, because that is the code that the student submitted and is evaluated by the automatic tests.
-         * -> All following results are semi-automatic (and therefore manual), created by a tutor during assessment.
+         * The last submission of manually graded programming exercises can contain automatic and manual results:
+         * The first result is automatic, because that is the code that the student submitted and is evaluated by the automatic tests.
+         * There can also be multiple automatic results, e.g. when the instructor triggers the tests manually.
          * Sometimes we cannot show the last submission because the assessment due date has not yet passed,
-         * but we should still show the student the last automatically determined score, i.e. the first result.
+         * but we should still show the student the latest automatically determined score.
          */
-        Result firstResult = programmingSubmission.getFirstResult();
-        if (firstResult != null && !firstResult.isManual()) {
-            programmingSubmission.setResults(List.of(firstResult));
+        List<Result> automaticResults = programmingSubmission.getResults().stream().filter(Result::isAutomatic).toList();
+        if (!automaticResults.isEmpty()) {
+            programmingSubmission.setResults(List.of(automaticResults.getLast()));
             return true;
         }
         return false;
