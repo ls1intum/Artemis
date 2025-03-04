@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -40,7 +40,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     private router = inject(Router);
     private translateService = inject(TranslateService);
 
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
 
     formData = input<TextUnitFormData>();
 

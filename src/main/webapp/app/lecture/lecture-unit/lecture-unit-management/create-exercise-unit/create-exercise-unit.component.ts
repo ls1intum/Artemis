@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
-import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -31,7 +31,7 @@ export class CreateExerciseUnitComponent implements OnInit {
     private sortService = inject(SortService);
     private exerciseUnitService = inject(ExerciseUnitService);
 
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
     protected readonly faSort = faSort;
 
     @Input() lectureId: number | undefined;

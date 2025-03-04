@@ -1,7 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
-
+import { faBan } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -11,7 +10,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     templateUrl: './close-edit-lecture-modal.component.html',
 })
 export class CloseEditLectureModalComponent {
-    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
 
     protected readonly activeModal = inject(NgbActiveModal);
 
