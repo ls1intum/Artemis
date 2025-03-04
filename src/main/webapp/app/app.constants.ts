@@ -24,7 +24,7 @@ export const addPublicFilePrefix = (filePath?: string): string | undefined => {
         return undefined;
     }
     if (filePath.startsWith('blob')) {
-        // We don't need to add the ürefix, it's locally stored
+        // We don't need to add the prefix, it's locally stored
         return filePath;
     } else {
         return filePath ? `${FILES_PATH_PREFIX}${filePath}` : undefined;
