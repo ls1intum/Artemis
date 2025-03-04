@@ -16,7 +16,6 @@ if ! command -v perl &> /dev/null; then
   exit 1
 fi
 
-TOTAL_REPLACEMENTS=0
 TOTAL_MODIFIED_FILES=0
 TOTAL_UNCHANGED_FILES=0
 TOTAL_FILES_SCANNED=0
@@ -24,37 +23,27 @@ TOTAL_FILES_SCANNED=0
 REPLACEMENTS=(
   "/api/public/programming-exercises/new-result|/api/assessment/public/programming-exercises/new-result"
   "/api/public/athena/programming-exercises/|/api/athena/public/programming-exercises/"
-  "/api/public/programming-exercises/{exerciseId number}/build-plan|/api/programming/public/programming-exercises/{exerciseId number}/build-plan"
+  "/api/public/programming-exercises/([0-9]+)/build-plan|/api/programming/public/programming-exercises/\1/build-plan"
 )
 
 while IFS= read -r -d '' file; do
-  FILE_MODIFIED=0
-  FILE_REPLACEMENTS=0
   ((TOTAL_FILES_SCANNED++))
+  ORIGINAL_CONTENT=$(cat "$file")
 
   for pair in "${REPLACEMENTS[@]}"; do
     SEARCH_STRING="${pair%%|*}"
     REPLACEMENT_STRING="${pair##*|}"
-
-    MATCH_COUNT=$(grep -F -c "$SEARCH_STRING" "$file")
-
-    if [ "$MATCH_COUNT" -gt 0 ]; then
-      perl -pi -e "s|$SEARCH_STRING|$REPLACEMENT_STRING|g" "$file"
-
-      FILE_REPLACEMENTS=$((FILE_REPLACEMENTS + MATCH_COUNT))
-      FILE_MODIFIED=1
-    fi
+    perl -pi -e "s|$SEARCH_STRING|$REPLACEMENT_STRING|g" "$file"
   done
 
-  if [ "$FILE_MODIFIED" -eq 1 ]; then
-      ((TOTAL_MODIFIED_FILES++))
-      ((TOTAL_REPLACEMENTS += FILE_REPLACEMENTS))
-    else
-      ((TOTAL_UNCHANGED_FILES++))
-    fi
+  # Check if file was modified
+  if ! cmp -s <(echo "$ORIGINAL_CONTENT") "$file"; then
+    ((TOTAL_MODIFIED_FILES++))
+  else
+    ((TOTAL_UNCHANGED_FILES++))
+  fi
 done < <(find "$ROOT_DIR" -type f -print0)
 
 echo "Total files scanned: $TOTAL_FILES_SCANNED"
-echo "Total replacements made: $TOTAL_REPLACEMENTS"
 echo "Total files modified: $TOTAL_MODIFIED_FILES"
 echo "Total files without replacements: $TOTAL_UNCHANGED_FILES"
