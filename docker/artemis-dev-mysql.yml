@@ -22,10 +22,21 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
+            flask-transcription: # Ensure Flask starts before Artemis
+              condition: service_started
     mysql:
         extends:
             file: ./mysql.yml
             service: mysql
+    flask-transcription:
+      build: ./flask-transcription
+      ports:
+        - "5001:5001"
+      volumes:
+        - ./flask-transcription/temp:/app/temp  # Persist transcription files
+      restart: always
+      networks:
+        - artemis
 
 networks:
     artemis:

@@ -1,0 +1,6 @@
+flask
+flask-cors
+openai-whisper
+torch
+requests
+ffmpeg-python

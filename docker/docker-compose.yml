@@ -17,6 +17,20 @@ services:
         extends:
             file: ./artemis-prod-mysql.yml
             service: nginx
+    transcription-service:
+      build:
+        context: ./flask-transcription  # Adjust if needed
+        dockerfile: Dockerfile
+      container_name: transcription-service
+      ports:
+        - "5000:5000"  # Change this to ensure Flask is exposed on port 5000
+      volumes:
+        - ./flask-transcription/uploads:/app/uploads
+        - ./flask-transcription/transcripts:/app/transcripts
+      restart: on-failure
+      networks:
+        - artemis
+
 
 networks:
     artemis:
