@@ -22,8 +22,7 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
 
     /**
      * Find all course notifications for a specific user and course where the status is not archived (value 2)
-     * according to {{@link UserCourseNotificationStatusType}}. This query includes the eagerly fetched parameters,
-     * since we always need those to instantiate the notification.
+     * according to {{@link UserCourseNotificationStatusType}}.
      *
      * @param userId   the ID of the user
      * @param courseId the ID of the course
@@ -31,7 +30,6 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      */
     @Query("""
             SELECT DISTINCT cn FROM CourseNotification cn
-            LEFT JOIN FETCH cn.parameters
             JOIN cn.userStatuses us
             WHERE us.user.id = :userId
             AND cn.course.id = :courseId

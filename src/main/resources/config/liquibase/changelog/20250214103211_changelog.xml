@@ -25,10 +25,10 @@
             <column name="course_notification_id" type="bigint">
                 <constraints nullable="false" primaryKey="true" foreignKeyName="fk_course_notification_parameter_notification_id" references="course_notification(id)"/>
             </column>
-            <column name="key" type="varchar(20)">
+            <column name="param_key" type="varchar(20)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="value" type="varchar(512)">
+            <column name="param_value" type="varchar(512)">
                 <constraints nullable="false"/>
             </column>
         </createTable>

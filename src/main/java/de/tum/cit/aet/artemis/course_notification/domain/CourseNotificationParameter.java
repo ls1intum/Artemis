@@ -29,11 +29,11 @@ public class CourseNotificationParameter implements Serializable {
     private CourseNotification courseNotification;
 
     @Id
-    @Column(name = "key", length = 20, nullable = false)
-    private String key;
+    @Column(name = "param_key", length = 20, nullable = false)
+    private String paramKey;
 
-    @Column(name = "value", length = 100, nullable = false)
-    private String value;
+    @Column(name = "param_value", length = 100, nullable = false)
+    private String paramValue;
 
     /**
      * Default constructor.
@@ -50,8 +50,8 @@ public class CourseNotificationParameter implements Serializable {
      */
     public CourseNotificationParameter(CourseNotification courseNotification, String key, String value) {
         this.courseNotification = courseNotification;
-        this.key = key;
-        this.value = value;
+        this.paramKey = key;
+        this.paramValue = value;
     }
 
     /**
@@ -78,7 +78,7 @@ public class CourseNotificationParameter implements Serializable {
      * @return the key
      */
     public String getKey() {
-        return key;
+        return paramKey;
     }
 
     /**
@@ -87,7 +87,7 @@ public class CourseNotificationParameter implements Serializable {
      * @param key the key to set
      */
     public void setKey(String key) {
-        this.key = key;
+        this.paramKey = key;
     }
 
     /**
@@ -96,7 +96,7 @@ public class CourseNotificationParameter implements Serializable {
      * @return the value
      */
     public String getValue() {
-        return value;
+        return paramValue;
     }
 
     /**
@@ -105,7 +105,7 @@ public class CourseNotificationParameter implements Serializable {
      * @param value the value to set
      */
     public void setValue(String value) {
-        this.value = value;
+        this.paramValue = value;
     }
 
     /**
@@ -122,7 +122,7 @@ public class CourseNotificationParameter implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
         CourseNotificationParameter that = (CourseNotificationParameter) o;
-        return Objects.equals(courseNotification.getId(), that.courseNotification.getId()) && Objects.equals(key, that.key);
+        return Objects.equals(courseNotification.getId(), that.courseNotification.getId()) && Objects.equals(paramKey, that.paramKey);
     }
 
     /**
@@ -133,7 +133,7 @@ public class CourseNotificationParameter implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(courseNotification.getId(), key);
+        return Objects.hash(courseNotification.getId(), paramKey);
     }
 
     /**
@@ -143,8 +143,8 @@ public class CourseNotificationParameter implements Serializable {
      */
     @Override
     public String toString() {
-        return "CourseNotificationParameter{" + "courseNotificationId=" + (courseNotification != null ? courseNotification.getId() : null) + ", key='" + key + '\'' + ", value='"
-                + value + '\'' + '}';
+        return "CourseNotificationParameter{" + "courseNotificationId=" + (courseNotification != null ? courseNotification.getId() : null) + ", key='" + paramKey + '\''
+                + ", value='" + paramValue + '\'' + '}';
     }
 
     /**
@@ -155,7 +155,7 @@ public class CourseNotificationParameter implements Serializable {
 
         private Long courseNotification;
 
-        private String key;
+        private String paramKey;
 
         /**
          * Default constructor required by JPA.
@@ -171,7 +171,7 @@ public class CourseNotificationParameter implements Serializable {
          */
         public CourseNotificationParameterId(Long courseNotification, String key) {
             this.courseNotification = courseNotification;
-            this.key = key;
+            this.paramKey = key;
         }
 
         /**
@@ -188,7 +188,7 @@ public class CourseNotificationParameter implements Serializable {
             if (o == null || getClass() != o.getClass())
                 return false;
             CourseNotificationParameterId that = (CourseNotificationParameterId) o;
-            return Objects.equals(courseNotification, that.courseNotification) && Objects.equals(key, that.key);
+            return Objects.equals(courseNotification, that.courseNotification) && Objects.equals(paramKey, that.paramKey);
         }
 
         /**
@@ -199,7 +199,7 @@ public class CourseNotificationParameter implements Serializable {
          */
         @Override
         public int hashCode() {
-            return Objects.hash(courseNotification, key);
+            return Objects.hash(courseNotification, paramKey);
         }
     }
 }

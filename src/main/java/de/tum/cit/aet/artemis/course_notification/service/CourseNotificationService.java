@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.course_notification.domain.CourseNotificationParam
 import de.tum.cit.aet.artemis.course_notification.domain.NotificationSettingOption;
 import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNotification;
 import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationPageableDTO;
 import de.tum.cit.aet.artemis.course_notification.repository.CourseNotificationParameterRepository;
 import de.tum.cit.aet.artemis.course_notification.repository.CourseNotificationRepository;
 
@@ -99,30 +100,39 @@ public class CourseNotificationService {
      * and returns the results as a paginated list. Results are cached unless empty.
      * </p>
      *
+     * <p>
+     * Since there may be some issues with serializing a Spring Boot {@link Page}, we created a wrapper class
+     * {@link CourseNotificationPageableDTO} which lets us cache the paging result without any issues.
+     * </p>
+     *
      * @param pageable The pagination information
      * @param courseId The ID of the course
      * @param userId   The ID of the user
      * @return A paginated list of {@link CourseNotificationDTO} objects
      */
-    @Cacheable(cacheNames = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE, key = "'user_course_notification_' + #userId + '_' + #courseId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize", unless = "#result.getNumberOfElements() == 0")
-    public Page<CourseNotificationDTO> getCourseNotifications(Pageable pageable, long courseId, long userId) {
+    @Cacheable(cacheNames = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE, key = "'user_course_notification_' + #userId + '_' " + "+ #courseId + '_' "
+            + "+ (#pageable != null ? (#pageable.isPaged() ? #pageable.pageNumber : 'unpaged') : 'null') + '_' "
+            + "+ (#pageable != null ? (#pageable.isPaged() ? #pageable.pageSize : 'unpaged') : 'null')", unless = "#result.totalElements() == 0")
+    public CourseNotificationPageableDTO<CourseNotificationDTO> getCourseNotifications(Pageable pageable, long courseId, long userId) {
         var courseNotificationsEntityPage = courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable);
 
-        return courseNotificationsEntityPage.map((courseNotificationEntity) -> {
+        return CourseNotificationPageableDTO.from(courseNotificationsEntityPage.map((courseNotificationEntity) -> {
             var classType = courseNotificationRegistry.getNotificationClass(courseNotificationEntity.getType());
 
             try {
-                CourseNotification courseNotification = classType.getDeclaredConstructor(Long.class, ZonedDateTime.class, Map.class).newInstance(
-                        courseNotificationEntity.getCourse().getId(), courseNotificationEntity.getCreationDate(), parametersToMap(courseNotificationEntity.getParameters()));
+                var parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(courseNotificationEntity.getId());
+
+                CourseNotification courseNotification = classType.getDeclaredConstructor(Long.class, ZonedDateTime.class, Map.class)
+                        .newInstance(courseNotificationEntity.getCourse().getId(), courseNotificationEntity.getCreationDate(), parametersToMap(parameters));
 
                 return convertToCourseNotificationDTO(courseNotification);
             }
             catch (InstantiationException | IllegalAccessException | IllegalArgumentException | ExceptionInInitializerError | InvocationTargetException | SecurityException
                     | NoSuchMethodException e) {
-                log.error("Failed to instantiate notification {}: {}", classType.getName(), e.getMessage());
+                log.error("Failed to instantiate notification {}: {} - {}", classType.getName(), e.getClass(), e.getMessage());
                 return null;
             }
-        });
+        }));
     }
 
     /**
