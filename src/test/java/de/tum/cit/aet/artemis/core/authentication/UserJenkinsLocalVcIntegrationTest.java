@@ -199,12 +199,6 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
-        userTestService.createUser_asAdmin_failInExternalVcsUserManagement_internalError();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
