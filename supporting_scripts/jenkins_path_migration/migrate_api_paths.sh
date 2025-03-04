@@ -6,7 +6,7 @@
 
 ROOT_DIR="$JENKINS_HOME/data/jobs"
 
-if [ -z "$ROOT_DIR" ]; then
+if [ -z "$JENKINS_HOME" ]; then
   echo "Error: JENKINS_HOME environment variable is not set. You can manually override by changing 'ROOT_DIR' in this script."
   exit 1
 fi
