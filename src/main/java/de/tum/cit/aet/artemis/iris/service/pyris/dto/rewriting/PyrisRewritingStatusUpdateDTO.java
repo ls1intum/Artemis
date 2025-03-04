@@ -12,10 +12,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * Pyris sends callback updates back to Artemis during rewriting of the text. These updates contain the current status of the rewriting process,
  * which are then forwarded to the user via Websockets.
  *
- * @param stages List of stages of the generation process
- * @param result The result of the rewriting process so far
- * @param tokens List of token usages send by Pyris for tracking the token usage and cost
+ * @param stages          List of stages of the generation process
+ * @param result          The result of the rewriting process so far
+ * @param tokens          List of token usages send by Pyris for tracking the token usage and cost
+ * @param inconsistencies Inconsistencies found during the rewriting process
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisRewritingStatusUpdateDTO(List<PyrisStageDTO> stages, String result, List<LLMRequest> tokens) {
+public record PyrisRewritingStatusUpdateDTO(List<PyrisStageDTO> stages, String result, List<LLMRequest> tokens, List<String> inconsistencies, List<String> suggestions,
+        String improvement) {
 }

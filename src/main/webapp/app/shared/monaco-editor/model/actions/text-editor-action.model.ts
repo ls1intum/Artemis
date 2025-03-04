@@ -11,6 +11,7 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/RewriteResult';
 
 export abstract class TextEditorAction implements Disposable {
     id: string;
@@ -304,13 +305,21 @@ export abstract class TextEditorAction implements Disposable {
      * @param artemisIntelligence The Artemis Intelligence service to use for rewriting the text.
      * @param variant The variant to use for rewriting the text.
      * @param courseId The ID of the course to use for rewriting the text (for tracking purposes).
+     * @param resultSignal used to write inconsistencies to the UI
      */
-    rewriteMarkdown(editor: TextEditor, artemisIntelligence: ArtemisIntelligenceService, variant: RewritingVariant, courseId: number): void {
+    rewriteMarkdown(
+        editor: TextEditor,
+        artemisIntelligence: ArtemisIntelligenceService,
+        variant: RewritingVariant,
+        courseId: number,
+        resultSignal: WritableSignal<RewriteResult>,
+    ): void {
         const text = editor.getFullText();
         if (text) {
             artemisIntelligence.rewrite(text, variant, courseId).subscribe({
-                next: (message) => {
-                    this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), message);
+                next: (rewriteResult) => {
+                    this.replaceTextAtRange(editor, new TextEditorRange(new TextEditorPosition(1, 1), this.getEndPosition(editor)), rewriteResult.result);
+                    resultSignal.set(rewriteResult);
                 },
             });
         }

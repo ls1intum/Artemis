@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/core/util/alert.service';
+import RewriteResult from 'app/shared/monaco-editor/model/actions/artemis-intelligence/RewriteResult';
 
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
@@ -28,9 +29,10 @@ export class ArtemisIntelligenceService {
      * @param courseId The ID of the course to which the rewritten text belongs.
      * @return Observable that emits the rewritten text when available.
      */
-    rewrite(toBeRewritten: string, rewritingVariant: RewritingVariant, courseId: number): Observable<string> {
+    rewrite(toBeRewritten: string, rewritingVariant: RewritingVariant, courseId: number): Observable<RewriteResult> {
         this.isLoadingRewrite.set(true);
-        return new Observable<string>((observer) => {
+
+        return new Observable<{ result: string; inconsistencies: string[]; suggestions: string[]; improvement: string }>((observer) => {
             this.http
                 .post(`${this.resourceUrl}/courses/${courseId}/rewrite-text`, {
                     toBeRewritten: toBeRewritten,
@@ -40,10 +42,16 @@ export class ArtemisIntelligenceService {
                     next: () => {
                         const websocketTopic = `/user/topic/iris/rewriting/${courseId}`;
                         this.websocketService.subscribe(websocketTopic);
+
                         this.websocketService.receive(websocketTopic).subscribe({
                             next: (update: any) => {
-                                if (update.result) {
-                                    observer.next(update.result);
+                                if (update.result || update.inconsistencies || update.improvement) {
+                                    observer.next({
+                                        result: update.result || '',
+                                        inconsistencies: update.inconsistencies || '',
+                                        suggestions: update.suggestions || '',
+                                        improvement: update.improvement || '',
+                                    });
                                     observer.complete();
                                     this.isLoadingRewrite.set(false);
                                     this.websocketService.unsubscribe(websocketTopic);
