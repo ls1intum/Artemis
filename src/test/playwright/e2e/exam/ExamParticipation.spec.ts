@@ -396,7 +396,7 @@ test.describe('Exam participation', () => {
                     const exerciseUpdateMessage = `The problem statement of the exercise '${exercise.exerciseGroup!.title!}' was updated. Please open the exercise to see the changes.`;
                     await modalDialog.checkDialogType('Problem Statement Update');
                     await modalDialog.checkDialogMessage(exerciseUpdateMessage);
-                    await modalDialog.checkDialogAuthor(instructor.username);
+                    await modalDialog.checkDialogAuthor('system');
                     await modalDialog.pressModalButton('Navigate to exercise');
                     const examParticipationActions = new ExamParticipationActions(studentPage);
                     await examParticipationActions.checkExerciseProblemStatementDifference([
