@@ -11,12 +11,13 @@ import { Exercise, getCourseId } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule],
+    imports: [TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, RouterModule],
 })
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);

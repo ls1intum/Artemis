@@ -33,6 +33,9 @@
             jhiTranslate="artemisApp.plagiarism.deny"
             [disabled]="comparison.status === plagiarismStatus.DENIED || isLoading || exercise.teamMode"
         ></button>
+        @if (exercise.teamMode) {
+            <jhi-help-icon class="m-0" text="artemisApp.plagiarism.teamModeDisabled" />
+        }
 
         <div class="vertical-divider"></div>
 
