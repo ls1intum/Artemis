@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -70,9 +71,9 @@ public class SubmissionFilterService {
         // if the result is missing from this submission, we still consider it valid for the dashboard if it was created
         // during the allowed timeframe of the exercise (or participation, if the participant has a different due date)
         if (latestResult == null) {
-            return exercise.getDueDate() == null || programmingSubmission.getSubmissionDate().isBefore(exercise.getDueDateForParticipation(participation));
+            Optional<ZonedDateTime> optionalDueDate = ExerciseDateService.getDueDate(participation);
+            return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
-
         // if the result is not rated, we don't consider it
         if (Boolean.FALSE.equals(latestResult.isRated())) {
             return false;
