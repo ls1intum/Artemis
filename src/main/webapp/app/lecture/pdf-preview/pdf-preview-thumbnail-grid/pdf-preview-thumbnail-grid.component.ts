@@ -12,12 +12,14 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { Exercise } from 'app/entities/exercise.model';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent],
+    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbModule, TranslateDirective],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
@@ -30,6 +32,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     appendFile = input<boolean>();
     hiddenPages = input<HiddenPageMap>();
     isAttachmentUnit = input<boolean>();
+    updatedSelectedPages = input<Set<number>>(new Set());
 
     // Signals
     isEnlargedView = signal<boolean>(false);
@@ -44,7 +47,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     connectedExercise = signal<Exercise | null>(null);
 
     // Outputs
-    isPdfLoading = output<boolean>();
     totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<number>>();
     newHiddenPagesOutput = output<HiddenPageMap>();
@@ -62,6 +64,10 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
         }
+        if (changes['updatedSelectedPages']) {
+            this.selectedPages.set(new Set(this.updatedSelectedPages()!));
+            this.updateCheckboxStates();
+        }
     }
 
     /**
@@ -75,7 +81,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             .nativeElement.querySelectorAll('.pdf-canvas-container')
             .forEach((canvas) => canvas.remove());
         this.totalPagesArray.set(new Set());
-        this.isPdfLoading.emit(true);
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
@@ -102,7 +107,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             onError(this.alertService, error);
         } finally {
             this.totalPagesOutput.emit(this.totalPagesArray().size);
-            this.isPdfLoading.emit(false);
         }
     }
 
@@ -211,5 +215,18 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         if (button) {
             button.style.opacity = '0';
         }
+    }
+
+    /**
+     * Updates checkbox states to match the current selection model
+     */
+    private updateCheckboxStates(): void {
+        const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll('input[type="checkbox"]');
+        if (!checkboxes) return;
+
+        checkboxes.forEach((checkbox: HTMLInputElement) => {
+            const pageNumber = parseInt(checkbox.id.replace('checkbox-', ''), 10);
+            checkbox.checked = this.selectedPages().has(pageNumber);
+        });
     }
 }

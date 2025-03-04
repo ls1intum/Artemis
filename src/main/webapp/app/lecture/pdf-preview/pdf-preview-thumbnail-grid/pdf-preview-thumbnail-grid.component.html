@@ -1,7 +1,7 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
     @for (page of totalPagesArray(); track page) {
         <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
-            @if (newHiddenPages()![page]) {
+            @if (newHiddenPages()[page]) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
@@ -20,9 +20,9 @@
                 <button
                     [id]="'hide-show-button-' + page"
                     style="'opacity' : activeButtonIndex === page '1' : '0'"
-                    [class]="'hide-show-btn btn ' + (newHiddenPages()![page] ? 'btn-success' : 'btn-secondary')"
+                    [class]="'hide-show-btn btn ' + (newHiddenPages()[page] ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
-                    [ngbPopover]="newHiddenPages()![page] ? showPageBox : hidePageBox"
+                    [ngbPopover]="newHiddenPages()[page] ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
                     [autoClose]="'outside'"
                     placement="right auto"
@@ -30,7 +30,7 @@
                     (shown)="isPopoverOpen.set(true)"
                     (hidden)="this.hideActionButton(page); isPopoverOpen.set(false)"
                 >
-                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash" />
+                    <fa-icon [icon]="newHiddenPages()[page] ? faEye : faEyeSlash" />
                 </button>
 
                 <ng-template #hidePageBox>
@@ -47,11 +47,11 @@
                             <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage" [translateValues]="{ param: activeButtonIndex()! }"></span></h5>
                             <p>
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                @if (newHiddenPages()![activeButtonIndex()!].date.isSame(forever)) {
+                                @if (newHiddenPages()[activeButtonIndex()!]?.date!.isSame(forever)) {
                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                 } @else {
                                     <span>
-                                        {{ newHiddenPages()![activeButtonIndex()!].date.format('MMM D, YYYY - HH:mm') }}
+                                        {{ newHiddenPages()[activeButtonIndex()!]?.date!.format('MMM D, YYYY - HH:mm') }}
                                     </span>
                                 }
                                 <br />
