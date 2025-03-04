@@ -22,8 +22,8 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     private entityTitleService = inject(EntityTitleService);
     private accountService = inject(AccountService);
 
-    public resourceUrlParticipations = 'api/programming-exercise-participations/';
-    public resourceUrl = 'api/programming-exercise/';
+    public resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
+    public resourceUrl = 'api/programming/programming-exercise/';
 
     getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });

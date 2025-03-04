@@ -9,7 +9,7 @@ export type EntityResponseType = HttpResponse<BuildPlan>;
 export class BuildPlanService {
     private http = inject(HttpClient);
 
-    public resourceUrl = `/api/programming-exercises`;
+    public resourceUrl = `/api/programming/programming-exercises`;
 
     getBuildPlan(programmingExerciseId: number): Observable<EntityResponseType> {
         return this.http.get<BuildPlan>(`${this.resourceUrl}/${programmingExerciseId}/build-plan/for-editor`, { observe: 'response' });

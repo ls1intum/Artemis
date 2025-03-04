@@ -54,7 +54,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faqs`,
+                url: `api/communication/courses/${courseId}/faqs`,
                 method: 'POST',
             });
             req.flush(returnedFromService);
@@ -70,7 +70,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faqs/${faqId}`,
+                url: `api/communication/courses/${courseId}/faqs/${faqId}`,
                 method: 'PUT',
             });
             req.flush(returnedFromService);
@@ -85,7 +85,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faqs/${faqId}`,
+                url: `api/communication/courses/${courseId}/faqs/${faqId}`,
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
@@ -105,7 +105,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faqs/${faqId}`,
+                url: `api/communication/courses/${courseId}/faqs/${faqId}`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -125,7 +125,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faqs`,
+                url: `api/communication/courses/${courseId}/faqs`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -145,7 +145,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faq-state/${FaqState.ACCEPTED}`,
+                url: `api/communication/courses/${courseId}/faq-state/${FaqState.ACCEPTED}`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -165,7 +165,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faq-categories`,
+                url: `api/communication/courses/${courseId}/faq-categories`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -186,7 +186,7 @@ describe('Faq Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/faq-categories/${faqState}`,
+                url: `api/communication/courses/${courseId}/faq-categories/${faqState}`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -258,7 +258,7 @@ describe('Faq Service', () => {
 
         it('should send a POST request to ingest faqs and return an OK response', () => {
             const courseId = 123;
-            const expectedUrl = `api/courses/${courseId}/faqs/ingest`;
+            const expectedUrl = `api/communication/courses/${courseId}/faqs/ingest`;
             const expectedStatus = 200;
 
             service.ingestFaqsInPyris(courseId).subscribe((response) => {

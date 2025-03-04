@@ -3,6 +3,7 @@
         "plagiarism": {
             "plagiarismDetection": "Plagiatskontrolle",
             "confirm": "Bestätigen",
+            "viewCases": "Fälle ansehen",
             "deny": "Ablehnen",
             "denyAfterConfirmModalTitle": "Wechsel von Bestätigen zu Ablehnen",
             "denyAfterConfirmModalText": "Bist du dir sicher, dass du die Entscheidung von \"Bestätigung des Plagiats\" in \"Ablehnung\" ändern möchtest? Dadurch wird der entsprechende Plagiatsfall einschließlich der Kommunikation mit dem/der Studierenden und des Urteils gelöscht und kann nicht rückgängig gemacht werden.",

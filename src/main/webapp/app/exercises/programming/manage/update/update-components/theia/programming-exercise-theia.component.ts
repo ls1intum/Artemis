@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
     styleUrls: ['../../../programming-exercise-form.scss'],
-    imports: [FormsModule, KeyValuePipe],
+    imports: [FormsModule, KeyValuePipe, TranslateDirective],
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {
     private theiaService = inject(TheiaService);

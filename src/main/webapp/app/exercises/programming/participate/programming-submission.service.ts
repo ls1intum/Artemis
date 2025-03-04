@@ -72,8 +72,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private participationService = inject(ProgrammingExerciseParticipationService);
     private profileService = inject(ProfileService);
 
-    public SUBMISSION_RESOURCE_URL = 'api/programming-submissions/';
-    public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming-exercises/';
+    public SUBMISSION_RESOURCE_URL = 'api/programming/programming-submissions/';
+    public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming/programming-exercises/';
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
     // Default value: 60 seconds.
@@ -164,7 +164,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     private fetchLatestPendingSubmissionByParticipationId(participationId: number): Observable<ProgrammingSubmission | undefined> {
         return this.http
-            .get<ProgrammingSubmission>('api/programming-exercise-participations/' + participationId + '/latest-pending-submission')
+            .get<ProgrammingSubmission>('api/programming/programming-exercise-participations/' + participationId + '/latest-pending-submission')
             .pipe(catchError(() => of(undefined)));
     }
 
@@ -179,12 +179,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     private fetchLatestPendingSubmissionsByExerciseId(exerciseId: number): Observable<{ [participationId: number]: ProgrammingSubmission }> {
         return this.http
-            .get<{ [participationId: number]: ProgrammingSubmission }>(`api/programming-exercises/${exerciseId}/latest-pending-submissions`)
+            .get<{ [participationId: number]: ProgrammingSubmission }>(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`)
             .pipe(catchError(() => of([])));
     }
 
     public fetchQueueReleaseDateEstimationByParticipationId(participationId: number): Observable<dayjs.Dayjs | undefined> {
-        return this.http.get<dayjs.Dayjs>('api/queued-jobs/queue-duration-estimation', { params: { participationId } }).pipe(catchError(() => of(undefined)));
+        return this.http.get<dayjs.Dayjs>('api/programming/queued-jobs/queue-duration-estimation', { params: { participationId } }).pipe(catchError(() => of(undefined)));
     }
 
     /**
@@ -785,7 +785,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param correctionRound for which to get the Submissions
      */
     getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ProgrammingSubmission[]>> {
-        const url = `api/exercises/${exerciseId}/programming-submissions`;
+        const url = `api/programming/exercises/${exerciseId}/programming-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -807,7 +807,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @return submission is empty if none are available
      */
     getSubmissionWithoutAssessment(exerciseId: number, lock = false, correctionRound = 0): Observable<ProgrammingSubmission | undefined> {
-        const url = `api/exercises/${exerciseId}/programming-submission-without-assessment`;
+        const url = `api/programming/exercises/${exerciseId}/programming-submission-without-assessment`;
         let params = new HttpParams();
         if (correctionRound !== 0) {
             params = params.set('correction-round', correctionRound.toString());
@@ -828,7 +828,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (correctionRound > 0) {
             params = params.set('correction-round', correctionRound.toString());
         }
-        return this.http.get<ProgrammingSubmission>(`api/programming-submissions/${submissionId}/lock`, { params });
+        return this.http.get<ProgrammingSubmission>(`api/programming/programming-submissions/${submissionId}/lock`, { params });
     }
 
     private static convertArrayResponse(res: HttpResponse<ProgrammingSubmission[]>): HttpResponse<ProgrammingSubmission[]> {

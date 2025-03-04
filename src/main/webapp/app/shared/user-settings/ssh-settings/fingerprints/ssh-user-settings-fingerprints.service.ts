@@ -9,6 +9,6 @@ export class SshUserSettingsFingerprintsService {
     private http = inject(HttpClient);
 
     public async getSshFingerprints(): Promise<{ [key: string]: string }> {
-        return await firstValueFrom(this.http.get<{ [key: string]: string }>('api/ssh-fingerprints'));
+        return await firstValueFrom(this.http.get<{ [key: string]: string }>('api/programming/ssh-fingerprints'));
     }
 }
