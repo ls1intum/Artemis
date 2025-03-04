@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement } from '@angular/core';
+import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
@@ -47,6 +47,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { MockConversationService } from '../../../../helpers/mocks/service/mock-conversation.service';
+import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -71,11 +75,12 @@ describe('PostComponent', () => {
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
                 { provide: DOCUMENT, useValue: document },
-                MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: ConversationService, useClass: MockConversationService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
             declarations: [
                 PostComponent,
@@ -182,7 +187,8 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
@@ -191,7 +197,8 @@ describe('PostComponent', () => {
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
         fixture.detectChanges();
-        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'closeCreateAnswerPostModal');
+        // @ts-ignore
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent(), 'closeCreateAnswerPostModal');
         component.closeCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
@@ -376,6 +383,19 @@ describe('PostComponent', () => {
         });
     });
 
+    it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.showDropdown = true;
+        component.posting = post;
+        fixture.detectChanges();
+
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton.nativeElement.click();
+        expect(forwardMessageSpy).toHaveBeenCalled();
+    });
+
     it('should cast the post to Post on change', () => {
         const mockPost: Posting = {
             id: 1,
@@ -421,5 +441,79 @@ describe('PostComponent', () => {
 
         const postTimeElement = debugElement.query(By.css('span.post-time'));
         expect(postTimeElement).toBeFalsy();
+    });
+
+    it('should do nothing if both forwardedPosts and forwardedAnswerPosts are empty', () => {
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
+            component.fetchForwardedMessages();
+
+            expect(component.originalPostDetails).toBeUndefined();
+        });
+    });
+
+    it('should set originalPostDetails from first forwarded post if forwardedPosts is non-empty', () => {
+        const forwardedPost1 = { id: 11, content: 'Forwarded Post 1' } as Post;
+        const forwardedPost2 = { id: 22, content: 'Forwarded Post 2' } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([forwardedPost1, forwardedPost2]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
+            component.fetchForwardedMessages();
+
+            expect(component.originalPostDetails).toEqual(forwardedPost1);
+        });
+    });
+
+    it('should set originalPostDetails from first forwarded answer if forwardedAnswerPosts is non-empty and forwardedPosts is empty', () => {
+        const forwardedAnswer1 = { id: 33, content: 'Forwarded Answer 1' } as AnswerPost;
+        const forwardedAnswer2 = { id: 44, content: 'Forwarded Answer 2' } as AnswerPost;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([forwardedAnswer1, forwardedAnswer2]);
+            component.fetchForwardedMessages();
+
+            expect(component.originalPostDetails).toEqual(forwardedAnswer1);
+        });
+    });
+
+    it('should call markForCheck if a forwarded post is set', () => {
+        const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
+        const forwardedPost = { id: 77, content: 'Forwarded Post MarkCheck' } as Post;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([forwardedPost]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
+            component.fetchForwardedMessages();
+
+            expect(markForCheckSpy).toHaveBeenCalled();
+            expect(component.originalPostDetails).toBe(forwardedPost);
+        });
+    });
+
+    it('should call markForCheck if a forwarded answer is set', () => {
+        const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
+        const forwardedAnswer = { id: 88, content: 'Forwarded Answer MarkCheck' } as AnswerPost;
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.forwardedPosts = input<Post[]>([]);
+            component.forwardedAnswerPosts = input<AnswerPost[]>([forwardedAnswer]);
+            component.fetchForwardedMessages();
+
+            expect(markForCheckSpy).toHaveBeenCalled();
+            expect(component.originalPostDetails).toBe(forwardedAnswer);
+        });
+    });
+
+    it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
+        const spyOnNavigateToPost = jest.spyOn(component.onNavigateToPost, 'emit');
+        const testPost = { id: 123, content: 'Test Content' } as Posting;
+
+        (component as any).onTriggerNavigateToPost(testPost);
+
+        expect(spyOnNavigateToPost).toHaveBeenCalledWith(testPost);
+        expect(spyOnNavigateToPost).toHaveBeenCalledOnce();
     });
 });

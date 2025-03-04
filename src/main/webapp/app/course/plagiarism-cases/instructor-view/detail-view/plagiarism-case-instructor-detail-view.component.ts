@@ -38,12 +38,15 @@ import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
-    providers: [MetisService],
+    providers: [MetisService, MetisConversationService, LinkPreviewService, LinkifyService],
     imports: [
         TranslateDirective,
         PlagiarismCaseVerdictComponent,
@@ -68,7 +71,7 @@ import { FormsModule } from '@angular/forms';
     ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
-    protected metisService = inject(MetisService);
+    private metisService = inject(MetisService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);

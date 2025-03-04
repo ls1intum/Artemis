@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
-import { ArtemisTestModule } from '../../test.module';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
@@ -10,7 +9,6 @@ describe('AdminFeatureToggleComponentTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })
             .compileComponents()

@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.programming.web.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -18,13 +16,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class BuildLogResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildLogResource.class);
@@ -54,26 +51,5 @@ public class BuildLogResource {
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
         responseHeaders.setContentDispositionFormData("attachment", "build-" + buildJobId + ".log");
         return new ResponseEntity<>(buildLog, responseHeaders, HttpStatus.OK);
-    }
-
-    /**
-     * GET /build-log/{buildJobId}/entries : get the build log entries for a given result
-     *
-     * @param buildJobId the id of the build job for which to retrieve the build log entries
-     * @return the ResponseEntity with status 200 (OK) and the build log entries in the body, or with status 404 (Not Found) if the build log entries could not be found
-     */
-    @GetMapping("build-log/{buildJobId}/entries")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<BuildLogDTO>> getBuildLogEntriesForBuildJob(@PathVariable String buildJobId) {
-        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
-        if (buildLog == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        var buildLogEntries = buildLogEntryService.parseBuildLogEntries(buildLog);
-        if (buildLogEntries == null || buildLogEntries.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(buildLogEntries);
     }
 }

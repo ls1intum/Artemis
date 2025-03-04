@@ -107,7 +107,7 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseFeedbackService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class ParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
@@ -265,7 +265,7 @@ public class ParticipationResource {
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(participation);
     }
 
     /**
@@ -781,7 +781,6 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

@@ -2,11 +2,13 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.annotation.PreDestroy;
 
@@ -139,7 +141,7 @@ public class LocalCIResultProcessingService {
         }
         log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
         log.debug("Build jobs waiting in queue: {}", resultQueue.size());
-        log.debug("Queued build jobs: {}", resultQueue.stream().map(i -> i.buildJobQueueItem().id()).toList());
+        log.debug("Queued build jobs: {}", getResultQueueBuildJobIds());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
@@ -181,6 +183,9 @@ public class LocalCIResultProcessingService {
                     if (buildException.getCause() instanceof CancellationException
                             && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
                         savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
+                    }
+                    else if (buildException.getCause() instanceof TimeoutException) {
+                        savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
                     }
                     else {
                         log.error("Error while processing build job: {}", buildJob, buildException);
@@ -272,6 +277,9 @@ public class LocalCIResultProcessingService {
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> {
+                buildJob.setId(existingBuildJob.getId());
+            });
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
@@ -339,5 +347,10 @@ public class LocalCIResultProcessingService {
     private boolean isSolutionBuildOfTestOrAuxPush(BuildJobQueueItem buildJob) {
         return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
                 && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
+    }
+
+    private List<String> getResultQueueBuildJobIds() {
+        List<ResultQueueItem> resultQueueList = new ArrayList<>(resultQueue);
+        return resultQueueList.stream().map(i -> i.buildJobQueueItem().id()).toList();
     }
 }

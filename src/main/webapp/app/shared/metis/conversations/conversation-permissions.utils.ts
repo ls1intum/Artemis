@@ -108,6 +108,10 @@ export function canChangeChannelArchivalState(channel: ChannelDTO): boolean {
     return hasChannelModerationRights(channel);
 }
 
+export function canChangeChannelPrivacyState(channel: ChannelDTO): boolean {
+    return hasChannelModerationRights(channel);
+}
+
 export function canDeleteChannel(course: Course, channelDTO: ChannelDTO): boolean {
     const isCreator = channelDTO.isCreator;
     const isInstructor = course.isAtLeastInstructor;

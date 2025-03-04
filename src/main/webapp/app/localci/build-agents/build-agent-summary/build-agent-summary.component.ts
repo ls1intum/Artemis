@@ -5,21 +5,22 @@ import { BuildAgentsService } from 'app/localci/build-agents/build-agents.servic
 import { Subscription } from 'rxjs';
 import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule],
+    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);

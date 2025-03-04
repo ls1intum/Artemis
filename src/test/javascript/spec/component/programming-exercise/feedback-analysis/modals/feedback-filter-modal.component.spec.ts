@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 
 describe('FeedbackFilterModalComponent', () => {
@@ -14,7 +14,7 @@ describe('FeedbackFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisSharedCommonModule, RangeSliderComponent, FeedbackFilterModalComponent],
+            imports: [TranslateModule.forRoot(), RangeSliderComponent, FeedbackFilterModalComponent],
             providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), clear: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal],
         }).compileComponents();
 
@@ -92,6 +92,12 @@ describe('FeedbackFilterModalComponent', () => {
         const event = { target: { checked: true, value: 'Student Error' } } as unknown as Event;
         component.onCheckboxChange(event, 'errorCategories');
         expect(component.filters.errorCategories).toEqual(['Student Error']);
+    });
+
+    it('should update filters when checkboxes change for occurrence', () => {
+        const event = { target: { checked: true, value: '1' } } as unknown as Event;
+        component.onCheckboxChange(event, 'occurrence');
+        expect(component.filters.occurrence).toEqual([0, 1, 1]);
     });
 
     it('should remove the value from filters when checkbox is unchecked for tasks', () => {

@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.BASH
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C_PLUS_PLUS;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C_SHARP;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.DART;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.EMPTY;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.GO;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASKELL;
@@ -24,6 +25,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.VHDL
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GRADLE_GRADLE;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_BLACKBOX;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_MAVEN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE;
@@ -62,20 +64,21 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of(FACT, GCC), true));
         programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, false, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, false, true, false, true, false, List.of(), true));
         programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, false, false, true, true, false, List.of(), true));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(JAVA,
-                new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), true));
+                new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), true));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of(), true));
         programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, true, false, false, List.of(), true));
-        programmingLanguageFeatures.put(RUBY, new ProgrammingLanguageFeature(RUBY, false, false, false, false, false, List.of(), true));
-        programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(RUBY, new ProgrammingLanguageFeature(RUBY, false, true, false, false, false, List.of(), true));
+        programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN), true));
-        programmingLanguageFeatures.put(TYPESCRIPT, new ProgrammingLanguageFeature(TYPESCRIPT, false, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(TYPESCRIPT, new ProgrammingLanguageFeature(TYPESCRIPT, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(VHDL, new ProgrammingLanguageFeature(VHDL, false, false, false, false, false, List.of(), true));
         return programmingLanguageFeatures;
     }

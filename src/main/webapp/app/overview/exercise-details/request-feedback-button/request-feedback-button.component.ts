@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, inject, input, output } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -10,18 +10,23 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { UserService } from 'app/core/user/user.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
+    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -30,6 +35,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
+    hasUserAcceptedExternalLLMUsage: boolean;
     currentFeedbackRequestCount = 0;
     feedbackRequestLimit = 10; // remark: this will be defined by the instructor and fetched
 
@@ -47,9 +53,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
     private participationService = inject(ParticipationService);
+    private accountService = inject(AccountService);
+    private userService = inject(UserService);
+    private modalService = inject(NgbModal);
     private participationWebsocketService = inject(ParticipationWebsocketService);
 
     private athenaResultUpdateListener?: Subscription;
+    private acceptSubscription?: Subscription;
 
     protected readonly ExerciseType = ExerciseType;
 
@@ -63,9 +73,11 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         }
         this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
+        this.setUserAcceptedExternalLLMUsage();
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();
+        this.acceptSubscription?.unsubscribe();
     }
 
     private updateParticipation() {
@@ -84,6 +96,32 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 },
             });
         }
+    }
+
+    setUserAcceptedExternalLLMUsage(): void {
+        this.hasUserAcceptedExternalLLMUsage = !!this.accountService.userIdentity?.externalLLMUsageAccepted;
+    }
+
+    acceptExternalLLMUsage(modal: any) {
+        this.acceptSubscription?.unsubscribe();
+        this.acceptSubscription = this.userService.acceptExternalLLMUsage().subscribe(() => {
+            this.hasUserAcceptedExternalLLMUsage = true;
+            this.accountService.setUserAcceptedExternalLLMUsage();
+            modal.close();
+        });
+
+        // Proceed with feedback request after accepting
+        if (this.assureConditionsSatisfied()) {
+            this.processFeedbackRequest();
+        }
+    }
+
+    requestAIFeedback(content: TemplateRef<any>) {
+        if (!this.hasUserAcceptedExternalLLMUsage) {
+            this.modalService.open(content, { ariaLabelledBy: 'modal-title' });
+            return;
+        }
+        this.requestFeedback();
     }
 
     private subscribeToResultUpdates() {
@@ -112,7 +150,10 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         if (!this.assureConditionsSatisfied()) {
             return;
         }
+        this.processFeedbackRequest();
+    }
 
+    private processFeedbackRequest() {
         this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
@@ -135,10 +176,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        if (this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions()) {
-            return true;
-        }
-        return false;
+        return this.exercise().type === ExerciseType.PROGRAMMING || this.assureTextModelingConditions();
     }
 
     /**

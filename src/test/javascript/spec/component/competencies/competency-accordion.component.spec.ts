@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { CompetencyMetrics, ExerciseInformation, ExerciseMetrics, LectureUnitInformation, LectureUnitStudentMetricsDTO, StudentMetrics } from 'app/entities/student-metrics.model';
@@ -16,7 +15,6 @@ describe('CompetencyAccordionComponent', () => {
     let component: CompetencyAccordionComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule],
             declarations: [CompetencyAccordionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(CompetencyRingsComponent)],
             providers: [MockProvider(TranslateService)],
             schemas: [],

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
-import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 export interface FeedbackAnalysisResponse {
@@ -21,6 +21,7 @@ export interface FeedbackDetail {
     testCaseName: string;
     taskName: string;
     errorCategory: string;
+    hasLongFeedbackText: boolean;
 }
 export interface FeedbackAffectedStudentDTO {
     participationId: number;
@@ -49,11 +50,11 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterErrorCategories', options.filters.errorCategories.join(','))
             .set('groupFeedback', groupFeedback.toString());
 
-        return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
+        return this.get<FeedbackAnalysisResponse>(`assessment/exercises/${options.exerciseId}/feedback-details`, { params });
     }
 
     getMaxCount(exerciseId: number): Promise<number> {
-        return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
+        return this.get<number>(`assessment/exercises/${exerciseId}/feedback-details-max-count`);
     }
 
     async getParticipationForFeedbackDetailText(exerciseId: number, feedbackIds: number[]): Promise<FeedbackAffectedStudentDTO[]> {
@@ -64,10 +65,10 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             params = params.set(`feedbackId${index + 1}`, id.toString());
         });
 
-        return this.get<FeedbackAffectedStudentDTO[]>(`exercises/${exerciseId}/feedback-details-participation`, { params });
+        return this.get<FeedbackAffectedStudentDTO[]>(`assessment/exercises/${exerciseId}/feedback-details-participation`, { params });
     }
 
     createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
-        return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
+        return this.post<ChannelDTO>(`communication/courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
     }
 }

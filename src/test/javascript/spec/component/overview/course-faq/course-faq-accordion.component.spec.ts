@@ -3,7 +3,6 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
-import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { input } from '@angular/core';
 
 describe('CourseFaqAccordionComponent', () => {
@@ -12,7 +11,6 @@ describe('CourseFaqAccordionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisMarkdownModule],
             declarations: [CourseFaqAccordionComponent, MockDirective(TranslateDirective), MockComponent(CustomExerciseCategoryBadgeComponent)],
         })
             .compileComponents()

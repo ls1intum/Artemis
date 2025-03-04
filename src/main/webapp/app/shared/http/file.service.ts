@@ -9,7 +9,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 @Injectable({ providedIn: 'root' })
 export class FileService {
     private http = inject(HttpClient);
-    private resourceUrl = 'api/files';
+    private resourceUrl = 'api/core/files';
 
     /**
      * Fetches the template file for the given programming language
@@ -41,7 +41,7 @@ export class FileService {
      * @returns markdown file
      */
     getTemplateCodeOfConduct(): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
+        return this.http.get<string>(`${this.resourceUrl}/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
     /**
@@ -95,7 +95,7 @@ export class FileService {
      * @param lectureId the id of the lecture
      */
     downloadMergedFile(lectureId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`api/files/attachments/lecture/${lectureId}/merge-pdf`, {
+        return this.http.get(`${this.resourceUrl}/attachments/lecture/${lectureId}/merge-pdf`, {
             observe: 'response',
             responseType: 'blob',
         });

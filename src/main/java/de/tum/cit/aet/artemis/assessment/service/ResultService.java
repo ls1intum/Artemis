@@ -128,7 +128,7 @@ public class ResultService {
 
     private static final int MAX_FEEDBACK_IDS = 5;
 
-    private static final double SIMILARITY_THRESHOLD = 0.9;
+    private static final double SIMILARITY_THRESHOLD = 0.7;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
@@ -629,7 +629,7 @@ public class ResultService {
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                 StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeNotAssignedToTask, minOccurrence,
                 maxOccurrence, filterErrorCategories, pageable);
-        ;
+
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
         long totalCount = 0;
@@ -638,7 +638,8 @@ public class ResultService {
             // Process and map feedback details, calculating relative count and assigning task names
             processedDetails = feedbackDetailPage.getContent().stream()
                     .map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), MAX_FEEDBACK_IDS)), detail.count(),
-                            (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
+                            (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory(),
+                            detail.hasLongFeedbackText()))
                     .toList();
             totalPages = feedbackDetailPage.getTotalPages();
             totalCount = feedbackDetailPage.getTotalElements();
@@ -661,8 +662,10 @@ public class ResultService {
             int start = Math.max(0, (page - 1) * pageSize);
             int end = Math.min(start + pageSize, processedDetailsPreSort.size());
             processedDetails = processedDetailsPreSort.subList(start, end);
-            processedDetails = processedDetails.stream().map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), 5)),
-                    detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
+            processedDetails = processedDetails.stream()
+                    .map(detail -> new FeedbackDetailDTO(detail.feedbackIds().subList(0, Math.min(detail.feedbackIds().size(), 5)), detail.count(),
+                            (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory(),
+                            detail.hasLongFeedbackText()))
                     .toList();
             totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
             totalCount = aggregatedFeedbackDetails.size();
@@ -713,7 +716,7 @@ public class ResultService {
                         // Replace the processed entry with the updated one
                         processedDetails.remove(processed);
                         FeedbackDetailDTO updatedProcessed = new FeedbackDetailDTO(mergedFeedbackIds, mergedCount, 0, mergedTexts, processed.testCaseName(), processed.taskName(),
-                                processed.errorCategory());
+                                processed.errorCategory(), processed.hasLongFeedbackText());
                         processedDetails.add(updatedProcessed); // Add the updated entry
                         isMerged = true;
                         break; // No need to check further
@@ -724,7 +727,7 @@ public class ResultService {
             if (!isMerged) {
                 // If not merged, add it as a new entry in processedDetails
                 FeedbackDetailDTO newEntry = new FeedbackDetailDTO(base.feedbackIds(), base.count(), 0, List.of(base.detailTexts().getFirst()), base.testCaseName(),
-                        base.taskName(), base.errorCategory());
+                        base.taskName(), base.errorCategory(), base.hasLongFeedbackText());
                 processedDetails.add(newEntry);
             }
         }

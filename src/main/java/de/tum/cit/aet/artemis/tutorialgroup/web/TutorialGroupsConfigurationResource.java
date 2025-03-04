@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/tutorialgroup/")
 public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
@@ -106,7 +106,8 @@ public class TutorialGroupsConfigurationResource {
             tutorialGroupChannelManagementService.createTutorialGroupsChannelsForAllTutorialGroupsOfCourse(course);
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId())).body(persistedConfiguration);
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId()))
+                .body(persistedConfiguration);
     }
 
     /**

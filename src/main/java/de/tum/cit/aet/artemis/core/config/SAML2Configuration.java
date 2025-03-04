@@ -1,11 +1,10 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -117,10 +116,10 @@ public class SAML2Configuration {
             return false;
         }
 
-        File keyFile = new File(config.getKeyFile());
-        File certFile = new File(config.getCertFile());
+        Path keyFile = Path.of(config.getKeyFile());
+        Path certFile = Path.of(config.getCertFile());
 
-        if (!keyFile.exists() || !certFile.exists()) {
+        if (!Files.exists(keyFile) || !Files.exists(certFile)) {
             log.error("Keyfile or Certfile for SAML[{}] does not exist.", config.getRegistrationId());
             return false;
         }
@@ -128,16 +127,16 @@ public class SAML2Configuration {
         return true;
     }
 
-    private static X509Certificate readPublicCert(String file) throws IOException, CertificateException {
-        try (InputStream inStream = new FileInputStream(file)) {
+    private static X509Certificate readPublicCert(String filepath) throws IOException, CertificateException {
+        try (InputStream inStream = Files.newInputStream(Path.of(filepath))) {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             return (X509Certificate) cf.generateCertificate(inStream);
         }
     }
 
-    private RSAPrivateKey readPrivateKey(String file) throws IOException {
+    private RSAPrivateKey readPrivateKey(String filepath) throws IOException {
         // Read PKCS#8 File!
-        try (var keyReader = new FileReader(file, StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
+        try (var keyReader = Files.newBufferedReader(Path.of(filepath), StandardCharsets.UTF_8); var pemParser = new PEMParser(keyReader)) {
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
             PrivateKeyInfo privateKeyInfo = PrivateKeyInfo.getInstance(pemParser.readObject());
             return (RSAPrivateKey) converter.getPrivateKey(privateKeyInfo);
@@ -159,14 +158,14 @@ public class SAML2Configuration {
         http
             // This filter chain is only applied if the URL matches
             // Else the request is filtered by {@link SecurityConfiguration}.
-            .securityMatcher("/api/public/saml2", "/saml2/**", "/login/**")
+            .securityMatcher("/api/core/public/saml2", "/saml2/**", "/login/**")
             // Needed for SAML to work properly
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
                 // to notify the client that a login is needed.
-                .requestMatchers("/api/public/saml2").permitAll()
+                .requestMatchers("/api/core/public/saml2").permitAll()
                 // Every other request must be authenticated. Any request triggers a SAML2
                 // authentication flow
                 .anyRequest().authenticated()

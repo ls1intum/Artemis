@@ -18,14 +18,14 @@
     @if (!isConsecutive()) {
         <div class="ps-3">
             <jhi-posting-header
-                [previewMode]="previewMode"
-                [readOnlyMode]="readOnlyMode"
+                [previewMode]="previewMode()"
+                [readOnlyMode]="readOnlyMode()"
                 [posting]="posting"
                 [isDeleted]="isDeleted"
                 [isCommunicationPage]="isCommunicationPage"
                 (isModalOpen)="displayInlineInput = true"
                 (onUserNameClicked)="onUserNameClicked()"
-                [lastReadDate]="lastReadDate"
+                [lastReadDate]="lastReadDate()"
             />
         </div>
     }
@@ -42,7 +42,7 @@
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode)) {
+                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode()) && contextInformation.displayName !== '') {
                     <span>
                         @if (contextInformation.routerLinkComponents) {
                             <a
@@ -77,7 +77,7 @@
                 >
                     <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
                         <jhi-posting-content
-                            [previewMode]="previewMode"
+                            [previewMode]="previewMode()"
                             [content]="posting.content"
                             [author]="posting.author"
                             [isEdited]="!!posting.updatedDate"
@@ -89,13 +89,17 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         />
-                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode }">
-                            @if (!previewMode) {
+                        @if (originalPostDetails) {
+                            <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)" />
+                        }
+                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }">
+                            @if (!previewMode()) {
                                 <!-- Post reactions (that appear when post is hovered) -->
                                 <jhi-posting-reactions-bar
-                                    [lastReadDate]="lastReadDate"
-                                    [isReadOnlyMode]="readOnlyMode"
-                                    [previewMode]="previewMode"
+                                    [lastReadDate]="lastReadDate()"
+                                    [isReadOnlyMode]="readOnlyMode()"
+                                    [previewMode]="previewMode()"
+                                    [course]="course"
                                     [posting]="posting"
                                     [(showAnswers)]="showAnswers"
                                     [sortedAnswerPosts]="sortedAnswerPosts"
@@ -107,6 +111,7 @@
                                     (mayEditOutput)="onMayEdit($event)"
                                     (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
+                                    [originalPostDetails]="originalPostDetails"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
                                 />
@@ -117,19 +122,19 @@
             }
         </div>
     </div>
-    @if (!isDeleted && displayInlineInput && !readOnlyMode) {
+    @if (!isDeleted && displayInlineInput && !readOnlyMode()) {
         <div class="post-content-padding">
             <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
         </div>
     }
     @if (!isDeleted) {
-        <div class="post-content-padding justify-content-between post-reactions-bar" [ngClass]="{ 'mb-2': previewMode, 'is-saved': posting.isSaved && isConsecutive() }">
+        <div class="post-content-padding justify-content-between post-reactions-bar" [ngClass]="{ 'mb-2': previewMode(), 'is-saved': posting.isSaved && isConsecutive() }">
             <!-- Post reactions -->
-            @if (!previewMode) {
+            @if (!previewMode()) {
                 <jhi-posting-reactions-bar
-                    [lastReadDate]="lastReadDate"
-                    [isReadOnlyMode]="readOnlyMode"
-                    [previewMode]="previewMode"
+                    [lastReadDate]="lastReadDate()"
+                    [isReadOnlyMode]="readOnlyMode()"
+                    [previewMode]="previewMode()"
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
                     [sortedAnswerPosts]="sortedAnswerPosts"
@@ -149,16 +154,16 @@
 </div>
 <jhi-posting-footer
     #postFooter
-    [readOnlyMode]="readOnlyMode"
-    [modalRef]="modalRef"
-    [previewMode]="previewMode || pageType === PageType.PLAGIARISM_CASE_STUDENT"
+    [readOnlyMode]="readOnlyMode()"
+    [modalRef]="modalRef()"
+    [previewMode]="previewMode() || pageType === PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting"
-    [showAnswers]="showAnswers"
+    [showAnswers]="showAnswers()"
     [isCommunicationPage]="isCommunicationPage"
     [isThreadSidebar]="isThreadSidebar"
     [sortedAnswerPosts]="sortedAnswerPosts"
     (openThread)="openThread.emit()"
-    [lastReadDate]="lastReadDate"
+    [lastReadDate]="lastReadDate()"
     (userReferenceClicked)="onUserReferenceClicked($event)"
     (channelReferenceClicked)="onChannelReferenceClicked($event)"
     [hasChannelModerationRights]="hasChannelModerationRights"
@@ -189,13 +194,17 @@
                 <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
             </button>
         }
-        <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent?.openAnswerView()">
+        <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
             <fa-icon [icon]="faComments" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
         </button>
         <button class="dropdown-item d-flex" (click)="toggleSavePost()">
             <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" class="item-icon" />
             <span [jhiTranslate]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost'"></span>
+        </button>
+        <button class="dropdown-item d-flex forward" (click)="forwardMessage()">
+            <fa-icon [icon]="faShare" class="item-icon" />
+            <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
         </button>
     </div>
 }
@@ -210,7 +219,7 @@
     [cdkConnectedOverlayOpen]="showReactionSelector"
     (backdropClick)="toggleEmojiSelect()"
 >
-    @if (!readOnlyMode) {
+    @if (!readOnlyMode()) {
         <jhi-emoji-picker (emojiSelect)="selectReaction($event)" />
     }
 </ng-template>

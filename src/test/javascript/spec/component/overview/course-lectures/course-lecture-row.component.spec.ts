@@ -13,7 +13,8 @@ import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTestModule } from '../../../test.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     template: '',
@@ -29,7 +30,6 @@ describe('CourseLectureRow', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                ArtemisTestModule,
                 MockDirective(NgbTooltip),
                 RouterModule.forRoot([
                     { path: 'courses/:courseId/lectures', component: DummyComponent },
@@ -44,7 +44,7 @@ describe('CourseLectureRow', () => {
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTimeAgoPipe),
             ],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             schemas: [],
         })
             .compileComponents()

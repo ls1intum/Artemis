@@ -1,22 +1,27 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
 import { faAngleDown, faAngleUp, faArrowDown19, faArrowUp19, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-course-archive',
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
-    imports: [ArtemisSharedModule, CourseCardHeaderComponent, SearchFilterComponent],
+    imports: [CourseCardHeaderComponent, SearchFilterComponent, SearchFilterPipe, TranslateDirective, ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
     private archiveCourseSubscription: Subscription;

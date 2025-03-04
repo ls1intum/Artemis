@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGitDiffReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.CommitHistoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -40,7 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseGitDiffReportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportResource.class);
@@ -57,22 +56,19 @@ public class ProgrammingExerciseGitDiffReportResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final CommitHistoryService commitHistoryService;
-
     private final RepositoryService repositoryService;
 
     private static final String ENTITY_NAME = "programmingExerciseGitDiffReportEntry";
 
     public ProgrammingExerciseGitDiffReportResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseGitDiffReportService gitDiffReportService, ProgrammingSubmissionRepository submissionRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService, CommitHistoryService commitHistoryService, RepositoryService repositoryService) {
+            ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService) {
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.gitDiffReportService = gitDiffReportService;
         this.submissionRepository = submissionRepository;
         this.participationAuthCheckService = participationAuthCheckService;
-        this.commitHistoryService = commitHistoryService;
         this.repositoryService = repositoryService;
     }
 
@@ -126,24 +122,24 @@ public class ProgrammingExerciseGitDiffReportResource {
     }
 
     /**
-     * GET exercises/:exerciseId/submissions/:submissionId1/diff-report-with-template : Get the diff report for a submission of a programming exercise with the template of the
+     * GET exercises/:exerciseId/submissions/:submissionId/diff-report-with-template : Get the diff report for a submission of a programming exercise with the template of the
      * exercise.
      * The current user needs to have at least instructor access to the exercise to fetch the diff report with the template.
      *
-     * @param exerciseId    the id of the exercise the submission and the template belong to
-     * @param submissionId1 the id of the submission
+     * @param exerciseId   the id of the exercise the submission and the template belong to
+     * @param submissionId the id of the submission
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with the diff report as body
      * @throws GitAPIException if errors occur while accessing the git repository
      * @throws IOException     if errors occur while accessing the file system
      */
-    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId1}/diff-report-with-template")
+    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/diff-report-with-template")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForSubmissionWithTemplate(@PathVariable long exerciseId, @PathVariable long submissionId1)
+    public ResponseEntity<ProgrammingExerciseGitDiffReportDTO> getGitDiffReportForSubmissionWithTemplate(@PathVariable long exerciseId, @PathVariable long submissionId)
             throws GitAPIException, IOException {
-        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} with the template of exercise {}", submissionId1, exerciseId);
+        log.debug("REST request to get a ProgrammingExerciseGitDiffReport for submission {} with the template of exercise {}", submissionId, exerciseId);
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
-        var submission = submissionRepository.findById(submissionId1).orElseThrow();
+        var submission = submissionRepository.findById(submissionId).orElseThrow();
         if (!submission.getParticipation().getExercise().getId().equals(exerciseId)) {
             throw new IllegalArgumentException("The submission does not belong to the exercise");
         }
@@ -193,7 +189,7 @@ public class ProgrammingExerciseGitDiffReportResource {
         else {
             throw new BadRequestAlertException("Either participationId or repositoryType must be provided", ENTITY_NAME, "missingParameters");
         }
-        var report = commitHistoryService.generateReportForCommits(repositoryUri, commitHash1, commitHash2);
+        var report = gitDiffReportService.generateReportForCommits(repositoryUri, commitHash1, commitHash2);
         return ResponseEntity.ok(new ProgrammingExerciseGitDiffReportDTO(report));
     }
 }
