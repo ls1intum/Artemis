@@ -32,9 +32,12 @@ public class RedisClientListResolver {
             log.error("Redis client list is null");
             return uniqueClients;
         }
-        // reactiveRedisConnectionFactory because when using redisConnectionFactory the client list comomand returns just a list of strings
-        for (Object clientInfo : clients) {
-            String clientName = RedisClientInfo.RedisClientInfoBuilder.fromString((String) clientInfo).getName();
+        // reactiveRedisConnectionFactory because when using redisConnectionFactory the client list command returns just a list of strings
+        for (RedisClientInfo clientInfo : clients) {
+            String clientName = clientInfo.getName();
+            // would be way to parse the string instead of helper methods if for some reason need to use redsConnectionFactory (TODO: check if this is redisson bug and if there are
+            // any downsides of using reactive one
+            // String clientName = RedisClientInfo.RedisClientInfoBuilder.fromString((String) clientInfo).getName();
             if (clientName.toLowerCase().startsWith("artemis")) {
                 // Optional: Apply more complex logic here to choose the most relevant connection
                 uniqueClients.add(clientName);
