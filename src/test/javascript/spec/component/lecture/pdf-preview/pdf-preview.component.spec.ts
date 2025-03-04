@@ -601,4 +601,58 @@ describe('PdfPreviewComponent', () => {
             expect(result).toBeUndefined();
         });
     });
+
+    describe('Page Visibility Management', () => {
+        it('should add pages to hiddenPages when hide action is used', () => {
+            component.hiddenPages.set(new Set([1, 3]));
+            component.selectedPages.set(new Set([2, 4]));
+
+            component.toggleVisibility('hide', component.selectedPages());
+
+            expect(component.hiddenPages()).toEqual(new Set([1, 2, 3, 4]));
+            expect(component.selectedPages().size).toBe(0);
+        });
+
+        it('should remove pages from hiddenPages when show action is used', () => {
+            component.hiddenPages.set(new Set([1, 2, 3, 4]));
+            component.selectedPages.set(new Set([2, 4]));
+
+            component.toggleVisibility('show', component.selectedPages());
+
+            expect(component.hiddenPages()).toEqual(new Set([1, 3]));
+            expect(component.selectedPages().size).toBe(0);
+        });
+
+        it('should not modify hiddenPages when selectedPages is empty', () => {
+            component.hiddenPages.set(new Set([1, 3]));
+            component.selectedPages.set(new Set());
+
+            component.toggleVisibility('hide', component.selectedPages());
+
+            expect(component.hiddenPages()).toEqual(new Set([1, 3]));
+        });
+    });
+
+    describe('Navigation', () => {
+        it('should navigate to attachments page when attachment is present', () => {
+            component.attachment.set({ id: 1, lecture: { id: 2 } });
+            component.course.set({ id: 3 });
+            const routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+
+            component.navigateToCourseManagement();
+
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 3, 'lectures', 2, 'attachments']);
+        });
+
+        it('should navigate to unit management page when attachmentUnit is present', () => {
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.course.set({ id: 6 });
+            const routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+
+            component.navigateToCourseManagement();
+
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
+        });
+    });
 });

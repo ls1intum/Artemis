@@ -22,6 +22,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     appendFile = input<boolean>();
     hiddenPages = input<Set<number>>();
     isAttachmentUnit = input<boolean>();
+    updatedSelectedPages = input<Set<number>>(new Set());
 
     // Signals
     isEnlargedView = signal<boolean>(false);
@@ -33,7 +34,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
 
     // Outputs
-    isPdfLoading = output<boolean>();
     totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<number>>();
     newHiddenPagesOutput = output<Set<number>>();
@@ -51,6 +51,10 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
         }
+        if (changes['updatedSelectedPages']) {
+            this.selectedPages.set(new Set(this.updatedSelectedPages()!));
+            this.updateCheckboxStates();
+        }
     }
 
     /**
@@ -64,7 +68,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             .nativeElement.querySelectorAll('.pdf-canvas-container')
             .forEach((canvas) => canvas.remove());
         this.totalPagesArray.set(new Set());
-        this.isPdfLoading.emit(true);
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
@@ -91,7 +94,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             onError(this.alertService, error);
         } finally {
             this.totalPagesOutput.emit(this.totalPagesArray().size);
-            this.isPdfLoading.emit(false);
         }
     }
 
@@ -161,5 +163,18 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageIndex);
+    }
+
+    /**
+     * Updates checkbox states to match the current selection model
+     */
+    private updateCheckboxStates(): void {
+        const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll('input[type="checkbox"]');
+        if (!checkboxes) return;
+
+        checkboxes.forEach((checkbox: HTMLInputElement) => {
+            const pageNumber = parseInt(checkbox.id.replace('checkbox-', ''), 10);
+            checkbox.checked = this.selectedPages().has(pageNumber);
+        });
     }
 }
