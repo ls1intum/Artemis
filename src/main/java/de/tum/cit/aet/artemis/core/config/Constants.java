@@ -42,6 +42,15 @@ public final class Constants {
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
     /**
+     * The default REST/URL-path prefix for accessing file uploads.
+     * Don't use this constant elsewhere than in the Presentation-Layer to reduce
+     * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
+     * presentation layer ({@link org.springframework.web.bind.annotation.RestController}).
+     * There might be exceptions if the path can be considered part of the business logic, and not presentation.
+     */
+    public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
+
+    /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
      * <p>

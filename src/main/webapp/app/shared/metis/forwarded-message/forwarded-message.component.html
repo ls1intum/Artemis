@@ -22,7 +22,7 @@
                 defaultPictureId="user-default-profile-picture"
                 [authorId]="originalPostDetails()?.author?.id"
                 [authorName]="originalPostDetails()?.author?.name"
-                [imageUrl]="originalPostDetails()?.author?.imageUrl"
+                [imageUrl]="addPublicFilePrefix(originalPostDetails()?.author?.imageUrl)"
                 style="margin-right: 0.2rem"
             />
             <span class="forwarded-message-author">{{ originalPostDetails()?.author?.name }}</span>

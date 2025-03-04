@@ -21,11 +21,11 @@
                 </div>
             </div>
         </div>
-        @if (course.courseIcon) {
+        @if (course.courseIconPath) {
             <div class="col-auto d-none d-lg-flex justify-content-end course-icon">
                 <jhi-secured-image
                     class="d-flex justify-content-center align-items-center"
-                    [src]="course.courseIcon!"
+                    [src]="course.courseIconPath!"
                     [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
                     [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
                 />

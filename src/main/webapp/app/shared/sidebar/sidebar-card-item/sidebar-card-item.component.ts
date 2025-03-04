@@ -10,6 +10,7 @@ import { ProfilePictureComponent } from '../../profile-picture/profile-picture.c
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-sidebar-card-item',
@@ -66,4 +67,6 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
             this.sidebarItem.icon = this.faPeopleGroup;
         }
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

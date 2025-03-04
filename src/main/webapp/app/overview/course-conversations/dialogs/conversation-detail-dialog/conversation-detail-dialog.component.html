@@ -15,7 +15,7 @@
                             defaultPictureId="user-default-profile-picture"
                             [authorId]="otherUser?.id"
                             [authorName]="otherUser?.name"
-                            [imageUrl]="otherUser?.imageUrl"
+                            [imageUrl]="addPublicFilePrefix(otherUser?.imageUrl)"
                         />
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}

@@ -27,6 +27,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -182,4 +183,6 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
     toggleSearchBar() {
         this.collapseSearch.emit();
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

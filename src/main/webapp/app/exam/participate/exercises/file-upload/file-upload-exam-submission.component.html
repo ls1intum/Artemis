@@ -47,10 +47,10 @@
                     </div>
                 }
             </div>
-            @if (submittedFileName && studentSubmission()?.filePath) {
+            @if (submittedFileName && studentSubmission()?.filePathUrl) {
                 <div class="card-text">
                     <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName }"></h6>
-                    <a class="text-primary" (click)="downloadFile(studentSubmission()!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
+                    <a class="text-primary" (click)="downloadFile(studentSubmission()!.filePathUrl!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
                     @if (submittedFileExtension) {
                         <span class="ms-2 badge bg-info">
                             {{ submittedFileExtension | uppercase }}

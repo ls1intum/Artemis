@@ -16,6 +16,7 @@ import { ConversationInfoComponent } from './tabs/conversation-info/conversation
 import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -100,4 +101,6 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     onUserNameClicked(userId: number) {
         this.userNameClicked.emit(userId);
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
@@ -133,6 +133,12 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                 .subscribe({
                     next: (findLectureResult) => {
                         this.lecture = findLectureResult.body!;
+                        this.lecture?.attachments?.forEach((attachment) => {
+                            if (attachment.link) {
+                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
+                            }
+                        });
+
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units

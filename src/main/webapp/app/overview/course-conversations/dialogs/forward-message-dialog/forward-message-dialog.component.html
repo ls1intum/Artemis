@@ -90,7 +90,7 @@
                         defaultPictureId="user-default-profile-picture"
                         [authorId]="postToForward()?.author?.id"
                         [authorName]="postToForward()?.author?.name"
-                        [imageUrl]="postToForward()?.author?.imageUrl"
+                        [imageUrl]="addPublicFilePrefix(postToForward()?.author?.imageUrl)"
                         style="margin-right: 0.2rem"
                     />
                     <span class="forwarded-message-author">{{ postToForward()?.author?.name }}</span>

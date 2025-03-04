@@ -23,6 +23,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -161,6 +162,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
             next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission().filePath = submissionFromServer.filePath;
+                this.studentSubmission().filePathUrl = addPublicFilePrefix(submissionFromServer.filePath);
                 this.studentSubmission().isSynced = true;
                 this.studentSubmission().submitted = true;
                 this.updateViewFromSubmission();

@@ -60,6 +60,7 @@ import {
     faUnlink,
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -1022,4 +1023,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const blob = this.dataUrlToBlob(dataUrl);
         return new File([blob], fileName, { type: blob.type });
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

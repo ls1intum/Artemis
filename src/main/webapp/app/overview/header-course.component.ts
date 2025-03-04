@@ -56,7 +56,7 @@ export class HeaderCourseComponent implements OnChanges {
      * Adjusts the course description and shows toggle buttons (if it is too long) based on the current window width
      */
     adjustCourseDescription() {
-        const shortDescriptionLength = window.innerWidth / (this.course.courseIcon ? 3.6 : 3.4);
+        const shortDescriptionLength = window.innerWidth / (this.course.courseIconPath ? 3.6 : 3.4);
         if (this.course && this.course.description) {
             this.enableShowMore = this.course.description.length > shortDescriptionLength;
             if (this.enableShowMore && !this.longDescriptionShown) {

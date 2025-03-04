@@ -4,7 +4,7 @@
             <!-- profile header -->
             <div class="d-flex flex-column">
                 @if (currentUser && currentUser.imageUrl) {
-                    <img class="user-settings-container-profile-picture rounded-3" [src]="currentUser.imageUrl" alt="User Profile Picture" />
+                    <img class="user-settings-container-profile-picture rounded-3" [src]="addPublicFilePrefix(currentUser.imageUrl)" alt="User Profile Picture" />
                 } @else {
                     <fa-icon id="avatar" size="3x" [icon]="faUser" />
                 }

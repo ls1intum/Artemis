@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -283,8 +284,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
 
         // first unit
-        String attachmentPathFirstUnit = attachmentUnitList.getFirst().getAttachment().getLink();
-        byte[] fileBytesFirst = request.get(attachmentPathFirstUnit, HttpStatus.OK, byte[].class);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentUnitList.getFirst().getAttachment().getLink());
+        byte[] fileBytesFirst = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesFirst)) {
             // 5 is the number of pages for the first unit (after break and solution are removed)
@@ -293,7 +294,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // second unit
         String attachmentPathSecondUnit = attachmentUnitList.get(1).getAttachment().getLink();
-        byte[] fileBytesSecond = request.get(attachmentPathSecondUnit, HttpStatus.OK, byte[].class);
+        String attachmentRequestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentPathSecondUnit);
+        byte[] fileBytesSecond = request.get(attachmentRequestUrl, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesSecond)) {
             // 13 is the number of pages for the second unit

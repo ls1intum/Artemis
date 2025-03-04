@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -53,7 +54,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
         attachment = LectureFactory.generateAttachment(null);
-        attachment.setLink("/api/core/files/temp/example.txt");
+        attachment.setLink("temp/example.txt");
 
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
@@ -74,8 +75,8 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(actualLink).isNotNull();
         // getLectureAttachment uses the provided file name to fetch the attachment which has that attachment name (not filename)
         String linkWithCorrectFileName = actualLink.substring(0, actualLink.lastIndexOf('/') + 1) + attachment.getName() + "." + getExtension(actualAttachment.getLink());
-        MvcResult file = request.performMvcRequest(get(linkWithCorrectFileName)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE))
-                .andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, linkWithCorrectFileName);
+        MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isNotEmpty();
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
         assertThat(actualAttachment).isEqualTo(expectedAttachment);

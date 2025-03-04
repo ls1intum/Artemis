@@ -2,8 +2,8 @@
     <div id="course-card-header" class="card-heading" [ngStyle]="{ '--background-color-for-hover': courseColor, '--content-color': contentColor }">
         <a class="stretched-link" [routerLink]="['/course-management', course.id]"></a>
         <div class="card-header-left">
-            @if (course.courseIcon) {
-                <jhi-secured-image class="header-item" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
+            @if (course.courseIconPath) {
+                <jhi-secured-image class="header-item" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIconPath" />
             }
             <div class="card-date">
                 @if (course.startDate && course.endDate) {

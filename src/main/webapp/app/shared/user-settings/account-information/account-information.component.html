@@ -36,7 +36,7 @@
             <input type="file" accept="image/png, image/jpeg" #fileInput style="display: none" (change)="setUserImage($event)" />
             @if (currentUser.imageUrl) {
                 <div class="position-relative d-inline-block rounded-3 overflow-hidden">
-                    <jhi-secured-image class="secured-image" [src]="currentUser.imageUrl" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+                    <jhi-secured-image class="secured-image" [src]="addPublicFilePrefix(currentUser.imageUrl)!" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
 
                     <button
                         id="delete-course-icon"

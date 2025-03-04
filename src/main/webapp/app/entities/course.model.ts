@@ -14,6 +14,7 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { Faq } from 'app/entities/faq.model';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -41,6 +42,16 @@ export function isMessagingEnabled(course: Course | undefined) {
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
 }
 
+/**
+ * Unset the course icon and course icon path.
+ * This method is not part of the Course-Entity as quite a few objects of similar
+ * type are mapped to a Course that would each need to implement this method.
+ */
+export function unsetCourseIcon(course: Course): void {
+    course.courseIcon = undefined;
+    course.courseIconPath = undefined;
+}
+
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',
@@ -66,6 +77,7 @@ export class Course implements BaseEntity {
     public defaultProgrammingLanguage?: ProgrammingLanguage;
     public color?: string;
     public courseIcon?: string;
+    public courseIconPath?: string;
     public onlineCourse?: boolean;
     public faqEnabled?: boolean;
     public enrollmentEnabled?: boolean;
@@ -144,6 +156,8 @@ export class Course implements BaseEntity {
         this.accuracyOfScores = 1; // default value
         this.restrictedAthenaModulesAccess = false; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
+
+        this.courseIconPath = addPublicFilePrefix(this.courseIcon);
     }
 
     /**

@@ -23,6 +23,7 @@ import { LinkPreviewService } from 'app/shared/link-preview/services/link-previe
 import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 interface CombinedOption {
     id: number;
@@ -245,4 +246,5 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

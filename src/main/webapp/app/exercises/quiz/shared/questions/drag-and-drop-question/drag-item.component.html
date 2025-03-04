@@ -2,7 +2,7 @@
     @if (dragItem && dragItem.pictureFilePath) {
         <div class="drag-item-picture" [cdkDragDisabled]="clickDisabled" [cdkDragData]="dragItem" cdkDrag>
             @if (dragItem.pictureFilePath) {
-                <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath!) || dragItem.pictureFilePath!" [mobileDragAndDrop]="isMobile" />
+                <jhi-secured-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath!) || dragItem.pictureFilePath!)!" [mobileDragAndDrop]="isMobile" />
             }
             <div *cdkDragPlaceholder></div>
         </div>

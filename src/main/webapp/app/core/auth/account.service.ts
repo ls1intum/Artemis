@@ -14,6 +14,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
 import dayjs from 'dayjs/esm';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -287,7 +288,7 @@ export class AccountService implements IAccountService {
      * Returns undefined if the user is not authenticated or the user does not have an image.
      */
     getImageUrl() {
-        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
+        return this.isAuthenticated() && this.userIdentity ? addPublicFilePrefix(this.userIdentity.imageUrl) : undefined;
     }
 
     setImageUrl(url: string | undefined) {

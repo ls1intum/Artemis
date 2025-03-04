@@ -11,6 +11,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-posting-summary',
@@ -65,4 +66,6 @@ export class PostingSummaryComponent {
         }
         this.onNavigateToPost.emit(this.post()!);
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

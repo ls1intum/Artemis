@@ -10,7 +10,7 @@
                     [isGray]="isDeleted()"
                     [authorId]="authorOfPosting.id"
                     [authorName]="authorOfPosting.name"
-                    [imageUrl]="authorOfPosting.imageUrl"
+                    [imageUrl]="addPublicFilePrefix(authorOfPosting.imageUrl)"
                     [isEditable]="currentUser !== undefined && authorOfPosting.id === currentUser.id"
                 />
                 <span class="fs-small d-inline-flex flex-column align-items-start">

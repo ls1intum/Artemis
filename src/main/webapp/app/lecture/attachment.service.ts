@@ -7,6 +7,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { cloneDeep } from 'lodash-es';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;
@@ -110,17 +111,18 @@ export class AttachmentService {
         });
     }
 
-    convertAttachmentDatesFromServer(attachment?: Attachment) {
+    convertAttachmentFromServer(attachment?: Attachment) {
         if (attachment) {
             attachment.releaseDate = convertDateFromServer(attachment.releaseDate);
             attachment.uploadDate = convertDateFromServer(attachment.uploadDate);
+            attachment.linkUrl = addPublicFilePrefix(attachment.link);
         }
         return attachment;
     }
 
     private convertAttachmentResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.convertAttachmentDatesFromServer(res.body);
+            this.convertAttachmentFromServer(res.body);
         }
         return res;
     }
@@ -128,7 +130,7 @@ export class AttachmentService {
     private convertAttachmentArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((attachment: Attachment) => {
-                this.convertAttachmentDatesFromServer(attachment);
+                this.convertAttachmentFromServer(attachment);
             });
         }
         return res;

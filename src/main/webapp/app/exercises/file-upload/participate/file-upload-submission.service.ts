@@ -7,6 +7,7 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export type EntityResponseType = HttpResponse<FileUploadSubmission>;
 
@@ -107,6 +108,12 @@ export class FileUploadSubmissionService {
     getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
         return this.http
             .get<FileUploadSubmission>(`api/fileupload/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
-            .pipe(map((res: FileUploadSubmission) => this.submissionService.convertSubmissionFromServer(res)));
+            .pipe(map((res: FileUploadSubmission) => this.convertFileSubmissionFromServer(res)));
+    }
+
+    private convertFileSubmissionFromServer(res: FileUploadSubmission) {
+        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res);
+        convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
+        return convertedBaseSubmission;
     }
 }
