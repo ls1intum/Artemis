@@ -9,7 +9,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
