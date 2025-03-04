@@ -388,7 +388,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        var response = request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, LearningPathInformationDTO.class);
+        var response = request.get("/api/atlas/learning-path/" + learningPath.getId(), HttpStatus.OK, LearningPathInformationDTO.class);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(learningPath.getId());
@@ -630,7 +630,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[0], false);
         TextUnit thirdTextUnit = createAndLinkTextUnit(student, competencies[0], false);
 
-        var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+        var result = request.get("/api/atlas/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
         verifyNavigationResult(result, List.of(textUnit), List.of(secondTextUnit, thirdTextUnit), List.of(secondTextUnit, thirdTextUnit));
     }
 
