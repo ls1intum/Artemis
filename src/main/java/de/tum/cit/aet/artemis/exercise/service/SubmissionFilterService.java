@@ -30,7 +30,9 @@ public class SubmissionFilterService {
 
     /**
      * Filters a set of submissions from a participation and determines the latest submission with a valid result, based
-     * on the type of the exercise. This method is used to get data for the course dashboard, in which case the
+     * on the type of the exercise.
+     * <p>
+     * This method can be used for example to get data for the course dashboard, in which case the
      * assessment due date matters, but also to get the latest results for each participation with points for each
      * grading criterion, where the assessment due date can be ignored, because the corresponding endpoint is only
      * visible for instructors.
