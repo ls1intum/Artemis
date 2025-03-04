@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PlagiarismCaseStudentDetailViewComponent } from 'app/course/plagiarism-cases/student-view/detail-view/plagiarism-case-student-detail-view.component';
 import { EntityResponseType, PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -27,9 +27,7 @@ describe('Plagiarism Cases Student View Component', () => {
     const routeParamsSubject = new BehaviorSubject<Params>({ plagiarismCaseId: 1 });
 
     const parentRoute = {
-        parent: {
-            params: ancestorRouteParamsSubject.asObservable(),
-        },
+        params: ancestorRouteParamsSubject.asObservable(),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute, params: routeParamsSubject.asObservable() } as any as ActivatedRoute;
 

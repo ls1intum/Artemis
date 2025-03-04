@@ -143,7 +143,7 @@ const routes: Routes = [
 
     {
         path: 'courses',
-        loadChildren: () => import('./overview/courses.route').then((m) => m.coursesState),
+        loadChildren: () => import('./overview/courses.route').then((m) => m.routes),
     },
     {
         path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
@@ -187,7 +187,7 @@ const routes: Routes = [
     },
     {
         path: 'features',
-        loadChildren: () => import('./feature-overview/feature-overview.route').then((m) => m.featureOverviewState),
+        loadChildren: () => import('./feature-overview/feature-overview.route').then((m) => m.routes),
     },
     {
         path: 'lti',

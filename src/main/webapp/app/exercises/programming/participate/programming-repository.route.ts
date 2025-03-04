@@ -4,7 +4,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: ':repositoryId',
         loadComponent: () => import('app/localvc/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
@@ -33,4 +33,3 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
 ];
-export { routes };

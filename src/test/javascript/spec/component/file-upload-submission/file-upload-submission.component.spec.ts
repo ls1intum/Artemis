@@ -4,7 +4,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -12,7 +11,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { createFileUploadSubmission, fileUploadParticipation, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -42,12 +40,12 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let debugElement: DebugElement;
-    let router: Router;
     let alertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
@@ -55,7 +53,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, RouterModule.forRoot([routes[0]])],
+            imports: [NgxDatatableModule],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
@@ -80,6 +78,7 @@ describe('FileUploadSubmissionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
             ],
         })
             .compileComponents()
@@ -87,10 +86,6 @@ describe('FileUploadSubmissionComponent', () => {
                 fixture = TestBed.createComponent(FileUploadSubmissionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                router = debugElement.injector.get(Router);
-                fixture.ngZone!.run(() => {
-                    router.initialNavigation();
-                });
                 alertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });

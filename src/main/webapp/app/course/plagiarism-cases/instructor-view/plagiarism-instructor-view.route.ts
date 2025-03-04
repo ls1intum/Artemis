@@ -2,7 +2,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Routes } from '@angular/router';
 
-const plagiarismInstructorRoutes: Routes = [
+export const plagiarismInstructorRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component').then((m) => m.PlagiarismCasesInstructorViewComponent),
@@ -25,5 +25,3 @@ const plagiarismInstructorRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
-
-export { plagiarismInstructorRoutes };
