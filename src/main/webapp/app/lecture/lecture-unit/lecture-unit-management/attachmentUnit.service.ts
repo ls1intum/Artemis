@@ -15,7 +15,7 @@ export class AttachmentUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/lecture';
 
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient
@@ -76,6 +76,6 @@ export class AttachmentUnitService {
      * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
      */
     getAttachmentFile(courseId: number, attachmentUnitId: number): Observable<Blob> {
-        return this.httpClient.get(`${this.resourceURL}/files/courses/${courseId}/attachment-units/${attachmentUnitId}`, { responseType: 'blob' });
+        return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`, { responseType: 'blob' });
     }
 }

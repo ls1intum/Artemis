@@ -1,11 +1,16 @@
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
 import { HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 interface CategorizedExercise {
     type: ExerciseType;
@@ -19,7 +24,7 @@ const FOREVER = dayjs('9999-12-31');
     templateUrl: './pdf-preview-date-box.component.html',
     styleUrls: ['./pdf-preview-date-box.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule],
+    imports: [FontAwesomeModule, NgbTooltipModule, RouterModule, TranslateDirective, CommonModule, FormsModule],
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs

@@ -109,35 +109,35 @@ public class FilePathService {
         String filename = path.getFileName().toString();
 
         // check for known path to convert
-        if (uriPath.startsWith("/api/files/temp")) {
+        if (uriPath.startsWith("/api/core/files/temp")) {
             return getTempFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/drag-and-drop/backgrounds")) {
+        if (uriPath.startsWith("/api/core/files/drag-and-drop/backgrounds")) {
             return getDragAndDropBackgroundFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/drag-and-drop/drag-items")) {
+        if (uriPath.startsWith("/api/core/files/drag-and-drop/drag-items")) {
             return getDragItemFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/course/icons")) {
+        if (uriPath.startsWith("/api/core/files/course/icons")) {
             return getCourseIconFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/user/profile-pictures")) {
+        if (uriPath.startsWith("/api/core/files/user/profile-pictures")) {
             return getProfilePictureFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/exam-user/signatures")) {
+        if (uriPath.startsWith("/api/core/files/exam-user/signatures")) {
             return getExamUserSignatureFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/exam-user")) {
+        if (uriPath.startsWith("/api/core/files/exam-user")) {
             return getStudentImageFilePath().resolve(filename);
         }
-        if (uriPath.startsWith("/api/files/attachments/lecture")) {
-            String lectureId = path.getName(4).toString();
+        if (uriPath.startsWith("/api/core/files/attachments/lecture")) {
+            String lectureId = path.getName(5).toString();
             return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
         }
-        if (uriPath.startsWith("/api/files/attachments/attachment-unit")) {
+        if (uriPath.startsWith("/api/core/files/attachments/attachment-unit")) {
             return actualPathForPublicAttachmentUnitFilePath(publicPath, filename);
         }
-        if (uriPath.startsWith("/api/files/file-upload-exercises")) {
+        if (uriPath.startsWith("/api/core/files/file-upload-exercises")) {
             return actualPathForPublicFileUploadExercisesFilePath(publicPath, filename);
         }
 
@@ -151,12 +151,12 @@ public class FilePathService {
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
         }
         if (!publicPath.toString().contains("/slide")) {
-            String attachmentUnitId = path.getName(4).toString();
+            String attachmentUnitId = path.getName(5).toString();
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
         }
         try {
-            String attachmentUnitId = path.getName(4).toString();
-            String slideId = path.getName(6).toString();
+            String attachmentUnitId = path.getName(5).toString();
+            String slideId = path.getName(7).toString();
             // check if the ids are valid long values
             Long.parseLong(attachmentUnitId);
             Long.parseLong(slideId);
@@ -170,8 +170,8 @@ public class FilePathService {
     private static Path actualPathForPublicFileUploadExercisesFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
         try {
-            String expectedExerciseId = path.getName(3).toString();
-            String expectedSubmissionId = path.getName(5).toString();
+            String expectedExerciseId = path.getName(4).toString();
+            String expectedSubmissionId = path.getName(6).toString();
             Long exerciseId = Long.parseLong(expectedExerciseId);
             Long submissionId = Long.parseLong(expectedSubmissionId);
             return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
@@ -217,25 +217,25 @@ public class FilePathService {
             return URI.create(FileService.DEFAULT_FILE_SUBPATH + filename);
         }
         if (path.startsWith(getDragAndDropBackgroundFilePath())) {
-            return URI.create("/api/files/drag-and-drop/backgrounds/" + id + "/" + filename);
+            return URI.create("/api/core/files/drag-and-drop/backgrounds/" + id + "/" + filename);
         }
         if (path.startsWith(getDragItemFilePath())) {
-            return URI.create("/api/files/drag-and-drop/drag-items/" + id + "/" + filename);
+            return URI.create("/api/core/files/drag-and-drop/drag-items/" + id + "/" + filename);
         }
         if (path.startsWith(getCourseIconFilePath())) {
-            return URI.create("/api/files/course/icons/" + id + "/" + filename);
+            return URI.create("/api/core/files/course/icons/" + id + "/" + filename);
         }
         if (path.startsWith(getProfilePictureFilePath())) {
-            return URI.create("/api/files/user/profile-pictures/" + id + "/" + filename);
+            return URI.create("/api/core/files/user/profile-pictures/" + id + "/" + filename);
         }
         if (path.startsWith(getExamUserSignatureFilePath())) {
-            return URI.create("/api/files/exam-user/signatures/" + id + "/" + filename);
+            return URI.create("/api/core/files/exam-user/signatures/" + id + "/" + filename);
         }
         if (path.startsWith(getStudentImageFilePath())) {
-            return URI.create("/api/files/exam-user/" + id + "/" + filename);
+            return URI.create("/api/core/files/exam-user/" + id + "/" + filename);
         }
         if (path.startsWith(getLectureAttachmentFilePath())) {
-            return URI.create("/api/files/attachments/lecture/" + id + "/" + filename);
+            return URI.create("/api/core/files/attachments/lecture/" + id + "/" + filename);
         }
         if (path.startsWith(getAttachmentUnitFilePath())) {
             return publicPathForActualAttachmentUnitFilePath(path, filename, id);
@@ -249,17 +249,17 @@ public class FilePathService {
 
     private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
         if (path.toString().contains("/student")) {
-            return URI.create("/api/files/attachments/attachment-unit/" + id + "/student/" + filename);
+            return URI.create("/api/core/files/attachments/attachment-unit/" + id + "/student/" + filename);
         }
         if (!path.toString().contains("/slide")) {
-            return URI.create("/api/files/attachments/attachment-unit/" + id + "/" + filename);
+            return URI.create("/api/core/files/attachments/attachment-unit/" + id + "/" + filename);
         }
         try {
             // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
             // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
             final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
             final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
-            return URI.create("/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
+            return URI.create("/api/core/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + path, e);
@@ -271,7 +271,7 @@ public class FilePathService {
             // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
             final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();
             final long exerciseId = Long.parseLong(expectedExerciseId);
-            return URI.create("/api/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);
+            return URI.create("/api/core/files/file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);
         }
         catch (IllegalArgumentException e) {
             throw new FilePathParsingException("Unexpected String in upload file path. Exercise ID should be present here: " + path, e);

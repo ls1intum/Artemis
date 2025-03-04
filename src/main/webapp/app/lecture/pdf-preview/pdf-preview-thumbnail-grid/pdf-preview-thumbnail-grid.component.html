@@ -5,7 +5,7 @@
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
-                            <fa-icon class="hidden-icon" [icon]="faEyeSlash"></fa-icon>
+                            <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
                         </span>
                     </div>
                 </ng-container>
@@ -30,7 +30,7 @@
                     (shown)="isPopoverOpen.set(true)"
                     (hidden)="this.hideActionButton(page); isPopoverOpen.set(false)"
                 >
-                    <fa-icon [icon]="newHiddenPages()![page] ? faEye : faEyeSlash"></fa-icon>
+                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash" />
                 </button>
 
                 <ng-template #hidePageBox>

@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("api/core/public/")
 public class PublicAccountResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);

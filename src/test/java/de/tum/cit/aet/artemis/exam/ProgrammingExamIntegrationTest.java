@@ -121,7 +121,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setTitle("New title");
 
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingEx.getId());
         verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
@@ -138,7 +138,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate.plusNanos(1), startDate.plusNanos(1), endDate.plusNanos(1));
 
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingEx.getId());
         verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
@@ -156,7 +156,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate.plusSeconds(1), startDate.plusSeconds(1), endDate);
 
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
         verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
@@ -169,7 +169,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
         examWithProgrammingEx.setVisibleDate(examWithProgrammingEx.getVisibleDate().plusSeconds(1));
 
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
         verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
@@ -186,7 +186,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate.plusSeconds(1), endDate);
 
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
         verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
@@ -203,7 +203,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
         examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate, endDate.plusMinutes(1));
 
-        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
         verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
@@ -217,7 +217,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
 
         var workingTimeExtensionSeconds = 60;
 
-        request.patch("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId() + "/working-time", workingTimeExtensionSeconds,
+        request.patch("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId() + "/working-time", workingTimeExtensionSeconds,
                 HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
@@ -239,7 +239,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExerciseRepository.save(programmingExercise2);
 
-        Integer numOfLockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", Optional.empty(),
+        Integer numOfLockedExercises = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", Optional.empty(),
                 Integer.class, HttpStatus.OK);
 
         assertThat(numOfLockedExercises).isEqualTo(2);
@@ -251,14 +251,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void lockAllRepositories_noInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void unlockAllRepositories_preAuthNoInstructor() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -300,8 +300,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student1", Set.of(student1), true);
         mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student2", Set.of(student2), true);
 
-        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories", Optional.empty(),
-                Integer.class, HttpStatus.OK);
+        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories",
+                Optional.empty(), Integer.class, HttpStatus.OK);
 
         assertThat(numOfUnlockedExercises).isEqualTo(2);
 
@@ -316,7 +316,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // invoke generate student exams
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
 
         verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
@@ -342,7 +342,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.performMvcRequest(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
+        request.performMvcRequest(
+                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
@@ -361,6 +362,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         exercise1.setTitle(title1);
         exercise2.setTitle(title2);
 
-        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
     }
 }

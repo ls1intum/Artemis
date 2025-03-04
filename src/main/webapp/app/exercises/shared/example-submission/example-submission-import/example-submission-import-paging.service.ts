@@ -12,7 +12,7 @@ type EntityResponseType = SearchResult<Submission>;
 export class ExampleSubmissionImportPagingService extends PagingService<Submission> {
     private http = inject(HttpClient);
 
-    private static readonly RESOURCE_URL = 'api/exercises';
+    private static readonly RESOURCE_URL = 'api/exercise/exercises';
 
     constructor() {
         super();
