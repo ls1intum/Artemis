@@ -308,7 +308,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void checkCreatedFile(String path) throws Exception {
         MediaType mediaType = path.endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
-        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, path);
+        MvcResult result = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
     }
@@ -1789,7 +1790,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        assertThat(request.get(dragItem.getPictureFilePath(), OK, byte[].class)).isNotEmpty();
+                        String requestUrlPath = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath());
+                        assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
                     }
                 }
             }

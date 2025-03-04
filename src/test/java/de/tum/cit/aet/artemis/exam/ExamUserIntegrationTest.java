@@ -205,7 +205,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(exam.getExamUsers()).hasSize(4);
         for (ExamUser examUser : exam.getExamUsers()) {
             assertThat(examUser.getStudentImagePath()).isNotNull();
-            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
     }
 
