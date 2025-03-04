@@ -27,6 +27,10 @@ REPLACEMENTS=(
 )
 
 while IFS= read -r -d '' file; do
+  if [ $((TOTAL_FILES_SCANNED % 50)) -eq 0 ]; then
+    echo "Progress - Files scanned: $TOTAL_FILES_SCANNED"
+  fi
+
   ((TOTAL_FILES_SCANNED++))
   ORIGINAL_CONTENT=$(cat "$file")
 
