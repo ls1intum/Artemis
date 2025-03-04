@@ -242,52 +242,52 @@
         <!-- Columns whose values are prefixed with /api/files -->
 
         <update tableName="attachment">
-            <column name="jhi_link" valueComputed="REPLACE(jhi_link, '/api/files/', '/')"/>
+            <column name="jhi_link" valueComputed="REPLACE(jhi_link, '/api/files/', '')"/>
             <where>jhi_link LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="course">
-            <column name="course_icon" valueComputed="REPLACE(course_icon, '/api/files/', '/')"/>
+            <column name="course_icon" valueComputed="REPLACE(course_icon, '/api/files/', '')"/>
             <where>course_icon LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="drag_item">
-            <column name="picture_file_path" valueComputed="REPLACE(picture_file_path, '/api/files/', '/')"/>
+            <column name="picture_file_path" valueComputed="REPLACE(picture_file_path, '/api/files/', '')"/>
             <where>picture_file_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="exam_user">
-            <column name="signing_image_path" valueComputed="REPLACE(signing_image_path, '/api/files/', '/')"/>
+            <column name="signing_image_path" valueComputed="REPLACE(signing_image_path, '/api/files/', '')"/>
             <where>signing_image_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="exam_user">
-            <column name="student_image_path" valueComputed="REPLACE(student_image_path, '/api/files/', '/')"/>
+            <column name="student_image_path" valueComputed="REPLACE(student_image_path, '/api/files/', '')"/>
             <where>student_image_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="file_upload">
-            <column name="path" valueComputed="REPLACE(path, '/api/files/', '/')"/>
+            <column name="path" valueComputed="REPLACE(path, '/api/files/', '')"/>
             <where>path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="jhi_user">
-            <column name="image_url" valueComputed="REPLACE(image_url, '/api/files/', '/')"/>
+            <column name="image_url" valueComputed="REPLACE(image_url, '/api/files/', '')"/>
             <where>image_url LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="quiz_question">
-            <column name="background_file_path" valueComputed="REPLACE(background_file_path, '/api/files/', '/')"/>
+            <column name="background_file_path" valueComputed="REPLACE(background_file_path, '/api/files/', '')"/>
             <where>discriminator = 'DD' AND background_file_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="slide">
-            <column name="slide_image_path" valueComputed="REPLACE(slide_image_path, '/api/files/', '/')"/>
+            <column name="slide_image_path" valueComputed="REPLACE(slide_image_path, '/api/files/', '')"/>
             <where>slide_image_path LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="submission">
-            <column name="file_path" valueComputed="REPLACE(file_path, '/api/files/', '/')"/>
+            <column name="file_path" valueComputed="REPLACE(file_path, '/api/files/', '')"/>
             <where>discriminator = 'F' AND file_path LIKE '%/api/files%'</where>
         </update>
 
