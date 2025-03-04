@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseGradingResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);

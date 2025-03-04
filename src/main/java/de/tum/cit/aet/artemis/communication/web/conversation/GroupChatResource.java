@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/courses/")
+@RequestMapping("api/communication/courses/")
 public class GroupChatResource extends ConversationManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(GroupChatResource.class);
@@ -71,7 +71,7 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/group-chats/: Starts a new group chat in a course
+     * POST courses/:courseId/group-chats/: Starts a new group chat in a course
      *
      * @param courseId                    the id of the course
      * @param otherChatParticipantsLogins logins of the starting members of the group chat (excluding the requesting user)
@@ -105,7 +105,7 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * PUT /api/courses/:courseId/group-chats/:groupChatId: Updates a group chat in a course
+     * PUT courses/:courseId/group-chats/:groupChatId: Updates a group chat in a course
      *
      * @param courseId     the id of the course
      * @param groupChatId  the id of the group chat to be updated
@@ -129,7 +129,7 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/group-chats/:groupChatId/register : Registers users to a group chat of a course
+     * POST courses/:courseId/group-chats/:groupChatId/register : Registers users to a group chat of a course
      *
      * @param courseId    the id of the course
      * @param groupChatId the id of the group chat
@@ -157,7 +157,7 @@ public class GroupChatResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/group-chats/:groupChatId/deregister : Deregisters users from a group chat of a course
+     * POST courses/:courseId/group-chats/:groupChatId/deregister : Deregisters users from a group chat of a course
      *
      * @param courseId    the id of the course
      * @param groupChatId the id of the group chat

@@ -34,7 +34,7 @@ export class ComplaintService implements IComplaintService {
     private http = inject(HttpClient);
     private complaintResponseService = inject(ComplaintResponseService);
 
-    private resourceUrl = 'api/complaints';
+    private resourceUrl = 'api/assessment/complaints';
 
     /**
      * Checks if a complaint is locked for the currently logged-in user

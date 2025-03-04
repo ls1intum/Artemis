@@ -10,7 +10,7 @@ import { UserFilter } from 'app/admin/user-management/user-management.component'
 export class AdminUserService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/admin/users';
+    public resourceUrl = 'api/core/admin/users';
 
     /**
      * Create a user on the server.

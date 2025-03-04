@@ -103,7 +103,7 @@ artemis:
                 c_sharp:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.0"
                 typescript:
-                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.1.0"
                 go:
                     default: "ghcr.io/ls1intum/artemis-go-docker:v1.0.0"
                 matlab:
