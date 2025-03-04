@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
+import de.tum.cit.aet.artemis.course_notification.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -66,12 +67,16 @@ public class CourseScoreCalculationService {
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
+    private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
+
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, PresentationPointsCalculationService presentationPointsCalculationService) {
+            PlagiarismCaseRepository plagiarismCaseRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
+        this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
     }
 
     /**
@@ -267,7 +272,7 @@ public class CourseScoreCalculationService {
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults);
+                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()));
     }
 
     /**

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
  */
 @Profile(PROFILE_CORE)
 @Service
-public class CourseNotificationEmailService implements CourseNotificationBroadcastService {
+public class CourseNotificationEmailService extends CourseNotificationBroadcastService {
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -80,7 +80,7 @@ public class CourseNotificationEmailService implements CourseNotificationBroadca
      */
     @Async
     @Override
-    public void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
+    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         recipients.forEach(recipient -> {
             String localeKey = recipient.getLangKey();
             if (localeKey == null) {

@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
  * or in-app notifications.
  * </p>
  */
-public interface CourseNotificationBroadcastService {
+public abstract class CourseNotificationBroadcastService {
 
     /**
      * Sends a course notification to a list of recipients.
@@ -29,5 +29,5 @@ public interface CourseNotificationBroadcastService {
      * @param courseNotification The notification data to be sent
      * @param recipients         The list of users who should receive the notification
      */
-    void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients);
+    protected abstract void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients);
 }

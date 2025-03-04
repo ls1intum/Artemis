@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.course_notification.domain.setting_presets.IgnoreU
  */
 public abstract class CourseNotification {
 
-    public final Long courseId;
+    public final long courseId;
 
     public final ZonedDateTime creationDate;
 
@@ -172,7 +172,7 @@ public abstract class CourseNotification {
      *
      * @return Returns the time interval of how long a notification should be kept in the database
      */
-    protected abstract Duration getCleanupDuration();
+    public abstract Duration getCleanupDuration();
 
     /**
      * This function should return which channels this notification supports (e.g. E-Mail, Push, etc.)

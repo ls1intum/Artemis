@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
  */
 @Profile(PROFILE_CORE)
 @Service
-public class CourseNotificationPushService implements CourseNotificationBroadcastService {
+public class CourseNotificationPushService extends CourseNotificationBroadcastService {
 
     private final ApplePushNotificationService applePushNotificationService;
 
@@ -39,7 +39,7 @@ public class CourseNotificationPushService implements CourseNotificationBroadcas
 
     @Async
     @Override
-    public void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
+    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         var recipientSet = new HashSet<>(recipients);
         applePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
         firebasePushNotificationService.sendCourseNotification(courseNotification, recipientSet);

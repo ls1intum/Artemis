@@ -41,7 +41,7 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
      * @return Newly stored {@link UserCourseNotificationSettingSpecification}
      */
     @CacheEvict(key = "'setting_specifications_' + #userCourseNotificationSettingSpecification.user.id + '_' + #userCourseNotificationSettingSpecification.course.id")
-    @Transactional // Modifying Query
+    @Transactional // Updating/Creating query
     @Override
     <S extends UserCourseNotificationSettingSpecification> S save(S userCourseNotificationSettingSpecification);
 

@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
  */
 @Profile(PROFILE_CORE)
 @Service
-public class CourseNotificationWebappService implements CourseNotificationBroadcastService {
+public class CourseNotificationWebappService extends CourseNotificationBroadcastService {
 
     private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/course-notification/";
 
@@ -48,7 +48,7 @@ public class CourseNotificationWebappService implements CourseNotificationBroadc
      */
     @Async
     @Override
-    public void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
+    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         recipients.forEach(user -> {
             websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
         });

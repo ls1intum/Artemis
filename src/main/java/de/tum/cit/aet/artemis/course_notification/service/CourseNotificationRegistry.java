@@ -5,9 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.course_notification.annotations.CourseNotificationType;
@@ -24,36 +27,40 @@ import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNot
 @Service
 public class CourseNotificationRegistry {
 
+    private static final Logger log = LoggerFactory.getLogger(CourseNotificationRegistry.class);
+
     private final Map<Short, Class<? extends CourseNotification>> notificationTypes = new HashMap<>();
 
     private final Map<Class<? extends CourseNotification>, Short> notificationTypeIdentifiers = new HashMap<>();
 
     /**
-     * Constructs a new NotificationRegistry and automatically scans the application context
-     * for all beans annotated with {@link CourseNotificationType}. The registry maps each
-     * notification type's numeric identifier to its class type.
-     *
-     * @param context the Spring application context used to discover annotated beans
+     * Constructs a new NotificationRegistry and automatically scans the application context for all classes annotated
+     * with {@link CourseNotificationType} in the {@code course_notification.domain.notifications} directory. The
+     * registry maps each notification type's numeric identifier to its class type.
      */
-    @Autowired
-    public CourseNotificationRegistry(ApplicationContext context) {
-        Map<String, Object> beans = context.getBeansWithAnnotation(CourseNotificationType.class);
+    public CourseNotificationRegistry() {
+        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationType.class));
+        String basePackage = "de.tum.cit.aet.artemis.course_notification.domain.notifications";
 
-        for (Object bean : beans.values()) {
-            Class<?> beanClass = bean.getClass();
-            // Handle proxy classes created by Spring just in case
-            if (beanClass.getSimpleName().contains("$$")) {
-                beanClass = beanClass.getSuperclass();
+        for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
+            try {
+                Class<?> classType = Class.forName(bd.getBeanClassName());
+
+                if (CourseNotification.class.isAssignableFrom(classType)) {
+                    CourseNotificationType annotation = classType.getAnnotation(CourseNotificationType.class);
+                    Short typeId = (short) annotation.value();
+
+                    @SuppressWarnings("unchecked")
+                    Class<? extends CourseNotification> notificationClass = (Class<? extends CourseNotification>) classType;
+
+                    log.debug("Registering notification: {}, {}", typeId, notificationClass);
+                    notificationTypes.put(typeId, notificationClass);
+                    notificationTypeIdentifiers.put(notificationClass, typeId);
+                }
             }
-
-            if (CourseNotification.class.isAssignableFrom(beanClass)) {
-                CourseNotificationType annotation = beanClass.getAnnotation(CourseNotificationType.class);
-                Short typeId = (short) annotation.value();
-
-                @SuppressWarnings("unchecked")
-                Class<? extends CourseNotification> notificationClass = (Class<? extends CourseNotification>) beanClass;
-                notificationTypes.put(typeId, notificationClass);
-                notificationTypeIdentifiers.put(notificationClass, typeId);
+            catch (ClassNotFoundException e) {
+                log.error("Failed to load notification class", e);
             }
         }
     }
@@ -64,7 +71,7 @@ public class CourseNotificationRegistry {
      * @param typeId the database tinyint value representing a notification type
      * @return the corresponding notification class, or null if no mapping exists for the given typeId
      */
-    public Class<? extends CourseNotification> getNotificationClass(Short typeId) {
+    protected Class<? extends CourseNotification> getNotificationClass(Short typeId) {
         return notificationTypes.get(typeId);
     }
 
@@ -76,7 +83,7 @@ public class CourseNotificationRegistry {
      * @param typeClass the class of a notification type
      * @return the corresponding database identifier, or null if no mapping exists for the given class
      */
-    public Short getNotificationIdentifier(Class<? extends CourseNotification> typeClass) {
+    protected Short getNotificationIdentifier(Class<? extends CourseNotification> typeClass) {
         return notificationTypeIdentifiers.get(typeClass);
     }
 }

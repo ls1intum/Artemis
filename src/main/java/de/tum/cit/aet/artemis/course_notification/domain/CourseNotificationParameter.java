@@ -1,15 +1,18 @@
 package de.tum.cit.aet.artemis.course_notification.domain;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * Entity class for Course Notification Parameters.
@@ -17,12 +20,15 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Entity
 @Table(name = "course_notification_parameter")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class CourseNotificationParameter extends DomainObject {
+@IdClass(CourseNotificationParameter.CourseNotificationParameterId.class)
+public class CourseNotificationParameter implements Serializable {
 
+    @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_notification_id", nullable = false)
     private CourseNotification courseNotification;
 
+    @Id
     @Column(name = "key", length = 20, nullable = false)
     private String key;
 
@@ -102,8 +108,98 @@ public class CourseNotificationParameter extends DomainObject {
         this.value = value;
     }
 
+    /**
+     * Checks if this parameter is equal to another object.
+     * Two parameters are considered equal if they have the same course notification ID and key.
+     *
+     * @param o the object to compare with
+     * @return true if the objects are equal, false otherwise
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        CourseNotificationParameter that = (CourseNotificationParameter) o;
+        return Objects.equals(courseNotification.getId(), that.courseNotification.getId()) && Objects.equals(key, that.key);
+    }
+
+    /**
+     * Generates a hash code for this parameter.
+     * The hash code is based on the course notification ID and key.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(courseNotification.getId(), key);
+    }
+
+    /**
+     * Returns a string representation of this parameter.
+     *
+     * @return a string representation
+     */
     @Override
     public String toString() {
-        return "CourseNotificationParameter{" + "id=" + getId() + ", key='" + key + '\'' + ", value='" + value + '\'' + '}';
+        return "CourseNotificationParameter{" + "courseNotificationId=" + (courseNotification != null ? courseNotification.getId() : null) + ", key='" + key + '\'' + ", value='"
+                + value + '\'' + '}';
+    }
+
+    /**
+     * Class representing the composite primary key for CourseNotificationParameter.
+     * This class combines courseNotification ID and key to form a composite key.
+     */
+    public static class CourseNotificationParameterId implements Serializable {
+
+        private Long courseNotification;
+
+        private String key;
+
+        /**
+         * Default constructor required by JPA.
+         */
+        public CourseNotificationParameterId() {
+        }
+
+        /**
+         * Constructs a composite key with the specified course notification ID and key.
+         *
+         * @param courseNotification the course notification ID
+         * @param key                the parameter key
+         */
+        public CourseNotificationParameterId(Long courseNotification, String key) {
+            this.courseNotification = courseNotification;
+            this.key = key;
+        }
+
+        /**
+         * Checks if this composite key is equal to another object.
+         * Two keys are considered equal if they have the same course notification ID and key.
+         *
+         * @param o the object to compare with
+         * @return true if the objects are equal, false otherwise
+         */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            CourseNotificationParameterId that = (CourseNotificationParameterId) o;
+            return Objects.equals(courseNotification, that.courseNotification) && Objects.equals(key, that.key);
+        }
+
+        /**
+         * Generates a hash code for this composite key.
+         * The hash code is based on the course notification ID and key.
+         *
+         * @return the hash code
+         */
+        @Override
+        public int hashCode() {
+            return Objects.hash(courseNotification, key);
+        }
     }
 }

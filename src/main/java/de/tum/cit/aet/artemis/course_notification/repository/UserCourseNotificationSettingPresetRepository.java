@@ -39,7 +39,7 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
      * @return Newly stored {@link UserCourseNotificationSettingPreset}
      */
     @CacheEvict(key = "'setting_preset_' + #userCourseNotificationSettingPreset.user.id + '_' + #userCourseNotificationSettingPreset.course.id")
-    @Transactional // Modifying Query
+    @Transactional // Updating/Creating query
     @Override
     <S extends UserCourseNotificationSettingPreset> S save(S userCourseNotificationSettingPreset);
 

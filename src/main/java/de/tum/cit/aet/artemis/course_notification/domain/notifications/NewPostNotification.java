@@ -63,7 +63,7 @@ public class NewPostNotification extends CourseNotification {
     }
 
     @Override
-    protected Duration getCleanupDuration() {
+    public Duration getCleanupDuration() {
         return Duration.ofDays(7);
     }
 

@@ -1,8 +1,13 @@
 package de.tum.cit.aet.artemis.course_notification.domain;
 
+import java.io.Serializable;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -10,7 +15,6 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -19,12 +23,15 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Entity
 @Table(name = "user_course_notification_setting_preset")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserCourseNotificationSettingPreset extends DomainObject {
+@IdClass(UserCourseNotificationSettingPreset.UserCourseNotificationSettingPresetId.class)
+public class UserCourseNotificationSettingPreset implements Serializable {
 
+    @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
@@ -105,8 +112,93 @@ public class UserCourseNotificationSettingPreset extends DomainObject {
         this.settingPreset = settingPreset;
     }
 
+    /**
+     * Checks if this setting preset is equal to another object.
+     * Two settings are considered equal if they have the same user ID and course ID.
+     *
+     * @param o the object to compare with
+     * @return true if the objects are equal, false otherwise
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        UserCourseNotificationSettingPreset that = (UserCourseNotificationSettingPreset) o;
+        return Objects.equals(user.getId(), that.user.getId()) && Objects.equals(course.getId(), that.course.getId());
+    }
+
+    /**
+     * Generates a hash code for this setting preset.
+     * The hash code is based on the user ID and course ID.
+     *
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        return Objects.hash(user.getId(), course.getId());
+    }
+
     @Override
     public String toString() {
-        return "UserCourseNotificationSettingPreset{" + "id=" + getId() + ", settingPreset=" + settingPreset + '}';
+        return "UserCourseNotificationSettingPreset{" + "userId=" + (user != null ? user.getId() : null) + ", courseId=" + (course != null ? course.getId() : null)
+                + ", settingPreset=" + settingPreset + '}';
+    }
+
+    /**
+     * Class representing the composite primary key for UserCourseNotificationSettingPreset.
+     * This class combines user ID and course ID to form a composite key.
+     */
+    public static class UserCourseNotificationSettingPresetId implements Serializable {
+
+        private Long user;
+
+        private Long course;
+
+        /**
+         * Default constructor required by JPA.
+         */
+        public UserCourseNotificationSettingPresetId() {
+        }
+
+        /**
+         * Constructs a composite key with the specified user ID and course ID.
+         *
+         * @param user   the user ID
+         * @param course the course ID
+         */
+        public UserCourseNotificationSettingPresetId(Long user, Long course) {
+            this.user = user;
+            this.course = course;
+        }
+
+        /**
+         * Checks if this composite key is equal to another object.
+         * Two keys are considered equal if they have the same user ID and course ID.
+         *
+         * @param o the object to compare with
+         * @return true if the objects are equal, false otherwise
+         */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            UserCourseNotificationSettingPresetId that = (UserCourseNotificationSettingPresetId) o;
+            return Objects.equals(user, that.user) && Objects.equals(course, that.course);
+        }
+
+        /**
+         * Generates a hash code for this composite key.
+         * The hash code is based on the user ID and course ID.
+         *
+         * @return the hash code
+         */
+        @Override
+        public int hashCode() {
+            return Objects.hash(user, course);
+        }
     }
 }
