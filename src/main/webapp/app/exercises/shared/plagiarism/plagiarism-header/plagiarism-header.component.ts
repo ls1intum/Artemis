@@ -17,7 +17,8 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, RouterModule]})
+    imports: [TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, RouterModule],
+})
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
