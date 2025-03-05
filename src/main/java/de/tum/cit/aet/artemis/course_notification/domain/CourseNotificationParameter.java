@@ -135,7 +135,11 @@ public class CourseNotificationParameter implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(courseNotification.getId(), paramKey);
+        int somePrimeNumber = 43;
+        int result = 29;
+        result = somePrimeNumber * result + (courseNotification != null ? Objects.hash(courseNotification.getId()) : 0);
+        result = somePrimeNumber * result + Objects.hash(paramKey);
+        return result;
     }
 
     /**
@@ -203,7 +207,11 @@ public class CourseNotificationParameter implements Serializable {
          */
         @Override
         public int hashCode() {
-            return Objects.hash(courseNotification, paramKey);
+            int somePrimeNumber = 43;
+            int result = 29;
+            result = somePrimeNumber * result + (courseNotification != null ? Objects.hash(courseNotification) : 0);
+            result = somePrimeNumber * result + Objects.hash(paramKey);
+            return result;
         }
     }
 }

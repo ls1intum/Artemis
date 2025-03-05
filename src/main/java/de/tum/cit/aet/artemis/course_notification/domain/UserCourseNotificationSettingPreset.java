@@ -139,7 +139,11 @@ public class UserCourseNotificationSettingPreset implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(user.getId(), course.getId());
+        int somePrimeNumber = 41;
+        int result = 23;
+        result = somePrimeNumber * result + (user != null ? Objects.hash(user.getId()) : 0);
+        result = somePrimeNumber * result + (course != null ? Objects.hash(course.getId()) : 0);
+        return result;
     }
 
     @Override
@@ -202,7 +206,11 @@ public class UserCourseNotificationSettingPreset implements Serializable {
          */
         @Override
         public int hashCode() {
-            return Objects.hash(user, course);
+            int somePrimeNumber = 41;
+            int result = 23;
+            result = somePrimeNumber * result + (user != null ? Objects.hash(user) : 0);
+            result = somePrimeNumber * result + (course != null ? Objects.hash(course) : 0);
+            return result;
         }
     }
 }

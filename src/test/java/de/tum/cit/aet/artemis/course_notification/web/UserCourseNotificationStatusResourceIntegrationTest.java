@@ -56,7 +56,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
         String requestBody = "{\"statusType\":\"SEEN\", \"notificationIds\":[" + courseNotification.getId() + "]}";
 
         request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/courses/" + course.getId() + "/notifications/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                MockMvcRequestBuilders.put("/api/course-notification/course/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk());
 
         var newStatus = userCourseNotificationStatusRepository.findByCourseNotificationId(courseNotification.getId());
@@ -76,7 +76,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
         String requestBody = "{\"statusType\":\"SEEN\", \"notificationIds\":[" + 999 + "]}";
 
         request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/courses/" + course.getId() + "/notifications/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                MockMvcRequestBuilders.put("/api/course-notification/course/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk());
 
         var newStatus = userCourseNotificationStatusRepository.findByCourseNotificationId(courseNotification.getId());
@@ -102,7 +102,7 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
                 + "]}";
 
         request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/courses/" + course.getId() + "/notifications/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                MockMvcRequestBuilders.put("/api/course-notification/course/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isOk());
 
         for (var courseNotification : notifications) {

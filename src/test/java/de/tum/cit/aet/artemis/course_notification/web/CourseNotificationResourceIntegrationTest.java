@@ -52,7 +52,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
         userCourseNotificationStatusTestRepository.save(userCourseNotificationStatus);
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/courses/" + course.getId() + "/course-notification?page=0&size=20")).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/course-notification/course/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newPostNotification"))
                 .andExpect(jsonPath("$.content[0].courseId").value(course.getId()));
     }
@@ -60,7 +60,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnEmptyResultWhenNoNotificationsAreFound() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/courses/" + course.getId() + "/course-notification")).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/course-notification/course/" + course.getId())).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(0))).andExpect(jsonPath("$.totalElements").value(0));
     }
 
@@ -79,7 +79,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
             userCourseNotificationStatusTestRepository.save(userCourseNotificationStatus);
         }
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/courses/" + course.getId() + "/course-notification?page=0&size=" + pageSize)).andExpect(status().isOk())
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/course-notification/course/" + course.getId() + "?page=0&size=" + pageSize)).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(pageSize)));
     }
 }

@@ -38,7 +38,7 @@ public class CourseNotificationResource {
      * @return the ResponseEntity with status 200 (OK) and the list of course notifications in body
      */
     @EnforceAtLeastStudent
-    @GetMapping("courses/{courseId}")
+    @GetMapping("course/{courseId}")
     public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {
         return ResponseEntity.ok().body(courseNotificationService.getCourseNotifications(pageable, courseId, userRepository.getUser().getId()));
     }

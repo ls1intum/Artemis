@@ -142,7 +142,11 @@ public class UserCourseNotificationStatus implements Serializable {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(courseNotification.getId(), user.getId());
+        int somePrimeNumber = 31;
+        int result = 17;
+        result = somePrimeNumber * result + (courseNotification != null ? Objects.hash(courseNotification.getId()) : 0);
+        result = somePrimeNumber * result + (user != null ? Objects.hash(user.getId()) : 0);
+        return result;
     }
 
     @Override
@@ -205,7 +209,11 @@ public class UserCourseNotificationStatus implements Serializable {
          */
         @Override
         public int hashCode() {
-            return Objects.hash(courseNotification, user);
+            int somePrimeNumber = 31;
+            int result = 17;
+            result = somePrimeNumber * result + (courseNotification != null ? Objects.hash(courseNotification) : 0);
+            result = somePrimeNumber * result + (user != null ? Objects.hash(user) : 0);
+            return result;
         }
     }
 }
