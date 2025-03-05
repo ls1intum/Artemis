@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -39,6 +40,9 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     private static final Logger log = LoggerFactory.getLogger(DragItem.class);
+
+    @Transient
+    private final transient FileService fileService = new FileService();
 
     @Column(name = "picture_file_path")
     @JsonView(QuizView.Before.class)
@@ -129,7 +133,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         // delete old file if necessary
         try {
             if (pictureFilePath != null) {
-                FileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(pictureFilePath)), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(pictureFilePath)), 0);
             }
         }
         catch (FilePathParsingException e) {

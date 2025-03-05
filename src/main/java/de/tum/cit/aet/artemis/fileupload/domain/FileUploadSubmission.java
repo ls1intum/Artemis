@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PostRemove;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -27,6 +28,9 @@ public class FileUploadSubmission extends Submission {
         return "file-upload";
     }
 
+    @Transient
+    private final transient FileService fileService = new FileService();
+
     @Column(name = "file_path")
     private String filePath;
 
@@ -37,7 +41,7 @@ public class FileUploadSubmission extends Submission {
     public void onDelete() {
         if (filePath != null) {
             Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath));
-            FileService.schedulePathForDeletion(actualPath, 0);
+            fileService.schedulePathForDeletion(actualPath, 0);
         }
     }
 
