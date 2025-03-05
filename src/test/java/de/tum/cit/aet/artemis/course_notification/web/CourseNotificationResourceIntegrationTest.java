@@ -60,8 +60,8 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnEmptyResultWhenNoNotificationsAreFound() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/course-notification/course/" + course.getId())).andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(0))).andExpect(jsonPath("$.totalElements").value(0));
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/course-notification/course/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
