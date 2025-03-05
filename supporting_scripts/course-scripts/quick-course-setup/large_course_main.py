@@ -70,7 +70,7 @@ def main() -> None:
             logging.info(f"Added commit for {username} in the programming exercise {exercise_Id} successfully")
 
     # This is a measure in case developers forget to revert changes to programming exercise template
-    run_cleanup()
+    #run_cleanup()
 
 if __name__ == "__main__":
     main()
