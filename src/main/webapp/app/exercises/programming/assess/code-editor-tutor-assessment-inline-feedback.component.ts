@@ -119,12 +119,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     /**
      * Deletes feedback with a notification and emits to parent component
      */
-    deleteFeedback() {
-        const storageKey = 'jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint';
+    deleteFeedback(preliminary: boolean) {
+        if (preliminary) {
+            const storageKey = 'jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint';
 
-        if (!localStorage.getItem(storageKey)) {
-            this.alertService.success('artemisApp.editor.showReopenFeedbackHint');
-            localStorage.setItem(storageKey, 'true');
+            if (!localStorage.getItem(storageKey)) {
+                this.alertService.success('artemisApp.editor.showReopenFeedbackHint');
+                localStorage.setItem(storageKey, 'true');
+            }
         }
 
         this.onDeleteFeedback.emit(this.feedback);

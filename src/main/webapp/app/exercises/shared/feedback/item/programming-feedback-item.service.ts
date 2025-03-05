@@ -50,9 +50,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             return this.createScaFeedbackItem(feedback, showTestDetails);
         } else if (Feedback.isFeedbackSuggestion(feedback)) {
             return this.createFeedbackSuggestionItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isPreliminaryFeedback(feedback)) {
             return this.createAutomaticFeedbackItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+        } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isPreliminaryFeedback(feedback)) {
             return this.createNonGradedFeedbackItem(feedback);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);

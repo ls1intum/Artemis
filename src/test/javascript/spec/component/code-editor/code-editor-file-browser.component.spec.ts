@@ -957,4 +957,13 @@ describe('CodeEditorFileBrowserComponent', () => {
             expect(result).toEqual([new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, 3)]); // 1 + 2
         });
     });
+
+    it('should emit onReopenFeedback when reopenFeedback is called', () => {
+        const treeViewItem = { value: 'file1.java' } as TreeViewItem<string>;
+        const emitSpy = jest.spyOn(comp.onReopenFeedback, 'emit');
+
+        comp.reopenFeedback(treeViewItem);
+
+        expect(emitSpy).toHaveBeenCalledWith('file1.java');
+    });
 });

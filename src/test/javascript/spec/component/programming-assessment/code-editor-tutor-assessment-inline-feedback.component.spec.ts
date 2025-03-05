@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { Feedback, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -70,7 +70,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
 
     it('should delete feedback and emit to parent', () => {
         const onDeleteFeedbackSpy = jest.spyOn(comp.onDeleteFeedback, 'emit');
-        comp.deleteFeedback();
+        comp.deleteFeedback(false);
 
         expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
         expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
@@ -239,8 +239,12 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     describe('Close feedback button', () => {
-        it('should display the delete button with correct attributes', () => {
+        it('should display the delete button with correct attributes for preliminary feedback', () => {
             comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.AUTOMATIC,
+                text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            } as Feedback;
             fixture.detectChanges();
 
             const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
@@ -249,8 +253,39 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
             expect(buttonElement.attributes['aria-label']).toBe('Close');
         });
 
+        it('should not display the delete button for feedback suggestions', () => {
+            comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.AUTOMATIC_ADAPTED,
+                text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'feedback',
+            } as Feedback;
+            comp.feedback.text = 'some feedback';
+            fixture.detectChanges();
+
+            const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
+
+            expect(buttonElement).toBeFalsy();
+        });
+
+        it('should not display the delete button for tutor feedback', () => {
+            comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.MANUAL,
+                text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'some feedback',
+            } as Feedback;
+            fixture.detectChanges();
+
+            const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
+
+            expect(buttonElement).toBeFalsy();
+        });
+
         it('should call deleteFeedback method when delete button is clicked', () => {
             comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.AUTOMATIC,
+                text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            } as Feedback;
             fixture.detectChanges();
 
             jest.spyOn(comp, 'deleteFeedback');
@@ -264,7 +299,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
             jest.spyOn(comp.onDeleteFeedback, 'emit');
 
             comp.feedback = { id: 1, text: 'Test feedback' } as Feedback;
-            comp.deleteFeedback();
+            comp.deleteFeedback(false);
 
             expect(comp.onDeleteFeedback.emit).toHaveBeenCalledWith(comp.feedback);
         });
@@ -272,7 +307,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         it('should not display a notification if localStorage key exists', () => {
             jest.spyOn(alertService, 'success');
             localStorage.getItem = jest.fn().mockReturnValueOnce(true);
-            comp.deleteFeedback();
+            comp.deleteFeedback(true);
 
             expect(alertService.success).not.toHaveBeenCalled();
         });
@@ -281,7 +316,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
             jest.spyOn(alertService, 'success');
             localStorage.setItem = jest.fn().mockReturnValueOnce(false);
 
-            comp.deleteFeedback();
+            comp.deleteFeedback(true);
 
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.editor.showReopenFeedbackHint');
             expect(localStorage.setItem).toHaveBeenCalledWith('jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint', 'true');

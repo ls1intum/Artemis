@@ -163,7 +163,7 @@ describe('Feedback', () => {
 
         it('should correctly detect non graded automatically generated feedback', () => {
             const feedback: Feedback = { type: FeedbackType.AUTOMATIC, text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'content' };
-            expect(Feedback.isNonGradedFeedbackSuggestion(feedback)).toBeTrue();
+            expect(Feedback.isPreliminaryFeedback(feedback)).toBeTrue();
         });
     });
 

@@ -477,8 +477,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
         if (this.selectedFile() !== fileName) {
             return;
         }
-        this.feedbackInternal.set(this.feedbacks());
-        this.onUpdateFeedback.emit(this.feedbackInternal());
-        this.renderFeedbackWidgets();
+        const currentFeedback = new Set<Feedback>(this.feedbackInternal());
+        const closedFeedback = this.feedbacks().filter((feedback) => feedback.reference && feedback.reference.startsWith('file:' + fileName) && !currentFeedback.has(feedback));
+
+        if (closedFeedback.length > 0) {
+            this.feedbackInternal.set([...this.feedbackInternal(), ...closedFeedback]);
+            this.onUpdateFeedback.emit(this.feedbackInternal());
+            this.renderFeedbackWidgets();
+        }
     }
 }

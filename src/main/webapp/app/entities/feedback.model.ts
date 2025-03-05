@@ -123,7 +123,7 @@ export class Feedback implements BaseEntity {
         return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
     }
 
-    public static isNonGradedFeedbackSuggestion(that: Feedback): boolean {
+    public static isPreliminaryFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }

@@ -69,7 +69,7 @@
                         [translateValues]="{ text: this.feedback | feedbackContent | quoted: ' ' }"
                         deleteQuestion="artemisApp.feedback.delete.question"
                         type="submit"
-                        (delete)="deleteFeedback()"
+                        (delete)="deleteFeedback(false)"
                         [dialogError]="dialogError$"
                         class="btn btn-danger btn-sm me-1"
                     >
@@ -89,15 +89,17 @@
         </div>
     } @else {
         <div class="p-1 position-relative">
-            <button
-                type="button"
-                class="btn-close cross position-absolute top-0 end-0 m-1 rounded-circle"
-                aria-label="Close"
-                (click)="deleteFeedback()"
-                [ngbTooltip]="'entity.action.close' | artemisTranslate"
-            >
-                <fa-icon [icon]="faTimes" />
-            </button>
+            @if (Feedback.isPreliminaryFeedback(feedback)) {
+                <button
+                    type="button"
+                    class="btn-close cross position-absolute top-0 end-0 m-1 rounded-circle"
+                    aria-label="Close"
+                    (click)="deleteFeedback(true)"
+                    [ngbTooltip]="'entity.action.close' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faTimes" />
+                </button>
+            }
             <div class="row flex-nowrap align-items-top m-1">
                 <div class="col flex-grow-0 ps-0">
                     <h5 class="d-inline">
@@ -112,7 +114,7 @@
                     </h5>
                 </div>
                 <div class="col-10 ps-0 flex-grow-1 flex-shrink-1">
-                    @if (Feedback.isNonGradedFeedbackSuggestion(feedback)) {
+                    @if (Feedback.isPreliminaryFeedback(feedback)) {
                         <h6 class="d-inline mb-1" jhiTranslate="artemisApp.assessment.detail.feedback"></h6>
                         <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-1 mb-0"></p>
                     } @else {

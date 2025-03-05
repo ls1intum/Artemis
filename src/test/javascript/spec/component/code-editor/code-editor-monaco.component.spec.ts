@@ -497,4 +497,26 @@ describe('CodeEditorMonacoComponent', () => {
         await comp.selectFileInEditor(scrolledFile);
         expect(setScrollTopStub).toHaveBeenCalledExactlyOnceWith(scrollTop);
     });
+
+    it('should add only closed feedback for the selected file', () => {
+        const selectedFile = 'file1.java';
+
+        const openFeedback = { reference: 'file:file1.java_line:1', text: 'already open feedback' } as Feedback;
+        const closedFeedbackForFile = { reference: 'file:file1.java_lines:2-3', text: 'closed feedback' } as Feedback;
+        const closedFeedbackForOtherFile = { reference: 'file:file2.java_line:3', text: 'closed feedback for another file' } as Feedback;
+
+        fixture.componentRef.setInput('feedbacks', [openFeedback, closedFeedbackForFile, closedFeedbackForOtherFile]);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
+        const emitSpy = jest.spyOn(comp.onUpdateFeedback, 'emit');
+
+        fixture.detectChanges();
+
+        comp.feedbackInternal.set([openFeedback]);
+
+        comp.refreshFeedback(selectedFile);
+
+        expect(comp.feedbackInternal()).toEqual([openFeedback, closedFeedbackForFile]);
+
+        expect(emitSpy).toHaveBeenCalledWith([openFeedback, closedFeedbackForFile]);
+    });
 });
