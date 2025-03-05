@@ -112,16 +112,18 @@ public class CourseNotificationParameter implements Serializable {
      * Checks if this parameter is equal to another object.
      * Two parameters are considered equal if they have the same course notification ID and key.
      *
-     * @param o the object to compare with
+     * @param other the object to compare with
      * @return true if the objects are equal, false otherwise
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
-        CourseNotificationParameter that = (CourseNotificationParameter) o;
+        }
+        CourseNotificationParameter that = (CourseNotificationParameter) other;
         return Objects.equals(courseNotification.getId(), that.courseNotification.getId()) && Objects.equals(paramKey, that.paramKey);
     }
 
@@ -178,16 +180,18 @@ public class CourseNotificationParameter implements Serializable {
          * Checks if this composite key is equal to another object.
          * Two keys are considered equal if they have the same course notification ID and key.
          *
-         * @param o the object to compare with
+         * @param other the object to compare with
          * @return true if the objects are equal, false otherwise
          */
         @Override
-        public boolean equals(Object o) {
-            if (this == o)
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (other == null || getClass() != other.getClass()) {
                 return false;
-            CourseNotificationParameterId that = (CourseNotificationParameterId) o;
+            }
+            CourseNotificationParameterId that = (CourseNotificationParameterId) other;
             return Objects.equals(courseNotification, that.courseNotification) && Objects.equals(paramKey, that.paramKey);
         }
 

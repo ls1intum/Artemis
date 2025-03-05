@@ -40,8 +40,9 @@ public abstract class UserCourseNotificationSettingPreset {
      *         or if the notification type is not configured in this preset
      */
     public boolean isEnabled(Class<? extends CourseNotification> notificationType, NotificationSettingOption option) {
-        if (!presetMap.containsKey(notificationType))
+        if (!presetMap.containsKey(notificationType)) {
             return false;
+        }
 
         return presetMap.get(notificationType).getOrDefault(option, false);
     }

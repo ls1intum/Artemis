@@ -119,16 +119,18 @@ public class UserCourseNotificationStatus implements Serializable {
      * Checks if this notification status is equal to another object.
      * Two notification statuses are considered equal if they have the same course notification ID and user ID.
      *
-     * @param o the object to compare with
+     * @param other the object to compare with
      * @return true if the objects are equal, false otherwise
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
-        UserCourseNotificationStatus that = (UserCourseNotificationStatus) o;
+        }
+        UserCourseNotificationStatus that = (UserCourseNotificationStatus) other;
         return Objects.equals(courseNotification.getId(), that.courseNotification.getId()) && Objects.equals(user.getId(), that.user.getId());
     }
 
@@ -180,16 +182,18 @@ public class UserCourseNotificationStatus implements Serializable {
          * Checks if this composite key is equal to another object.
          * Two keys are considered equal if they have the same course notification ID and user ID.
          *
-         * @param o the object to compare with
+         * @param other the object to compare with
          * @return true if the objects are equal, false otherwise
          */
         @Override
-        public boolean equals(Object o) {
-            if (this == o)
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (other == null || getClass() != other.getClass()) {
                 return false;
-            UserCourseNotificationStatusId that = (UserCourseNotificationStatusId) o;
+            }
+            UserCourseNotificationStatusId that = (UserCourseNotificationStatusId) other;
             return Objects.equals(courseNotification, that.courseNotification) && Objects.equals(user, that.user);
         }
 

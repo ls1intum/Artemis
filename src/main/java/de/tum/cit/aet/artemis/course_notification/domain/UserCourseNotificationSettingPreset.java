@@ -116,16 +116,18 @@ public class UserCourseNotificationSettingPreset implements Serializable {
      * Checks if this setting preset is equal to another object.
      * Two settings are considered equal if they have the same user ID and course ID.
      *
-     * @param o the object to compare with
+     * @param other the object to compare with
      * @return true if the objects are equal, false otherwise
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
-        UserCourseNotificationSettingPreset that = (UserCourseNotificationSettingPreset) o;
+        }
+        UserCourseNotificationSettingPreset that = (UserCourseNotificationSettingPreset) other;
         return Objects.equals(user.getId(), that.user.getId()) && Objects.equals(course.getId(), that.course.getId());
     }
 
@@ -177,16 +179,18 @@ public class UserCourseNotificationSettingPreset implements Serializable {
          * Checks if this composite key is equal to another object.
          * Two keys are considered equal if they have the same user ID and course ID.
          *
-         * @param o the object to compare with
+         * @param other the object to compare with
          * @return true if the objects are equal, false otherwise
          */
         @Override
-        public boolean equals(Object o) {
-            if (this == o)
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (other == null || getClass() != other.getClass()) {
                 return false;
-            UserCourseNotificationSettingPresetId that = (UserCourseNotificationSettingPresetId) o;
+            }
+            UserCourseNotificationSettingPresetId that = (UserCourseNotificationSettingPresetId) other;
             return Objects.equals(user, that.user) && Objects.equals(course, that.course);
         }
 

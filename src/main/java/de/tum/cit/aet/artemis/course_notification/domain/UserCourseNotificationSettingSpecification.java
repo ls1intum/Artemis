@@ -207,16 +207,18 @@ public class UserCourseNotificationSettingSpecification implements Serializable 
      * Checks if this setting specification is equal to another object.
      * Two setting specifications are considered equal if they have the same user ID, course ID, and course notification type.
      *
-     * @param o the object to compare with
+     * @param other the object to compare with
      * @return true if the objects are equal, false otherwise
      */
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (other == null || getClass() != other.getClass()) {
             return false;
-        UserCourseNotificationSettingSpecification that = (UserCourseNotificationSettingSpecification) o;
+        }
+        UserCourseNotificationSettingSpecification that = (UserCourseNotificationSettingSpecification) other;
         return Objects.equals(user.getId(), that.user.getId()) && Objects.equals(course.getId(), that.course.getId())
                 && Objects.equals(courseNotificationType, that.courseNotificationType);
     }
@@ -273,16 +275,18 @@ public class UserCourseNotificationSettingSpecification implements Serializable 
          * Checks if this composite key is equal to another object.
          * Two keys are considered equal if they have the same user ID, course ID, and course notification type.
          *
-         * @param o the object to compare with
+         * @param other the object to compare with
          * @return true if the objects are equal, false otherwise
          */
         @Override
-        public boolean equals(Object o) {
-            if (this == o)
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            if (o == null || getClass() != o.getClass())
+            }
+            if (other == null || getClass() != other.getClass()) {
                 return false;
-            UserCourseNotificationSettingSpecificationId that = (UserCourseNotificationSettingSpecificationId) o;
+            }
+            UserCourseNotificationSettingSpecificationId that = (UserCourseNotificationSettingSpecificationId) other;
             return Objects.equals(user, that.user) && Objects.equals(course, that.course) && Objects.equals(courseNotificationType, that.courseNotificationType);
         }
 
