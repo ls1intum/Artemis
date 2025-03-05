@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
 import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -29,16 +29,14 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
     isLoading: boolean;
 
-    @Input()
-    tutorialGroupConfigurationId: number;
+    tutorialGroupConfigurationId = input.required<number>();
 
-    @Input()
-    course: Course;
+    course = input.required<Course>();
 
     isInitialized = false;
 
     initialize() {
-        if (!this.tutorialGroupConfigurationId || !this.course) {
+        if (!this.tutorialGroupConfigurationId() || !this.course()) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -53,7 +51,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
-            .create(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
+            .create(this.course().id!, this.tutorialGroupConfigurationId(), this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

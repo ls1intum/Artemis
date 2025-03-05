@@ -103,8 +103,8 @@ describe('Registered Students Component', () => {
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
 
-                comp.course = course;
-                comp.tutorialGroupId = tutorialGroup.id!;
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('tutorialGroupId', tutorialGroup.id!);
 
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 
@@ -124,7 +124,7 @@ describe('Registered Students Component', () => {
 
     describe('OnInit', () => {
         it('should load tutorial group', () => {
-            expect(comp.course).toEqual(course);
+            expect(comp.course()).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();

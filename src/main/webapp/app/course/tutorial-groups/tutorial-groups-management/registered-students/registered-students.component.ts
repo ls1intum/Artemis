@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject, input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -28,8 +28,8 @@ export class RegisteredStudentsComponent implements OnDestroy {
     private courseService = inject(CourseManagementService);
     private cdr = inject(ChangeDetectorRef);
 
-    @Input() course: Course;
-    @Input() tutorialGroupId: number;
+    course = input.required<Course>();
+    tutorialGroupId = input.required<number>();
 
     tutorialGroup: TutorialGroup;
     isLoading = false;
@@ -61,7 +61,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
     }
 
     initialize() {
-        if (!this.tutorialGroupId || !this.course) {
+        if (!this.tutorialGroupId() || !this.course()) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -72,7 +72,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
     handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
 
     addToGroup = (login: string) =>
-        this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
+        this.tutorialGroupService.registerStudent(this.course().id!, this.tutorialGroup.id!, login).pipe(
             tap({
                 next: () => {
                     this.registrationsChanged = true;
@@ -82,7 +82,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
         );
 
     removeFromGroup = (login: string) =>
-        this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
+        this.tutorialGroupService.deregisterStudent(this.course().id!, this.tutorialGroup.id!, login).pipe(
             tap({
                 next: () => {
                     this.registrationsChanged = true;
@@ -91,11 +91,11 @@ export class RegisteredStudentsComponent implements OnDestroy {
             }),
         );
 
-    userSearch = (loginOrName: string) => this.courseService.searchStudents(this.course.id!, loginOrName);
+    userSearch = (loginOrName: string) => this.courseService.searchStudents(this.course().id!, loginOrName);
 
     get exportFilename(): string {
-        if (this.course && this.tutorialGroup) {
-            return this.course.title + ' ' + this.tutorialGroup.title;
+        if (this.course() && this.tutorialGroup) {
+            return this.course().title + ' ' + this.tutorialGroup.title;
         } else {
             return 'RegisteredStudents';
         }
@@ -103,7 +103,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
 
     loadAll = () => {
         this.tutorialGroupService
-            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
+            .getOneOfCourse(this.course().id!, this.tutorialGroupId())
             .pipe(
                 finalize(() => (this.isLoading = false)),
                 takeUntil(this.ngUnsubscribe),
