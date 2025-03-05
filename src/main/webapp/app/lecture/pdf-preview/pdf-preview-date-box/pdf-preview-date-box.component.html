@@ -1,6 +1,12 @@
 <div class="date-box">
     <div class="popover-title mb-2">
-        <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pageIndex()! }"></span></h5>
+        <h5>
+            @if (isMultiplePages()) {
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideMultiplePages" [translateValues]="{ param: pageIndices().join(', ') }"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pageIndex()! }"></span>
+            }
+        </h5>
     </div>
     <div class="checkbox-container mb-3">
         <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />

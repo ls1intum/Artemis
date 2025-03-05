@@ -120,6 +120,7 @@
                 },
                 "dateBox": {
                     "hidePage": "Hide Page {{ param }}",
+                    "hideMultiplePages": "Hide Pages {{ param }}",
                     "hideForever": "Hide forever",
                     "selectDate": "Select Date",
                     "selectExercise": "Select Exercise",

@@ -17,7 +17,7 @@
                         <button
                             (click)="toggleVisibility('show', selectedPages())"
                             class="btn btn-success text-truncate"
-                            aria-label="Hide selected pages"
+                            aria-label="Show selected pages"
                             [disabled]="isPdfLoading() || selectedPages().size === 0"
                         >
                             <fa-icon [icon]="faEye" />
@@ -25,14 +25,31 @@
                         </button>
                     }
                     <button
-                        (click)="toggleVisibility('hide', selectedPages())"
                         class="btn btn-primary text-truncate"
                         aria-label="Hide selected pages"
                         [disabled]="isPdfLoading() || selectedPages().size === 0"
+                        [ngbPopover]="hidePageBox"
+                        #popover="ngbPopover"
+                        [autoClose]="'outside'"
+                        placement="right auto"
+                        container="body"
+                        (shown)="isPopoverOpen.set(true)"
+                        (hidden)="isPopoverOpen.set(false)"
                     >
                         <fa-icon [icon]="faEyeSlash" />
                         <span jhiTranslate="artemisApp.attachment.pdfPreview.hidePageButton"></span>
                     </button>
+
+                    <ng-template #hidePageBox>
+                        <jhi-pdf-preview-date-box-component
+                            [course]="course()"
+                            [pageIndex]="selectedPages().size === 1 ? Array.from(selectedPages())[0] : undefined"
+                            [pageIndices]="selectedPages().size > 1 ? Array.from(selectedPages()) : []"
+                            (hiddenPageOutput)="onHiddenPageReceived($event); popover.close()"
+                            (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
+                            (selectionCancelledOutput)="popover.close()"
+                        />
+                    </ng-template>
                 }
                 <button
                     type="button"

@@ -30,6 +30,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
     pageIndex = input<number>();
+    pageIndices = input<number[]>([]);
 
     // Signals
     calendarSelected = signal<boolean>(false);
@@ -40,9 +41,11 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     hideForever = signal<boolean>(false);
     selectedExercise = signal<Exercise | null>(null);
     hiddenPage = signal<HiddenPage | null>(null);
+    isMultiplePages = signal<boolean>(false);
 
     // Outputs
     hiddenPageOutput = output<HiddenPage>();
+    hiddenPagesOutput = output<HiddenPage[]>();
     selectionCancelledOutput = output<boolean>();
 
     // Injected services
@@ -51,6 +54,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadExercises();
+        this.isMultiplePages.set(this.pageIndices().length > 0);
     }
 
     /**
@@ -162,13 +166,23 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const newEntry: HiddenPage = {
-            pageIndex: this.pageIndex()!,
-            date: selectedDate,
-            exerciseId: this.selectedExercise()?.id ?? null,
-        };
+        if (this.isMultiplePages()) {
+            const hiddenPages: HiddenPage[] = this.pageIndices().map((pageIndex) => ({
+                pageIndex,
+                date: selectedDate,
+                exerciseId: this.selectedExercise()?.id ?? null,
+            }));
 
-        this.hiddenPage.set(newEntry);
-        this.hiddenPageOutput.emit(newEntry);
+            this.hiddenPagesOutput.emit(hiddenPages);
+        } else {
+            const newEntry: HiddenPage = {
+                pageIndex: this.pageIndex()!,
+                date: selectedDate,
+                exerciseId: this.selectedExercise()?.id ?? null,
+            };
+
+            this.hiddenPage.set(newEntry);
+            this.hiddenPageOutput.emit(newEntry);
+        }
     }
 }

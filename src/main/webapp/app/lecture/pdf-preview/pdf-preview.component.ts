@@ -26,6 +26,8 @@ import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { ButtonType } from 'app/shared/components/button.component';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 type VisibilityAction = 'hide' | 'show';
 
@@ -55,6 +57,8 @@ export interface HiddenPageMap {
         DeleteButtonDirective,
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
+        PdfPreviewDateBoxComponent,
+        NgbModule,
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
@@ -65,6 +69,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     protected readonly ButtonType = ButtonType;
     protected readonly Object = Object;
+    protected readonly Array = Array;
 
     // Signals
     course = signal<Course | undefined>(undefined);
@@ -82,6 +87,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     initialHiddenPages = signal<HiddenPageMap>({});
     hiddenPages = signal<HiddenPageMap>({});
     isSaving = signal<boolean>(false);
+    isPopoverOpen = signal<boolean>(false);
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -445,5 +451,39 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } else {
             this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
         }
+    }
+
+    /**
+     * Handle multiple hidden pages data from date box component
+     */
+    onHiddenPagesReceived(hiddenPages: HiddenPage[]): void {
+        this.hiddenPages.update((currentMap) => {
+            const updatedMap = { ...currentMap };
+
+            hiddenPages.forEach((page) => {
+                updatedMap[page.pageIndex] = {
+                    date: page.date,
+                    exerciseId: page.exerciseId,
+                };
+            });
+
+            return updatedMap;
+        });
+
+        this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Handle single hidden page data
+     */
+    onHiddenPageReceived(hiddenPage: HiddenPage): void {
+        this.hiddenPages.update((currentMap) => {
+            const updatedMap = { ...currentMap };
+            updatedMap[hiddenPage.pageIndex] = {
+                date: hiddenPage.date,
+                exerciseId: hiddenPage.exerciseId,
+            };
+            return updatedMap;
+        });
     }
 }
