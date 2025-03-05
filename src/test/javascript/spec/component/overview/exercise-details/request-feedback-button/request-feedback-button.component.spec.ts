@@ -72,7 +72,6 @@ describe('RequestFeedbackButtonComponent', () => {
             type,
             course: isExam ? undefined : {},
             studentParticipations: participation ? [participation] : undefined,
-            allowFeedbackRequests: true,
             preliminaryFeedbackModule: preliminaryModule,
         } as Exercise;
     }

@@ -154,8 +154,8 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         expect(component.inputControlsDisabled()).toBeFalse();
         expect(component.showDropdownList).toBeFalse();
 
-        checkbox = fixture.debugElement.query(By.css('#feedbackSuggestionsEnabledCheck')).nativeElement;
-        expect(checkbox.disabled).toBeFalse();
-        expect(checkbox.checked).toBeFalse();
+        checkbox = fixture.debugElement.query(By.css('#feedbackSuggestionsEnabledCheck'));
+        expect(checkbox.nativeElement.disabled).toBeFalse();
+        expect(checkbox.nativeElement.checked).toBeFalse();
     });
 });
