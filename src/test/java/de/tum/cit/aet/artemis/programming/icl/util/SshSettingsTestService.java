@@ -38,7 +38,7 @@ public class SshSettingsTestService {
     @Autowired
     private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    private final String requestPrefix = "/api/ssh-settings/";
+    private final String requestPrefix = "/api/programming/ssh-settings/";
 
     private static final String sshKey1 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o keyComment1 many comments";
 

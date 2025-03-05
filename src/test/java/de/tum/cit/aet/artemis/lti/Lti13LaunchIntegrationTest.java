@@ -63,7 +63,7 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         body.put("id_token", VALID_ID_TOKEN);
         body.put("state", VALID_STATE);
 
-        URI header = request.postForm("/api/public/lti13/auth-callback", body, HttpStatus.FOUND);
+        URI header = request.postForm("/api/lti/public/lti13/auth-callback", body, HttpStatus.FOUND);
 
         validateRedirect(header, VALID_ID_TOKEN);
     }
@@ -74,7 +74,7 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         Map<String, Object> body = new HashMap<>();
         body.put("id_token", VALID_ID_TOKEN);
 
-        request.postFormWithoutLocation("/api/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
+        request.postFormWithoutLocation("/api/lti/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -83,7 +83,7 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         Map<String, Object> body = new HashMap<>();
         body.put("state", VALID_STATE);
 
-        request.postFormWithoutLocation("/api/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
+        request.postFormWithoutLocation("/api/lti/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -93,7 +93,7 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         body.put("state", VALID_STATE);
         body.put("id_token", "invalid-token");
 
-        request.postFormWithoutLocation("/api/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
+        request.postFormWithoutLocation("/api/lti/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -103,7 +103,7 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         body.put("state", VALID_STATE);
         body.put("id_token", OUTDATED_TOKEN);
 
-        request.postFormWithoutLocation("/api/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
+        request.postFormWithoutLocation("/api/lti/public/lti13/auth-callback", body, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -115,14 +115,14 @@ class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
         body.put("state", VALID_STATE);
         body.put("id_token", invalidSignatureToken);
 
-        URI header = request.postForm("/api/public/lti13/auth-callback", body, HttpStatus.FOUND);
+        URI header = request.postForm("/api/lti/public/lti13/auth-callback", body, HttpStatus.FOUND);
         validateRedirect(header, invalidSignatureToken);
     }
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     void oidcFlowFails_noRequestCached() throws Exception {
-        String ltiLaunchUri = "/api/public/lti13/auth-login?id_token=some-token&state=some-state";
+        String ltiLaunchUri = "/api/lti/public/lti13/auth-login?id_token=some-token&state=some-state";
         request.get(ltiLaunchUri, HttpStatus.INTERNAL_SERVER_ERROR, Object.class);
     }
 

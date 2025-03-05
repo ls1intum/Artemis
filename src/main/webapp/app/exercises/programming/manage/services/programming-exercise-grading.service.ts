@@ -50,7 +50,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
     private websocketService = inject(WebsocketService);
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/programming-exercises';
+    public resourceUrl = 'api/programming/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};

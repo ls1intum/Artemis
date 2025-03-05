@@ -16,7 +16,7 @@ describe('Plagiarism Results Service', () => {
     it('should make GET request to retrieve number of plagiarism results', fakeAsync(() => {
         const numberOfResults = 2;
         service.getNumberOfPlagiarismResultsForExercise(1).subscribe((resp) => expect(resp).toEqual(numberOfResults));
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/exercises/1/potential-plagiarism-count' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/plagiarism/exercises/1/potential-plagiarism-count' });
         req.flush(numberOfResults);
         tick();
     }));

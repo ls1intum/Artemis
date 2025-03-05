@@ -36,7 +36,7 @@ describe('FileService', () => {
 
     describe('getFile', () => {
         it('should return a file', async () => {
-            const filePath = 'api/file/path/test.png';
+            const filePath = 'api/core/file/path/test.png';
             const blob = new Blob(['123456789']);
 
             const filePromise = fileService.getFile(filePath);
@@ -55,7 +55,7 @@ describe('FileService', () => {
         });
 
         it('should return a file with unique name', async () => {
-            const filePath = 'api/file/path/test.png';
+            const filePath = 'api/core/file/path/test.png';
             const blob = new Blob(['123456789']);
             const existingFileNames = new Map<string, { file: File; path?: string }>([
                 [secondUniqueFileName + '.png', { file: new File([], secondUniqueFileName) }],
@@ -81,7 +81,7 @@ describe('FileService', () => {
     describe('getTemplateFile', () => {
         it('should fetch the template file without project type', () => {
             const language = ProgrammingLanguage.JAVA;
-            const expectedUrl = `api/files/templates/JAVA`;
+            const expectedUrl = `api/core/files/templates/JAVA`;
             const response = 'template content';
 
             fileService.getTemplateFile(language).subscribe((data) => {
@@ -99,7 +99,7 @@ describe('FileService', () => {
         it('should fetch the template file with project type', () => {
             const language = ProgrammingLanguage.JAVA;
             const projectType = ProjectType.PLAIN_MAVEN;
-            const expectedUrl = `api/files/templates/JAVA/PLAIN_MAVEN`;
+            const expectedUrl = `api/core/files/templates/JAVA/PLAIN_MAVEN`;
             const response = 'template content';
 
             fileService.getTemplateFile(language, projectType).subscribe((data) => {
@@ -118,7 +118,7 @@ describe('FileService', () => {
     describe('downloadMergedFile', () => {
         it('should download the merged PDF file', () => {
             const lectureId = 123;
-            const expectedUrl = `api/files/attachments/lecture/${lectureId}/merge-pdf`;
+            const expectedUrl = `api/core/files/attachments/lecture/${lectureId}/merge-pdf`;
             const blobResponse = new Blob(['PDF content'], { type: 'application/pdf' });
 
             fileService.downloadMergedFile(lectureId).subscribe((response) => {
@@ -137,7 +137,7 @@ describe('FileService', () => {
 
     describe('getTemplateCodeOfConduct', () => {
         it('should fetch the template code of conduct', () => {
-            const expectedUrl = `api/files/templates/code-of-conduct`;
+            const expectedUrl = `api/core/files/templates/code-of-conduct`;
             const response = 'code of conduct content';
 
             fileService.getTemplateCodeOfConduct().subscribe((data) => {

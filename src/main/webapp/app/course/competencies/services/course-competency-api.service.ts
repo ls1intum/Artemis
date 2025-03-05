@@ -10,7 +10,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class CourseCompetencyApiService extends BaseApiHttpService {
-    private readonly basePath = `courses/$courseId/course-competencies`;
+    private readonly basePath = `atlas/courses/$courseId/course-competencies`;
 
     private getPath(courseId: number): string {
         return this.basePath.replace('$courseId', courseId.toString());

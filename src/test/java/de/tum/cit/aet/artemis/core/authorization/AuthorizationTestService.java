@@ -41,9 +41,9 @@ public class AuthorizationTestService {
 
     private static final String REST_BASE_PATH = "/api";
 
-    private static final String REST_ADMIN_PATH = REST_BASE_PATH + "/admin";
+    private static final String REST_ADMIN_PATH = REST_BASE_PATH + "/(.*)/admin/(.*)";
 
-    private static final String REST_PUBLIC_PATH = REST_BASE_PATH + "/public";
+    private static final String REST_PUBLIC_PATH = REST_BASE_PATH + "/(.*)/public/(.*)";
 
     /**
      * Tests all endpoints and prints the reports
@@ -149,7 +149,7 @@ public class AuthorizationTestService {
         switch (annotationType) {
             case "EnforceAdmin" -> {
                 for (String pattern : patterns) {
-                    if (!pattern.startsWith(REST_ADMIN_PATH)) {
+                    if (!pattern.matches(REST_ADMIN_PATH)) {
                         addElement(methodReports, javaMethod,
                                 "Expect path of method " + javaMethod.getName() + " annotated with @EnforceAdmin to start with " + REST_ADMIN_PATH + " but is " + pattern + ".");
                     }
@@ -165,7 +165,7 @@ public class AuthorizationTestService {
             }
             case "EnforceNothing" -> {
                 for (String pattern : patterns) {
-                    if (!pattern.startsWith(REST_PUBLIC_PATH)) {
+                    if (!pattern.matches(REST_PUBLIC_PATH)) {
                         addElement(methodReports, javaMethod,
                                 "Expect path of method " + javaMethod.getName() + " annotated with @EnforceNothing to start with " + REST_PUBLIC_PATH + " but is " + pattern + ".");
                     }

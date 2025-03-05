@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/modeling/admin/")
 public class AdminModelingExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminModelingExerciseResource.class);

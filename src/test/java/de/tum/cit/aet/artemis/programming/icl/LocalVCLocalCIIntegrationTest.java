@@ -373,7 +373,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // students will not be able to create a repository before that.
         // Teaching assistants should be able to fetch and instructors should be able to fetch and push.
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
-        request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         // Student
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
@@ -397,7 +397,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Teaching assistants should be able to fetch and instructors should be able to fetch and push.
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-        request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         // Student
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
@@ -422,7 +422,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         lockRepositoryPolicy.setSubmissionLimit(1);
         lockRepositoryPolicy.setActive(true);
 
-        request.postWithResponseBody("/api/programming-exercises/" + programmingExercise.getId() + "/submission-policy", lockRepositoryPolicy, SubmissionPolicy.class,
+        request.postWithResponseBody("/api/programming/programming-exercises/" + programmingExercise.getId() + "/submission-policy", lockRepositoryPolicy, SubmissionPolicy.class,
                 HttpStatus.CREATED);
 
         // First push should go through.
@@ -478,7 +478,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
 
         programmingExercise.setStartDate(ZonedDateTime.now().plusMinutes(1));
-        request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         // Student is not able to access repository before start date even if it already exists.
         localVCLocalCITestService.testFetchReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, FORBIDDEN);
@@ -504,7 +504,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, team);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-        request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         // Student should be able to read but not write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);

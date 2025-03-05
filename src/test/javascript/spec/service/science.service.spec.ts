@@ -45,6 +45,6 @@ describe('ScienceService', () => {
         scienceService.logEvent(type);
         const event = new ScienceEventDTO();
         event.type = type;
-        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/science', event, { observe: 'response' });
+        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/atlas/science', event, { observe: 'response' });
     });
 });

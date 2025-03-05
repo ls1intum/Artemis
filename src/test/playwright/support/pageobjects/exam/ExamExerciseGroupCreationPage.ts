@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamAPIRequests } from '../../requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { AdditionalData, COURSE_BASE, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
+import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
 import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -44,14 +44,14 @@ export class ExamExerciseGroupCreationPage {
     }
 
     async clickSave(): Promise<ExerciseGroup> {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/exercise-groups`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         const response = await responsePromise;
         return response.json();
     }
 
     async update() {
-        const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/exams/*/exercise-groups`);
+        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/exercise-groups`);
         await this.page.locator('#save-group').click();
         await responsePromise;
     }

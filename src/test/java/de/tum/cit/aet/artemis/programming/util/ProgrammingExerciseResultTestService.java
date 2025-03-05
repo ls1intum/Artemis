@@ -232,7 +232,7 @@ public class ProgrammingExerciseResultTestService {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api/assessment/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {

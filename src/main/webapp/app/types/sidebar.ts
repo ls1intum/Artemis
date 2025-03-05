@@ -25,7 +25,7 @@ export type ChannelGroupCategory =
     | 'examChannels'
     | 'feedbackDiscussion'
     | 'savedPosts'
-    | 'hiddenChannels';
+    | 'archivedChannels';
 export type CollapseState = {
     [key: string]: boolean;
 } & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
