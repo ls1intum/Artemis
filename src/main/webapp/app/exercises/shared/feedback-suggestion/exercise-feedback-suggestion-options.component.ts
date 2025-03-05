@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { AfterViewChecked, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
     templateUrl: './exercise-feedback-suggestion-options.component.html',
     imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
 })
-export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
+export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges, AfterViewChecked {
     private athenaService = inject(AthenaService);
     private activatedRoute = inject(ActivatedRoute);
 
