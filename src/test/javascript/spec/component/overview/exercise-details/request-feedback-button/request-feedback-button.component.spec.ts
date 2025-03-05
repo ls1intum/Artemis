@@ -63,13 +63,15 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.detectChanges();
     }
 
-    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation, preliminaryModule: string = 'module'): Exercise {
+    function createBaseExercise(type: ExerciseType, isExam = false, participation?: StudentParticipation, preliminaryModule?: string): Exercise {
+        if (!preliminaryModule) {
+            preliminaryModule = 'module';
+        }
         return {
             id: 1,
             type,
             course: isExam ? undefined : {},
             studentParticipations: participation ? [participation] : undefined,
-            allowFeedbackRequests: true,
             preliminaryFeedbackModule: preliminaryModule,
         } as Exercise;
     }

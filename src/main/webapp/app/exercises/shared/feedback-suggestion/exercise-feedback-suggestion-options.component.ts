@@ -54,6 +54,12 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         }
     }
 
+    ngAfterViewChecked() {
+        if (this.inputControlsDisabled()) {
+            this.showDropdownList = false;
+        }
+    }
+
     /**
      * Returns true in case the input controls should be disabled. This is the case for all exercises when the due date has passed. For programming exercises,
      * it returns true in case the assessment type is automatic, the exercise is readonly, the due date is undefined or the due date has passed.
