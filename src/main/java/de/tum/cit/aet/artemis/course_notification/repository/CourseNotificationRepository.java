@@ -29,6 +29,7 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      *
      * @param userId   the ID of the user
      * @param courseId the ID of the course
+     * @param pageable pageable to filter for
      * @return list of course notifications that match the criteria
      */
     @Query("""

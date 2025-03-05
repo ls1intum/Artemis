@@ -64,6 +64,7 @@ public class UserCourseNotificationStatusService {
      * @param user                  The user whose notification statuses will be updated
      * @param courseNotificationIds List of course notification IDs to update
      * @param newStatus             The new status to set for the notifications
+     * @param courseId              The id of the course for cache invalidation
      */
     public void updateUserCourseNotificationStatus(User user, List<Long> courseNotificationIds, UserCourseNotificationStatusType newStatus, long courseId) {
         userCourseNotificationStatusRepository.updateUserCourseNotificationStatusForUserIdAndCourseNotificationIds(courseNotificationIds, user.getId(), newStatus);
