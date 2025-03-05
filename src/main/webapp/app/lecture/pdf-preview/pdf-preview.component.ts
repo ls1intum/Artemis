@@ -27,7 +27,7 @@ import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { ButtonType } from 'app/shared/components/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 type VisibilityAction = 'hide' | 'show';
 
@@ -63,9 +63,12 @@ export interface HiddenPageMap {
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+    showPopover = viewChild.required<NgbPopover>('showPopover');
 
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
+
+    forever = dayjs('9999-12-31');
 
     protected readonly ButtonType = ButtonType;
     protected readonly Object = Object;
@@ -87,7 +90,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     initialHiddenPages = signal<HiddenPageMap>({});
     hiddenPages = signal<HiddenPageMap>({});
     isSaving = signal<boolean>(false);
-    isPopoverOpen = signal<boolean>(false);
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -178,6 +180,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     triggerFileInput(): void {
         this.fileInput().nativeElement.click();
+    }
+
+    /**
+     * Checks if any of the currently selected pages are in the hidden pages collection.
+     */
+    hasHiddenSelectedPages(): boolean {
+        return Array.from(this.selectedPages()).some((pageId) => this.hiddenPages()[pageId]);
     }
 
     /**

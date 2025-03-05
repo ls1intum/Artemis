@@ -102,6 +102,7 @@
                 "removePageButton": "Remove Pages",
                 "hidePageButton": "Hide Pages",
                 "showPageButton": "Show Pages",
+                "showPagesTitle": "Show Pages",
                 "appendPDFButton": "Append PDF",
                 "attachmentUpdateSuccess": "Attachment updated successfully.",
                 "attachmentUpdateError": "Failed to update attachment: {{error}}",

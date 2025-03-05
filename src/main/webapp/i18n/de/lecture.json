@@ -102,6 +102,7 @@
                 "removePageButton": "Seiten entfernen",
                 "hidePageButton": "Seiten ausblenden",
                 "showPageButton": "Seiten anzeigen",
+                "showPagesTitle": "Seiten anzeigen",
                 "appendPDFButton": "PDF anhängen",
                 "attachmentUpdateSuccess": "Anhang erfolgreich aktualisiert.",
                 "attachmentUpdateError": "Fehler beim Aktualisieren des Anhangs: {{error}}",

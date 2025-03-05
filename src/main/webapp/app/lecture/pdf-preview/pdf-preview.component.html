@@ -15,10 +15,14 @@
                 @if (attachmentUnit()) {
                     @if (Object.keys(hiddenPages()).length > 0) {
                         <button
-                            (click)="toggleVisibility('show', selectedPages())"
                             class="btn btn-success text-truncate"
                             aria-label="Show selected pages"
-                            [disabled]="isPdfLoading() || selectedPages().size === 0"
+                            [disabled]="isPdfLoading() || selectedPages().size === 0 || !hasHiddenSelectedPages()"
+                            [ngbPopover]="showPageBox"
+                            #showPopover="ngbPopover"
+                            [autoClose]="'outside'"
+                            placement="right auto"
+                            container="body"
                         >
                             <fa-icon [icon]="faEye" />
                             <span jhiTranslate="artemisApp.attachment.pdfPreview.showPageButton"></span>
@@ -29,25 +33,61 @@
                         aria-label="Hide selected pages"
                         [disabled]="isPdfLoading() || selectedPages().size === 0"
                         [ngbPopover]="hidePageBox"
-                        #popover="ngbPopover"
+                        #hidePopover="ngbPopover"
                         [autoClose]="'outside'"
                         placement="right auto"
                         container="body"
-                        (shown)="isPopoverOpen.set(true)"
-                        (hidden)="isPopoverOpen.set(false)"
                     >
                         <fa-icon [icon]="faEyeSlash" />
                         <span jhiTranslate="artemisApp.attachment.pdfPreview.hidePageButton"></span>
                     </button>
 
+                    <ng-template #showPageBox>
+                        <div class="confirmation-box">
+                            <div class="popover-title mb-2">
+                                <h5>
+                                    <span jhiTranslate="artemisApp.attachment.pdfPreview.showPagesTitle" [translateValues]="{ param: selectedPages().size }"> </span>
+                                </h5>
+                                <div class="mt-3 mb-3">
+                                    @for (pageIndex of Array.from(selectedPages()); track pageIndex) {
+                                        @if (hiddenPages()[pageIndex]) {
+                                            <div class="page-info mb-2">
+                                                <strong>Page {{ pageIndex }}:</strong>
+                                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
+                                                @if (hiddenPages()[pageIndex]!.date!.isSame(forever)) {
+                                                    <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
+                                                } @else {
+                                                    <span>
+                                                        {{ hiddenPages()[pageIndex]!.date!.format('MMM D, YYYY - HH:mm') }}
+                                                    </span>
+                                                }
+                                                @if (hiddenPages()[pageIndex]!.exerciseId) {
+                                                    <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forExercise"></span>
+                                                    <span class="text-primary">{{ hiddenPages()[pageIndex]!.exerciseId }}</span>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                                <div class="submit-container mt-3 d-flex justify-content-between">
+                                    <button class="btn btn-secondary" (click)="showPopover().close()">
+                                        <span jhiTranslate="entity.action.cancel"></span>
+                                    </button>
+                                    <button class="btn btn-primary" (click)="toggleVisibility('show', selectedPages()); showPopover().close()">
+                                        <span jhiTranslate="entity.action.show"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </ng-template>
                     <ng-template #hidePageBox>
                         <jhi-pdf-preview-date-box-component
                             [course]="course()"
                             [pageIndex]="selectedPages().size === 1 ? Array.from(selectedPages())[0] : undefined"
                             [pageIndices]="selectedPages().size > 1 ? Array.from(selectedPages()) : []"
-                            (hiddenPageOutput)="onHiddenPageReceived($event); popover.close()"
-                            (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
-                            (selectionCancelledOutput)="popover.close()"
+                            (hiddenPageOutput)="onHiddenPageReceived($event); hidePopover.close()"
+                            (hiddenPagesOutput)="onHiddenPagesReceived($event); hidePopover.close()"
+                            (selectionCancelledOutput)="hidePopover.close()"
                         />
                     </ng-template>
                 }
