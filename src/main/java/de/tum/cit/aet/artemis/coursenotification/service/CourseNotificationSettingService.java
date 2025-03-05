@@ -31,14 +31,6 @@ public class CourseNotificationSettingService {
 
     private final CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
-    /**
-     * Constructs a new CourseNotificationSettingService with required dependencies.
-     *
-     * @param courseNotificationRegistryService                    Registry for managing course notification types
-     * @param userCourseNotificationSettingSpecificationRepository Repository for user-specific notification settings
-     * @param userCourseNotificationSettingPresetRepository        Repository for user notification presets
-     * @param courseNotificationSettingPresetRegistryService       Registry for standard notification setting presets
-     */
     public CourseNotificationSettingService(CourseNotificationRegistryService courseNotificationRegistryService,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
