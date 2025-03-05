@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
@@ -37,7 +36,14 @@ public class CourseNotificationPushService extends CourseNotificationBroadcastSe
         this.firebasePushNotificationService = firebasePushNotificationService;
     }
 
-    @Async
+    /**
+     * Sends a course notification to a list of recipients using multiple notification services.
+     * This method forwards the notification to both Apple and Firebase push notification services
+     * to ensure delivery across different device platforms. These methods are ran asynchronously.
+     *
+     * @param courseNotification The DTO containing the course notification details to be sent
+     * @param recipients         A list of User objects who should receive the notification
+     */
     @Override
     protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         var recipientSet = new HashSet<>(recipients);
