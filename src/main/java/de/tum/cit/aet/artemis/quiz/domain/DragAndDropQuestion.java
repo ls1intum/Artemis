@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
+import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
@@ -46,6 +47,9 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropProp
 public class DragAndDropQuestion extends QuizQuestion {
 
     private static final Logger log = LoggerFactory.getLogger(DragAndDropQuestion.class);
+
+    @Transient
+    private final transient FileService fileService = new FileService();
 
     @Column(name = "background_file_path")
     @JsonView(QuizView.Before.class)
@@ -186,7 +190,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                FileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(backgroundFilePath)), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(backgroundFilePath)), 0);
             }
         }
         catch (FilePathParsingException e) {
