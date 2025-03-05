@@ -262,10 +262,16 @@ dependencies {
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
-    // Hazelcast replacement to enable caching and communication between server nodes
+    // communication between server nodes
     implementation "org.redisson:redisson:3.44.0"
     implementation "org.redisson:redisson-spring-boot-starter:3.44.0"
     implementation "org.redisson:redisson-hibernate-6:3.44.0"
+
+    // caching
+    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
+    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
+    // Required for Hibernate multi node caching
+    runtimeOnly "com.hazelcast:hazelcast-hibernate53:5.2.0"
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version { 				strictly "2.5.2" } }

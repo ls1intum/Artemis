@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.fileupload.FileItem;
@@ -46,14 +45,11 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
-import org.redisson.api.RMapCache;
-import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.ByteArrayCodec;
-import org.redisson.client.codec.StringCodec;
-import org.redisson.codec.CompositeCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -74,13 +70,9 @@ public class FileService implements DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(FileService.class);
 
-    private static final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
+    private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
-    private final RedissonClient redissonClient;
-
-    private RMapCache<String, byte[]> files;
-
-    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+    private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     /**
      * A list of common binary file extensions.
@@ -123,16 +115,6 @@ public class FileService implements DisposableBean {
         futures.clear();
     }
 
-    public FileService(RedissonClient redissonClient) {
-        this.redissonClient = redissonClient;
-    }
-
-    @PostConstruct
-    public void init() {
-        CompositeCodec codec = new CompositeCodec(new StringCodec(), new ByteArrayCodec());
-        files = redissonClient.getMapCache("files", codec);
-    }
-
     /**
      * Get the file for the given path as a byte[]
      *
@@ -140,17 +122,11 @@ public class FileService implements DisposableBean {
      * @return file contents as a byte[], or null, if the file doesn't exist
      * @throws IOException if the file can't be accessed.
      */
-    public synchronized byte[] getFileForPath(Path path) throws IOException {
-        String stringPath = path.toString();
-        if (files.containsKey(stringPath)) {
-            return files.get(stringPath);
-        }
+    @Cacheable(value = "files", unless = "#result == null")
+    public byte[] getFileForPath(Path path) throws IOException {
         if (Files.exists(path)) {
-            var bytes = Files.readAllBytes(path);
-            files.put(stringPath, bytes, 1, TimeUnit.DAYS);
-            return bytes;
+            return Files.readAllBytes(path);
         }
-        files.remove(stringPath);
         return null;
     }
 
@@ -159,9 +135,10 @@ public class FileService implements DisposableBean {
      *
      * @param path the path for the file to evict from cache
      */
+    @CacheEvict(value = "files", key = "#path")
     public void evictCacheForPath(Path path) {
         log.info("Invalidate files cache for {}", path);
-        files.remove(path.toString());
+        // Intentionally blank
     }
 
     /**
@@ -861,7 +838,7 @@ public class FileService implements DisposableBean {
      * @param path           The path that should be deleted
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
-    public static void schedulePathForDeletion(@Nullable Path path, long delayInMinutes) {
+    public void schedulePathForDeletion(@Nullable Path path, long delayInMinutes) {
         if (path == null) {
             return;
         }
