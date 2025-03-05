@@ -23,13 +23,13 @@ import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNot
 import de.tum.cit.aet.artemis.course_notification.domain.setting_presets.UserCourseNotificationSettingPreset;
 
 @ExtendWith(MockitoExtension.class)
-class CourseNotificationSettingPresetRegistryTest {
+class CourseNotificationSettingPresetRegistryServiceTest {
 
-    private CourseNotificationSettingPresetRegistry settingPresetRegistry;
+    private CourseNotificationSettingPresetRegistryService settingPresetRegistry;
 
     @BeforeEach
     void setUp() {
-        settingPresetRegistry = new CourseNotificationSettingPresetRegistry();
+        settingPresetRegistry = new CourseNotificationSettingPresetRegistryService();
     }
 
     @Test

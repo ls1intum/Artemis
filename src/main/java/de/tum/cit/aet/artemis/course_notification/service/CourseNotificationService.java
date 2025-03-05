@@ -39,7 +39,7 @@ public class CourseNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseNotificationService.class);
 
-    private final CourseNotificationRegistry courseNotificationRegistry;
+    private final CourseNotificationRegistryService courseNotificationRegistryService;
 
     private final CourseNotificationSettingService courseNotificationSettingService;
 
@@ -51,11 +51,11 @@ public class CourseNotificationService {
 
     private final Map<NotificationSettingOption, CourseNotificationBroadcastService> serviceMap;
 
-    public CourseNotificationService(CourseNotificationRegistry courseNotificationRegistry, CourseNotificationSettingService courseNotificationSettingService,
+    public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
             UserCourseNotificationStatusService userCourseNotificationStatusService, UserRepository userRepository, CourseNotificationWebappService webappService,
             CourseNotificationPushService pushService, CourseNotificationEmailService emailService) {
-        this.courseNotificationRegistry = courseNotificationRegistry;
+        this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
@@ -117,7 +117,7 @@ public class CourseNotificationService {
         var courseNotificationsEntityPage = courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable);
 
         return CourseNotificationPageableDTO.from(courseNotificationsEntityPage.map((courseNotificationEntity) -> {
-            var classType = courseNotificationRegistry.getNotificationClass(courseNotificationEntity.getType());
+            var classType = courseNotificationRegistryService.getNotificationClass(courseNotificationEntity.getType());
 
             try {
                 var parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(courseNotificationEntity.getId());
@@ -181,7 +181,7 @@ public class CourseNotificationService {
 
         // Package needed because of overlap in class name
         var courseNotificationEntity = new de.tum.cit.aet.artemis.course_notification.domain.CourseNotification(course,
-                courseNotificationRegistry.getNotificationIdentifier(courseNotification.getClass()), courseNotification.creationDate,
+                courseNotificationRegistryService.getNotificationIdentifier(courseNotification.getClass()), courseNotification.creationDate,
                 courseNotification.creationDate.plus(courseNotification.getCleanupDuration()));
 
         courseNotificationEntity = courseNotificationRepository.save(courseNotificationEntity);

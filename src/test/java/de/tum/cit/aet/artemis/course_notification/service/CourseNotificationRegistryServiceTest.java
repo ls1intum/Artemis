@@ -20,20 +20,20 @@ import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNot
 import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNotificationCategory;
 
 @ExtendWith(MockitoExtension.class)
-class CourseNotificationRegistryTest {
+class CourseNotificationRegistryServiceTest {
 
-    private CourseNotificationRegistry courseNotificationRegistry;
+    private CourseNotificationRegistryService courseNotificationRegistryService;
 
     @BeforeEach
     void setUp() {
-        courseNotificationRegistry = new CourseNotificationRegistry();
+        courseNotificationRegistryService = new CourseNotificationRegistryService();
     }
 
     @Test
     void shouldReturnNullWhenRequestingUnknownNotificationClass() {
         Short unknownTypeId = (short) 999;
 
-        Class<? extends CourseNotification> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistry, "getNotificationClass", unknownTypeId);
+        Class<? extends CourseNotification> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationClass", unknownTypeId);
 
         assertThat(result).isNull();
     }
@@ -42,7 +42,7 @@ class CourseNotificationRegistryTest {
     void shouldReturnNullWhenRequestingUnknownNotificationIdentifier() {
         Class<? extends CourseNotification> unknownClass = createMockNotificationClass();
 
-        Short result = ReflectionTestUtils.invokeMethod(courseNotificationRegistry, "getNotificationIdentifier", unknownClass);
+        Short result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationIdentifier", unknownClass);
 
         assertThat(result).isNull();
     }
@@ -52,9 +52,9 @@ class CourseNotificationRegistryTest {
         Short knownTypeId = (short) 1;
         Class<? extends CourseNotification> expectedClass = createTestNotificationClass();
         Map<Short, Class<? extends CourseNotification>> notificationTypes = Map.of(knownTypeId, expectedClass);
-        ReflectionTestUtils.setField(courseNotificationRegistry, "notificationTypes", notificationTypes);
+        ReflectionTestUtils.setField(courseNotificationRegistryService, "notificationTypes", notificationTypes);
 
-        Class<? extends CourseNotification> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistry, "getNotificationClass", knownTypeId);
+        Class<? extends CourseNotification> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationClass", knownTypeId);
 
         assertThat(result).isEqualTo(expectedClass);
     }
@@ -64,9 +64,9 @@ class CourseNotificationRegistryTest {
         Short expectedTypeId = (short) 1;
         Class<? extends CourseNotification> knownClass = createTestNotificationClass();
         Map<Class<? extends CourseNotification>, Short> notificationIdentifiers = Map.of(knownClass, expectedTypeId);
-        ReflectionTestUtils.setField(courseNotificationRegistry, "notificationTypeIdentifiers", notificationIdentifiers);
+        ReflectionTestUtils.setField(courseNotificationRegistryService, "notificationTypeIdentifiers", notificationIdentifiers);
 
-        Short result = ReflectionTestUtils.invokeMethod(courseNotificationRegistry, "getNotificationIdentifier", knownClass);
+        Short result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationIdentifier", knownClass);
 
         assertThat(result).isEqualTo(expectedTypeId);
     }

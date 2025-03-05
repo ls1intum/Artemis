@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.course_notification.domain.setting_presets.UserCou
  */
 @Profile(PROFILE_CORE)
 @Service
-public class CourseNotificationSettingPresetRegistry {
+public class CourseNotificationSettingPresetRegistryService {
 
-    private static final Logger log = LoggerFactory.getLogger(CourseNotificationSettingPresetRegistry.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseNotificationSettingPresetRegistryService.class);
 
     private final Map<Integer, UserCourseNotificationSettingPreset> presets = new HashMap<>();
 
@@ -35,7 +35,7 @@ public class CourseNotificationSettingPresetRegistry {
      * classes annotated with {@link CourseNotificationSettingPreset} in the {@code course_notification.domain.setting_presets}
      * directory. The registry then creates an instance for all preset types.
      */
-    public CourseNotificationSettingPresetRegistry() {
+    public CourseNotificationSettingPresetRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationSettingPreset.class));
         String basePackage = "de.tum.cit.aet.artemis.course_notification.domain.setting_presets";

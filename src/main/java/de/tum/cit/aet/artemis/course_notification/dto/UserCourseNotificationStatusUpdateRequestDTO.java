@@ -2,10 +2,13 @@ package de.tum.cit.aet.artemis.course_notification.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.course_notification.domain.UserCourseNotificationStatusType;
 
 /**
  * Record for notification status update requests
  */
-public record UserCourseNotificationStatusUpdateRequest(List<Long> notificationIds, UserCourseNotificationStatusType statusType) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record UserCourseNotificationStatusUpdateRequestDTO(List<Long> notificationIds, UserCourseNotificationStatusType statusType) {
 }

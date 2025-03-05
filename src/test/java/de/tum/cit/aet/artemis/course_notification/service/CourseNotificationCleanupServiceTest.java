@@ -21,13 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.course_notification.domain.CourseNotification;
-import de.tum.cit.aet.artemis.course_notification.repository.CourseNotificationRepository;
+import de.tum.cit.aet.artemis.course_notification.test_repository.CourseNotificationTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationCleanupServiceTest {
 
     @Mock
-    private CourseNotificationRepository courseNotificationRepository;
+    private CourseNotificationTestRepository courseNotificationRepository;
 
     @Mock
     private CourseNotificationCacheService courseNotificationCacheService;

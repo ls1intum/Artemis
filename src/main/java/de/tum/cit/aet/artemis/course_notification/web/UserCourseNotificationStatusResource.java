@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.course_notification.dto.UserCourseNotificationStatusUpdateRequest;
+import de.tum.cit.aet.artemis.course_notification.dto.UserCourseNotificationStatusUpdateRequestDTO;
 import de.tum.cit.aet.artemis.course_notification.service.UserCourseNotificationStatusService;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/course-notification/")
 public class UserCourseNotificationStatusResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationStatusResource.class);
@@ -33,14 +33,14 @@ public class UserCourseNotificationStatusResource {
     }
 
     /**
-     * PUT /courses/{courseId}/notifications/status : Update status of multiple notifications for the current user
+     * PUT course-notification/courses/{courseId}/notifications/status : Update status of multiple notifications for the current user
      *
      * @param courseId   the ID of the course
      * @param requestDTO the request containing the list of notification ids as well as the status
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/courses/{courseId}/notifications/status")
-    public ResponseEntity<Void> updateNotificationStatus(@PathVariable Long courseId, @RequestBody UserCourseNotificationStatusUpdateRequest requestDTO) {
+    @PutMapping("course/{courseId}/status")
+    public ResponseEntity<Void> updateNotificationStatus(@PathVariable Long courseId, @RequestBody UserCourseNotificationStatusUpdateRequestDTO requestDTO) {
         log.debug("REST request to update notification status to {} for notifications {} in course {}", requestDTO.statusType(), requestDTO.notificationIds(), courseId);
 
         var currentUser = userRepository.getUser();

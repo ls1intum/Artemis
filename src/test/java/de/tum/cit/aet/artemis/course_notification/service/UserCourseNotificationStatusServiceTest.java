@@ -20,13 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.course_notification.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.course_notification.domain.UserCourseNotificationStatusType;
-import de.tum.cit.aet.artemis.course_notification.repository.UserCourseNotificationStatusRepository;
+import de.tum.cit.aet.artemis.course_notification.test_repository.UserCourseNotificationStatusTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class UserCourseNotificationStatusServiceTest {
 
     @Mock
-    private UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
 
     @Mock
     private CourseNotificationCacheService courseNotificationCacheService;

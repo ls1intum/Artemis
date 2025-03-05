@@ -23,30 +23,30 @@ import de.tum.cit.aet.artemis.course_notification.repository.UserCourseNotificat
 @Service
 public class CourseNotificationSettingService {
 
-    private final CourseNotificationRegistry courseNotificationRegistry;
+    private final CourseNotificationRegistryService courseNotificationRegistryService;
 
     private final UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
 
     private final UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository;
 
-    private final CourseNotificationSettingPresetRegistry courseNotificationSettingPresetRegistry;
+    private final CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
     /**
      * Constructs a new CourseNotificationSettingService with required dependencies.
      *
-     * @param courseNotificationRegistry                           Registry for managing course notification types
+     * @param courseNotificationRegistryService                    Registry for managing course notification types
      * @param userCourseNotificationSettingSpecificationRepository Repository for user-specific notification settings
      * @param userCourseNotificationSettingPresetRepository        Repository for user notification presets
-     * @param courseNotificationSettingPresetRegistry              Registry for standard notification setting presets
+     * @param courseNotificationSettingPresetRegistryService       Registry for standard notification setting presets
      */
-    public CourseNotificationSettingService(CourseNotificationRegistry courseNotificationRegistry,
+    public CourseNotificationSettingService(CourseNotificationRegistryService courseNotificationRegistryService,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
-            CourseNotificationSettingPresetRegistry courseNotificationSettingPresetRegistry) {
-        this.courseNotificationRegistry = courseNotificationRegistry;
+            CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService) {
+        this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
-        this.courseNotificationSettingPresetRegistry = courseNotificationSettingPresetRegistry;
+        this.courseNotificationSettingPresetRegistryService = courseNotificationSettingPresetRegistryService;
     }
 
     /**
@@ -68,8 +68,8 @@ public class CourseNotificationSettingService {
                 // The specifications are cached per-user per-course. Similar to above.
                 var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(recipient.getId(), notification.courseId);
 
-                var specification = specifications.stream()
-                        .filter((spec) -> Objects.equals(spec.getCourseNotificationType(), this.courseNotificationRegistry.getNotificationIdentifier(notification.getClass())))
+                var specification = specifications.stream().filter(
+                        (spec) -> Objects.equals(spec.getCourseNotificationType(), this.courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())))
                         .findFirst();
 
                 return specification.map(switch (filterFor) {
@@ -79,7 +79,7 @@ public class CourseNotificationSettingService {
                 }).orElse(false);
             }
             else {
-                return this.courseNotificationSettingPresetRegistry.isPresetSettingEnabled(preset.getSettingPreset(), notification.getClass(), filterFor);
+                return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset.getSettingPreset(), notification.getClass(), filterFor);
             }
         }).toList();
     }

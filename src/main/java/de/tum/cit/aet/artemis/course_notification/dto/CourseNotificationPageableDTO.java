@@ -5,9 +5,12 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Record for serializing paginated notification responses
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseNotificationPageableDTO<T>(List<T> content, int pageNumber, int pageSize, long totalElements, int totalPages) implements Serializable {
 
     public static <T> CourseNotificationPageableDTO<T> from(Page<T> page) {

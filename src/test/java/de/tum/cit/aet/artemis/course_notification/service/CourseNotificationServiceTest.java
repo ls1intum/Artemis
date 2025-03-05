@@ -29,15 +29,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.course_notification.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.course_notification.domain.NotificationSettingOption;
 import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNotification;
 import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationPageableDTO;
-import de.tum.cit.aet.artemis.course_notification.repository.CourseNotificationParameterRepository;
-import de.tum.cit.aet.artemis.course_notification.repository.CourseNotificationRepository;
+import de.tum.cit.aet.artemis.course_notification.test_repository.CourseNotificationParameterTestRepository;
+import de.tum.cit.aet.artemis.course_notification.test_repository.CourseNotificationTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationServiceTest {
@@ -45,22 +45,22 @@ class CourseNotificationServiceTest {
     private CourseNotificationService courseNotificationService;
 
     @Mock
-    private CourseNotificationRegistry courseNotificationRegistry;
+    private CourseNotificationRegistryService courseNotificationRegistryService;
 
     @Mock
     private CourseNotificationSettingService courseNotificationSettingService;
 
     @Mock
-    private CourseNotificationRepository courseNotificationRepository;
+    private CourseNotificationTestRepository courseNotificationRepository;
 
     @Mock
-    private CourseNotificationParameterRepository courseNotificationParameterRepository;
+    private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
 
     @Mock
     private UserCourseNotificationStatusService userCourseNotificationStatusService;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private CourseNotificationWebappService webappService;
@@ -73,7 +73,7 @@ class CourseNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        courseNotificationService = new CourseNotificationService(courseNotificationRegistry, courseNotificationSettingService, courseNotificationRepository,
+        courseNotificationService = new CourseNotificationService(courseNotificationRegistryService, courseNotificationSettingService, courseNotificationRepository,
                 courseNotificationParameterRepository, userCourseNotificationStatusService, userRepository, webappService, pushService, emailService);
     }
 
@@ -87,7 +87,7 @@ class CourseNotificationServiceTest {
         when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationSettingOption.WEBAPP)).thenReturn(webappRecipients);
         when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationSettingOption.PUSH)).thenReturn(pushRecipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
-        when(courseNotificationRegistry.getNotificationIdentifier(any())).thenReturn((short) 1);
+        when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
         courseNotificationService.sendCourseNotification(notification, allRecipients);
 
@@ -107,7 +107,7 @@ class CourseNotificationServiceTest {
 
         when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any())).thenReturn(recipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
-        when(courseNotificationRegistry.getNotificationIdentifier(any())).thenReturn((short) 1);
+        when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
         courseNotificationService.sendCourseNotification(notification, recipients);
 
@@ -136,7 +136,7 @@ class CourseNotificationServiceTest {
         PageImpl<de.tum.cit.aet.artemis.course_notification.domain.CourseNotification> page = new PageImpl<>(List.of(entity));
 
         when(courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable)).thenReturn(page);
-        when(courseNotificationRegistry.getNotificationClass(any())).thenReturn((Class) TestNotification.class);
+        when(courseNotificationRegistryService.getNotificationClass(any())).thenReturn((Class) TestNotification.class);
 
         CourseNotificationPageableDTO<CourseNotificationDTO> result = courseNotificationService.getCourseNotifications(pageable, courseId, userId);
 

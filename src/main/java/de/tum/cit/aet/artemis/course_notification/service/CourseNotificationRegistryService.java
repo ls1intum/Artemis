@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.course_notification.domain.notifications.CourseNot
  */
 @Profile(PROFILE_CORE)
 @Service
-public class CourseNotificationRegistry {
+public class CourseNotificationRegistryService {
 
-    private static final Logger log = LoggerFactory.getLogger(CourseNotificationRegistry.class);
+    private static final Logger log = LoggerFactory.getLogger(CourseNotificationRegistryService.class);
 
     private final Map<Short, Class<? extends CourseNotification>> notificationTypes = new HashMap<>();
 
@@ -38,7 +38,7 @@ public class CourseNotificationRegistry {
      * with {@link CourseNotificationType} in the {@code course_notification.domain.notifications} directory. The
      * registry maps each notification type's numeric identifier to its class type.
      */
-    public CourseNotificationRegistry() {
+    public CourseNotificationRegistryService() {
         ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationType.class));
         String basePackage = "de.tum.cit.aet.artemis.course_notification.domain.notifications";

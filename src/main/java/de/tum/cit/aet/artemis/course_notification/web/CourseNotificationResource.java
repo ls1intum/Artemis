@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.course_notification.service.CourseNotificationServ
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/course-notification/")
 public class CourseNotificationResource {
 
     private final CourseNotificationService courseNotificationService;
@@ -31,14 +31,14 @@ public class CourseNotificationResource {
     }
 
     /**
-     * GET /courses/{courseId}/course-notification: get all non-archived course notifications for the current user
+     * GET course-notification/courses/{courseId}: get all non-archived course notifications for the current user
      *
      * @param courseId the ID of the course
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of course notifications in body
      */
     @EnforceAtLeastStudent
-    @GetMapping("courses/{courseId}/course-notification")
+    @GetMapping("courses/{courseId}")
     public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {
         return ResponseEntity.ok().body(courseNotificationService.getCourseNotifications(pageable, courseId, userRepository.getUser().getId()));
     }

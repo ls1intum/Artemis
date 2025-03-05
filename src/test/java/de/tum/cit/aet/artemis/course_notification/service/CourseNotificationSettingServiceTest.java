@@ -32,7 +32,7 @@ class CourseNotificationSettingServiceTest {
     private CourseNotificationSettingService courseNotificationSettingService;
 
     @Mock
-    private CourseNotificationRegistry courseNotificationRegistry;
+    private CourseNotificationRegistryService courseNotificationRegistryService;
 
     @Mock
     private UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
@@ -41,12 +41,12 @@ class CourseNotificationSettingServiceTest {
     private UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository;
 
     @Mock
-    private CourseNotificationSettingPresetRegistry courseNotificationSettingPresetRegistry;
+    private CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
 
     @BeforeEach
     void setUp() {
-        courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistry, userCourseNotificationSettingSpecificationRepository,
-                userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistry);
+        courseNotificationSettingService = new CourseNotificationSettingService(courseNotificationRegistryService, userCourseNotificationSettingSpecificationRepository,
+                userCourseNotificationSettingPresetRepository, courseNotificationSettingPresetRegistryService);
     }
 
     @Test
@@ -61,7 +61,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
 
         Short notificationTypeId = 1;
-        when(courseNotificationRegistry.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
+        when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
         UserCourseNotificationSettingSpecification user1Spec = new UserCourseNotificationSettingSpecification();
         user1Spec.setCourseNotificationType(notificationTypeId);
@@ -99,8 +99,8 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(eq(1L), eq(123L))).thenReturn(preset1);
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(eq(2L), eq(123L))).thenReturn(preset2);
 
-        when(courseNotificationSettingPresetRegistry.isPresetSettingEnabled(eq(1), any(), eq(NotificationSettingOption.PUSH))).thenReturn(true);
-        when(courseNotificationSettingPresetRegistry.isPresetSettingEnabled(eq(2), any(), eq(NotificationSettingOption.PUSH))).thenReturn(false);
+        when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(1), any(), eq(NotificationSettingOption.PUSH))).thenReturn(true);
+        when(courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(eq(2), any(), eq(NotificationSettingOption.PUSH))).thenReturn(false);
 
         List<User> filteredRecipients = courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationSettingOption.PUSH);
 
@@ -120,7 +120,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
 
         Short notificationTypeId = 1;
-        when(courseNotificationRegistry.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
+        when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
         UserCourseNotificationSettingSpecification userSpec = new UserCourseNotificationSettingSpecification();
         userSpec.setCourseNotificationType(notificationTypeId);
@@ -146,7 +146,7 @@ class CourseNotificationSettingServiceTest {
         when(userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(anyLong(), eq(123L))).thenReturn(customPreset);
 
         Short notificationTypeId = 1;
-        when(courseNotificationRegistry.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
+        when(courseNotificationRegistryService.getNotificationIdentifier(notification.getClass())).thenReturn(notificationTypeId);
 
         UserCourseNotificationSettingSpecification differentSpec = new UserCourseNotificationSettingSpecification();
         differentSpec.setCourseNotificationType((short) 2); // Different from the notificationTypeId

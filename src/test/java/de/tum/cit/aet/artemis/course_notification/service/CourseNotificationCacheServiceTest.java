@@ -25,7 +25,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.CacheManager;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -39,13 +38,7 @@ class CourseNotificationCacheServiceTest {
     private CourseNotificationCacheService courseNotificationCacheService;
 
     @Mock
-    private CacheManager cacheManager;
-
-    @Mock
     private HazelcastInstance hazelcastInstance;
-
-    @Mock
-    private HazelcastCacheManager hazelcastCacheManager;
 
     @Mock
     private IMap<Object, Object> cacheMap;
