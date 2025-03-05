@@ -1,4 +1,4 @@
-<label class="form-label">{{ labelText | artemisTranslate }}</label>
+<label class="form-label">{{ labelText() | artemisTranslate }}</label>
 <div class="table-responsive">
     <table class="table table-sm table-hover">
         <thead>
@@ -13,16 +13,16 @@
             </tr>
         </thead>
         <tbody>
-            @for (freePeriod of tutorialGroupFreePeriods; track freePeriod) {
+            @for (freePeriod of tutorialGroupFreePeriods(); track freePeriod) {
                 <tr [ngClass]="{ 'text-past': isInThePast(freePeriod) }" class="free-period-row">
                     <td class="col-1">
                         {{ freePeriod.id }}
                     </td>
                     <td class="col-2">
-                        {{ freePeriod.start | artemisDate: 'long-date' : false : course.timeZone : true }}
+                        {{ freePeriod.start | artemisDate: 'long-date' : false : course().timeZone : true }}
                     </td>
                     <td class="col-2">
-                        {{ freePeriod.end | artemisDate: 'long-date' : false : course.timeZone : true }}
+                        {{ freePeriod.end | artemisDate: 'long-date' : false : course().timeZone : true }}
                     </td>
                     <td class="col-2">
                         {{
@@ -44,11 +44,11 @@
                     <td class="col-1">
                         <div class="extra-buttons">
                             <jhi-tutorial-group-free-period-row-buttons
-                                [course]="course"
-                                [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                [course]="course()"
+                                [tutorialGroupConfiguration]="tutorialGroupsConfiguration()"
                                 [tutorialFreePeriod]="freePeriod"
-                                (tutorialFreePeriodDeleted)="loadAll()"
-                                (tutorialFreePeriodEdited)="loadAll()"
+                                (tutorialFreePeriodDeleted)="loadAll()()"
+                                (tutorialFreePeriodEdited)="loadAll()()"
                             />
                         </div>
                     </td>
