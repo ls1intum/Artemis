@@ -1,12 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { By } from '@angular/platform-browser';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
     let component: ExerciseFeedbackSuggestionOptionsComponent;
@@ -22,16 +26,14 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
                     isEnabled: () => of(true),
                 }),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
+                MockDirective(TranslateDirective),
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseFeedbackSuggestionOptionsComponent);
         component = fixture.componentInstance;
         athenaService = TestBed.inject(AthenaService);
-    });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
     });
 
     it('should initialize with available modules', async () => {
@@ -114,5 +116,46 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
         component.toggleFeedbackSuggestions(event);
 
         expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
+    });
+
+    it('should hide dropdown and disable checkbox when switching to AUTOMATIC, then, after switching back, the component is in its original state', () => {
+        // prepare data
+        const modules = ['Module1', 'Module2'];
+        jest.spyOn(athenaService, 'getAvailableModules').mockReturnValue(of(modules));
+        component.exercise = { type: ExerciseType.PROGRAMMING, dueDate: futureDueDate, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
+
+        fixture.detectChanges();
+
+        // assume a module is chosen, hence, the controls are active
+        const event = { target: { checked: true } };
+        component.toggleFeedbackSuggestions(event);
+
+        expect(component.inputControlsDisabled()).toBeFalse();
+        expect(component.showDropdownList).toBeTrue();
+
+        // change assessment type
+        component.exercise.assessmentType = AssessmentType.AUTOMATIC;
+        fixture.detectChanges();
+
+        // now, the input is unchecked and the controls are disabled
+        expect(component.inputControlsDisabled()).toBeTrue();
+        expect(component.showDropdownList).toBeFalse();
+
+        let checkbox = fixture.debugElement.query(By.css('#feedbackSuggestionsEnabledCheck'));
+        expect(checkbox.nativeElement.disabled).toBeTrue();
+
+        // Now, change the assessment type back to semi automatic
+        component.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        component.exercise.feedbackSuggestionModule = undefined; // will be reset by parent component
+
+        fixture.detectChanges();
+
+        // the controls are enabled, but not checked
+        expect(component.inputControlsDisabled()).toBeFalse();
+        expect(component.showDropdownList).toBeFalse();
+
+        checkbox = fixture.debugElement.query(By.css('#feedbackSuggestionsEnabledCheck')).nativeElement;
+        expect(checkbox.disabled).toBeFalse();
+        expect(checkbox.checked).toBeFalse();
     });
 });
