@@ -70,7 +70,7 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
                 WHERE s.user.id = :userId AND s.postType = :postType
             """)
     @Cacheable(key = "'saved_post_type_' + #postType.getDatabaseKey() + '_' + #userId")
-    List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") Long userId, @Param("postType") PostingType postType);
+    List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") long userId, @Param("postType") PostingType postType);
 
     /***
      * Query all saved posts of a user by status. E.g. for displaying the saved posts. Cached by user id and status.
@@ -89,7 +89,7 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
             ORDER BY MAX(sp.completedAt) DESC, MAX(sp.id) DESC
             """)
     @Cacheable(key = "'saved_post_status_' + #status.getDatabaseKey() + '_' + #userId")
-    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") Long userId, @Param("status") SavedPostStatus status);
+    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") long userId, @Param("status") SavedPostStatus status);
 
     /***
      * Query all SavedPosts for a certain user. Not cached.
