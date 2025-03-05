@@ -115,9 +115,8 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
                     }
                     else if (getIgnoredModulePathPrefixResources().stream().noneMatch(clazz -> clazz.isAssignableFrom(javaClass.reflect()))) {
                         String moduleName = getModulePackage().substring(getModulePackage().lastIndexOf(".") + 1);
-                        if (!value.startsWith("api/" + moduleName.replaceAll("_", "-"))) {
-                            conditionEvents
-                                    .add(violated(javaClass, createMessage(javaClass, "The @RequestMapping path value should start with api/" + moduleName.replaceAll("_", "-"))));
+                        if (!value.startsWith("api/" + moduleName)) {
+                            conditionEvents.add(violated(javaClass, createMessage(javaClass, "The @RequestMapping path value should start with api/" + moduleName)));
                         }
                     }
                     if (!value.endsWith("/")) {

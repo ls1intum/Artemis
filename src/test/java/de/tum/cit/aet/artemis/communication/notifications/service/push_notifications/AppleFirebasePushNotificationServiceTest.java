@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceCon
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.course_notification.service.CourseNotificationPushProxyService;
+import de.tum.cit.aet.artemis.coursenotification.service.CourseNotificationPushProxyService;
 
 class AppleFirebasePushNotificationServiceTest {
 

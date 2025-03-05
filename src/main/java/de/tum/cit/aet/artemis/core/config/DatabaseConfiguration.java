@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 @Profile(PROFILE_CORE)
 @Configuration
 @EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.assessment.repository", "de.tum.cit.aet.artemis.atlas.repository",
-        "de.tum.cit.aet.artemis.communication.repository", "de.tum.cit.aet.artemis.core.repository", "de.tum.cit.aet.artemis.course_notification.repository",
+        "de.tum.cit.aet.artemis.communication.repository", "de.tum.cit.aet.artemis.core.repository", "de.tum.cit.aet.artemis.coursenotification.repository",
         "de.tum.cit.aet.artemis.exam.repository", "de.tum.cit.aet.artemis.exercise.repository", "de.tum.cit.aet.artemis.fileupload.repository",
         "de.tum.cit.aet.artemis.iris.repository", "de.tum.cit.aet.artemis.lecture.repository", "de.tum.cit.aet.artemis.lti.repository",
         "de.tum.cit.aet.artemis.modeling.repository", "de.tum.cit.aet.artemis.plagiarism.repository", "de.tum.cit.aet.artemis.programming.repository",

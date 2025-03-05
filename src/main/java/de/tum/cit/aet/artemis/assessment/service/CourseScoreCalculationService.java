@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.course_notification.repository.UserCourseNotificationStatusRepository;
+import de.tum.cit.aet.artemis.coursenotification.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;

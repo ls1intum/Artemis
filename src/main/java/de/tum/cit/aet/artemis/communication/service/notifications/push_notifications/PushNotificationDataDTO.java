@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.communication.service.notifications.push_notifications;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.course_notification.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.coursenotification.dto.CourseNotificationDTO;
 
 /**
  * This DTO represents the data that is encrypted and sent to the hermes service. All values except courseNotificationDTO
