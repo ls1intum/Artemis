@@ -103,8 +103,6 @@
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "exampleSolutionPublicationDateError": "Bei benoteten Übungen muss das Veröffentlichungsdatum der Beispiellösung nach dem Veröffentlichungsdatum, dem Startdatum und nach der Einreichungsfrist für Aufgaben sein, falls diese festgelegt wurden. Bitte überprüfe deine Auswahl nochmal.",
             "exampleSolutionPublicationDateWarning": "Veröffentlichungsdatum der Beispiellösung liegt vor Einreichungsfrist!",
-            "feedbackSuggestionsEnabled": "Aktiviere Feedback-Vorschläge von Athena",
-            "feedbackSuggestionsEnabledTooltip": "Wenn diese Option aktiviert ist, werden Tutor:innen Feedback-Vorschläge von Athena angezeigt.",
             "points": "Punktzahl",
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonuspunkte",
