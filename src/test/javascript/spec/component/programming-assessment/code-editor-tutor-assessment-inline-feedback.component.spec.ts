@@ -8,8 +8,6 @@ import { StructuredGradingCriterionService } from 'app/exercises/shared/structur
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/core/util/alert.service';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
