@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, inject, input } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -41,11 +41,11 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 
-    @Input() studentExamWithGrade: StudentExamWithGradeDTO;
-    @Input() isGradingKeyCollapsed = true;
-    @Input() isBonusGradingKeyCollapsed = true;
-    @Input() exerciseInfos: Record<number, ExerciseInfo>;
-    @Input() isTestRun = false;
+    studentExamWithGrade = input.required<StudentExamWithGradeDTO>();
+    isGradingKeyCollapsed = input(true);
+    isBonusGradingKeyCollapsed = input(true);
+    exerciseInfos = input.required<Record<number, ExerciseInfo>>();
+    isTestRun = input(false);
 
     gradingScaleExists = false;
     isBonus = false;
@@ -94,14 +94,14 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     private areResultsPublished() {
-        return isExamResultPublished(this.isTestRun, this.studentExamWithGrade?.studentExam?.exam, this.serverDateService);
+        return isExamResultPublished(this.isTestRun(), this.studentExamWithGrade()?.studentExam?.exam, this.serverDateService);
     }
 
     private updateLocalVariables() {
         this.showResultOverview = !!(this.areResultsPublished() && this.hasAtLeastOneResult());
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
-        this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
-        this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
+        this.maxPoints = this.studentExamWithGrade()?.maxPoints ?? 0;
+        this.isBonusGradingKeyDisplayed = this.studentExamWithGrade().studentResult.gradeWithBonus?.bonusGrade != undefined;
 
         this.overallAchievedPoints = this.getOverallAchievedPoints();
         this.overallAchievedPercentageRoundedByCourseSettings = this.getOverallAchievedPercentageRoundedByCourseSettings();
@@ -111,14 +111,14 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * used as fallback if not pre-calculated by the server
      */
     private sumExerciseScores() {
-        return (this.studentExamWithGrade.studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
-            const achievedPoints = this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
+        return (this.studentExamWithGrade().studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
+            const achievedPoints = this.studentExamWithGrade()?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
             return exerciseScoreSum + achievedPoints;
         }, 0);
     }
 
     private getOverallAchievedPoints() {
-        const overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved;
+        const overallAchievedPoints = this.studentExamWithGrade()?.studentResult.overallPointsAchieved;
         if (overallAchievedPoints === undefined || overallAchievedPoints === 0) {
             return this.sumExerciseScores();
         }
@@ -127,12 +127,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     private getOverallAchievedPercentageRoundedByCourseSettings() {
-        let overallScoreAchieved = this.studentExamWithGrade.studentResult.overallScoreAchieved;
+        let overallScoreAchieved = this.studentExamWithGrade().studentResult.overallScoreAchieved;
         if (overallScoreAchieved === undefined || overallScoreAchieved === 0) {
             overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
         }
 
-        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade.studentExam?.exam?.course);
+        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade().studentExam?.exam?.course);
     }
 
     /**
@@ -142,7 +142,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         let summedPercentages = 0;
         let numberOfExercises = 0;
 
-        Object.entries(this.exerciseInfos).forEach(([, exerciseInfo]) => {
+        Object.entries(this.exerciseInfos()).forEach(([, exerciseInfo]) => {
             summedPercentages += exerciseInfo.achievedPercentage ?? 0;
             numberOfExercises++;
         });
@@ -159,7 +159,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * -> displayed if at least one exercise is not included in the overall score
      */
     containsExerciseThatIsNotIncludedCompletely(): boolean {
-        for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
+        for (const exercise of this.studentExamWithGrade()?.studentExam?.exercises ?? []) {
             if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 return true;
             }
@@ -172,11 +172,11 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * Sets the student's exam grade if a grading scale exists for the exam
      */
     setExamGrade() {
-        if (this.studentExamWithGrade?.studentResult?.overallGrade != undefined) {
+        if (this.studentExamWithGrade()?.studentResult?.overallGrade != undefined) {
             this.gradingScaleExists = true;
-            this.grade = this.studentExamWithGrade.studentResult.overallGrade;
-            this.isBonus = this.studentExamWithGrade.gradeType === GradeType.BONUS;
-            this.hasPassed = !!this.studentExamWithGrade.studentResult.hasPassed;
+            this.grade = this.studentExamWithGrade().studentResult.overallGrade;
+            this.isBonus = this.studentExamWithGrade().gradeType === GradeType.BONUS;
+            this.hasPassed = !!this.studentExamWithGrade().studentResult.hasPassed;
             this.changeDetector.detectChanges();
         }
     }
@@ -185,7 +185,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
      */
     getMaxNormalAndBonusPointsSum(): number {
-        const maxAchievableBonusPoints = this.studentExamWithGrade?.maxBonusPoints ?? 0;
+        const maxAchievableBonusPoints = this.studentExamWithGrade()?.maxBonusPoints ?? 0;
         return this.maxPoints + maxAchievableBonusPoints;
     }
 
@@ -216,7 +216,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     private hasAtLeastOneResult(): boolean {
-        const exercises = this.studentExamWithGrade?.studentExam?.exercises;
+        const exercises = this.studentExamWithGrade()?.studentExam?.exercises;
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         if (exercises?.length! > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
