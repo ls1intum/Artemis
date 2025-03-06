@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { PdfPreviewDateBoxComponent } from '../../../../../../main/webapp/app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
@@ -68,18 +68,26 @@ describe('PdfPreviewDateBoxComponent', () => {
 
     describe('Exercise Processing', () => {
         it('should correctly categorize and sort exercises', fakeAsync(() => {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 1);
+
+            const futureMockExercises = [
+                { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs(futureDate).add(1, 'day') },
+                { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs(futureDate).add(2, 'days') },
+                { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs(futureDate).add(3, 'days') },
+                { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null },
+            ] as Exercise[];
+
+            courseExerciseServiceMock.findAllExercisesForCourse.mockReturnValue(of(new HttpResponse({ body: futureMockExercises })));
+
             component.ngOnInit();
             tick();
 
             const categorized = component.categorizedExercises();
-            expect(categorized).toHaveLength(2); // QUIZ and PROGRAMMING
-
-            // Check QUIZ exercises
+            expect(categorized).toHaveLength(2);
             expect(categorized[0].type).toBe(ExerciseType.QUIZ);
             expect(categorized[0].exercises).toHaveLength(2);
             expect(categorized[0].exercises[0].id).toBe(1); // Earlier date first
-
-            // Check PROGRAMMING exercises
             expect(categorized[1].type).toBe(ExerciseType.PROGRAMMING);
             expect(categorized[1].exercises).toHaveLength(1); // Only one with dueDate
         }));
@@ -129,50 +137,84 @@ describe('PdfPreviewDateBoxComponent', () => {
     });
 
     describe('Form Submission', () => {
-        let hiddenPageOutputSpy: jest.SpyInstance;
+        let hiddenPagesOutputSpy: jest.SpyInstance;
+        let alertServiceSpy: jest.SpyInstance;
 
         beforeEach(() => {
-            hiddenPageOutputSpy = jest.spyOn(component.hiddenPageOutput, 'emit');
+            hiddenPagesOutputSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+            alertServiceSpy = jest.spyOn(component['alertService'], 'error');
         });
 
-        it('should emit hidden page with forever date when hide forever is selected', () => {
+        it('should emit hidden pages with forever date when hide forever is selected', () => {
             component.hideForever.set(true);
             component.onSubmit();
 
-            expect(hiddenPageOutputSpy).toHaveBeenCalledWith({
-                pageIndex: 1,
-                date: dayjs('9999-12-31'),
-            });
+            expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
+                {
+                    pageIndex: 1,
+                    date: dayjs('9999-12-31'),
+                    exerciseId: null,
+                },
+            ]);
         });
 
-        it('should emit hidden page with calendar date when calendar is selected', () => {
-            const testDate = '2024-02-01T10:00';
+        it('should emit hidden pages with selected calendar date', () => {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 1);
+            const testDate = futureDate.toISOString().slice(0, 16); // Format as YYYY-MM-DDTHH:MM
+
             component.calendarSelected.set(true);
             component.defaultDate.set(testDate);
 
             component.onSubmit();
 
-            expect(hiddenPageOutputSpy).toHaveBeenCalledWith({
-                pageIndex: 1,
-                date: dayjs(testDate),
-            });
+            expect(alertServiceSpy).not.toHaveBeenCalled();
+            expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
+                {
+                    pageIndex: 1,
+                    date: dayjs(testDate),
+                    exerciseId: null,
+                },
+            ]);
         });
 
-        it('should emit hidden page with exercise due date when exercise is selected', () => {
+        it('should emit hidden pages with selected exercise due date and id', () => {
+            const futureDate = dayjs().add(1, 'year');
+            const futureExercise = {
+                id: 123,
+                type: ExerciseType.QUIZ,
+                dueDate: futureDate,
+            } as Exercise;
+
             component.exerciseSelected.set(true);
-            component.selectedExercise.set(mockExercises[0]);
+            component.selectedExercise.set(futureExercise);
 
             component.onSubmit();
 
-            expect(hiddenPageOutputSpy).toHaveBeenCalledWith({
-                pageIndex: 1,
-                date: mockExercises[0].dueDate,
-            });
+            expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
+                {
+                    pageIndex: 1,
+                    date: futureDate,
+                    exerciseId: 123,
+                },
+            ]);
         });
 
         it('should not emit when no valid date option is selected', () => {
             component.onSubmit();
-            expect(hiddenPageOutputSpy).not.toHaveBeenCalled();
+            expect(hiddenPagesOutputSpy).not.toHaveBeenCalled();
+        });
+
+        it('should show error and not emit when calendar date is in the past', () => {
+            // Use a past date that will fail validation
+            const pastDate = '2020-01-01T10:00';
+            component.calendarSelected.set(true);
+            component.defaultDate.set(pastDate);
+
+            component.onSubmit();
+
+            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateError');
+            expect(hiddenPagesOutputSpy).not.toHaveBeenCalled();
         });
     });
 });

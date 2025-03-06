@@ -192,7 +192,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             exerciseId: null,
         };
 
-        component.onHiddenPageChange(hiddenPage);
+        component.onHiddenPagesReceived(hiddenPage);
 
         expect(component.newHiddenPages()[hiddenPage.pageIndex]).toBeDefined();
         expect(component.newHiddenPages()[hiddenPage.pageIndex].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
@@ -579,6 +579,103 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     behavior: 'smooth',
                 });
             }
+        });
+    });
+
+    describe('onHiddenPagesReceived method', () => {
+        it('should update newHiddenPages with a single page and emit the change', () => {
+            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+            component.newHiddenPages.set({});
+
+            const hiddenPage: HiddenPage = {
+                pageIndex: 1,
+                date: dayjs('2024-01-01'),
+                exerciseId: null,
+            };
+
+            component.onHiddenPagesReceived(hiddenPage);
+
+            expect(component.newHiddenPages()[hiddenPage.pageIndex]).toBeDefined();
+            expect(component.newHiddenPages()[hiddenPage.pageIndex].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
+            expect(component.newHiddenPages()[hiddenPage.pageIndex].exerciseId).toBeNull();
+            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        });
+
+        it('should update newHiddenPages with multiple pages and emit the change', () => {
+            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+            const initialHiddenPages: HiddenPageMap = {
+                5: { date: dayjs('2023-12-15'), exerciseId: 123 },
+            };
+            component.newHiddenPages.set({ ...initialHiddenPages });
+
+            const hiddenPages: HiddenPage[] = [
+                {
+                    pageIndex: 1,
+                    date: dayjs('2024-01-01'),
+                    exerciseId: null,
+                },
+                {
+                    pageIndex: 2,
+                    date: dayjs('2024-01-15'),
+                    exerciseId: 456,
+                },
+            ];
+
+            component.onHiddenPagesReceived(hiddenPages);
+
+            expect(Object.keys(component.newHiddenPages()).length).toBe(3); // 1 initial + 2 new
+            expect(component.newHiddenPages()[1]).toBeDefined();
+            expect(component.newHiddenPages()[1].date.isSame(dayjs('2024-01-01'))).toBeTruthy();
+            expect(component.newHiddenPages()[1].exerciseId).toBeNull();
+            expect(component.newHiddenPages()[2]).toBeDefined();
+            expect(component.newHiddenPages()[2].date.isSame(dayjs('2024-01-15'))).toBeTruthy();
+            expect(component.newHiddenPages()[2].exerciseId).toBe(456);
+            expect(component.newHiddenPages()[5]).toBeDefined();
+            expect(component.newHiddenPages()[5].date.isSame(dayjs('2023-12-15'))).toBeTruthy();
+            expect(component.newHiddenPages()[5].exerciseId).toBe(123);
+            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        });
+
+        it('should overwrite existing page data if same pageIndex is received', () => {
+            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+            const initialHiddenPages: HiddenPageMap = {
+                1: { date: dayjs('2023-12-15'), exerciseId: 123 },
+            };
+            component.newHiddenPages.set({ ...initialHiddenPages });
+
+            const updatedPage: HiddenPage = {
+                pageIndex: 1,
+                date: dayjs('2024-02-01'),
+                exerciseId: 789,
+            };
+
+            component.onHiddenPagesReceived(updatedPage);
+
+            expect(Object.keys(component.newHiddenPages()).length).toBe(1);
+            expect(component.newHiddenPages()[1]).toBeDefined();
+            expect(component.newHiddenPages()[1].date.isSame(dayjs('2024-02-01'))).toBeTruthy();
+            expect(component.newHiddenPages()[1].exerciseId).toBe(789);
+
+            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        });
+
+        it('should handle null exerciseId correctly', () => {
+            component.newHiddenPages.set({});
+
+            const hiddenPages: HiddenPage[] = [
+                {
+                    pageIndex: 1,
+                    date: dayjs('2024-01-01'),
+                    exerciseId: null,
+                },
+            ];
+
+            component.onHiddenPagesReceived(hiddenPages);
+
+            expect(component.newHiddenPages()[1].exerciseId).toBeNull();
         });
     });
 });

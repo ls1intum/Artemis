@@ -659,7 +659,6 @@ describe('PdfPreviewComponent', () => {
 
         describe('Page Visibility Management', () => {
             it('should add pages to hiddenPages when hide action is used', () => {
-                // Initialize hiddenPages with the updated interface structure
                 component.hiddenPages.set({
                     1: { date: dayjs(), exerciseId: null },
                     3: { date: dayjs(), exerciseId: null },
@@ -668,14 +667,12 @@ describe('PdfPreviewComponent', () => {
 
                 component.toggleVisibility('hide', component.selectedPages());
 
-                // Expect hiddenPages to contain all four page entries with the correct structure
                 expect(Object.keys(component.hiddenPages()).length).toBe(4);
                 expect(component.hiddenPages()[1]).toBeDefined();
                 expect(component.hiddenPages()[2]).toBeDefined();
                 expect(component.hiddenPages()[3]).toBeDefined();
                 expect(component.hiddenPages()[4]).toBeDefined();
 
-                // Verify each entry has the correct structure
                 Object.values(component.hiddenPages()).forEach((entry) => {
                     expect(entry).toHaveProperty('date');
                     expect(entry).toHaveProperty('exerciseId');
@@ -685,7 +682,6 @@ describe('PdfPreviewComponent', () => {
             });
 
             it('should remove pages from hiddenPages when show action is used', () => {
-                // Initialize hiddenPages with the updated interface structure
                 component.hiddenPages.set({
                     1: { date: dayjs(), exerciseId: null },
                     2: { date: dayjs(), exerciseId: null },
@@ -696,7 +692,6 @@ describe('PdfPreviewComponent', () => {
 
                 component.toggleVisibility('show', component.selectedPages());
 
-                // Expect hiddenPages to only contain pages 1 and 3
                 expect(Object.keys(component.hiddenPages()).length).toBe(2);
                 expect(component.hiddenPages()[1]).toBeDefined();
                 expect(component.hiddenPages()[2]).toBeUndefined();
@@ -707,7 +702,6 @@ describe('PdfPreviewComponent', () => {
             });
 
             it('should not modify hiddenPages when selectedPages is empty', () => {
-                // Initialize hiddenPages with the updated interface structure
                 const initialHiddenPages = {
                     1: { date: dayjs(), exerciseId: null },
                     3: { date: dayjs(), exerciseId: null },
@@ -717,7 +711,6 @@ describe('PdfPreviewComponent', () => {
 
                 component.toggleVisibility('hide', component.selectedPages());
 
-                // Expect hiddenPages to remain unchanged
                 expect(Object.keys(component.hiddenPages()).length).toBe(2);
                 expect(component.hiddenPages()).toEqual(initialHiddenPages);
             });
@@ -744,6 +737,98 @@ describe('PdfPreviewComponent', () => {
 
                 expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
             });
+        });
+    });
+
+    describe('Hidden Pages Management', () => {
+        it('should update hidden pages when receiving a single hidden page', () => {
+            const mockDate = dayjs('2024-05-15');
+            const mockHiddenPage = {
+                pageIndex: 5,
+                date: mockDate,
+                exerciseId: 123,
+            };
+
+            // Initial state
+            component.hiddenPages.set({
+                1: { date: dayjs(), exerciseId: null },
+                3: { date: dayjs(), exerciseId: null },
+            });
+
+            component.selectedPages.set(new Set([1, 5]));
+            component.onHiddenPagesReceived(mockHiddenPage);
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(3);
+            expect(component.hiddenPages()[5]).toEqual({
+                date: mockDate,
+                exerciseId: 123,
+            });
+
+            expect(component.hiddenPages()[1]).toBeDefined();
+            expect(component.hiddenPages()[3]).toBeDefined();
+            expect(component.selectedPages().size).toBe(0);
+        });
+
+        it('should update hidden pages when receiving multiple hidden pages', () => {
+            const mockDate1 = dayjs('2024-05-15');
+            const mockDate2 = dayjs('2024-05-20');
+            const mockHiddenPages = [
+                {
+                    pageIndex: 5,
+                    date: mockDate1,
+                    exerciseId: 123,
+                },
+                {
+                    pageIndex: 7,
+                    date: mockDate2,
+                    exerciseId: 456,
+                },
+            ];
+
+            component.hiddenPages.set({
+                1: { date: dayjs(), exerciseId: null },
+                3: { date: dayjs(), exerciseId: null },
+            });
+            component.selectedPages.set(new Set([2, 7]));
+            component.onHiddenPagesReceived(mockHiddenPages);
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(4);
+            expect(component.hiddenPages()[5]).toEqual({
+                date: mockDate1,
+                exerciseId: 123,
+            });
+            expect(component.hiddenPages()[7]).toEqual({
+                date: mockDate2,
+                exerciseId: 456,
+            });
+            expect(component.hiddenPages()[1]).toBeDefined();
+            expect(component.hiddenPages()[3]).toBeDefined();
+            expect(component.selectedPages().size).toBe(0);
+        });
+
+        it('should overwrite existing hidden page data when receiving updated hidden page', () => {
+            const initialDate = dayjs('2024-01-01');
+            const updatedDate = dayjs('2024-06-01');
+
+            component.hiddenPages.set({
+                1: { date: dayjs(), exerciseId: null },
+                5: { date: initialDate, exerciseId: null },
+            });
+
+            const updatedHiddenPage = {
+                pageIndex: 5,
+                date: updatedDate,
+                exerciseId: 789,
+            };
+
+            component.onHiddenPagesReceived(updatedHiddenPage);
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(2);
+            expect(component.hiddenPages()[5]).toEqual({
+                date: updatedDate,
+                exerciseId: 789,
+            });
+            expect(component.hiddenPages()[1]).toBeDefined();
         });
     });
 });

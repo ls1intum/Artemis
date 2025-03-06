@@ -172,7 +172,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param hiddenPageData Data for one or more hidden pages
      */
     onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
-        // Convert single page to array for consistent handling
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
 
         const updatedHiddenPages = { ...this.newHiddenPages() };
