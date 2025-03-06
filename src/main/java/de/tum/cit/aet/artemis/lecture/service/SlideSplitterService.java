@@ -27,8 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -47,7 +45,6 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  */
 @Profile(PROFILE_CORE)
 @Service
-@EnableScheduling
 public class SlideSplitterService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
@@ -56,9 +53,12 @@ public class SlideSplitterService {
 
     private final SlideRepository slideRepository;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
+    private final SlideUnhideService slideUnhideService;
+
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, SlideUnhideService slideUnhideService) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
+        this.slideUnhideService = slideUnhideService;
     }
 
     /**
@@ -138,8 +138,18 @@ public class SlideSplitterService {
                 slide.setSlideNumber(slideNumber);
                 slide.setAttachmentUnit(attachmentUnit);
 
-                slide.setHidden(hiddenPagesMap.getOrDefault(slideNumber, null));
-                slideRepository.save(slide);
+                // Check if the hidden status is changing
+                java.util.Date previousHiddenValue = slide.getHidden();
+                java.util.Date newHiddenValue = hiddenPagesMap.getOrDefault(slideNumber, null);
+                slide.setHidden(newHiddenValue);
+
+                Slide savedSlide = slideRepository.save(slide);
+
+                // Schedule unhiding if the hidden value is set or has changed
+                if (previousHiddenValue != newHiddenValue) {
+                    slideUnhideService.handleSlideHiddenUpdate(savedSlide);
+                    log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+                }
             }
         }
         catch (IOException e) {
@@ -158,21 +168,6 @@ public class SlideSplitterService {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             ImageIO.write(bufferedImage, format, outputStream);
             return outputStream.toByteArray();
-        }
-    }
-
-    /**
-     * A scheduled task that runs every minute to check for slides
-     * with expired hidden timestamps and unhide them.
-     */
-    @Scheduled(cron = "0 * * * * *")
-    public void checkAndUnhideSlides() {
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
-        List<Slide> expiredHiddenSlides = slideRepository.findByHiddenLessThanEqual(currentTime);
-
-        for (Slide slide : expiredHiddenSlides) {
-            slide.setHidden(null);
-            slideRepository.save(slide);
         }
     }
 }
