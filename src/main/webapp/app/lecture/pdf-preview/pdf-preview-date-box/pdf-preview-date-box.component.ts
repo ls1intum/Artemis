@@ -40,11 +40,9 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
     selectedExercise = signal<Exercise | null>(null);
-    hiddenPage = signal<HiddenPage | null>(null);
     isMultiplePages = signal<boolean>(false);
 
     // Outputs
-    hiddenPageOutput = output<HiddenPage>();
     hiddenPagesOutput = output<HiddenPage[]>();
     selectionCancelledOutput = output<boolean>();
 
@@ -166,23 +164,14 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        if (this.isMultiplePages()) {
-            const hiddenPages: HiddenPage[] = this.pageIndices().map((pageIndex) => ({
-                pageIndex,
-                date: selectedDate,
-                exerciseId: this.selectedExercise()?.id ?? null,
-            }));
+        const pageIndices = this.isMultiplePages() ? this.pageIndices() : [this.pageIndex()!];
 
-            this.hiddenPagesOutput.emit(hiddenPages);
-        } else {
-            const newEntry: HiddenPage = {
-                pageIndex: this.pageIndex()!,
-                date: selectedDate,
-                exerciseId: this.selectedExercise()?.id ?? null,
-            };
+        const hiddenPages: HiddenPage[] = pageIndices.map((pageIndex) => ({
+            pageIndex,
+            date: selectedDate,
+            exerciseId: this.selectedExercise()?.id ?? null,
+        }));
 
-            this.hiddenPage.set(newEntry);
-            this.hiddenPageOutput.emit(newEntry);
-        }
+        this.hiddenPagesOutput.emit(hiddenPages);
     }
 }

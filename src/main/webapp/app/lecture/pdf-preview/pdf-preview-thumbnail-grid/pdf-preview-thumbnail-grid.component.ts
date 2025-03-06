@@ -168,15 +168,22 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Toggles the selection state of a page by adding or removing it from the selected pages set.
-     * @param hiddenPage
+     * Updates hidden pages information based on data from the date box component
+     * @param hiddenPageData Data for one or more hidden pages
      */
-    onHiddenPageChange(hiddenPage: HiddenPage): void {
-        const updatedHiddenPages = this.newHiddenPages();
-        updatedHiddenPages[hiddenPage.pageIndex] = {
-            date: dayjs(hiddenPage.date),
-            exerciseId: hiddenPage.exerciseId ?? null,
-        };
+    onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
+        // Convert single page to array for consistent handling
+        const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
+
+        const updatedHiddenPages = { ...this.newHiddenPages() };
+
+        pages.forEach((page) => {
+            updatedHiddenPages[page.pageIndex] = {
+                date: dayjs(page.date),
+                exerciseId: page.exerciseId ?? null,
+            };
+        });
+
         this.newHiddenPages.set(updatedHiddenPages);
         this.newHiddenPagesOutput.emit(this.newHiddenPages());
     }
@@ -203,6 +210,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             return pages;
         });
         this.hideActionButton(pageIndex);
+        this.newHiddenPagesOutput.emit(this.newHiddenPages());
     }
 
     /**

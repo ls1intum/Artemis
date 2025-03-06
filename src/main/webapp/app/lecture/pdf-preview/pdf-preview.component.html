@@ -85,7 +85,6 @@
                             [course]="course()"
                             [pageIndex]="selectedPages().size === 1 ? Array.from(selectedPages())[0] : undefined"
                             [pageIndices]="selectedPages().size > 1 ? Array.from(selectedPages()) : []"
-                            (hiddenPageOutput)="onHiddenPageReceived($event); hidePopover.close()"
                             (hiddenPagesOutput)="onHiddenPagesReceived($event); hidePopover.close()"
                             (selectionCancelledOutput)="hidePopover.close()"
                         />

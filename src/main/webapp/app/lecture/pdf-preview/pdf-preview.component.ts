@@ -463,13 +463,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handle multiple hidden pages data from date box component
+     * Handles the reception of one or more hidden pages from the date box component
+     * @param hiddenPageData A single HiddenPage or an array of HiddenPages
      */
-    onHiddenPagesReceived(hiddenPages: HiddenPage[]): void {
+    onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
+        const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
+
         this.hiddenPages.update((currentMap) => {
             const updatedMap = { ...currentMap };
 
-            hiddenPages.forEach((page) => {
+            pages.forEach((page) => {
                 updatedMap[page.pageIndex] = {
                     date: page.date,
                     exerciseId: page.exerciseId,
@@ -480,19 +483,5 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         this.selectedPages.set(new Set());
-    }
-
-    /**
-     * Handle single hidden page data
-     */
-    onHiddenPageReceived(hiddenPage: HiddenPage): void {
-        this.hiddenPages.update((currentMap) => {
-            const updatedMap = { ...currentMap };
-            updatedMap[hiddenPage.pageIndex] = {
-                date: hiddenPage.date,
-                exerciseId: hiddenPage.exerciseId,
-            };
-            return updatedMap;
-        });
     }
 }
