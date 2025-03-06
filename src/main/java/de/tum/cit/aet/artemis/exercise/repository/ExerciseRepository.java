@@ -617,7 +617,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             UPDATE Exercise e
             SET e.preliminaryFeedbackModule = NULL
             WHERE e.course.id = :courseId
-                  AND e.preliminaryFeedbackModule IN :restrictedFeedbackSuggestionModule
+                  AND e.preliminaryFeedbackModule IN :restrictedPreliminaryFeedbackModule
             """)
     void revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(@Param("courseId") Long courseId,
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedPreliminaryFeedbackModule);
