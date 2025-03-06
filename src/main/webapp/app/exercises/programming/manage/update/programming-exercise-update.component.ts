@@ -55,6 +55,7 @@ import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-ba
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from './update-components/problem/programming-exercise-problem.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
+import { ProgrammingExerciseVersionControlComponent } from 'app/exercises/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -74,6 +75,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ProgrammingExerciseGradingComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
+        ProgrammingExerciseVersionControlComponent,
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {

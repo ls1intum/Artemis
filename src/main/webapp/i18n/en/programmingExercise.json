@@ -81,6 +81,8 @@
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Language",
                     "languageStepMessage": "Configure the specific details related to the programming language and build mechanism used in the exercise",
+                    "versionControlTitle": "Version Control",
+                    "versionControlMessage": "Decide which version control features should be available.",
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
@@ -167,6 +169,10 @@
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineIde": "Online IDE",
+            "allowBranching": {
+                "title": "Allow Custom Branches",
+                "description": "Enables students to push other branches than 'main'. Warning! Custom branches are not shown in the user interface, and there is no merge support in the UI. Only enable when it is absolutely required."
+            },
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",

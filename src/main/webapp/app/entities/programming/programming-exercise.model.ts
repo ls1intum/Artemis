@@ -59,6 +59,7 @@ export class ProgrammingExercise extends Exercise {
      * Max penalty from SCA in percentage
      */
     public maxStaticCodeAnalysisPenalty?: number;
+    public allowBranching?: boolean;
     public allowOfflineIde?: boolean;
     public allowOnlineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
