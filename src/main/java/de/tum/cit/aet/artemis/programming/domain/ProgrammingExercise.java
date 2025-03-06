@@ -94,6 +94,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "max_static_code_analysis_penalty", table = "programming_exercise_details")
     private Integer maxStaticCodeAnalysisPenalty;
 
+    @Column(name = "allow_branching", table = "programming_exercise_details")
+    private boolean allowBranching;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "programming_language")
     private ProgrammingLanguage programmingLanguage;
