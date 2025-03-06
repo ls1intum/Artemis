@@ -539,13 +539,9 @@ public class ProgrammingExerciseService {
             programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
 
-        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
-        // we do not trigger them here
-        if (!isImportedFromFile) {
-            // trigger BASE and SOLUTION build plans once here
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
-        }
+        // trigger BASE and SOLUTION build plans once here
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**
