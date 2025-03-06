@@ -14,6 +14,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../../../helpers/mocks/service/mock-profile.service';
+import { input } from '@angular/core';
 
 describe('TextExamSummaryComponent', () => {
     let fixture: ComponentFixture<TextExamSummaryComponent>;
@@ -50,6 +51,10 @@ describe('TextExamSummaryComponent', () => {
     });
 
     it('should initialize', () => {
+        TestBed.runInInjectionContext(() => {
+            component.submission = input({} as TextSubmission);
+            component.exercise = input({} as Exercise);
+        });
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(fixture.debugElement.nativeElement.querySelector('div').innerHTML).toContain('No submission');
@@ -57,8 +62,10 @@ describe('TextExamSummaryComponent', () => {
 
     it('should display the submission text', () => {
         const submissionText = 'A test submission text';
-        component.submission = { text: submissionText } as TextSubmission;
-        component.exercise = { studentParticipations: [{ id: 1 }] } as Exercise;
+        TestBed.runInInjectionContext(() => {
+            component.submission = input({ text: submissionText } as TextSubmission);
+            component.exercise = input({ studentParticipations: [{ id: 1 }] } as Exercise);
+        });
         fixture.detectChanges();
 
         const textEditorComponent = fixture.debugElement.query(By.directive(TextEditorComponent)).componentInstance;
