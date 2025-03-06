@@ -98,7 +98,7 @@ class CourseNotificationSettingPresetRegistryServiceTest {
     static class TestNotification extends CourseNotification {
 
         public TestNotification(Long courseId, ZonedDateTime creationDate) {
-            super(courseId, creationDate);
+            super(courseId, "Test Course", "image.url", creationDate);
         }
 
         @Override

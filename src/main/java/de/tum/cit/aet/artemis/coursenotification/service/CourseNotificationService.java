@@ -189,6 +189,10 @@ public class CourseNotificationService {
         var parameters = courseNotification.getParameters();
 
         for (var key : parameters.keySet()) {
+            if (parameters.get(key) == null) {
+                continue;
+            }
+
             courseNotificationParameterRepository.save(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key)));
         }
 

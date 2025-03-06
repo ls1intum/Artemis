@@ -56,7 +56,11 @@ public class CourseNotificationSettingService {
             // Note: We run a single query per user, however, this query is cached, so this should not cause performance issues.
             var preset = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(recipient.getId(), notification.courseId);
 
-            if (preset.getSettingPreset() == 0) {
+            if (preset == null) {
+                // Run query on default preset if none are present
+                return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(1, notification.getClass(), filterFor);
+            }
+            else if (preset.getSettingPreset() == 0) {
                 // The specifications are cached per-user per-course. Similar to above.
                 var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(recipient.getId(), notification.courseId);
 

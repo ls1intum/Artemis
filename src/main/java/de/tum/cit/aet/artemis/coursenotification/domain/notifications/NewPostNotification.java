@@ -15,8 +15,6 @@ import de.tum.cit.aet.artemis.coursenotification.domain.NotificationSettingOptio
 @CourseNotificationType(1)
 public class NewPostNotification extends CourseNotification {
 
-    protected String courseTitle;
-
     protected Long postId;
 
     protected String postMarkdownContent;
@@ -36,10 +34,9 @@ public class NewPostNotification extends CourseNotification {
     /**
      * Default constructor used when creating a new post notification.
      */
-    public NewPostNotification(Long courseId, String courseTitle, Long postId, String postMarkdownContent, Long channelId, String channelName, String channelType,
-            String authorName, String authorImageUrl, Long authorId) {
-        super(courseId, ZonedDateTime.now());
-        this.courseTitle = courseTitle;
+    public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
+            String channelType, String authorName, String authorImageUrl, Long authorId) {
+        super(courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.postId = postId;
         this.postMarkdownContent = postMarkdownContent;
         this.channelName = channelName;

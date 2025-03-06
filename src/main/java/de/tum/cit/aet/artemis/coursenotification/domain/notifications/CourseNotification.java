@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.coursenotification.domain.notifications;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,15 +37,21 @@ public abstract class CourseNotification {
 
     public final ZonedDateTime creationDate;
 
+    protected String courseTitle;
+
+    protected String courseIconUrl;
+
     private final Map<String, String> parameters;
 
     /**
      * Default constructor used when creating a new notification.
      */
-    public CourseNotification(Long courseId, ZonedDateTime creationDate) {
+    public CourseNotification(Long courseId, String courseTitle, String courseIconUrl, ZonedDateTime creationDate) {
         this.courseId = courseId;
+        this.courseTitle = courseTitle;
+        this.courseIconUrl = courseIconUrl;
         this.creationDate = creationDate;
-        this.parameters = Map.of();
+        this.parameters = new HashMap<>();
     }
 
     /**
@@ -106,6 +113,10 @@ public abstract class CourseNotification {
                 }
             }
         }
+
+        // Since these fields are part of every notification, though not part of getDeclaredFields, we query for them:
+        courseTitle = parameters.get("courseTitle");
+        courseIconUrl = parameters.get("courseIconUrl");
     }
 
     /**
@@ -127,12 +138,18 @@ public abstract class CourseNotification {
                 if (value != null) {
                     parameters.put(field.getName(), value.toString());
                 }
+                else {
+                    parameters.put(field.getName(), null);
+                }
             }
             catch (IllegalAccessException e) {
                 parameters.clear();
                 throw new RuntimeException("Error getting value from field when initializing parameter map: " + field.getName(), e);
             }
         }
+
+        parameters.put("courseTitle", courseTitle);
+        parameters.put("courseIconUrl", courseIconUrl);
     }
 
     /**
