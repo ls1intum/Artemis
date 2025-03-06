@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
@@ -114,6 +114,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private accountService = inject(AccountService); // TODO TW: This "feature" is only temporary for a paper.
+    private readonly cdr = inject(ChangeDetectorRef);
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
@@ -224,6 +225,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
 
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
         this.exercise = newExerciseDetails.exercise;
+        this.cdr.detectChanges(); // IMPORTANT: necessary to update the view after the exercise has been loaded in learning path view
 
         // TODO TW: This "feature" is only temporary for a paper.
         if (this.exercise.problemStatement?.includes(ICER_PAPER_FLAG)) {
