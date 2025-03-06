@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Component, OnChanges, inject, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -35,22 +35,20 @@ export class QuizExamSummaryComponent implements OnChanges {
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    @Input() quizParticipation: QuizParticipation;
-    @Input() submission: QuizSubmission;
-    @Input() resultsPublished: boolean;
-    @Input() exam: Exam;
+    quizParticipation = input.required<QuizParticipation>();
+    submission = input.required<QuizSubmission>();
+    resultsPublished = input.required<boolean>();
+    exam = input.required<Exam>();
 
     result?: Result;
 
     ngOnChanges() {
         this.updateViewFromSubmission();
-        if (this.quizParticipation.studentParticipations) {
-            this.result =
-                this.quizParticipation.studentParticipations.length > 0 && this.quizParticipation.studentParticipations[0].results?.length
-                    ? this.quizParticipation.studentParticipations[0].results[0]
-                    : undefined;
+        const studentParticipations = this.quizParticipation().studentParticipations;
+        if (studentParticipations) {
+            this.result = studentParticipations.length > 0 && studentParticipations[0].results?.length ? studentParticipations[0].results[0] : undefined;
         } else {
-            this.result = this.submission.results?.length ? this.submission.results[0] : undefined;
+            this.result = this.submission().results?.length ? this.submission().results![0] : undefined;
         }
     }
 
@@ -67,12 +65,14 @@ export class QuizExamSummaryComponent implements OnChanges {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizParticipation.quizQuestions && this.submission) {
+        const quizQuestions = this.quizParticipation().quizQuestions;
+        if (quizQuestions && this.submission()) {
             // iterate through all questions of this quiz
-            this.quizParticipation.quizQuestions.forEach((question) => {
+            quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers
-                    ? this.submission.submittedAnswers.find((answer) => {
+                const submittedAnswers = this.submission().submittedAnswers;
+                const submittedAnswer = submittedAnswers
+                    ? submittedAnswers.find((answer) => {
                           return answer.quizQuestion!.id === question.id;
                       })
                     : undefined;
@@ -112,12 +112,12 @@ export class QuizExamSummaryComponent implements OnChanges {
     }
 
     getScoreForQuizQuestion(quizQuestionId?: number) {
-        if (this.submission && this.submission.submittedAnswers && this.submission.submittedAnswers.length > 0) {
-            const submittedAnswer = this.submission.submittedAnswers.find((answer) => {
+        if (this.submission() && this.submission().submittedAnswers && this.submission().submittedAnswers!.length > 0) {
+            const submittedAnswer = this.submission().submittedAnswers!.find((answer) => {
                 return answer && answer.quizQuestion ? answer.quizQuestion.id === quizQuestionId : false;
             });
             if (submittedAnswer && submittedAnswer.scoreInPoints !== undefined) {
-                return roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, this.exam.course);
+                return roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, this.exam().course);
             }
         }
         return 0;
@@ -127,8 +127,8 @@ export class QuizExamSummaryComponent implements OnChanges {
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
     get showMissingResultsNotice(): boolean {
-        if (this.exam && this.exam.publishResultsDate && this.quizParticipation.studentParticipations && this.quizParticipation.studentParticipations.length > 0) {
-            return dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
+        if (this.exam() && this.exam().publishResultsDate && this.quizParticipation().studentParticipations && this.quizParticipation().studentParticipations!.length > 0) {
+            return dayjs(this.exam().publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
         }
         return false;
     }
