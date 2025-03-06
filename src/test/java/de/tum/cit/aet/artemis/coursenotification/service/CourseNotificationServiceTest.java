@@ -119,7 +119,9 @@ class CourseNotificationServiceTest {
         assertThat(savedEntity.getCourse().getId()).isEqualTo(123L);
         assertThat(savedEntity.getType()).isEqualTo((short) 1);
 
-        verify(courseNotificationParameterRepository, times(2)).save(any(CourseNotificationParameter.class));
+        ArgumentCaptor<Iterable<CourseNotificationParameter>> captor = ArgumentCaptor.forClass((Class) Iterable.class);
+
+        verify(courseNotificationParameterRepository, times(1)).saveAll(captor.capture());
     }
 
     @Test
