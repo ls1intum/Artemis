@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,8 +45,7 @@ public class ParticipationFilterService {
         if (participationsAcrossAllExercises == null || participationsAcrossAllExercises.isEmpty()) {
             return Set.of();
         }
-        var participationsInExercise = participationsAcrossAllExercises.stream().filter(p -> p.getExercise() != null && p.getExercise().equals(exercise))
-                .collect(Collectors.toSet());
+        var participationsInExercise = participationsAcrossAllExercises.stream().filter(p -> Objects.equals(p.getExercise(), exercise)).collect(Collectors.toSet());
 
         if (participationsInExercise.isEmpty()) {
             return Set.of();
