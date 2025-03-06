@@ -24,11 +24,6 @@
             <where>content LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="assessment_note">
-            <column name="note" valueComputed="REPLACE(note, '/api/files', '/api/core/files')"/>
-            <where>note LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="competency">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
@@ -109,26 +104,6 @@
             <where>question_answer LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="feedback">
-            <column name="detail_text" valueComputed="REPLACE(detail_text, '/api/files', '/api/core/files')"/>
-            <where>detail_text LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="feedback">
-            <column name="text" valueComputed="REPLACE(text, '/api/files', '/api/core/files')"/>
-            <where>text LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="grading_instruction">
-            <column name="feedback" valueComputed="REPLACE(feedback, '/api/files', '/api/core/files')"/>
-            <where>feedback LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="grading_instruction">
-            <column name="instruction_description" valueComputed="REPLACE(instruction_description, '/api/files', '/api/core/files')"/>
-            <where>instruction_description LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="knowledge_area">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
@@ -152,11 +127,6 @@
         <update tableName="lecture_unit">
             <column name="source" valueComputed="REPLACE(source, '/api/files', '/api/core/files')"/>
             <where>(discriminator = 'O' OR discriminator = 'V') AND source LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="long_feedback_text">
-            <column name="feedback_text" valueComputed="REPLACE(feedback_text, '/api/files', '/api/core/files')"/>
-            <where>feedback_text LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="organization">
@@ -199,24 +169,9 @@
             <where>text LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="short_answer_submitted_text">
-            <column name="text" valueComputed="REPLACE(text, '/api/files', '/api/core/files')"/>
-            <where>text LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="standardized_competency">
             <column name="description" valueComputed="REPLACE(description, '/api/files', '/api/core/files')"/>
             <where>description LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="submission">
-            <column name="explanation_text" valueComputed="REPLACE(explanation_text, '/api/files', '/api/core/files')"/>
-            <where>discriminator = 'M' AND explanation_text LIKE '%/api/files%'</where>
-        </update>
-
-        <update tableName="submission">
-            <column name="text" valueComputed="REPLACE(text, '/api/files', '/api/core/files')"/>
-            <where>discriminator = 'T' AND text LIKE '%/api/files%'</where>
         </update>
 
         <update tableName="text_block">
