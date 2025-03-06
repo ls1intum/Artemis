@@ -168,9 +168,14 @@ public class AthenaModuleService {
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
         var dueDate = originalExercise.getDueDate();
-        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule()) && dueDate != null
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule(), entityName, dueDate);
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getPreliminaryFeedbackModule(), updatedExercise.getPreliminaryFeedbackModule(), entityName, dueDate);
+    }
+
+    private static void checkValidityOfAnAthenaModuleBasedOnDueDate(String originalExerciseModule, String updatedExerciseModule, String entityName, ZonedDateTime dueDate) {
+        if (!Objects.equals(originalExerciseModule, updatedExerciseModule) && dueDate != null
                 && dueDate.isBefore(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
+            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, " ");
         }
     }
 
@@ -179,7 +184,8 @@ public class AthenaModuleService {
      *
      * @param course The course for which the access to restricted modules should be revoked
      */
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
+    public void revokeAccessToRestrictedFeedbackModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
+        exerciseRepository.revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(course.getId(), restrictedModules);
     }
 }
