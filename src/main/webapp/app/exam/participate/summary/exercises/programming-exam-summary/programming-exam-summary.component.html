@@ -3,23 +3,23 @@
         <div class="row gx-5">
             <div class="col-md-4">
                 <div class="mb-4">
-                    @if (submission) {
+                    @if (submission()) {
                         <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
                     }
                     <h1>Programming exam summary</h1>
                     <jhi-code-button
                         [smallButtons]="true"
-                        [participations]="[participation]"
-                        [repositoryUri]="participation?.userIndependentRepositoryUri ?? ''"
+                        [participations]="[participation()]"
+                        [repositoryUri]="participation()?.userIndependentRepositoryUri ?? ''"
                         [routerLinkForRepositoryView]="
                             isInCourseManagement
-                                ? ['..', 'programming-exercises', exercise.id!, 'repository', 'USER', participation.id!]
-                                : [routerLink, 'exercises', exercise.id!, 'repository', participation.id!]
+                                ? ['..', 'programming-exercises', exercise().id!, 'repository', 'USER', participation().id!]
+                                : [routerLink, 'exercises', exercise().id!, 'repository', participation().id!]
                         "
                     />
                     <br />
                     <span>
-                        @if (submission) {
+                        @if (submission()) {
                             <span jhiTranslate="artemisApp.exam.examSummary.submissionLinkedToCommit"></span>
                         }
                         @if (commitUrl) {
@@ -31,8 +31,8 @@
                         }
                     </span>
                 </div>
-                @if (isAfterResultsArePublished) {
-                    @if (submission) {
+                @if (isAfterResultsArePublished()) {
+                    @if (submission()) {
                         <h5 jhiTranslate="artemisApp.exam.examSummary.assessment"></h5>
                     }
                     @if (feedbackComponentParameters && feedbackComponentParameters.result) {
@@ -45,27 +45,27 @@
                             [messageKey]="feedbackComponentParameters.messageKey"
                             [showMissingAutomaticFeedbackInformation]="feedbackComponentParameters.showMissingAutomaticFeedbackInformation ?? false"
                             [isExamReviewPage]="true"
-                            [isPrinting]="isPrinting"
+                            [isPrinting]="isPrinting()"
                         />
                     }
                 }
             </div>
             <div class="col-md-8">
                 <h5 jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
-                @if (exercise.problemStatement) {
-                    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation" [personalParticipation]="!instructorView" />
+                @if (exercise().problemStatement) {
+                    <jhi-programming-exercise-instructions [exercise]="exercise()" [participation]="participation()" [personalParticipation]="!instructorView()" />
                 }
             </div>
         </div>
     </div>
-    @if ((exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) && submission && isAfterStudentReviewStart) {
+    @if ((exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise().allowComplaintsForAutomaticAssessments) && submission() && isAfterStudentReviewStart()) {
         <jhi-complaint-student-view
             class="mb-2 mt-2 ms-3"
-            [exercise]="exercise"
-            [participation]="participation"
-            [result]="participation.results?.[0] ?? submission?.results?.[0]"
-            [exam]="exam"
-            [testRun]="isTestRun!"
+            [exercise]="exercise()"
+            [participation]="participation()"
+            [result]="participation().results?.[0] ?? submission()?.results?.[0]"
+            [exam]="exam()"
+            [testRun]="isTestRun()!"
         />
     }
 </ng-container>

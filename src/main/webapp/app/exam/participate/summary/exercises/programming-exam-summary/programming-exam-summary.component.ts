@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
@@ -32,25 +32,25 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
-    @Input() exercise: ProgrammingExercise;
+    exercise = input.required<ProgrammingExercise>();
 
-    @Input() participation: ProgrammingExerciseStudentParticipation;
+    participation = input.required<ProgrammingExerciseStudentParticipation>();
 
-    @Input() submission: ProgrammingSubmission;
+    submission = input.required<ProgrammingSubmission>();
 
-    @Input() isTestRun = false;
+    isTestRun = input(false);
 
-    @Input() exam: Exam;
+    exam = input.required<Exam>();
 
-    @Input() isAfterStudentReviewStart = false;
+    isAfterStudentReviewStart = input(false);
 
-    @Input() resultsPublished = false;
+    resultsPublished = input(false);
 
-    @Input() isPrinting = false;
+    isPrinting = input(false);
 
-    @Input() isAfterResultsArePublished = false;
+    isAfterResultsArePublished = input(false);
 
-    @Input() instructorView = false;
+    instructorView = input(false);
 
     readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
 
@@ -71,21 +71,21 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
-        this.result = this.participation.results?.[0];
-        this.commitHash = this.submission?.commitHash?.slice(0, 11);
+        this.result = this.participation().results?.[0];
+        this.commitHash = this.submission()?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
         const missingResultInfo = MissingResultInformation.NONE;
 
-        const templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.participation.results?.[0], isBuilding, missingResultInfo);
+        const templateStatus = evaluateTemplateStatus(this.exercise(), this.participation(), this.participation().results?.[0], isBuilding, missingResultInfo);
 
         if (this.result) {
             this.feedbackComponentParameters = prepareFeedbackComponentParameters(
-                this.exercise,
+                this.exercise(),
                 this.result,
-                this.participation,
+                this.participation(),
                 templateStatus,
-                this.exam.latestIndividualEndDate,
+                this.exam().latestIndividualEndDate,
                 this.exerciseCacheService ?? this.exerciseService,
             );
         }
@@ -97,7 +97,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         // Get active profiles, to distinguish between VC systems for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise.projectKey, this.participation, this.submission);
+            this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise().projectKey, this.participation(), this.submission());
             this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
         });
     }
