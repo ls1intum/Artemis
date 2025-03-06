@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -187,13 +188,18 @@ public class CourseNotificationService {
         courseNotificationEntity = courseNotificationRepository.save(courseNotificationEntity);
 
         var parameters = courseNotification.getParameters();
+        var parameterEntities = new ArrayList<CourseNotificationParameter>();
 
         for (var key : parameters.keySet()) {
             if (parameters.get(key) == null) {
                 continue;
             }
 
-            courseNotificationParameterRepository.save(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key)));
+            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key)));
+        }
+
+        if (!parameterEntities.isEmpty()) {
+            courseNotificationParameterRepository.saveAll(parameterEntities);
         }
 
         return courseNotificationEntity.getId();
