@@ -14,6 +14,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { input } from '@angular/core';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
@@ -36,11 +37,6 @@ describe('ExamBarComponent', () => {
 
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;
-
-        comp.exam = new Exam();
-        comp.exam.title = 'Test Exam';
-        comp.studentExam = new StudentExam();
-        comp.endDate = dayjs();
         const exercises = [
             {
                 id: 0,
@@ -54,7 +50,16 @@ describe('ExamBarComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
-        comp.studentExam.exercises = exercises;
+
+        TestBed.runInInjectionContext(() => {
+            comp.exam = input(new Exam());
+            comp.exam().title = 'Test Exam';
+            comp.studentExam = input(new StudentExam());
+            comp.endDate = input(dayjs());
+            comp.examStartDate = input(dayjs());
+            comp.studentExam().exercises = exercises;
+            comp.isEndView = input(false);
+        });
     });
 
     beforeEach(() => {
