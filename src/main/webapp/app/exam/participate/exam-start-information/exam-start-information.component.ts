@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared/information-box/information-box.component';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -16,9 +16,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 export class ExamStartInformationComponent implements OnInit {
     examInformationBoxData: InformationBox[] = [];
 
-    @Input() exam: Exam;
-    @Input() studentExam: StudentExam;
-    @Input() formattedStartText?: SafeHtml;
+    exam = input.required<Exam>();
+    studentExam = input.required<StudentExam>();
+    formattedStartText = input<SafeHtml>();
 
     totalPoints?: number;
     totalWorkingTimeInMinutes?: number;
@@ -31,15 +31,15 @@ export class ExamStartInformationComponent implements OnInit {
     gracePeriodInMinutes?: number;
 
     ngOnInit(): void {
-        this.totalPoints = this.exam.examMaxPoints;
-        this.totalWorkingTimeInMinutes = Math.floor(this.exam.workingTime! / 60);
-        this.moduleNumber = this.exam.moduleNumber;
-        this.courseName = this.exam.courseName;
-        this.examiner = this.exam.examiner;
-        this.numberOfExercisesInExam = this.exam.numberOfExercisesInExam;
-        this.examinedStudent = this.studentExam.user?.name;
-        this.startDate = this.exam.startDate;
-        this.gracePeriodInMinutes = Math.floor(this.exam.gracePeriod! / 60);
+        this.totalPoints = this.exam().examMaxPoints;
+        this.totalWorkingTimeInMinutes = Math.floor(this.exam().workingTime! / 60);
+        this.moduleNumber = this.exam().moduleNumber;
+        this.courseName = this.exam().courseName;
+        this.examiner = this.exam().examiner;
+        this.numberOfExercisesInExam = this.exam().numberOfExercisesInExam;
+        this.examinedStudent = this.studentExam().user?.name;
+        this.startDate = this.exam().startDate;
+        this.gracePeriodInMinutes = Math.floor(this.exam().gracePeriod! / 60);
 
         this.prepareInformationBoxData();
     }
@@ -97,7 +97,7 @@ export class ExamStartInformationComponent implements OnInit {
 
         const boxContentExamWorkingTime: InformationBoxContent = {
             type: 'workingTime',
-            value: this.studentExam,
+            value: this.studentExam(),
         };
 
         const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', boxContentExamWorkingTime, true);
