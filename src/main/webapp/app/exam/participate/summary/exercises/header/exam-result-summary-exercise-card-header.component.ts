@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { SubmissionType } from 'app/entities/submission.model';
@@ -13,10 +13,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, NgClass, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExamResultSummaryExerciseCardHeaderComponent {
-    @Input() index: number;
-    @Input() exercise: Exercise;
-    @Input() exerciseInfo?: ResultSummaryExerciseInfo;
-    @Input() resultsPublished: boolean;
+    index = input.required<number>();
+    exercise = input.required<Exercise>();
+    exerciseInfo = input.required<ResultSummaryExerciseInfo>();
+    resultsPublished = input.required<boolean>();
 
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 }
