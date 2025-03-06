@@ -14,6 +14,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
+import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
 let component: ExamResultSummaryExerciseCardHeaderComponent;
@@ -50,9 +51,12 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamResultSummaryExerciseCardHeaderComponent);
                 component = fixture.componentInstance;
-                component.index = 3;
-                component.exercise = programmingExercise;
-                component.exerciseInfo = { isCollapsed: false } as ResultSummaryExerciseInfo;
+                TestBed.runInInjectionContext(() => {
+                    component.index = input(3);
+                    component.exercise = input(programmingExercise);
+                    component.exerciseInfo = input({ isCollapsed: false } as ResultSummaryExerciseInfo);
+                    component.resultsPublished = input(false);
+                });
             });
     });
 
@@ -71,7 +75,9 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.MANUAL }] }] }, false],
         [{ studentParticipations: [{ submissions: [{ type: SubmissionType.ILLEGAL }] }] }, true],
     ])('should handle missing/empty fields correctly for %o when displaying illegal submission badge', (exercise, shouldBeNonNull) => {
-        component.exercise = exercise as Exercise;
+        TestBed.runInInjectionContext(() => {
+            component.exercise = input(exercise as Exercise);
+        });
 
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
@@ -86,7 +92,7 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         fixture.detectChanges();
 
         const exerciseTitleElement: HTMLElement = fixture.nativeElement.querySelector('#exercise-group-title-' + programmingExercise.id);
-        expect(exerciseTitleElement.textContent).toContain('#' + (component.index + 1));
+        expect(exerciseTitleElement.textContent).toContain('#' + (component.index() + 1));
         expect(exerciseTitleElement.textContent).toContain(programmingExercise.exerciseGroup?.title);
     });
 });
