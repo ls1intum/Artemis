@@ -23,6 +23,7 @@ import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { input } from '@angular/core';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -79,18 +80,27 @@ describe('QuizExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizExamSummaryComponent);
                 component = fixture.componentInstance;
-                component.quizParticipation = {
+                const quizParticipation = {
                     quizQuestions: exercise.quizQuestions!,
                     studentParticipations: exercise.studentParticipations,
                 };
-                component.submission = { id: 2, submittedAnswers: [] };
-                component.resultsPublished = true;
-                component.exam = { id: 1 } as Exam;
+                const submission = { id: 2, submittedAnswers: [] };
+                const resultsPublished = true;
+                const exam = { id: 1 } as Exam;
+                TestBed.runInInjectionContext(() => {
+                    component.quizParticipation = input(quizParticipation);
+                    component.submission = input(submission);
+                    component.resultsPublished = input(resultsPublished);
+                    component.exam = input(exam);
+                });
             });
     });
 
     it('should initialize', () => {
-        component.exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
+        const exam = { id: 1, publishResultsDate: dayjs().subtract(1, 'hours') } as Exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
         component.ngOnChanges();
         expect(component).not.toBeNull();
         expect(component.exam).not.toBeNull();
@@ -98,7 +108,9 @@ describe('QuizExamSummaryComponent', () => {
     });
 
     it('should initialize the solution dictionaries correctly', () => {
-        component.submission = submissionWithAnswers;
+        TestBed.runInInjectionContext(() => {
+            component.submission = input(submissionWithAnswers);
+        });
         component.ngOnChanges();
         expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);
