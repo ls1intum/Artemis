@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, OnChanges, input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/participate/exam.utils';
@@ -17,15 +17,14 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     imports: [TranslateDirective, StudentExamWorkingTimeComponent, TestExamWorkingTimeComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe],
 })
 export class ExamGeneralInformationComponent implements OnChanges {
-    @Input() exam: Exam;
-    @Input() studentExam: StudentExam;
-    @Input() reviewIsOpen = false;
-
+    exam = input.required<Exam>();
+    studentExam = input.required<StudentExam>();
+    reviewIsOpen = input<boolean>(false);
     /**
      * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
      * the information is shown in the {@link ExamResultOverviewComponent}
      */
-    @Input() displayOnExamCover = false;
+    displayOnExamCover = input<boolean>(false);
 
     examEndDate?: dayjs.Dayjs;
     normalWorkingTime?: number;
@@ -35,11 +34,11 @@ export class ExamGeneralInformationComponent implements OnChanges {
     currentDate?: dayjs.Dayjs;
 
     ngOnChanges() {
-        this.examEndDate = endTime(this.exam, this.studentExam);
-        this.normalWorkingTime = examWorkingTime(this.exam);
-        this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);
-        this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam, this.studentExam);
-        this.isTestExam = this.exam?.testExam;
+        this.examEndDate = endTime(this.exam(), this.studentExam());
+        this.normalWorkingTime = examWorkingTime(this.exam());
+        this.additionalWorkingTime = getAdditionalWorkingTime(this.exam(), this.studentExam());
+        this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam(), this.studentExam());
+        this.isTestExam = this.exam()?.testExam;
         if (this.isTestExam) {
             this.currentDate = dayjs();
         }
