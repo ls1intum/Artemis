@@ -173,8 +173,7 @@ public class AthenaModuleService {
     }
 
     private static void checkValidityOfAnAthenaModuleBasedOnDueDate(String originalExerciseModule, String updatedExerciseModule, String entityName, ZonedDateTime dueDate) {
-        if (!Objects.equals(originalExerciseModule, updatedExerciseModule) && dueDate != null
-                && dueDate.isBefore(ZonedDateTime.now())) {
+        if (!Objects.equals(originalExerciseModule, updatedExerciseModule) && dueDate != null && dueDate.isBefore(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, " ");
         }
     }
