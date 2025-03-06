@@ -87,7 +87,7 @@ describe('ExamParticipationLiveEventsService', () => {
 
             if (connected && wasEverConnectedBefore) {
                 expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
-                const req = httpMock.expectOne({ method: 'GET', url: `/api/courses/1/exams/1/student-exams/live-events` });
+                const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/1/exams/1/student-exams/live-events` });
                 req.flush(mockEvents);
                 expect(service['events']).toEqual(mockEvents);
                 expect(service['allEventsSubject'].getValue()).toEqual(mockEvents);

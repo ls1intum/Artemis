@@ -559,7 +559,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
         final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
@@ -620,7 +620,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         changeTestCaseWeights(testCases);
 
         // re-evaluate
-        final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
+        final var endpoint = "/programming/programming-exercises/" + programmingExercise.getId() + "/grading/re-evaluate";
         final var response = request.putWithResponseBody("/api" + endpoint, "{}", Integer.class, HttpStatus.OK);
         assertThat(response).isEqualTo(7);
 
@@ -1226,7 +1226,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         createTestParticipationsWithResults();
 
         // get statistics
-        final var endpoint = "/programming-exercises/" + programmingExerciseSCAEnabled.getId() + "/grading/statistics";
+        final var endpoint = "/programming/programming-exercises/" + programmingExerciseSCAEnabled.getId() + "/grading/statistics";
         final var statistics = request.get("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
         assertThat(statistics.numParticipations()).isEqualTo(5);

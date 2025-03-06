@@ -126,6 +126,6 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private String getEndpointUrl(long courseId) {
-        return String.format("/api/courses/%d/charts/exercise-scores", courseId);
+        return String.format("/api/exercise/courses/%d/charts/exercise-scores", courseId);
     }
 }

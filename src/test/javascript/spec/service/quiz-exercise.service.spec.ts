@@ -77,7 +77,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined), fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz-exercises' });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -102,7 +102,7 @@ describe('QuizExercise Service', () => {
 
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.import(quizExercise, fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz-exercises/import/42' });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises/import/42' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -124,7 +124,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.update(1, expected, fileMap));
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz-exercises/1' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -146,7 +146,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.query());
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/quiz-exercises' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/quiz/quiz-exercises' });
         req.flush([returnedFromService]);
         expect((await result)?.body).toEqual([expected]);
     });

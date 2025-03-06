@@ -75,7 +75,7 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), true, false);
 
-        var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).isEmpty();
     }
 
@@ -93,7 +93,7 @@ public class ConsistencyCheckTestService {
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId(), true, false);
 
-        var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(1);
         assertThat(consistencyErrors.getFirst().type()).isEqualTo(ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING);
     }
@@ -120,7 +120,7 @@ public class ConsistencyCheckTestService {
         expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.SOLUTION_REPO_MISSING));
         expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.TEST_REPO_MISSING));
 
-        var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(3).containsAll(expectedErrors);
     }
 
@@ -145,7 +145,7 @@ public class ConsistencyCheckTestService {
         expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));
         expectedErrors.add(new ConsistencyErrorDTO(exercise, ConsistencyErrorDTO.ErrorType.SOLUTION_BUILD_PLAN_MISSING));
 
-        var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
+        var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).hasSize(2);
         assertThat(consistencyErrors).containsAll(expectedErrors);
 
@@ -163,6 +163,6 @@ public class ConsistencyCheckTestService {
         userRepository.save(notAuthorizedUser);
 
         var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
-        request.get("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.FORBIDDEN, ConsistencyErrorDTO.class);
+        request.get("/api/exercise/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.FORBIDDEN, ConsistencyErrorDTO.class);
     }
 }
