@@ -1,17 +1,19 @@
-<div class="alert alert-warning alert-dismissible text-start fade show mt-4" role="alert">
-    <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
-    <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
-    <p jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.inconsistencies"></p>
-    @if (formattedConsistency().length > 0) {
+@if (formattedConsistency().length > 0) {
+    <div class="alert alert-warning alert-dismissible text-start fade show mt-4" role="alert">
+        <button type="button" class="btn-close" (click)="dismissConsistencyCheck()" aria-label="Close"></button>
+        <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.title"></h4>
+        <p jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.inconsistencies"></p>
+
         <ul>
-            @for (element of formattedConsistency(); track formattedConsistency) {
+            @for (element of formattedConsistency(); track element.suggestion) {
                 <div>
                     <li>{{ element.suggestion }}</li>
                     <p>{{ element.inconsistentFaq }}</p>
                 </div>
             }
         </ul>
-    }
-    <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.improvement"></h4>
-    <div [innerHtml]="this.improvement()"></div>
-</div>
+
+        <h4 class="alert-heading" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.consistencyCheckAlert.improvement"></h4>
+        <div [innerHtml]="this.improvement()"></div>
+    </div>
+}
