@@ -1,4 +1,3 @@
-# artemis repository, reusable-build.yml
 name: Build
 
 on:
