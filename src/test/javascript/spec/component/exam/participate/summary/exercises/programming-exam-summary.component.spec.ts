@@ -27,6 +27,7 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { input } from '@angular/core';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -113,11 +114,13 @@ describe('ProgrammingExamSummaryComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExamSummaryComponent);
                 component = fixture.componentInstance;
 
-                component.exercise = programmingExercise;
                 programmingParticipation.results = [result];
-                component.participation = programmingParticipation;
-                component.submission = programmingSubmission;
-                component.exam = exam;
+                TestBed.runInInjectionContext(() => {
+                    component.exercise = input(programmingExercise);
+                    component.participation = input(programmingParticipation);
+                    component.submission = input(programmingSubmission);
+                    component.exam = input(exam);
+                });
 
                 profileService = TestBed.inject(ProfileService);
 
@@ -149,7 +152,9 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should show result if present and results are published', () => {
-        component.isAfterResultsArePublished = true;
+        TestBed.runInInjectionContext(() => {
+            component.isAfterResultsArePublished = input(true);
+        });
 
         fixture.detectChanges();
 
@@ -162,7 +167,9 @@ describe('ProgrammingExamSummaryComponent', () => {
     });
 
     it('should not show results if not yet published', () => {
-        component.isAfterResultsArePublished = false;
+        TestBed.runInInjectionContext(() => {
+            component.isAfterResultsArePublished = input(false);
+        });
 
         fixture.detectChanges();
 
