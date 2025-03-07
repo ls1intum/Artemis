@@ -21,7 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
-    let getInlineFeedbackNodeStub: jest.SpyInstance;
+    let getInlineFeedbackNodeByLineStub: jest.SpyInstance;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let loadFileFromRepositoryStub: jest.SpyInstance;
 
@@ -44,6 +44,12 @@ describe('CodeEditorMonacoComponent', () => {
             text: 'comment on line 9',
             detailText: 'the most detailed text',
         },
+        {
+            id: 4,
+            reference: 'file:file2.java_line:9',
+            text: 'another comment on line 9',
+            detailText: 'plagiarism statement',
+        },
     ];
 
     beforeEach(async () => {
@@ -62,7 +68,7 @@ describe('CodeEditorMonacoComponent', () => {
         comp = fixture.componentInstance;
         codeEditorRepositoryFileService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
         loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
-        getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
+        getInlineFeedbackNodeByLineStub = jest.spyOn(comp, 'getInlineFeedbackNodeByLine').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -311,7 +317,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(setAnnotationsStub).toHaveBeenNthCalledWith(3, [buildAnnotations[1]], false);
     });
 
-    it('should display feedback when viewing a tutor assessment', fakeAsync(() => {
+    it('should display feedback(without multiple widgets at the same line) when viewing a tutor assessment', fakeAsync(() => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
         fixture.componentRef.setInput('isTutorAssessment', true);
@@ -326,7 +332,7 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1`, document.createElement('div'));
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
-            expect(getInlineFeedbackNodeStub).toHaveBeenCalledTimes(2);
+            expect(getInlineFeedbackNodeByLineStub).toHaveBeenCalledTimes(2);
             expect(selectFileInEditorStub).toHaveBeenCalledOnce();
         });
     }));
@@ -337,11 +343,11 @@ describe('CodeEditorMonacoComponent', () => {
         const feedbackLineZeroBased = feedbackLineOneBased - 1;
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const element = document.createElement('div');
-        getInlineFeedbackNodeStub.mockReturnValue(undefined);
+        getInlineFeedbackNodeByLineStub.mockReturnValue(undefined);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
-        getInlineFeedbackNodeStub.mockReturnValue(element);
+        getInlineFeedbackNodeByLineStub.mockReturnValue(element);
         expect(comp.newFeedbackLines()).toEqual([feedbackLineZeroBased]);
         tick(1);
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
@@ -519,4 +525,26 @@ describe('CodeEditorMonacoComponent', () => {
 
         expect(emitSpy).toHaveBeenCalledWith([openFeedback, closedFeedbackForFile]);
     });
+
+    it('should display feedback(with multiple widgets at the same line) when viewing a tutor assessment', fakeAsync(() => {
+        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
+        const addLineWidgetWithFeedbackStub = jest.spyOn(comp, 'addLineWidgetWithFeedback').mockImplementation();
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.componentRef.setInput('selectedFile', 'file2.java');
+        fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
+        TestBed.flushEffects();
+        fixture.detectChanges();
+        // Use .then() here instead of await so fakeAsync does not break.
+        comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file2', false) }).then(() => {
+            // Rendering of the feedback items happens after one tick to allow the renderer to catch up with the DOM nodes.
+            tick(1);
+            expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
+            expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 10, `feedback-3`, document.createElement('div'));
+            expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 10, `feedback-4`, document.createElement('div'));
+            expect(getInlineFeedbackNodeByLineStub).toHaveBeenCalledTimes(2);
+            expect(selectFileInEditorStub).toHaveBeenCalledOnce();
+            expect(addLineWidgetWithFeedbackStub).toHaveBeenCalledWith(expect.arrayContaining([exampleFeedbacks[2], exampleFeedbacks[3]]), 9);
+        });
+    }));
 });
