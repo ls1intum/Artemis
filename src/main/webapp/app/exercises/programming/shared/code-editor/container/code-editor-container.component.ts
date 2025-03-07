@@ -134,7 +134,6 @@ export class CodeEditorContainerComponent implements OnChanges {
         if (changes.feedbackSuggestions) {
             this.updateFileBadgesForFeedbackSuggestions();
         }
-        console.log("result changed! time to update badges");
         if (changes.latestResult) {
             this.updateFileBadgesForPreliminaryFeedback();
         }
