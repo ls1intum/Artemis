@@ -309,7 +309,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserCreatesNewBranch() throws Exception {
+    void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Users cannot create new branches.
@@ -322,6 +322,24 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesNewBranchBranchingAllowed() throws Exception {
+        programmingExercise.setAllowBranching(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+                .iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
     }
 
     @Test
