@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, ViewEncapsulation, inject, input } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
@@ -51,10 +51,8 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
 
     faPlus = faPlus;
 
-    @Input()
-    tutorialGroupId: number;
-    @Input()
-    course: Course;
+    tutorialGroupId = input.required<number>();
+    course = input.required<Course>();
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;
@@ -63,7 +61,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     isInitialized = false;
 
     initialize() {
-        if (!this.tutorialGroupId || !this.course) {
+        if (!this.tutorialGroupId() || !this.course()) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -75,7 +73,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     loadAll() {
         this.isLoading = true;
         return this.tutorialGroupService
-            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
+            .getOneOfCourse(this.course().id!, this.tutorialGroupId())
             .pipe(
                 finalize(() => (this.isLoading = false)),
                 map((res: HttpResponse<TutorialGroup>) => {
@@ -103,7 +101,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     openCreateSessionDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.course = this.course();
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.initialize();
         from(modalRef.result)

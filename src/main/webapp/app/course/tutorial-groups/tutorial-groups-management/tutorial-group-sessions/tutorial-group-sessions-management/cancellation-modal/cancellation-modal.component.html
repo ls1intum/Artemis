@@ -18,7 +18,7 @@
             ) | artemisTranslate: { label: generateSessionLabel(tutorialGroupSession) }
         }}
     </p>
-    @if (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE) {
+    @if (tutorialGroupSession().status === tutorialGroupSessionStatus.ACTIVE) {
         <form [formGroup]="form">
             <div class="form-group">
                 <label for="reason" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation"></label>

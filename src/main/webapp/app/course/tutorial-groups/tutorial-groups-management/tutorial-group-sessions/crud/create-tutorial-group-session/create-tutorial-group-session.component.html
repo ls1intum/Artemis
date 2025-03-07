@@ -6,7 +6,7 @@
                 <button type="button" class="btn-close" (click)="clear()"></button>
             </div>
             <div class="modal-body">
-                <jhi-tutorial-group-session-form [isEditMode]="false" [timeZone]="course.timeZone!" (formSubmitted)="createTutorialGroupSession($event)" />
+                <jhi-tutorial-group-session-form [isEditMode]="false" [timeZone]="course().timeZone!" (formSubmitted)="createTutorialGroupSession($event)" />
             </div>
         </div>
     }

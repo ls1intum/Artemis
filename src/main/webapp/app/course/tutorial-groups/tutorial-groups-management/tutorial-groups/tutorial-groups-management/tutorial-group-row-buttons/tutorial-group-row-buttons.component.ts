@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, inject, input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -26,9 +26,9 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     ngUnsubscribe = new Subject<void>();
 
-    @Input() isAtLeastInstructor = false;
-    @Input() course: Course;
-    @Input() tutorialGroup: TutorialGroup;
+    isAtLeastInstructor = input(false);
+    course = input.required<Course>();
+    tutorialGroup = input.required<TutorialGroup>();
 
     @Output() tutorialGroupDeleted = new EventEmitter<void>();
     @Output() registrationsChanged = new EventEmitter<void>();
@@ -52,8 +52,8 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
             animation: false,
             windowClass: 'session-management-dialog',
         });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
+        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -68,8 +68,8 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     openRegistrationDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(RegisteredStudentsComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
+        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -83,7 +83,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     deleteTutorialGroup = () => {
         this.tutorialGroupsService
-            .delete(this.course.id!, this.tutorialGroup.id!)
+            .delete(this.course().id!, this.tutorialGroup().id!)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
