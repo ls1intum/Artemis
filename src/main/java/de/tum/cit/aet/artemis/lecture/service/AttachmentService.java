@@ -59,10 +59,13 @@ public class AttachmentService {
 
         List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(attachmentUnit.getId());
 
-        // If no slides are marked as hidden, no need to generate a student version
+        // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
-            attachment.setStudentVersion(attachment.getLink());
-            attachmentRepository.save(attachment);
+            if (attachment.getStudentVersion() != null) {
+                deleteStudentVersionFile(attachment);
+                attachment.setStudentVersion(null);
+                attachmentRepository.save(attachment);
+            }
             return;
         }
 
@@ -77,6 +80,24 @@ public class AttachmentService {
         }
         catch (Exception e) {
             throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Deletes the student version file and cleans up associated resources.
+     *
+     * @param attachment The attachment whose student version should be deleted
+     */
+    private void deleteStudentVersionFile(Attachment attachment) {
+        if (attachment.getStudentVersion() != null) {
+            try {
+                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
+                fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+            }
+            catch (Exception e) {
+                throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());
+            }
         }
     }
 
@@ -110,9 +131,7 @@ public class AttachmentService {
     private void handleStudentVersionFile(byte[] pdfData, Attachment attachment, Long attachmentUnitId) throws IOException {
         // Delete the old student version if it exists
         if (attachment.getStudentVersion() != null) {
-            URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
-            fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+            deleteStudentVersionFile(attachment);
         }
 
         // Create the student version directory if it doesn't exist
