@@ -156,6 +156,7 @@ jobs:
     needs: validate-inputs
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@chore/refactor-build-workflow
     with:
+      ref: ${{ inputs.docker_ref }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
       tags: ${{ inputs.docker_build_tag }}
