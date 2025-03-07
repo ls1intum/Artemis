@@ -9,6 +9,6 @@ export class LongFeedbackTextService {
     private http = inject(HttpClient);
 
     find(feedbackId: number): Observable<LongFeedbackResponse> {
-        return this.http.get(`api/feedbacks/${feedbackId}/long-feedback`, { observe: 'response', responseType: 'text' });
+        return this.http.get(`api/assessment/feedbacks/${feedbackId}/long-feedback`, { observe: 'response', responseType: 'text' });
     }
 }

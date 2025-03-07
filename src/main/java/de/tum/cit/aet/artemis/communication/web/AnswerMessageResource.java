@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class AnswerMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(AnswerMessageResource.class);
@@ -65,7 +65,7 @@ public class AnswerMessageResource {
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert
         log.debug("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
+        return ResponseEntity.created(new URI("/api/communication/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
     }
 
     /**
@@ -116,7 +116,7 @@ public class AnswerMessageResource {
      *         or 404 (Not Found) if no matching answer posts are found
      * @throws BadRequestAlertException if the provided answer post IDs are null, empty, or belong to a different course
      */
-    @GetMapping("communication/courses/{courseId}/answer-messages-source-posts")
+    @GetMapping("courses/{courseId}/answer-messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
         log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, answerPostIds.size());

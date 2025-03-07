@@ -18,7 +18,7 @@ export class FeedbackService extends BaseApiHttpService {
     };
 
     public async getLongFeedbackText(feedbackId: number): Promise<string> {
-        const url = `feedbacks/${feedbackId}/long-feedback`;
+        const url = `assessment/feedbacks/${feedbackId}/long-feedback`;
         return await this.get<string>(url, { responseType: 'text' });
     }
 }

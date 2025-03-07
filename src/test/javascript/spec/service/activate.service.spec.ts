@@ -8,7 +8,7 @@ describe('ActivateService', () => {
     let httpService: HttpClient;
     let getStub: jest.SpyInstance;
 
-    const getURL = 'api/public/activate';
+    const getURL = 'api/core/public/activate';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

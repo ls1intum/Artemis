@@ -12,7 +12,7 @@ export class ScienceService {
     private scienceSettingsService = inject(ScienceSettingsService);
     private accountService = inject(AccountService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/atlas';
 
     private featureToggleActive = false;
 

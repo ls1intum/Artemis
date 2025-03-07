@@ -13,7 +13,7 @@ export class LtiConfigurationService {
      */
     query(req?: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
         const params: HttpParams = createRequestOption(req);
-        return this.http.get<LtiPlatformConfiguration[]>('api/lti-platforms', {
+        return this.http.get<LtiPlatformConfiguration[]>('api/lti/lti-platforms', {
             params,
             observe: 'response',
         });
@@ -25,7 +25,7 @@ export class LtiConfigurationService {
      * @return Observable of the HTTP response.
      */
     addLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
-        return this.http.post<LtiPlatformConfiguration>(`api/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
+        return this.http.post<LtiPlatformConfiguration>(`api/lti/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
     }
 
     /**
@@ -34,7 +34,7 @@ export class LtiConfigurationService {
      * @return Observable of the HTTP response.
      */
     updateLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
-        return this.http.put<LtiPlatformConfiguration>(`api/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
+        return this.http.put<LtiPlatformConfiguration>(`api/lti/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
     }
 
     /**
@@ -42,10 +42,10 @@ export class LtiConfigurationService {
      * @param platformId The platform id.
      */
     deleteLtiPlatform(platformId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`api/admin/lti-platform/${platformId}`, { observe: 'response' });
+        return this.http.delete<any>(`api/lti/admin/lti-platform/${platformId}`, { observe: 'response' });
     }
 
     getLtiPlatformById(platformId: number): Observable<LtiPlatformConfiguration> {
-        return this.http.get<LtiPlatformConfiguration>(`api/admin/lti-platform/${platformId}`);
+        return this.http.get<LtiPlatformConfiguration>(`api/lti/admin/lti-platform/${platformId}`);
     }
 }
