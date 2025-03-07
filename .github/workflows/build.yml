@@ -33,6 +33,34 @@ on:
     types:
     - created
 
+
+# Concurrency control for GitHub Actions workflow
+# Ensures efficient use of CI resources by canceling redundant runs where needed.
+#
+# - Pull requests: Cancel previous runs for the same PR to avoid redundant builds.
+#   Example: PR #42 → "build-pr-42"
+#
+# - Pushes (branches & tags): Each branch or tag runs independently. If a run is in progress for the same branch or tag, it is canceled.
+#   Example: Push to "develop" → "build-refs/heads/develop"
+#   Example: Push to "release/1.2.3" → "build-refs/heads/release/1.2.3"
+#   Example: Tag "v1.2.3" → "build-refs/tags/v1.2.3"
+#
+# - Releases: Each release runs independently.
+#   Example: Release for "v1.2.3" → "build-release-v1.2.3"
+#
+# - Default fallback: Ensures the workflow always has a concurrency group.
+#   Example: Unexpected event type → "build-default"
+concurrency:
+  group: |
+    ${{
+      github.event_name == 'pull_request' && format('build-pr-{0}', github.event.pull_request.number) ||
+      github.event_name == 'push' && format('build-{0}', github.ref) ||
+      github.event_name == 'release' && format('build-release-{0}', github.event.release.tag_name) ||
+      'build-default'
+    }}
+  cancel-in-progress: true
+
+
 # Keep this filename in sync with the filename environment variable (PR_AUTO_BUILD_FILE_NAME) in the testserver-deployment.yml workflow
 # and with the build_workflow_name environment variable in the staging-deployment.yml workflow
 
