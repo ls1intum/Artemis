@@ -59,7 +59,7 @@
                 </th>
                 @if (showChannelColumn()) {
                     <th>
-                        <a class="th-link" [routerLink]="['/courses', course().id!, 'communication']" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></a>
+                        <a class="th-link" [routerLink]="['/courses', course()?.id!, 'communication']" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></a>
                     </th>
                 }
                 @if (extraColumn) {

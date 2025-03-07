@@ -26,15 +26,15 @@
                         {{ tutorialGroup().teachingAssistantName }}
                     </div>
 
-                    @if (tutorialGroup().channel && isMessagingEnabled) {
+                    @if (tutorialGroup()?.channel && isMessagingEnabled) {
                         <div>
                             <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></span><span class="text-secondary">:</span>
-                            @if (tutorialGroup().channel.isMember) {
-                                <a [routerLink]="['/courses', course().id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup().channel.id }">
-                                    {{ tutorialGroup().channel.name }}
+                            @if (tutorialGroup()?.channel?.isMember) {
+                                <a [routerLink]="['/courses', course().id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup()?.channel?.id }">
+                                    {{ tutorialGroup()?.channel?.name }}
                                 </a>
                             } @else {
-                                <span> {{ tutorialGroup().channel.name }} </span>
+                                <span> {{ tutorialGroup()?.channel?.name }} </span>
                             }
                         </div>
                     }
@@ -47,7 +47,7 @@
                 <div>
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.averageAttendanceDetail"></span><span class="text-secondary">:</span>
-                        {{ (tutorialGroup().averageAttendance && Math.round(tutorialGroup().averageAttendance)) ?? '-' }}
+                        {{ (tutorialGroup()?.averageAttendance && Math.round(tutorialGroup()?.averageAttendance)) ?? '-' }}
                         <fa-icon
                             class="text-secondary"
                             [icon]="faQuestionCircle"
@@ -154,7 +154,7 @@
                 [sessions]="sessions"
                 [tutorialGroup]="tutorialGroup()"
                 [showIdColumn]="false"
-                [isReadOnly]="!course().isAtLeastTutor"
+                [isReadOnly]="!course()?.isAtLeastTutor"
                 (attendanceUpdated)="recalculateAttendanceDetails()"
             />
         </div>

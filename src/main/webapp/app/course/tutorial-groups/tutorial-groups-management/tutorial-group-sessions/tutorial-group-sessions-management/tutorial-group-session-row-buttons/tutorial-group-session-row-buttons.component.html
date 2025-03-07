@@ -3,7 +3,7 @@
     @if (!tutorialGroupSession().tutorialGroupFreePeriod) {
         <button [id]="'cancel-activate-' + tutorialGroupSession().id" type="button" class="btn btn-secondary" (click)="openCancellationDialog(tutorialGroupSession())">
             {{
-                (tutorialGroupSession.status === tutorialGroupSessionStatus.CANCELLED
+                (tutorialGroupSession().status === tutorialGroupSessionStatus.CANCELLED
                     ? 'artemisApp.pages.tutorialGroupSessionManagement.rowButtons.activate'
                     : 'artemisApp.pages.tutorialGroupSessionManagement.rowButtons.cancel'
                 ) | artemisTranslate

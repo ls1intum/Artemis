@@ -28,14 +28,14 @@
                         {{
                             TutorialGroupFreePeriodsManagementComponent.isFreeDay(freePeriod) || TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod)
                                 ? '-'
-                                : (freePeriod.start | artemisDate: 'time' : false : course.timeZone : false)
+                                : (freePeriod.start | artemisDate: 'time' : false : course.timeZone() : false)
                         }}
                     </td>
                     <td class="col-2">
                         {{
                             TutorialGroupFreePeriodsManagementComponent.isFreeDay(freePeriod) || TutorialGroupFreePeriodsManagementComponent.isFreePeriod(freePeriod)
                                 ? '-'
-                                : (freePeriod.end | artemisDate: 'time' : false : course.timeZone : false)
+                                : (freePeriod.end | artemisDate: 'time' : false : course.timeZone() : false)
                         }}
                     </td>
                     <td class="col-2">
