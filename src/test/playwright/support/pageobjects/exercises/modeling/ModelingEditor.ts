@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { EXERCISE_BASE, MODELING_EDITOR_CANVAS } from '../../../constants';
+import { MODELING_EDITOR_CANVAS } from '../../../constants';
 import { getExercise } from '../../../utils';
 
 export class ModelingEditor {
@@ -28,7 +28,7 @@ export class ModelingEditor {
     }
 
     async submit() {
-        const responsePromise = this.page.waitForResponse(`${EXERCISE_BASE}/*/modeling-submissions`);
+        const responsePromise = this.page.waitForResponse(`api/modeling/exercises/*/modeling-submissions`);
         await this.page.locator('#submit-modeling-submission').first().click();
         return await responsePromise;
     }

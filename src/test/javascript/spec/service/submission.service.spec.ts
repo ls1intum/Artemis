@@ -81,7 +81,7 @@ describe('Submission Service', () => {
             .findAllSubmissionsOfParticipation(participationId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ url: `api/participations/${participationId}/submissions`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `api/exercise/participations/${participationId}/submissions`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));
@@ -100,7 +100,7 @@ describe('Submission Service', () => {
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ url: `api/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));
@@ -187,7 +187,7 @@ describe('Submission Service', () => {
                 expect(submissionWithComplaint.submission.submissionDate).toEqual(dayjs(submissionDateStr));
                 expect(submissionWithComplaint.complaint.submittedTime).toEqual(dayjs(complaintSubmittedTimeStr));
             });
-        const req = httpMock.expectOne({ url: `api/exercises/${exerciseId}/submissions-with-complaints`, method: 'GET' });
+        const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/submissions-with-complaints`, method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));

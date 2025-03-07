@@ -15,7 +15,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
 
-    private resourceUrl = 'api/file-upload-exercises';
+    private resourceUrl = 'api/fileupload/file-upload-exercises';
 
     /**
      * Sends request to create new file upload exercise

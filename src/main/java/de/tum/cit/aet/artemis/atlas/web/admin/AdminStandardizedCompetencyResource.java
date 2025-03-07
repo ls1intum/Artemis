@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @FeatureToggle(Feature.StandardizedCompetencies)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/atlas/admin/")
 public class AdminStandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminStandardizedCompetencyResource.class);
