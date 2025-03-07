@@ -7,14 +7,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
@@ -28,15 +31,17 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
 
     private final TaskScheduler taskScheduler;
 
+    private final AttachmentService attachmentService;
+
     private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
-    private final ApplicationContext applicationContext;
+    private static final Logger log = LoggerFactory.getLogger(SlideUnhideService.class);
 
     @Autowired
-    public SlideUnhideService(SlideRepository slideRepository, TaskScheduler taskScheduler, ApplicationContext applicationContext) {
+    public SlideUnhideService(SlideRepository slideRepository, TaskScheduler taskScheduler, AttachmentService attachmentService) {
         this.slideRepository = slideRepository;
         this.taskScheduler = taskScheduler;
-        this.applicationContext = applicationContext;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -45,8 +50,7 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
      */
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        SlideUnhideService self = applicationContext.getBean(SlideUnhideService.class);
-        self.scheduleAllHiddenSlides();
+        scheduleAllHiddenSlides();
     }
 
     /**
@@ -79,28 +83,43 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
         Instant unhideTime = unhideDate.toInstant();
         Instant now = Instant.now();
 
-        SlideUnhideService self = applicationContext.getBean(SlideUnhideService.class);
-
         if (unhideTime.isBefore(now)) {
-            self.unhideSlide(slide.getId());
+            this.unhideSlide(slide.getId());
         }
         else {
-            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> self.unhideSlide(slide.getId()), unhideTime);
+            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> this.unhideSlide(slide.getId()), unhideTime);
             scheduledTasks.put(slide.getId(), scheduledTask);
         }
     }
 
     /**
      * Unhides a slide by setting its hidden property to null.
+     * After unhiding, regenerates the student version of the attachment.
      *
      * @param slideId The ID of the slide to unhide
      */
     @Transactional
     public void unhideSlide(Long slideId) {
         slideRepository.findById(slideId).ifPresent(slide -> {
+            AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
+            Attachment attachment = null;
+            if (attachmentUnit != null) {
+                attachment = attachmentUnit.getAttachment();
+            }
+
             slide.setHidden(null);
             slideRepository.save(slide);
             scheduledTasks.remove(slideId);
+
+            // Regenerate student version of the attachment if applicable
+            if (attachment != null) {
+                try {
+                    attachmentService.regenerateStudentVersion(attachment);
+                }
+                catch (Exception e) {
+                    log.error("Failed to regenerate student version for attachment {} after unhiding slide {}: {}", attachment.getId(), slideId, e.getMessage(), e);
+                }
+            }
         });
     }
 

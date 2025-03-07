@@ -26,4 +26,12 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      */
     List<Slide> findAllByHiddenNotNull();
 
+    /**
+     * Find slides for a specific attachment unit where the hidden field is not null
+     * (these are the hidden slides)
+     *
+     * @param attachmentUnitId The ID of the attachment unit
+     * @return List of hidden slides for the attachment unit
+     */
+    List<Slide> findByAttachmentUnitIdAndHiddenNotNull(Long attachmentUnitId);
 }
