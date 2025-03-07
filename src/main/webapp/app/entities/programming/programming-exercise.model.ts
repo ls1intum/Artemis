@@ -92,6 +92,7 @@ export class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = false; // default value
         this.allowOnlineIde = false; // default value
         this.staticCodeAnalysisEnabled = false; // default value
+        this.allowBranching = false; // default value
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value

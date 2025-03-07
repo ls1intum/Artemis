@@ -65,8 +65,9 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
-        // Reject pushes to anything other than the default branch.
-        if (!command.getRefName().equals("refs/heads/" + defaultBranchName)) {
+        // If branching is not allowed, reject pushes to anything other than the default branch
+        boolean isBranchingAllowed = localVCServletService.isBranchingAllowedForRepository(repository);
+        if (!command.getRefName().equals("refs/heads/" + defaultBranchName) && !isBranchingAllowed) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
             return;
         }

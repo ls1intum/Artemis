@@ -7,7 +7,7 @@
     @if (isEditFieldDisplayedRecord().allowBranching) {
         <div class="form-check">
             <label class="form-check-label" for="field_allowBranching">
-                <input class="form-check-input" type="checkbox" name="allowBranching" id="field_allowBranching" [checked]="programmingExercise().allowBranching" />
+                <input class="form-check-input" type="checkbox" name="allowBranching" id="field_allowBranching" [(ngModel)]="programmingExercise().allowBranching" />
                 <span jhiTranslate="artemisApp.programmingExercise.allowBranching.title"></span>
                 <jhi-help-icon text="artemisApp.programmingExercise.allowBranching.description" />
             </label>
