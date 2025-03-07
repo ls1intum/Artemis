@@ -24,6 +24,7 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -185,8 +186,11 @@ describe('ExamResultOverviewComponent', () => {
                 component = fixture.componentInstance;
                 exam.course = course;
                 component.gradingScaleExists = false;
-                component.studentExamWithGrade = studentExamWithGrade;
-                component.exerciseInfos = {};
+                const exerciseInfos = {};
+                TestBed.runInInjectionContext(() => {
+                    component.studentExamWithGrade = input(studentExamWithGrade);
+                    component.exerciseInfos = input(exerciseInfos);
+                });
             });
     });
 
@@ -195,11 +199,11 @@ describe('ExamResultOverviewComponent', () => {
     });
 
     it('should handle error correctly', () => {
-        component.studentExamWithGrade.studentExam = undefined as any;
+        component.studentExamWithGrade().studentExam = undefined as any;
         fixture.detectChanges();
 
         expect(fixture).not.toBeNull();
-        expect(component.studentExamWithGrade.studentExam).toBeUndefined();
+        expect(component.studentExamWithGrade().studentExam).toBeUndefined();
         expect(component.gradingScaleExists).toBeFalse();
     });
 
@@ -218,52 +222,52 @@ describe('ExamResultOverviewComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[programmingExerciseTwo.id!]).toBe(0);
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[textExercise.id!]).toBe(20);
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[notIncludedTextExercise.id!]).toBe(10);
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[bonusTextExercise.id!]).toBe(10);
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[quizExercise.id!]).toBe(2);
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[modelingExercise.id!]).toBe(3.33);
-        expect(component.studentExamWithGrade?.achievedPointsPerExercise?.[programmingExercise.id!]).toBe(0);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[programmingExerciseTwo.id!]).toBe(0);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[textExercise.id!]).toBe(20);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[notIncludedTextExercise.id!]).toBe(10);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[bonusTextExercise.id!]).toBe(10);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[quizExercise.id!]).toBe(2);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[modelingExercise.id!]).toBe(3.33);
+        expect(component.studentExamWithGrade()?.achievedPointsPerExercise?.[programmingExercise.id!]).toBe(0);
 
         expect(component.overallAchievedPoints).toBe(35.33);
         expect(component.maxPoints).toBe(40);
-        expect(component.studentExamWithGrade?.maxBonusPoints).toBe(20);
+        expect(component.studentExamWithGrade()?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(60);
     });
 
     it('should display 0 if no exercises are present', () => {
-        component.studentExamWithGrade.studentExam!.exercises = [];
-        component.studentExamWithGrade.maxPoints = 0;
-        component.studentExamWithGrade.studentResult.overallPointsAchieved = 0;
+        component.studentExamWithGrade().studentExam!.exercises = [];
+        component.studentExamWithGrade().maxPoints = 0;
+        component.studentExamWithGrade().studentResult.overallPointsAchieved = 0;
 
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
         expect(component.overallAchievedPoints).toBe(0);
         expect(component.maxPoints).toBe(0);
-        expect(component.studentExamWithGrade?.maxBonusPoints).toBe(20);
+        expect(component.studentExamWithGrade()?.maxBonusPoints).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
     });
 
     describe('should evaluate showIncludedInScoreColumn', () => {
         it('to false if all exercises are included in the score', () => {
             const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
-            component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
+            component.studentExamWithGrade().studentExam!.exercises = onlyIncludedExercises;
 
             expect(component.containsExerciseThatIsNotIncludedCompletely()).toBeFalse();
         });
 
         it('to true if exercise is excluded', () => {
             const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise, notIncludedTextExercise];
-            component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
+            component.studentExamWithGrade().studentExam!.exercises = onlyIncludedExercises;
 
             expect(component.containsExerciseThatIsNotIncludedCompletely()).toBeTrue();
         });
 
         it('to true if bonus exercise is included', () => {
             const onlyIncludedExercises = [textExercise, quizExercise, modelingExercise, programmingExercise, bonusTextExercise];
-            component.studentExamWithGrade.studentExam!.exercises = onlyIncludedExercises;
+            component.studentExamWithGrade().studentExam!.exercises = onlyIncludedExercises;
 
             expect(component.containsExerciseThatIsNotIncludedCompletely()).toBeTrue();
         });
@@ -299,8 +303,10 @@ describe('ExamResultOverviewComponent', () => {
         it('should be called when overallScoreAchieved is not defined in DTO from server', () => {
             //@ts-ignore spying on private method
             const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
-            component.studentExamWithGrade.studentResult.overallScoreAchieved = undefined;
-            component.exerciseInfos = {};
+            component.studentExamWithGrade().studentResult.overallScoreAchieved = undefined;
+            TestBed.runInInjectionContext(() => {
+                component.exerciseInfos = input({});
+            });
 
             component.ngOnInit();
 
@@ -310,8 +316,10 @@ describe('ExamResultOverviewComponent', () => {
         it('should be called when overallScoreAchieved is 0 (default value, might be set as initial value because not defined from server DTO)', () => {
             //@ts-ignore spying on private method
             const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
-            component.studentExamWithGrade.studentResult.overallScoreAchieved = 0;
-            component.exerciseInfos = {};
+            component.studentExamWithGrade().studentResult.overallScoreAchieved = 0;
+            TestBed.runInInjectionContext(() => {
+                component.exerciseInfos = input({});
+            });
 
             component.ngOnInit();
 
@@ -328,7 +336,7 @@ describe('ExamResultOverviewComponent', () => {
             };
             //@ts-ignore missing attributes
             component.exerciseInfos = exerciseInfosWithAchievedPercentage;
-            component.studentExamWithGrade.studentResult.overallScoreAchieved = undefined;
+            component.studentExamWithGrade().studentResult.overallScoreAchieved = undefined;
 
             component.ngOnInit();
 
