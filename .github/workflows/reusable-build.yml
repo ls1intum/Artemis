@@ -1,3 +1,4 @@
+# artemis repository, reusable-build.yml
 name: Build
 
 on:
@@ -153,7 +154,7 @@ jobs:
     name: Build and Push Docker Image
     if: ${{ inputs.docker }}
     needs: validate-inputs
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@c44a87d8bbb45a0cea6c84420041e120ee3e129f
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@chore/refactor-build-workflow
     with:
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
