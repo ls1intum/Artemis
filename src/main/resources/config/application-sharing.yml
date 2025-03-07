@@ -1,15 +1,18 @@
 # ===================================================================
-# Local VC specific properties: this file will only be loaded during startup if the profile localvc is active
+# Ssharing specific properties: this file will only be loaded during startup if the profile sharing is active
 #
-# This configuration overrides the application.yml file.
+# This configuration extends the application.yml file for specific sharing configs.
 # ===================================================================
 artemis:
   sharing:
     # the shared common secret
     apikey: acdd-erdf-asd2-234f-234d-32eb
     # an url used to force reinitialization of Sharing Plattform configuation
-    # if not set, you have to wait for the next scheduled reinitialization request (typically every 10 minutes)
+    # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+    # (typically every 10 minutes)
     serverurl: http://localhost:9001
+    actionName: Export to Artemis@testInstance
+
 
 
 

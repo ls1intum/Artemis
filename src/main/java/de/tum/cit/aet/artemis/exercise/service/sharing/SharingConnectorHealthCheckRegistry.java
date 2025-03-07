@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +34,15 @@ public class SharingConnectorHealthCheckRegistry {
 
     @PostConstruct
     protected void registerPluginHealth() {
-            healthContributorRegistry.registerContributor("SharingConnectorService", new SharingHealthCheck(sharingConnectorService));
+        healthContributorRegistry.registerContributor("SharingConnectorService", new SharingHealthCheck(sharingConnectorService));
     }
 
     public static class SharingHealthCheck implements HealthContributor, HealthIndicator {
 
         public static final ZoneId UTC = ZoneId.of("UTC");
+
         public static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
+
         protected final SharingConnectorService sharingConnectorService;
 
         public SharingHealthCheck(SharingConnectorService sharingConnectorService) {
@@ -51,23 +54,25 @@ public class SharingConnectorHealthCheckRegistry {
         public Health health() {
             SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.getLastHealthStati();
             Health.Builder health;
-            if(lastHealthStati.getLastConnect()==null) {
+            if (lastHealthStati.getLastConnect() == null) {
                 health = Health.down();
-            } else if(lastHealthStati.getLastConnect().isBefore(Instant.now().minus(11, ChronoUnit.MINUTES))) {
+            }
+            else if (lastHealthStati.getLastConnect().isBefore(Instant.now().minus(11, ChronoUnit.MINUTES))) {
                 health = Health.unknown();
-            } else {
+            }
+            else {
                 health = Health.up();
             }
 
-            for(int i = lastHealthStati.size()-1; i >= 0; i--) {
-                    SharingConnectorService.HealthStatus hs = lastHealthStati.get(i);
-                    ZonedDateTime zonedTimestamp = hs.getTimeStamp().atZone(UTC);
-                    String timeStamp = TIME_STAMP_FORMATTER.format(zonedTimestamp);
-                    health.withDetail(String.format("%3d: %s", i+1, timeStamp), hs.getStatusMessage());
-                };
+            for (int i = lastHealthStati.size() - 1; i >= 0; i--) {
+                SharingConnectorService.HealthStatus hs = lastHealthStati.get(i);
+                ZonedDateTime zonedTimestamp = hs.getTimeStamp().atZone(UTC);
+                String timeStamp = TIME_STAMP_FORMATTER.format(zonedTimestamp);
+                health.withDetail(String.format("%3d: %s", i + 1, timeStamp), hs.getStatusMessage());
+            }
+            ;
 
             return health.build();
         }
     }
 }
-

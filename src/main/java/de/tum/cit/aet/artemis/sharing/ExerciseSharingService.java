@@ -420,7 +420,8 @@ public class ExerciseSharingService {
      */
     public boolean validate(String base64token, String sec) {
         String computedHMAC = createHMAC(base64token);
-        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sec.getBytes(StandardCharsets.UTF_8));    }
+        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sec.getBytes(StandardCharsets.UTF_8));
+    }
 
     /**
      * loads the stored file from file system (via the b64 token).

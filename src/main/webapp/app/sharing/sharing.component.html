@@ -39,7 +39,9 @@
                             <br />
                             <div></div>
 
-                            <div><span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ date: getTokenExpiryDate().toLocaleString() }">expires at: </span></div>
+                            <div>
+                                <span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: getTokenExpiryDate().toLocaleString() }">expires at: </span>
+                            </div>
                             <div *ngIf="!isInstructor" class="p-2">
                                 <strong jhiTranslate="artemisApp.sharing.loginAsInstructor">Please ensure to log in as instructor!</strong>
                             </div>

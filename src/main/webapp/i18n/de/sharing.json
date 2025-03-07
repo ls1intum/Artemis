@@ -2,7 +2,7 @@
     "artemisApp": {
         "sharing": {
             "title": "Import aus Austauschplattform",
-            "expiresAt": "Verbindung läuft ab um <strong>{{date}}</strong>",
+            "expiresAt": "Verbindung läuft ab um <strong>{{expirationDate}}</strong>",
             "importedExercise": "Importierte Aufgaben",
             "courseToImport": "Kurs in den die Aufgabe importiert werden soll",
             "noExercisesFound": "Keine importierten Aufgaben gefunden?",

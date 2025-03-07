@@ -119,6 +119,7 @@ public class SharingInfoDTO {
 
     /**
      * verifies the checksum of returnURL and apiBaseURL with the secret key
+     *
      * @param secretKey the secret key
      * @return true, if checksum is correct
      */

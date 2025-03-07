@@ -17,3 +17,4 @@ and 'Apollon' that can be used to activate additional functionality in your Arte
    setup/iris
    setup/pyris
    setup/aeolus
+   setup/sharing

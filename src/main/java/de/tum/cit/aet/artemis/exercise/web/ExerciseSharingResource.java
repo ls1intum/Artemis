@@ -11,7 +11,6 @@ import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Optional;
 
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.UriBuilder;
 
@@ -36,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.exercise.service.sharing.ProgrammingExerciseImportFromSharingService;
+import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.exercise.service.sharing.SharingException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
@@ -59,6 +59,7 @@ public class ExerciseSharingResource {
      * the exercise sharing service
      */
     private final ExerciseSharingService exerciseSharingService;
+
     /**
      * the sharing connector service
      */
@@ -76,7 +77,8 @@ public class ExerciseSharingResource {
      * @param sharingConnectorService                     the sharing connector service
      * @param programmingExerciseImportFromSharingService programming exercise import from sharing service
      */
-    public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService, ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
+    public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, SharingConnectorService sharingConnectorService,
+            ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
         this.exerciseSharingService = exerciseSharingService;
         this.programmingExerciseImportFromSharingService = programmingExerciseImportFromSharingService;
         this.sharingConnectorService = sharingConnectorService;
@@ -88,11 +90,13 @@ public class ExerciseSharingResource {
      * @return the ResponseEntity with status 200 (OK) and with body the Shopping Basket, or with status 404 (Not Found)
      */
     @GetMapping("/sharing/import/basket")
-    public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL, @RequestParam String checksum) {
-        if(SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKeyOrNull(), checksum)) {
+    public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
+            @RequestParam String checksum) {
+        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKeyOrNull(), checksum)) {
             Optional<ShoppingBasket> sharingInfoDTO = exerciseSharingService.getBasketInfo(basketToken, apiBaseURL);
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
-        } else {
+        }
+        else {
             return ResponseEntity.badRequest().body(null);
         }
     }
@@ -130,7 +134,7 @@ public class ExerciseSharingResource {
      */
     @PostMapping("/sharing/import/basket/exerciseDetails")
     public ResponseEntity<ProgrammingExercise> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
-        if(!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
+        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
             return ResponseEntity.badRequest().body(null);
         }
         ProgrammingExercise exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service.sharing;
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 public class SharingConnectorService {
 
     public static class HealthStatus {
+
         private Instant timeStamp = Instant.now();
 
         private String statusMessage;
@@ -53,6 +53,7 @@ public class SharingConnectorService {
      * holds the current status and the last connect
      */
     public static class HealthStatusWithHistory extends ArrayList<HealthStatus> {
+
         private Instant lastConnect = null;
 
         public HealthStatusWithHistory() {
@@ -75,8 +76,8 @@ public class SharingConnectorService {
             this.lastConnect = Instant.now();
         }
 
-
     }
+
     private static final int HEALTH_HISTORY_LIMIT = 10;
 
     private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
@@ -98,6 +99,12 @@ public class SharingConnectorService {
      */
     @Value("${artemis.sharing.apikey:#{null}}")
     private String sharingApiKey;
+
+    /**
+     * the shared secret api key
+     */
+    @Value("${artemis.sharing.actionName:Export to Artemis@somewhere}")
+    private String actionName;
 
     /**
      * the url of the sharing platform.
@@ -180,7 +187,7 @@ public class SharingConnectorService {
     public SharingPluginConfig getPluginConfig(URL apiBaseUrl, String installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
         this.installationName = installationName;
-        SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", "Export to Artemis",
+        SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
         lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
         lastHealthStati.setLastConnect();
@@ -207,7 +214,7 @@ public class SharingConnectorService {
         }
 
         boolean success = Objects.equals(sharingApiKey, apiKey);
-        if(!success) {
+        if (!success) {
             lastHealthStati.add(new HealthStatus("Failed api Key validation (unequal)"));
         }
         return success;
@@ -245,6 +252,5 @@ public class SharingConnectorService {
     public HealthStatusWithHistory getLastHealthStati() {
         return lastHealthStati;
     }
-
 
 }
