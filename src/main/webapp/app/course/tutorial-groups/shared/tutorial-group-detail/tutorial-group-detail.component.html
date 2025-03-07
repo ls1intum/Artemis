@@ -1,8 +1,8 @@
 <div class="tutorial-group-detail">
-    <h2>{{ tutorialGroup.title }}</h2>
+    <h2>{{ tutorialGroup().title }}</h2>
     <hr />
     @if (header) {
-        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
+        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup() }" />
         <hr />
     }
     <div class="row align-items-stretch">
@@ -15,26 +15,26 @@
                             fontSizeInRem="2"
                             imageId="tutor-profile-picture"
                             defaultPictureId="tutor-default-profile-picture"
-                            [authorId]="tutorialGroup.teachingAssistantId"
-                            [authorName]="tutorialGroup.teachingAssistantName"
-                            [imageUrl]="tutorialGroup.teachingAssistantImageUrl"
+                            [authorId]="tutorialGroup().teachingAssistantId"
+                            [authorName]="tutorialGroup().teachingAssistantName"
+                            [imageUrl]="tutorialGroup().teachingAssistantImageUrl"
                         />
                     </div>
 
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.name"></span><span class="text-secondary">:</span>
-                        {{ tutorialGroup.teachingAssistantName }}
+                        {{ tutorialGroup().teachingAssistantName }}
                     </div>
 
-                    @if (tutorialGroup.channel && isMessagingEnabled) {
+                    @if (tutorialGroup().channel && isMessagingEnabled) {
                         <div>
                             <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></span><span class="text-secondary">:</span>
-                            @if (tutorialGroup.channel.isMember) {
-                                <a [routerLink]="['/courses', course.id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup.channel.id }">
-                                    {{ tutorialGroup.channel.name }}
+                            @if (tutorialGroup().channel.isMember) {
+                                <a [routerLink]="['/courses', course().id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup().channel.id }">
+                                    {{ tutorialGroup().channel.name }}
                                 </a>
                             } @else {
-                                <span> {{ tutorialGroup.channel.name }} </span>
+                                <span> {{ tutorialGroup().channel.name }} </span>
                             }
                         </div>
                     }
@@ -47,7 +47,7 @@
                 <div>
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.averageAttendanceDetail"></span><span class="text-secondary">:</span>
-                        {{ (tutorialGroup.averageAttendance && Math.round(tutorialGroup.averageAttendance)) ?? '-' }}
+                        {{ (tutorialGroup().averageAttendance && Math.round(tutorialGroup().averageAttendance)) ?? '-' }}
                         <fa-icon
                             class="text-secondary"
                             [icon]="faQuestionCircle"
@@ -57,12 +57,12 @@
 
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.capacity"></span><span class="text-secondary">:</span>
-                        {{ tutorialGroup.capacity }}
+                        {{ tutorialGroup().capacity }}
                     </div>
 
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.registrations"></span><span class="text-secondary">:</span>
-                        {{ !tutorialGroup.numberOfRegisteredUsers || tutorialGroup.numberOfRegisteredUsers === 0 ? '-' : tutorialGroup.numberOfRegisteredUsers }}
+                        {{ !tutorialGroup().numberOfRegisteredUsers || tutorialGroup().numberOfRegisteredUsers === 0 ? '-' : tutorialGroup().numberOfRegisteredUsers }}
                     </div>
 
                     <div class="mt-2">
@@ -94,12 +94,12 @@
                 <div>
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.language"></span><span class="text-secondary">:</span>
-                        {{ tutorialGroup.language }}
+                        {{ tutorialGroup().language }}
                     </div>
 
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.campus"></span><span class="text-secondary">:</span>
-                        {{ tutorialGroup.campus }}
+                        {{ tutorialGroup().campus }}
                     </div>
 
                     <div>
@@ -111,16 +111,16 @@
                         <span
                             class="text-secondary"
                             [jhiTranslate]="
-                                tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline'
+                                tutorialGroup().isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline'
                             "
                         ></span
                         ><span class="text-secondary">:</span>
 
-                        {{ tutorialGroup.tutorialGroupSchedule?.location }}
+                        {{ tutorialGroup().tutorialGroupSchedule?.location }}
                     </div>
 
                     <div>
-                        @if (tutorialGroup.isOnline) {
+                        @if (tutorialGroup().isOnline) {
                             <fa-icon class="text-success" [icon]="faCircle" />
                             <span class="text-success" jhiTranslate="artemisApp.entities.tutorialGroup.isOnline"></span>
                         } @else {
@@ -150,11 +150,11 @@
     @if (sessions && sessions.length) {
         <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
             <jhi-tutorial-group-sessions-table
-                [timeZone]="timeZone"
+                [timeZone]="timeZone()"
                 [sessions]="sessions"
-                [tutorialGroup]="tutorialGroup"
+                [tutorialGroup]="tutorialGroup()"
                 [showIdColumn]="false"
-                [isReadOnly]="!course.isAtLeastTutor"
+                [isReadOnly]="!course().isAtLeastTutor"
                 (attendanceUpdated)="recalculateAttendanceDetails()"
             />
         </div>

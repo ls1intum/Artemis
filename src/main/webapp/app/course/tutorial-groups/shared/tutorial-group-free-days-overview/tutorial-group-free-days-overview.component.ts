@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DoCheck, IterableDiffer, IterableDiffers, OnInit, inject, input } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -20,11 +20,9 @@ export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
     private sortService = inject(SortService);
     private iterableDiffers = inject(IterableDiffers);
 
-    @Input()
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    tutorialGroupFreeDays = input<TutorialGroupFreePeriod[]>([]);
 
-    @Input()
-    timeZone?: string = undefined;
+    timeZone = input<string | undefined>(undefined);
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
@@ -37,18 +35,18 @@ export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
     }
 
     public ngOnInit(): void {
-        this.diff = this.iterableDiffers.find(this.tutorialGroupFreeDays).create();
+        this.diff = this.iterableDiffers.find(this.tutorialGroupFreeDays()).create();
         this.sort();
     }
 
     public ngDoCheck(): void {
-        const changes = this.diff.diff(this.tutorialGroupFreeDays);
+        const changes = this.diff.diff(this.tutorialGroupFreeDays());
         if (changes) {
             this.sort();
         }
     }
 
     private sort() {
-        this.sortService.sortByProperty(this.tutorialGroupFreeDays, 'start', false);
+        this.sortService.sortByProperty(this.tutorialGroupFreeDays(), 'start', false);
     }
 }

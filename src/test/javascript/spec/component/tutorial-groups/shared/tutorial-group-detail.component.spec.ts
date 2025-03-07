@@ -100,7 +100,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     it('should pass the tutorialGroup to the header', () => {
         expect(headerInstance.tutorialGroup).toEqual(component.tutorialGroup);
-        expect(component.tutorialGroup).toEqual(detailInstance.tutorialGroup);
+        expect(component.tutorialGroup).toEqual(detailInstance.tutorialGroup());
         const mockHeader = fixture.debugElement.nativeElement.querySelector('#mockHeader');
         expect(mockHeader).toBeTruthy();
     });
@@ -129,7 +129,7 @@ describe('TutorialGroupDetailComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupDetailComponent);
                 component = fixture.componentInstance;
-                component.tutorialGroup = generateExampleTutorialGroup({});
+                fixture.componentRef.setInput('tutorialGroup', generateExampleTutorialGroup({}));
                 fixture.detectChanges();
             });
     });
@@ -178,8 +178,8 @@ describe('TutorialGroupDetailComponent', () => {
             24,
         ],
     ])('should calculate average attendance correctly', (tutorialGroup: TutorialGroup, expectedAttendance: number) => {
-        component.tutorialGroup = tutorialGroup;
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         component.recalculateAttendanceDetails();
-        expect(component.tutorialGroup.averageAttendance).toBe(expectedAttendance);
+        expect(component.tutorialGroup().averageAttendance).toBe(expectedAttendance);
     });
 });

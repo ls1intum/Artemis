@@ -79,9 +79,9 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
                 tutorialGroup = generateExampleTutorialGroup({});
                 sessionOne = generateExampleTutorialGroupSession({ id: 1 });
                 sessionTwo = generateExampleTutorialGroupSession({ id: 2 });
-                component.sessions = [sessionOne, sessionTwo];
-                component.timeZone = 'Europe/Berlin';
-                component.tutorialGroup = tutorialGroup;
+                fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+                fixture.componentRef.setInput('sessions', [sessionOne, sessionTwo]);
+                fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
                 fixture.detectChanges();
                 tableInstance = component.sessionTableInstance;
                 mockExtraColumns = component.mockExtraColumns.toArray();
@@ -93,8 +93,8 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     it('should pass the session to the headers', () => {
-        expect(tableInstance.sessions).toEqual([sessionOne, sessionTwo]);
-        expect(tableInstance.timeZone).toBe('Europe/Berlin');
+        expect(tableInstance.sessions()).toEqual([sessionOne, sessionTwo]);
+        expect(tableInstance.timeZone()).toBe('Europe/Berlin');
         expect(mockExtraColumns).toHaveLength(2);
         mockExtraColumns.sort((a, b) => a.tutorialGroupSession!.id! - b.tutorialGroupSession!.id!);
         expect(mockExtraColumns[0].tutorialGroupSession).toEqual(sessionOne);
@@ -147,9 +147,9 @@ describe('TutorialGroupSessionTableComponent', () => {
                 tutorialGroup = generateExampleTutorialGroup({});
                 tutorialGroup.nextSession = upcomingSession;
 
-                component.sessions = [upcomingSession, pastSession];
-                component.tutorialGroup = tutorialGroup;
-                component.timeZone = timeZone;
+                fixture.componentRef.setInput('sessions', [upcomingSession, pastSession]);
+                fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+                fixture.componentRef.setInput('timeZone', timeZone);
                 jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
                 fixture.detectChanges();
             });

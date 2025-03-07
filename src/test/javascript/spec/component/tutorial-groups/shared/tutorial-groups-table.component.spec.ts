@@ -107,8 +107,8 @@ describe('TutorialGroupTableWrapperTest', () => {
     });
 
     it('should pass the tutorialGroup to the headers', () => {
-        expect(tableInstance.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
-        expect(tableInstance.course).toEqual(course);
+        expect(tableInstance.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
+        expect(tableInstance.course()).toEqual(course);
         expect(mockExtraColumns).toHaveLength(2);
         mockExtraColumns.sort((a, b) => a.tutorialGroup!.id! - b.tutorialGroup!.id!);
         expect(mockExtraColumns[0].tutorialGroup).toEqual(tutorialGroupOne);
@@ -138,9 +138,9 @@ describe('TutorialGroupsTableComponent', () => {
                 component = fixture.componentInstance;
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
-                component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
-                component.course = course;
-                component.showIdColumn = true;
+                fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('showIdColumn', true);
                 fixture.detectChanges();
             });
     });
