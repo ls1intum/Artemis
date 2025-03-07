@@ -134,6 +134,7 @@ export class CodeEditorContainerComponent implements OnChanges {
         if (changes.feedbackSuggestions) {
             this.updateFileBadgesForFeedbackSuggestions();
         }
+        console.log("result changed! time to update badges");
         if (changes.latestResult) {
             this.updateFileBadgesForPreliminaryFeedback();
         }
@@ -186,10 +187,10 @@ export class CodeEditorContainerComponent implements OnChanges {
      * Update the file badges for the code editor for preliminary feedback
      */
     updateFileBadgesForPreliminaryFeedback() {
+        this.fileBadges = {};
         if (this.latestResult?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
             return;
         }
-        this.fileBadges = {};
         // Create badges for preliminary feedback
         const feedbacks = this.latestResult?.feedbacks ?? [];
         // Count only preliminary feedback
