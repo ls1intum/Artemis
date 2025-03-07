@@ -293,12 +293,14 @@
                         </a>
                     }
                     @if (standardizedCompetenciesEnabled) {
-                        <li>
-                            <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faFlag" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.admin.standardizedCompetencies"></span>
-                            </a>
-                        </li>
+                        <jhi-feature-overlay [enabled]="atlasEnabled">
+                            <li>
+                                <a class="dropdown-item" routerLink="/admin/standardized-competencies" routerLinkActive="active" (click)="collapseNavbar()">
+                                    <fa-icon [icon]="faFlag" [fixedWidth]="true" />
+                                    <span jhiTranslate="global.menu.admin.standardizedCompetencies"></span>
+                                </a>
+                            </li>
+                        </jhi-feature-overlay>
                     }
                     <li>
                         <a class="dropdown-item" routerLink="/admin/cleanup-service" routerLinkActive="active" (click)="collapseNavbar()">
