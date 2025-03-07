@@ -62,7 +62,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(ASSEMBLER, new ProgrammingLanguageFeature(ASSEMBLER, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(BASH, new ProgrammingLanguageFeature(BASH, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of(FACT, GCC), true));
-        programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(C_SHARP, new ProgrammingLanguageFeature(C_SHARP, false, false, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(DART, new ProgrammingLanguageFeature(DART, false, true, false, true, false, List.of(), true));
         programmingLanguageFeatures.put(GO, new ProgrammingLanguageFeature(GO, false, false, true, true, false, List.of(), true));

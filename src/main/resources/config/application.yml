@@ -98,7 +98,7 @@ artemis:
                 bash:
                     default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
-                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.0"
                 c_sharp:
                     default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.0"
                 typescript:

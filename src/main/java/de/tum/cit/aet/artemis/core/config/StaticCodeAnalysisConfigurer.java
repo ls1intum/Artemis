@@ -93,6 +93,7 @@ public class StaticCodeAnalysisConfigurer {
     static {
         Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> map = new EnumMap<>(ProgrammingLanguage.class);
         map.put(ProgrammingLanguage.C, createDefaultCategoriesForC());
+        map.put(ProgrammingLanguage.C_PLUS_PLUS, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.CLANG_TIDY));
         map.put(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE));
         map.put(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava());
         map.put(ProgrammingLanguage.JAVASCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
