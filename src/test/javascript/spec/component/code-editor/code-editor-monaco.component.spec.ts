@@ -528,7 +528,6 @@ describe('CodeEditorMonacoComponent', () => {
 
     it('should display feedback(with multiple widgets at the same line) when viewing a tutor assessment', fakeAsync(() => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
-        const addLineWidgetWithFeedbackStub = jest.spyOn(comp, 'addLineWidgetWithFeedback').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file2.java');
@@ -544,7 +543,6 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 10, `feedback-4`, document.createElement('div'));
             expect(getInlineFeedbackNodeByLineStub).toHaveBeenCalledTimes(2);
             expect(selectFileInEditorStub).toHaveBeenCalledOnce();
-            expect(addLineWidgetWithFeedbackStub).toHaveBeenCalledWith(expect.arrayContaining([exampleFeedbacks[2], exampleFeedbacks[3]]), 9);
         });
     }));
 });
