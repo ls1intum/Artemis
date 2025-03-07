@@ -149,7 +149,6 @@ jobs:
           asset_name: ${{ inputs.release_name }}
           asset_content_type: ${{ inputs.release_type }}
 
-
   docker:
     name: Build and Push Docker Image
     if: ${{ inputs.docker }}
