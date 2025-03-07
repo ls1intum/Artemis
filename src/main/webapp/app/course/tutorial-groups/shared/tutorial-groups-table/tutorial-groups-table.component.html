@@ -9,7 +9,7 @@
     <table class="table table-sm table-hover">
         <thead>
             <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                @if (showIdColumn()) {
+                @if (showIdColumn) {
                     <th jhiSortBy="id">
                         <a class="th-link" jhiTranslate="global.field.id"></a>
                         <fa-icon [icon]="faSort" />
@@ -57,9 +57,9 @@
                     <a class="th-link" jhiTranslate="artemisApp.entities.tutorialGroup.nextSession"></a>
                     <fa-icon [icon]="faSort" />
                 </th>
-                @if (showChannelColumn()) {
+                @if (showChannelColumn) {
                     <th>
-                        <a class="th-link" [routerLink]="['/courses', course()?.id!, 'communication']" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></a>
+                        <a class="th-link" [routerLink]="['/courses', course.id!, 'communication']" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></a>
                     </th>
                 }
                 @if (extraColumn) {
@@ -68,7 +68,7 @@
             </tr>
         </thead>
         <tbody>
-            @for (tutorialGroup of tutorialGroups(); track trackId($index, tutorialGroup)) {
+            @for (tutorialGroup of tutorialGroups; track trackId($index, tutorialGroup)) {
                 <tr
                     jhi-tutorial-group-row
                     id="tutorial-group-row-{{ tutorialGroup.id }}"
@@ -78,11 +78,11 @@
                         'is-user-not-tutor': !tutorialGroup.isUserTutor,
                     }"
                     [tutorialGroup]="tutorialGroup"
-                    [course]="course()"
+                    [course]="course"
                     [extraColumn]="extraColumn"
-                    [showIdColumn]="showIdColumn()"
-                    [showChannelColumn]="showChannelColumn()"
-                    [timeZone]="timeZone()"
+                    [showIdColumn]="showIdColumn"
+                    [showChannelColumn]="showChannelColumn"
+                    [timeZone]="timeZone"
                     [mifOfDifferentLanguages]="mifOfDifferentLanguages"
                     [mixOfOfflineAndOfflineTutorialGroups]="mixOfOfflineAndOfflineTutorialGroups"
                     [tutorialGroupsSplitAcrossMultipleCampuses]="tutorialGroupsSplitAcrossMultipleCampuses"
