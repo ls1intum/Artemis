@@ -13,5 +13,10 @@
                 "statusError": "Status der Sharing Platform kann nicht identifiziert werden"
             }
         }
+    },
+    "health": {
+        "indicator": {
+            "SharingConnectorService": "Sharing Connector"
+        }
     }
 }

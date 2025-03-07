@@ -13,5 +13,10 @@
                 "statusError": "Status of Sharing Platform cannot be determined"
             }
         }
+    },
+    "health": {
+        "indicator": {
+            "SharingConnectorService": "Sharing Connector"
+        }
     }
 }

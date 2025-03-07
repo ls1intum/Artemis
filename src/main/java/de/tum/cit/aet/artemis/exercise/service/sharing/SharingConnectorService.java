@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.service.sharing;
 
 import java.net.URL;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -28,6 +31,56 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 @Profile("sharing")
 public class SharingConnectorService {
 
+    public static class HealthStatus {
+        private Instant timeStamp = Instant.now();
+
+        private String statusMessage;
+
+        public HealthStatus(String statusMessage) {
+            this.statusMessage = statusMessage;
+        }
+
+        public String getStatusMessage() {
+            return statusMessage;
+        }
+
+        public Instant getTimeStamp() {
+            return timeStamp;
+        }
+    }
+
+    /**
+     * holds the current status and the last connect
+     */
+    public static class HealthStatusWithHistory extends ArrayList<HealthStatus> {
+        private Instant lastConnect = null;
+
+        public HealthStatusWithHistory() {
+            super(HEALTH_HISTORY_LIMIT);
+        }
+
+        @Override
+        public boolean add(HealthStatus e) {
+            if (this.size() >= HEALTH_HISTORY_LIMIT) {
+                this.removeFirst(); // Remove the oldest element
+            }
+            return super.add(e);
+        }
+
+        public Instant getLastConnect() {
+            return lastConnect;
+        }
+
+        public void setLastConnect() {
+            this.lastConnect = Instant.now();
+        }
+
+
+    }
+    private static final int HEALTH_HISTORY_LIMIT = 10;
+
+    private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
+
     private final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
     /**
@@ -43,14 +96,14 @@ public class SharingConnectorService {
     /**
      * the shared secret api key
      */
-    @Value("${artemis.sharing.api-key:#{null}}")
+    @Value("${artemis.sharing.apikey:#{null}}")
     private String sharingApiKey;
 
     /**
      * the url of the sharing platform.
      * Only needed for initial trigger an configuration exchange during startup.
      */
-    @Value("${artemis.sharing.server-url:#{null}}")
+    @Value("${artemis.sharing.serverurl:#{null}}")
     private String sharingUrl;
 
     /**
@@ -129,6 +182,8 @@ public class SharingConnectorService {
         this.installationName = installationName;
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", "Export to Artemis",
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
+        lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
+        lastHealthStati.setLastConnect();
         return new SharingPluginConfig("Artemis Sharing Connector", new SharingPluginConfig.Action[] { action });
     }
 
@@ -141,6 +196,8 @@ public class SharingConnectorService {
     public boolean validate(String apiKey) {
         if (apiKey == null || apiKey.length() > 200) {
             // this is just in case, somebody tries an attack
+            lastHealthStati.add(new HealthStatus("Failed api Key validation"));
+
             return false;
         }
         Pattern p = Pattern.compile("Bearer\\s(.+)");
@@ -149,7 +206,11 @@ public class SharingConnectorService {
             apiKey = m.group(1);
         }
 
-        return Objects.equals(sharingApiKey, apiKey);
+        boolean success = Objects.equals(sharingApiKey, apiKey);
+        if(!success) {
+            lastHealthStati.add(new HealthStatus("Failed api Key validation (unequal)"));
+        }
+        return success;
     }
 
     /**
@@ -169,7 +230,8 @@ public class SharingConnectorService {
     public void triggerReinit() {
         if (sharingUrl != null) {
             log.info("Requesting reinitialization from Sharing Platform");
-            String reInitUrlWithApiKey = UriComponentsBuilder.fromHttpUrl(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
+            lastHealthStati.add(new HealthStatus("Requested reinitialization from Sharing Platform"));
+            String reInitUrlWithApiKey = UriComponentsBuilder.fromUriString(sharingUrl).pathSegment("api", "pluginIF", "v0.1", "reInitialize").queryParam("apiKey", sharingApiKey)
                     .encode().toUriString();
             try {
                 restTemplate.getForObject(reInitUrlWithApiKey, Boolean.class);
@@ -179,5 +241,10 @@ public class SharingConnectorService {
             }
         }
     }
+
+    public HealthStatusWithHistory getLastHealthStati() {
+        return lastHealthStati;
+    }
+
 
 }

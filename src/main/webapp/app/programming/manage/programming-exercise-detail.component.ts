@@ -291,7 +291,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 map((response) => response.body ?? false),
                 catchError(() => {
                     // TODO: should be silent in future
-                    this.alertService.info('artemisApp.sharing.error.loadingStatus');
+                    // this.alertService.info('artemisApp.sharing.error.loadingStatus');
                     return of(false);
                 }),
             )
