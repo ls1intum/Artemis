@@ -20,17 +20,17 @@ import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.notification.util.NotificationFactory;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
@@ -49,7 +49,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         course1 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         course2 = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        notificationRepository.deleteAll();
+        notificationTestRepository.deleteAll();
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setLastNotificationRead(ZonedDateTime.now().minusDays(1));
@@ -58,7 +58,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @AfterEach
     void tearDown() {
-        notificationRepository.deleteAll();
+        notificationTestRepository.deleteAll();
     }
 
     @Test
@@ -66,11 +66,11 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void testGetNotifications_recipientEvaluation() throws Exception {
         User recipient = userTestRepository.getUser();
         SingleUserNotification notification1 = NotificationFactory.generateSingleUserNotification(ZonedDateTime.now(), recipient);
-        notificationRepository.save(notification1);
+        notificationTestRepository.save(notification1);
         SingleUserNotification notification2 = NotificationFactory.generateSingleUserNotification(ZonedDateTime.now(), userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        notificationRepository.save(notification2);
+        notificationTestRepository.save(notification2);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with recipient equal to current user is returned").contains(notification1);
         assertThat(notifications).as("Notification with recipient not equal to current user is not returned").doesNotContain(notification2);
     }
@@ -81,13 +81,13 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
         // student1 is member of `testgroup` and `tumuser` per default
         // the studentGroupName of course1 is `tumuser` per default
         GroupNotification notification1 = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(notification1);
+        notificationTestRepository.save(notification1);
         course2.setStudentGroupName("some-group");
         courseRepository.save(course2);
         GroupNotification notification2 = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course2, GroupNotificationType.STUDENT);
-        notificationRepository.save(notification2);
+        notificationTestRepository.save(notification2);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with course the current user belongs to is returned").contains(notification1);
         assertThat(notifications).as("Notification with course the current user does not belong to is not returned").doesNotContain(notification2);
     }
@@ -96,15 +96,15 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetNotifications_groupNotificationTypeEvaluation_asStudent() throws Exception {
         GroupNotification notificationStudent = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(notificationStudent);
+        notificationTestRepository.save(notificationStudent);
         GroupNotification notificationTutor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
-        notificationRepository.save(notificationTutor);
+        notificationTestRepository.save(notificationTutor);
         GroupNotification notificationEditor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
-        notificationRepository.save(notificationEditor);
+        notificationTestRepository.save(notificationEditor);
         GroupNotification notificationInstructor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
-        notificationRepository.save(notificationInstructor);
+        notificationTestRepository.save(notificationInstructor);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is returned").contains(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type editor is not returned").doesNotContain(notificationEditor);
@@ -115,15 +115,15 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetNotifications_groupNotificationTypeEvaluation_asTutor() throws Exception {
         GroupNotification notificationStudent = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(notificationStudent);
+        notificationTestRepository.save(notificationStudent);
         GroupNotification notificationTutor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
-        notificationRepository.save(notificationTutor);
+        notificationTestRepository.save(notificationTutor);
         GroupNotification notificationEditor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
-        notificationRepository.save(notificationEditor);
+        notificationTestRepository.save(notificationEditor);
         GroupNotification notificationInstructor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
-        notificationRepository.save(notificationInstructor);
+        notificationTestRepository.save(notificationInstructor);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is returned").contains(notificationTutor);
         assertThat(notifications).as("Notification with type editor is not returned").doesNotContain(notificationEditor);
@@ -134,15 +134,15 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetNotifications_groupNotificationTypeEvaluation_asEditor() throws Exception {
         GroupNotification notificationStudent = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(notificationStudent);
+        notificationTestRepository.save(notificationStudent);
         GroupNotification notificationTutor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
-        notificationRepository.save(notificationTutor);
+        notificationTestRepository.save(notificationTutor);
         GroupNotification notificationEditor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
-        notificationRepository.save(notificationEditor);
+        notificationTestRepository.save(notificationEditor);
         GroupNotification notificationInstructor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
-        notificationRepository.save(notificationInstructor);
+        notificationTestRepository.save(notificationInstructor);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type editor is returned").contains(notificationEditor);
@@ -153,15 +153,15 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNotifications_groupNotificationTypeEvaluation_asInstructor() throws Exception {
         GroupNotification notificationStudent = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(notificationStudent);
+        notificationTestRepository.save(notificationStudent);
         GroupNotification notificationTutor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
-        notificationRepository.save(notificationTutor);
+        notificationTestRepository.save(notificationTutor);
         GroupNotification notificationEditor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
-        notificationRepository.save(notificationEditor);
+        notificationTestRepository.save(notificationEditor);
         GroupNotification notificationInstructor = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
-        notificationRepository.save(notificationInstructor);
+        notificationTestRepository.save(notificationInstructor);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
         assertThat(notifications).as("Notification with type student is not returned").doesNotContain(notificationStudent);
         assertThat(notifications).as("Notification with type tutor is not returned").doesNotContain(notificationTutor);
         assertThat(notifications).as("Notification with type editor is not returned").doesNotContain(notificationEditor);
@@ -184,13 +184,13 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
         GroupNotification allowedNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         allowedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(allowedType));
-        notificationRepository.save(allowedNotification);
+        notificationTestRepository.save(allowedNotification);
 
         GroupNotification blockedNotification = NotificationFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
         blockedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(blockedType));
-        notificationRepository.save(blockedNotification);
+        notificationTestRepository.save(blockedNotification);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
 
         assertThat(notifications).as("Notification that is allowed by Settings is returned").contains(allowedNotification);
         assertThat(notifications).as("Notification that is blocked by Settings is not returned").doesNotContain(blockedNotification);
@@ -207,12 +207,12 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
         userTestRepository.save(student1);
 
         GroupNotification futureNotification = NotificationFactory.generateGroupNotification(timeNow.plusHours(1), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(futureNotification);
+        notificationTestRepository.save(futureNotification);
 
         GroupNotification pastNotification = NotificationFactory.generateGroupNotification(timeNow.minusHours(1), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(pastNotification);
+        notificationTestRepository.save(pastNotification);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
 
         assertThat(notifications).as("Future notification is returned").contains(futureNotification);
         assertThat(notifications).as("Past notification is returned").contains(pastNotification);
@@ -228,12 +228,12 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
         userTestRepository.save(student1);
 
         GroupNotification futureNotification = NotificationFactory.generateGroupNotification(timeNow.plusHours(1), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(futureNotification);
+        notificationTestRepository.save(futureNotification);
 
         GroupNotification pastNotification = NotificationFactory.generateGroupNotification(timeNow.minusHours(1), course1, GroupNotificationType.STUDENT);
-        notificationRepository.save(pastNotification);
+        notificationTestRepository.save(pastNotification);
 
-        List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
+        List<Notification> notifications = request.getList("/api/communication/notifications", HttpStatus.OK, Notification.class);
 
         assertThat(notifications).as("Future notification is returned because it is after the hideUntil property").contains(futureNotification);
         assertThat(notifications).as("Past notification is not returned because it is prior to the hideUntil property").doesNotContain(pastNotification);

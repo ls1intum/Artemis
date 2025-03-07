@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 export class UserService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/users';
+    public resourceUrl = 'api/core/users';
 
     /**
      * Search for a user on the server by login or name.
@@ -42,9 +42,9 @@ export class UserService {
     }
 
     /**
-     * Accept Iris policy.
+     * Accept external LLM usage policy.
      */
-    acceptIris(): Observable<HttpResponse<void>> {
-        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-iris`, { observe: 'response' });
+    acceptExternalLLMUsage(): Observable<HttpResponse<void>> {
+        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-external-llm-usage`, { observe: 'response' });
     }
 }

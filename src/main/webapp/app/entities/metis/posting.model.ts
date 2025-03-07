@@ -34,6 +34,8 @@ export abstract class Posting implements BaseEntity {
     public savedPostStatus?: number;
     public postingType?: number;
     public reactions?: Reaction[];
+    public hasForwardedMessages?: boolean = false;
+    public isConsecutive?: boolean = false;
     public conversation?: Conversation;
 
     public static mapToStatus(map: SavedPostStatusMap) {

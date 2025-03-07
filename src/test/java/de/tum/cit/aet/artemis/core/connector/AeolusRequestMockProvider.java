@@ -40,7 +40,7 @@ public class AeolusRequestMockProvider {
 
     private MockRestServiceServer mockServer;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Constructor for the AeolusRequestMockProvider

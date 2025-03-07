@@ -28,7 +28,6 @@ describe('User Settings Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()

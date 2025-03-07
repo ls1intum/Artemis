@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/quiz/")
 public class QuizSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);

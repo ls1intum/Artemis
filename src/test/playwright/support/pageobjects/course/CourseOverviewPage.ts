@@ -91,7 +91,7 @@ export class CourseOverviewPage {
      * @param exerciseID The ID of the programming exercise to open.
      */
     async openRunningProgrammingExercise(exerciseID: number) {
-        const responsePromise = this.page.waitForRequest(`${BASE_API}/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks`);
+        const responsePromise = this.page.waitForRequest(`${BASE_API}/programming/programming-exercise-participations/*/student-participation-with-latest-result-and-feedbacks`);
         await this.openRunningExercise(exerciseID);
         await responsePromise;
     }

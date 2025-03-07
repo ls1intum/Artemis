@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../test.module';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -9,6 +8,8 @@ import { EntityResponseType, ResultService } from 'app/exercises/shared/result/r
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Service', () => {
     let httpMock: HttpTestingController;
@@ -16,8 +17,7 @@ describe('External Submission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(ExternalSubmissionService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -43,7 +43,7 @@ describe('External Submission Service', () => {
 
         let createResult: EntityResponseType | undefined;
         service.create(exercise, user, result).subscribe((subResult) => (createResult = subResult));
-        const req = httpMock.expectOne({ url: `api/exercises/1/external-submission-results?studentLogin=ab12cde`, method: 'POST' });
+        const req = httpMock.expectOne({ url: `api/assessment/exercises/1/external-submission-results?studentLogin=ab12cde`, method: 'POST' });
         const returned = { ...result, id: 4 };
         req.flush(returned);
         expect(convertDateFromServerSpy).toHaveBeenCalledOnce();

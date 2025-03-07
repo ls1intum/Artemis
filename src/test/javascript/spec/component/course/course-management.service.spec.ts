@@ -45,7 +45,7 @@ describe('Course Management Service', () => {
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
 
-    const resourceUrl = 'api/courses';
+    const resourceUrl = 'api/core/courses';
 
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
@@ -60,7 +60,6 @@ describe('Course Management Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -166,7 +165,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/online-course-configuration` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/lti/courses/1/online-course-configuration` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -293,7 +292,7 @@ describe('Course Management Service', () => {
             .findAllParticipationsWithResults(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(participations));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/participations` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/${course.id}/participations` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -455,7 +454,7 @@ describe('Course Management Service', () => {
     it('should download course archive', () => {
         const windowSpy = jest.spyOn(window, 'open').mockImplementation();
         courseManagementService.downloadCourseArchive(1);
-        expect(windowSpy).toHaveBeenCalledWith('api/courses/1/download-archive', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith(`${resourceUrl}/1/download-archive`, '_blank');
     });
 
     it('should archive the course', fakeAsync(() => {
@@ -539,7 +538,7 @@ describe('Course Management Service', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/allowed-complaints?teamMode=true`);
+        expect(res.request.url).toBe(`${resourceUrl}/${courseId}/allowed-complaints?teamMode=true`);
 
         res.flush(expectedCount);
     });

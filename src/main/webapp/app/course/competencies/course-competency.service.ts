@@ -45,7 +45,7 @@ export class CourseCompetencyService {
     protected lectureUnitService = inject(LectureUnitService);
     protected accountService = inject(AccountService);
 
-    protected resourceURL = 'api';
+    protected resourceURL = 'api/atlas';
 
     getForImport(pageable: CompetencyPageableSearch) {
         const params = this.createCompetencySearchHttpParams(pageable);

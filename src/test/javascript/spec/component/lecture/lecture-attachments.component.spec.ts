@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
@@ -17,11 +16,16 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
 import { RouterModule } from '@angular/router';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -60,7 +64,7 @@ describe('LectureAttachmentsComponent', () => {
         {
             id: 50,
             name: 'test',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
             version: 2,
             uploadDate: dayjs('2019-05-05T10:05:25+02:00'),
             attachmentType: 'FILE',
@@ -68,7 +72,7 @@ describe('LectureAttachmentsComponent', () => {
         {
             id: 52,
             name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -78,7 +82,7 @@ describe('LectureAttachmentsComponent', () => {
     const newAttachment = {
         id: 53,
         name: 'TestFile',
-        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+        link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
         version: 1,
         uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
         attachmentType: 'FILE',
@@ -86,15 +90,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockDirective(NgbTooltip),
-                RouterModule,
-                ReactiveFormsModule,
-                FormsModule,
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
-            ],
+            imports: [MockDirective(NgbTooltip), RouterModule, ReactiveFormsModule, FormsModule, MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 LectureAttachmentsComponent,
                 FormDateTimePickerComponent,
@@ -106,7 +102,11 @@ describe('LectureAttachmentsComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
                 { provide: FileService, useClass: MockFileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(AttachmentService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -294,7 +294,7 @@ describe('LectureAttachmentsComponent', () => {
                     body: {
                         id: 52,
                         name: 'TestFile',
-                        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                        link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
                         version: 2,
                         uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                         attachmentType: 'FILE',
@@ -324,7 +324,7 @@ describe('LectureAttachmentsComponent', () => {
         const toDelete = {
             id: attachmentId,
             name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -343,7 +343,7 @@ describe('LectureAttachmentsComponent', () => {
         const toDelete = {
             id: attachmentId,
             name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -362,7 +362,7 @@ describe('LectureAttachmentsComponent', () => {
         const toCancel = {
             id: 52,
             name: 'test34',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
             version: 5,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -383,8 +383,8 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should set lecture attachment', fakeAsync(() => {
         fixture.detectChanges();
-        const myBlob1 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest34.pdf' };
-        const myBlob2 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest100.pdf' };
+        const myBlob1 = { size: 1024, name: '/api/core/files/attachments/lecture/4/NewTest34.pdf' };
+        const myBlob2 = { size: 1024, name: '/api/core/files/attachments/lecture/4/NewTest100.pdf' };
         const object = {
             target: {
                 files: [myBlob1, myBlob2],
