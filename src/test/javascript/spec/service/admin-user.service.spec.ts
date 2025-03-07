@@ -26,7 +26,7 @@ describe('User Service', () => {
             adminService.findUser('user').subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = 'api/admin/users';
+            const resourceUrl = 'api/core/admin/users';
             expect(req.request.url).toBe(`${resourceUrl}/user`);
         });
         it('should return User', () => {

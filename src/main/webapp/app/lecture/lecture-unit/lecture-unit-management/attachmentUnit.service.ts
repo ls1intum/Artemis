@@ -15,7 +15,7 @@ export class AttachmentUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/lecture';
 
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient

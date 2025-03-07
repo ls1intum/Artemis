@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);

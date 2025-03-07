@@ -36,8 +36,8 @@
             },
             "conversationSelectionSideBar": {
                 "header": "Konversationen",
-                "show": "Konversationen zeigen",
-                "hide": "Konversationen ausblenden",
+                "show": "Wiederherstellen",
+                "hide": "Archivieren",
                 "notFound": "Keine Konversation gefunden",
                 "favoriteChannels": "Favoriten",
                 "hiddenChannels": "Ausgeblendet",

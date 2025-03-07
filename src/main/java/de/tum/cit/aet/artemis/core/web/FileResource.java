@@ -91,7 +91,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class FileResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
@@ -217,7 +217,7 @@ public class FileResource {
         var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
 
         var api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
-        var fileUpload = api.findByPath("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var fileUpload = api.findByPath("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
 
         if (fileUpload.isPresent()) {
             return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);

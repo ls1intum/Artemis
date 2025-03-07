@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import jakarta.validation.Valid;
 
@@ -43,12 +44,14 @@ import io.jsonwebtoken.ExpiredJwtException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/push_notification/")
+@RequestMapping("api/communication/push_notification/")
 public class PushNotificationResource {
 
     private static final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
 
     private static final KeyGenerator aesKeyGenerator;
+
+    private static final Pattern VERSION_CODE_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");
 
     private final TokenProvider tokenProvider;
 
@@ -101,12 +104,16 @@ public class PushNotificationResource {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
+        if (pushNotificationRegisterBody.versionCode() != null && !VERSION_CODE_PATTERN.matcher(pushNotificationRegisterBody.versionCode()).matches()) {
+            throw new IllegalArgumentException("Version code is not valid");
+        }
+
         PushNotificationApiType apiType = pushNotificationRegisterBody.apiType() != null ? pushNotificationRegisterBody.apiType() : PushNotificationApiType.DEFAULT;
 
         User user = userRepository.getUser();
 
         PushNotificationDeviceConfiguration deviceConfiguration = new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(),
-                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user, apiType);
+                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user, apiType, pushNotificationRegisterBody.versionCode());
         pushNotificationDeviceConfigurationRepository.save(deviceConfiguration);
 
         var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());

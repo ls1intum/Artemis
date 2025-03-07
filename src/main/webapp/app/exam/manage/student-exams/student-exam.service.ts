@@ -13,7 +13,7 @@ export class StudentExamService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
 
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api/exam/courses';
 
     /**
      * Find a student exam on the server using a GET request.
