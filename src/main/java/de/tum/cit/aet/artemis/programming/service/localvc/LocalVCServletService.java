@@ -424,6 +424,20 @@ public class LocalVCServletService {
         return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
+    /**
+     * Checks if branching is allowed for the exercise to which the given repository belongs.
+     *
+     * @param repository The repository for which we check if branching is allowed.
+     * @return True if branching is allowed, false otherwise.
+     */
+    public boolean isBranchingAllowedForRepository(Repository repository) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        String projectKey = localVCRepositoryUri.getProjectKey();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
+        return exercise.isAllowBranching();
+    }
+
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         var urlString = request.getRequestURL().toString().replace("/info/refs", "");
         return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);

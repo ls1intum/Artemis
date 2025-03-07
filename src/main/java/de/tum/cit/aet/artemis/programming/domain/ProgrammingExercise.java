@@ -298,6 +298,14 @@ public class ProgrammingExercise extends Exercise {
         this.maxStaticCodeAnalysisPenalty = maxStaticCodeAnalysisPenalty;
     }
 
+    public boolean isAllowBranching() {
+        return allowBranching;
+    }
+
+    public void setAllowBranching(boolean allowBranching) {
+        this.allowBranching = allowBranching;
+    }
+
     public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
         this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
     }
