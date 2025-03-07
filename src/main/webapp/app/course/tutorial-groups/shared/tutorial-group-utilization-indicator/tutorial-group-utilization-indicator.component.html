@@ -1,6 +1,6 @@
-@if (tutorialGroup().averageAttendance !== undefined && tutorialGroup().capacity !== undefined) {
+@if (tutorialGroup()?.averageAttendance !== null && tutorialGroup()?.capacity !== null) {
     <jhi-vertical-progress-bar
-        [fillLevelInPercent]="Math.round((tutorialGroup()?.averageAttendance / tutorialGroup()?.capacity) * 100)"
+        [fillLevelInPercent]="Math.round(((tutorialGroup()?.averageAttendance ?? 0) / (tutorialGroup()?.capacity ?? 1)) * 100)"
         [widthInPixels]="20"
         [heightInPixels]="50"
         [tooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup()?.averageAttendance }"

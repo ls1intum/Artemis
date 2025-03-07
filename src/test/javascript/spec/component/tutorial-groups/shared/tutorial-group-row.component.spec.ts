@@ -30,8 +30,8 @@ describe('TutorialGroupRowComponent', () => {
         fixture = TestBed.createComponent(TutorialGroupRowComponent);
         component = fixture.componentInstance;
         tutorialGroup = generateExampleTutorialGroup({});
-        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
-        fixture.componentRef.setInput('showIdColumn', true);
+        component.tutorialGroup = tutorialGroup;
+        component.showIdColumn = true;
         fixture.detectChanges();
     });
 

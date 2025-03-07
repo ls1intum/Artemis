@@ -30,7 +30,7 @@
                         <div>
                             <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></span><span class="text-secondary">:</span>
                             @if (tutorialGroup()?.channel?.isMember) {
-                                <a [routerLink]="['/courses', course().id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup()?.channel?.id }">
+                                <a [routerLink]="['/courses', course()?.id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup()?.channel?.id }">
                                     {{ tutorialGroup()?.channel?.name }}
                                 </a>
                             } @else {
@@ -47,7 +47,7 @@
                 <div>
                     <div>
                         <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.averageAttendanceDetail"></span><span class="text-secondary">:</span>
-                        {{ (tutorialGroup()?.averageAttendance && Math.round(tutorialGroup()?.averageAttendance)) ?? '-' }}
+                        {{ tutorialGroup()?.averageAttendance !== null ? Math.round(tutorialGroup()?.averageAttendance) : '-' }}
                         <fa-icon
                             class="text-secondary"
                             [icon]="faQuestionCircle"

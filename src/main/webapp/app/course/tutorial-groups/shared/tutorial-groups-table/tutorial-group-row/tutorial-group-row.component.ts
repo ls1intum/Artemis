@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostBinding, TemplateRef, ViewEncapsulation, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
 import { RouterLink } from '@angular/router';
@@ -21,29 +21,34 @@ export class TutorialGroupRowComponent {
     readonly Math = Math;
     @HostBinding('class') class = 'tutorial-group-row';
 
-    showIdColumn = input(false);
+    @Input()
+    showIdColumn = false;
 
     /**
      * If true we show the campus column
      */
-    tutorialGroupsSplitAcrossMultipleCampuses = input(false);
+    @Input()
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
     /**
      * If true we show the online / offline column
      */
-    mixOfOfflineAndOfflineTutorialGroups = input(false);
+    @Input()
+    mixOfOfflineAndOfflineTutorialGroups = false;
 
     /**
      * If true we show the language column
      */
-    mifOfDifferentLanguages = input(false);
+    @Input()
+    mifOfDifferentLanguages = false;
 
-    showChannelColumn = input(false);
+    @Input()
+    showChannelColumn = false;
 
-    extraColumn = input<TemplateRef<any>>();
+    @Input() extraColumn: TemplateRef<any>;
 
-    tutorialGroup = input<TutorialGroup>();
+    @Input() tutorialGroup: TutorialGroup;
 
-    course = input<Course>();
+    @Input() course: Course;
 
-    timeZone = input<string | undefined>(undefined);
+    @Input() timeZone?: string = undefined;
 }
