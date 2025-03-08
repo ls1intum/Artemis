@@ -134,6 +134,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     constructor() {
         effect(() => {
             this.feedbackInternal.set(this.feedbacks());
+            console.log(this.feedbacks());
         });
 
         effect(() => {
@@ -313,10 +314,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param feedback The feedback item of the feedback suggestion.
      */
     acceptSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
+        const originalFeedbackObject = this.feedbackSuggestionsInternal().find((f) => Feedback.areIdentical(feedback, f))!;
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => !Feedback.areIdentical(feedback, f)));
         feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         this.updateFeedback(feedback);
-        this.onAcceptSuggestion.emit(feedback);
+        this.onAcceptSuggestion.emit(originalFeedbackObject);
     }
 
     /**
@@ -324,9 +326,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param feedback The feedback item of the feedback suggestion.
      */
     discardSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
+        const originalFeedbackObject = this.feedbackSuggestionsInternal().find((f) => Feedback.areIdentical(feedback, f))!;
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => !Feedback.areIdentical(feedback, f)));
         this.renderFeedbackWidgets();
-        this.onDiscardSuggestion.emit(feedback);
+        this.onDiscardSuggestion.emit(originalFeedbackObject);
     }
 
     /**
@@ -342,10 +345,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
             const feedbackMap = new Map<number, Feedback[]>();
 
+            console.log(this.feedbackInternal());
             for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
                 const line = Feedback.getReferenceLine(feedback);
                 if (line === undefined) {
-                    throw new Error('No line found for feedback ' + feedback.id);
+                    continue; // skip unreferenced feedback, will be shown outside the code editor
                 }
 
                 if (!feedbackMap.has(line)) {
@@ -353,7 +357,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
                 }
                 feedbackMap.get(line)!.push(feedback);
             }
-
+            console.log(feedbackMap);
             for (const [lineId, feedbackItems] of feedbackMap.entries()) {
                 this.addLineWidgetWithFeedback(feedbackItems, lineId);
             }
@@ -414,10 +418,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
     private addLineWidgetWithFeedback(feedbacks: Feedback[], lineId: number): void {
         // Now supports multiple existing widgets anchored at a specific line
         feedbacks.forEach((feedback) => {
-            if (!feedback.id) {
-                throw new Error();
-            }
-            const feedbackNode = this.getInlineFeedbackNodeByIdOrElseThrow(feedback.id);
+            // There is always an id for existing feedback, and if there is no id, then feedback is new, manually added, and there is only one instance of it
+            const feedbackNode = feedback.id ? this.getInlineFeedbackNodeByIdOrElseThrow(feedback.id) : this.getInlineFeedbackNodeByLineOrElseThrow(lineId);
             // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
             const oneBasedLine = lineId + 1;
             this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
