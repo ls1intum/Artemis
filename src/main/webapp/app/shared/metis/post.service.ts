@@ -161,7 +161,7 @@ export class PostService extends PostingService<Post> {
         if (post?.conversation || postContextFilter?.conversationId || postContextFilter?.courseWideChannelIds) {
             return `api/communication/courses/${courseId}/messages`;
         } else {
-            return `api/plagiarism/courses/${courseId}posts`;
+            return `api/plagiarism/courses/${courseId}/posts`;
         }
     }
 }
