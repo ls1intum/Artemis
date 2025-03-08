@@ -207,10 +207,6 @@ public class LectureService {
      * @param existingLectureTranscription the Lecture transcription to be removed from Pyris
      */
     public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
-        if (pyrisWebhookService.isEmpty()) {
-            return;
-        }
-
-        pyrisWebhookService.get().deleteLectureTranscription(existingLectureTranscription);
+        pyrisWebhookService.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
     }
 }

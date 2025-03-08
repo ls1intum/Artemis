@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -88,7 +88,8 @@ public class LectureTranscriptionResource {
             @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            throw new BadRequestAlertException("Lecture unit does not belong to the specified lecture", "lectureTranscription", "lectureUnitDoesNotMatchLecture");
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
+                    .body(null);
         }
 
         if (lectureUnit.getLectureTranscription() != null) {
@@ -97,7 +98,6 @@ public class LectureTranscriptionResource {
         }
 
         LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), transcriptionDTO.segments(), lectureUnit);
-        lectureTranscription.setId(null);
 
         LectureTranscription result = lectureTranscriptionRepository.save(lectureTranscription);
 
@@ -133,16 +133,18 @@ public class LectureTranscriptionResource {
     @PutMapping("lectures/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         Course course = lecture.getCourse();
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
         Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
         if (transcription.isEmpty()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "noTranscription"))
                     .body(null);
         }
         LectureTranscription transcriptionToIngest = transcription.get();
@@ -165,17 +167,17 @@ public class LectureTranscriptionResource {
         Course course = lecture.getCourse();
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         if (!course.getId().equals(courseId)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
-                    .body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureDoesNotMatchCourse")).body(null);
         }
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
         Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
         if (lectureTranscription.isEmpty()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscriptionForId"))
-                    .body(null);
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "noTranscriptionForId")).body(null);
         }
         log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.get().getId());
         lectureService.deleteLectureTranscriptionInPyris(lectureTranscription.get());

@@ -19,17 +19,18 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 public class LectureTranscription extends DomainObject {
 
     /**
-     * The language spoken in the video that is transcribed
+     * The language spoken in the video that is transcribed, given as a language key e.g. "en" or "de"
      */
     @Size(min = 2, max = 2, message = "Language must be exactly 2 characters long")
+    @Column(name = "language")
     private String language;
 
     @Convert(converter = LectureTranscriptionSegmentConverter.class)
-    @Column(columnDefinition = "json")
+    @Column(name = "segments", columnDefinition = "json")
     private List<LectureTranscriptionSegment> segments;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn(name = "lecture_unit_id", unique = true)
     @JsonIgnore
     private LectureUnit lectureUnit;
 
