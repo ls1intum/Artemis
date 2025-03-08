@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,7 +140,9 @@ public class AttachmentService {
         String sanitizedName = fileService.checkAndSanitizeFilename(attachment.getName());
         String filename = sanitizedName + ".pdf";
         Path savePath = basePath.resolve(filename);
-        Files.write(savePath, pdfData);
+
+        FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
+
         attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
     }
 }
