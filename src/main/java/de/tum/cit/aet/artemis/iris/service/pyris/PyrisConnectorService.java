@@ -114,7 +114,7 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Executes a webhook and send transcription to the webhook with the given variant
+     * This webhook adds a transcription to the Pyris system
      *
      * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution

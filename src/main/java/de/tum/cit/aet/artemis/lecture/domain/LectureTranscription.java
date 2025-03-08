@@ -18,6 +18,9 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "lecture_transcription")
 public class LectureTranscription extends DomainObject {
 
+    /**
+     * The language spoken in the video that is transcribed
+     */
     @Size(min = 2, max = 2, message = "Language must be exactly 2 characters long")
     private String language;
 

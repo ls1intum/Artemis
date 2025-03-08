@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class LectureTranscriptionService {
@@ -10,13 +11,16 @@ export class LectureTranscriptionService {
     ingestTranscription(courseId: number, lectureId: number, lectureUnitId: number): Observable<boolean> {
         return this.httpClient
             .put(
-                `api/lecture/courses/${courseId}/lectures/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription`,
+                `api/lecture/lectures/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription`,
                 {},
                 {
                     observe: 'response',
                 },
             )
-            .pipe(map((response) => response.status == 200));
+            .pipe(
+                map((response) => response.status === 200),
+                catchError(() => of(false)),
+            );
     }
 
     createTranscription(lectureId: number, lectureUnitId: number, transcription: any): Observable<boolean> {
@@ -24,6 +28,9 @@ export class LectureTranscriptionService {
             .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions`, transcription, {
                 observe: 'response',
             })
-            .pipe(map((response) => response.status == 201));
+            .pipe(
+                map((response) => response.status == 201),
+                catchError(() => of(false)),
+            );
     }
 }

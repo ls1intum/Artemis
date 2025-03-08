@@ -190,7 +190,7 @@ public class LectureService {
     }
 
     /**
-     * Ingest the transcriptions when triggered by the ingest transcription button
+     * Ingest the transcriptions in the Pyris system
      *
      * @param transcription Transcription to be ingested
      * @param course        The course containing the transcription

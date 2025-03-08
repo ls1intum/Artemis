@@ -52,11 +52,8 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -79,8 +76,6 @@ public class LectureResource {
 
     private final LectureRepository lectureRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
     private final LectureService lectureService;
 
     private final LectureImportService lectureImportService;
@@ -97,14 +92,10 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
-    private final LectureTranscriptionRepository lectureTranscriptionRepository;
-
-    public LectureResource(LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository, LectureService lectureService,
-            LectureImportService lectureImportService, CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ExerciseService exerciseService, ChannelService channelService, ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi,
-            LectureTranscriptionRepository lectureTranscriptionRepository) {
+    public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
+            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi) {
         this.lectureRepository = lectureRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
         this.courseRepository = courseRepository;
@@ -114,7 +105,6 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyApi = competencyApi;
-        this.lectureTranscriptionRepository = lectureTranscriptionRepository;
     }
 
     /**
@@ -303,72 +293,6 @@ public class LectureResource {
         }
         lectureService.ingestLecturesInPyris(course.getLectures());
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * POST courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
-     * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
-     *
-     * @param courseId      The id of the course of the lecture
-     * @param lectureId     The id of the lecture of the transcription
-     * @param lectureUnitId The id of the lectureUnit that should be ingested
-     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
-     */
-    @Profile(PROFILE_IRIS)
-    @PutMapping("courses/{courseId}/lectures/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
-        Course course = lecture.getCourse();
-        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
-        if (!course.getId().equals(courseId)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
-                    .body(null);
-        }
-        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
-        }
-        Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
-        if (transcription.isEmpty()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscription"))
-                    .body(null);
-        }
-        LectureTranscription transcriptionToIngest = transcription.get();
-        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, lectureUnit);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * DELETE courses/:courseId/lecture/:lectureId/lecture-unit/:lectureUnitId : delete the "id" lecture transcription.
-     *
-     * @param courseId      the id of the course containing the lecture transcription
-     * @param lectureId     the id of the lecture containing the lecture transcription
-     * @param lectureUnitId the id of the lecture unit containing the lecture transcription
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
-        Course course = lecture.getCourse();
-        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
-        if (!course.getId().equals(courseId)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureError", "lectureDoesNotMatchCourse"))
-                    .body(null);
-        }
-        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.wrongLectureUnitError", "lectureUnitDoesNotMatchLecture")).body(null);
-        }
-        Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
-        if (lectureTranscription.isEmpty()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.noTranscriptionError", "noTranscriptionForId"))
-                    .body(null);
-        }
-        log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.get().getId());
-        lectureService.deleteLectureTranscriptionInPyris(lectureTranscription.get());
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.get().getId().toString())).build();
     }
 
     /**

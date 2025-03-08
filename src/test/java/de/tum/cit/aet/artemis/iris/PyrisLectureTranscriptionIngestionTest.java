@@ -80,17 +80,14 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         Optional<LectureUnit> lu = lectureUnitRepository.findById(this.lectureUnit.getId());
-        request.put(
-                "/api/lecture/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId() + "/lecture-unit/" + this.lectureUnit.getId() + "/ingest-transcription",
-                Optional.empty(), HttpStatus.OK);
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-unit/" + this.lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionWithInvalidLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        request.put("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lectures/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription",
-                Optional.empty(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/lecture/lectures/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -100,8 +97,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.put("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription",
-                Optional.empty(), HttpStatus.FORBIDDEN);
+        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
 }
