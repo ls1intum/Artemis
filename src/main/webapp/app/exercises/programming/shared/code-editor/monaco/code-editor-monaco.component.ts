@@ -21,7 +21,7 @@ import { CodeEditorFileService } from 'app/exercises/programming/shared/code-edi
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom, timeout } from 'rxjs';
-import { Feedback, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, FeedbackType } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import {
@@ -390,14 +390,15 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     /**
-     * Retrieves the newly created feedback node currently rendered at the specified line, or undefined if it is not available.
-     * Only one manual feedback node pro line is currently allowed.
+     * Retrieves manually created feedback node currently rendered at the specified line, or undefined if it is not available.
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNodeForManualFeedback(line: number): HTMLElement | undefined {
-        // Undefined, because this is the value for new feedback, see the setter for tutor assessment inline component
-        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((comp) => comp.codeLine === line && comp.feedback.type === undefined)
-            ?.elementRef?.nativeElement;
+        // Feedback suggestions also have type manual
+        // New feedback has type undefined, see the setter in tutor inline feedback component
+        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find(
+            (comp) => comp.codeLine === line && (!comp.feedback.type || comp.feedback.type === FeedbackType.MANUAL),
+        )?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedbacks: Feedback[], line: number): void {
