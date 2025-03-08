@@ -21,7 +21,7 @@ import { TranslateService } from '@ngx-translate/core';
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
     let fixture: ComponentFixture<CodeEditorMonacoComponent>;
-    let getInlineFeedbackNodeByLineStub: jest.SpyInstance;
+    let getInlineFeedbackNodeForManualFeedbackStub: jest.SpyInstance;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let loadFileFromRepositoryStub: jest.SpyInstance;
 
@@ -68,7 +68,7 @@ describe('CodeEditorMonacoComponent', () => {
         comp = fixture.componentInstance;
         codeEditorRepositoryFileService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
         loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
-        getInlineFeedbackNodeByLineStub = jest.spyOn(comp, 'getInlineFeedbackNodeByLine').mockReturnValue(document.createElement('div'));
+        getInlineFeedbackNodeForManualFeedbackStub = jest.spyOn(comp, 'getInlineFeedbackNodeForManualFeedback').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -332,7 +332,7 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1`, document.createElement('div'));
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2`, document.createElement('div'));
-            expect(getInlineFeedbackNodeByLineStub).toHaveBeenCalledTimes(2);
+            expect(getInlineFeedbackNodeForManualFeedbackStub).toHaveBeenCalledTimes(2);
             expect(selectFileInEditorStub).toHaveBeenCalledOnce();
         });
     }));
@@ -343,11 +343,11 @@ describe('CodeEditorMonacoComponent', () => {
         const feedbackLineZeroBased = feedbackLineOneBased - 1;
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const element = document.createElement('div');
-        getInlineFeedbackNodeByLineStub.mockReturnValue(undefined);
+        getInlineFeedbackNodeForManualFeedbackStub.mockReturnValue(undefined);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
-        getInlineFeedbackNodeByLineStub.mockReturnValue(element);
+        getInlineFeedbackNodeForManualFeedbackStub.mockReturnValue(element);
         expect(comp.newFeedbackLines()).toEqual([feedbackLineZeroBased]);
         tick(1);
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
@@ -541,7 +541,7 @@ describe('CodeEditorMonacoComponent', () => {
             expect(addLineWidgetStub).toHaveBeenCalledTimes(2);
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 10, `feedback-3`, document.createElement('div'));
             expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 10, `feedback-4`, document.createElement('div'));
-            expect(getInlineFeedbackNodeByLineStub).toHaveBeenCalledTimes(2);
+            expect(getInlineFeedbackNodeForManualFeedbackStub).toHaveBeenCalledTimes(2);
             expect(selectFileInEditorStub).toHaveBeenCalledOnce();
         });
     }));
