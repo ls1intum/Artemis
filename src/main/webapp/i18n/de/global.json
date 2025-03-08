@@ -117,7 +117,8 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
-                "cleanupService": "Aufräumdienst"
+                "cleanupService": "Aufräumdienst",
+                "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
