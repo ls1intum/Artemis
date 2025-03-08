@@ -333,7 +333,7 @@ public class CourseResource {
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
         if (athenaModuleAccessChanged && !courseUpdate.getRestrictedAthenaModulesAccess()) {
-            athenaModuleService.ifPresent(ams -> ams.revokeAccessToRestrictedFeedbackSuggestionModules(result));
+            athenaModuleService.ifPresent(ams -> ams.revokeAccessToRestrictedFeedbackModules(result));
         }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)

@@ -137,7 +137,7 @@ public class AthenaModuleService {
      * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
      */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, ModuleType moduleType, String entityName) throws BadRequestAlertException {
-        String module = getModule(exercise, moduleType, entityName);
+        String module = getModule(exercise, moduleType);
         if (exercise.isExamExercise() && module != null) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
         }
@@ -147,7 +147,7 @@ public class AthenaModuleService {
         }
     }
 
-    private static String getModule(Exercise exercise, ModuleType moduleType, String entityName) {
+    private static String getModule(Exercise exercise, ModuleType moduleType) {
         String module = null;
         switch (moduleType) {
             case ModuleType.FEEDBACK_SUGGESTIONS -> module = exercise.getFeedbackSuggestionModule();
@@ -168,9 +168,13 @@ public class AthenaModuleService {
      */
     public void checkValidAthenaModuleChange(Exercise originalExercise, Exercise updatedExercise, String entityName) throws BadRequestAlertException {
         var dueDate = originalExercise.getDueDate();
-        if (!Objects.equals(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule()) && dueDate != null
-                && dueDate.isBefore(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getFeedbackSuggestionModule(), updatedExercise.getFeedbackSuggestionModule(), entityName, dueDate);
+        checkValidityOfAnAthenaModuleBasedOnDueDate(originalExercise.getPreliminaryFeedbackModule(), updatedExercise.getPreliminaryFeedbackModule(), entityName, dueDate);
+    }
+
+    private static void checkValidityOfAnAthenaModuleBasedOnDueDate(String originalExerciseModule, String updatedExerciseModule, String entityName, ZonedDateTime dueDate) {
+        if (!Objects.equals(originalExerciseModule, updatedExerciseModule) && dueDate != null && dueDate.isBefore(ZonedDateTime.now())) {
+            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, " ");
         }
     }
 
@@ -179,7 +183,8 @@ public class AthenaModuleService {
      *
      * @param course The course for which the access to restricted modules should be revoked
      */
-    public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
+    public void revokeAccessToRestrictedFeedbackModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
+        exerciseRepository.revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(course.getId(), restrictedModules);
     }
 }
