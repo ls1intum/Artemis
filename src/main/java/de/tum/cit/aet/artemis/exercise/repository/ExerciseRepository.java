@@ -620,7 +620,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                   AND e.preliminaryFeedbackModule IN :restrictedPreliminaryFeedbackModule
             """)
     void revokeAccessToRestrictedPreliminaryFeedbackModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedPreliminaryFeedbackModule);
+            @Param("restrictedPreliminaryFeedbackModule") Collection<String> restrictedPreliminaryFeedbackModule);
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
