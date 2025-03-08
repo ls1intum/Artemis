@@ -465,6 +465,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
             const slideLink = 'attachment-unit/123/slide/';
             const slideIndex = 1;
+            const slideId = '05ddced4-a4fc-4929-92b2-ed5743ed70f7';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.SLIDE,
@@ -472,9 +473,10 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachmentUnit,
                 slide,
                 slideIndex,
+                slideId,
             });
 
-            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slideIndex}(${slideLink}${slideIndex})[/slide]`);
+            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slideIndex}(${slideLink}${slideId})[/slide]`);
         });
 
         it('should error when incorrectly referencing a slide', () => {
