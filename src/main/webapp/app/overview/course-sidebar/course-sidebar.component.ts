@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { IconDefinition, faChevronRight, faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -34,7 +34,7 @@ export interface SidebarItem {
 @Component({
     selector: 'jhi-course-sidebar',
     templateUrl: './course-sidebar.component.html',
-    styleUrls: ['../course-overview.scss', '../course-overview.component.scss'],
+    styleUrls: ['../../overview/course-overview.scss', './course-sidebar.component.scss'],
     standalone: true,
     imports: [
         NgClass,
@@ -42,7 +42,6 @@ export interface SidebarItem {
         NgbDropdownToggle,
         NgTemplateOutlet,
         NgbDropdownMenu,
-        NgbDropdownButtonItem,
         NgbDropdownItem,
         FaIconComponent,
         TranslateDirective,
@@ -55,13 +54,11 @@ export interface SidebarItem {
         SlicePipe,
     ],
 })
-export class CourseSidebarComponent {
+export class CourseSidebarComponent implements OnInit, OnChanges {
     @Input() course: Course | undefined;
     @Input() courses: Course[] | undefined;
     @Input() sidebarItems: SidebarItem[] = [];
     @Input() courseActionItems: CourseActionItem[] = [];
-    @Input() hiddenItems: SidebarItem[] = [];
-    @Input() anyItemHidden = false;
     @Input() isNavbarCollapsed = false;
     @Input() isExamStarted = false;
     @Input() isProduction = true;
@@ -69,13 +66,69 @@ export class CourseSidebarComponent {
     @Input() hasUnreadMessages = false;
     @Input() communicationRouteLoaded = false;
 
+    // Track hidden items internally
+    hiddenItems: SidebarItem[] = [];
+    anyItemHidden = false;
+
     @Output() switchCourse = new EventEmitter<Course>();
     @Output() courseActionItemClick = new EventEmitter<CourseActionItem>();
     @Output() toggleCollapseState = new EventEmitter<void>();
 
     @ViewChild('itemsDrop') itemsDrop: NgbDropdown;
 
+    // Constants for threshold calculation
+    readonly WINDOW_OFFSET: number = 300;
+    readonly ITEM_HEIGHT: number = 38;
+
     // Icons
     faChevronRight = faChevronRight;
     faEllipsis = faEllipsis;
+
+    ngOnInit() {
+        this.updateVisibleNavbarItems(window.innerHeight);
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.sidebarItems && !changes.sidebarItems.firstChange) {
+            this.updateVisibleNavbarItems(window.innerHeight);
+        }
+    }
+
+    /** Listen window resize event by height */
+    @HostListener('window:resize', ['$event'])
+    onResize() {
+        this.updateVisibleNavbarItems(window.innerHeight);
+    }
+
+    /** Update sidebar item's hidden property based on the window height to display three-dots */
+    updateVisibleNavbarItems(height: number) {
+        const threshold = this.calculateThreshold();
+        this.applyThreshold(threshold, height);
+
+        if (!this.anyItemHidden && this.itemsDrop) {
+            this.itemsDrop.close();
+        }
+    }
+
+    /**  Applies the visibility threshold to sidebar items, determining which items should be hidden.*/
+    private applyThreshold(threshold: number, height: number) {
+        this.anyItemHidden = false;
+        this.hiddenItems = [];
+
+        // Reverse the sidebar items to remove items starting from the bottom
+        const reversedSidebarItems = [...this.sidebarItems].reverse();
+        reversedSidebarItems.forEach((item, index) => {
+            const currentThreshold = threshold - index * this.ITEM_HEIGHT;
+            item.hidden = height <= currentThreshold;
+            if (item.hidden) {
+                this.anyItemHidden = true;
+                this.hiddenItems.unshift(item);
+            }
+        });
+    }
+
+    /** Calculate threshold levels based on the number of entries in the sidebar */
+    calculateThreshold(): number {
+        return this.sidebarItems.length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+    }
 }

@@ -73,7 +73,6 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from '../shared/language/translate.directive';
 
-// Component imports
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { CourseExamsComponent } from './course-exams/course-exams.component';
@@ -162,11 +161,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isShownViaLti = false;
     private ltiSubscription: Subscription;
 
-    // Properties to track hidden items for dropdown menu
-    anyItemHidden = false;
-    hiddenItems: SidebarItem[] = [];
-    readonly WINDOW_OFFSET: number = 300;
-    readonly ITEM_HEIGHT: number = 38;
+    // Properties to track hidden items for dropdown menu - moved to sidebar component
+    anyItemHidden = false; // kept for backwards compatibility but no longer used
+    hiddenItems: SidebarItem[] = []; // kept for backwards compatibility but no longer used
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -228,6 +225,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
         });
+
         this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
             this.courseId = Number(params.courseId);
         });
@@ -264,45 +262,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         await this.initAfterCourseLoad();
         this.sidebarItems = this.getSidebarItems();
         this.courseActionItems = this.getCourseActionItems();
-        this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti = isShownViaLti;
         });
-    }
-
-    /** Listen window resize event by height */
-    @HostListener('window: resize', ['$event'])
-    onResize() {
-        this.updateVisibleNavbarItems(window.innerHeight);
-    }
-
-    /** Update sidebar item's hidden property based on the window height to display three-dots */
-    updateVisibleNavbarItems(height: number) {
-        const threshold = this.calculateThreshold();
-        this.applyThreshold(threshold, height);
-    }
-
-    /**  Applies the visibility threshold to sidebar items, determining which items should be hidden.*/
-    private applyThreshold(threshold: number, height: number) {
-        this.anyItemHidden = false;
-        this.hiddenItems = [];
-        // Reverse the sidebar items to remove items starting from the bottom
-        const reversedSidebarItems = [...this.sidebarItems].reverse();
-        reversedSidebarItems.forEach((item, index) => {
-            const currentThreshold = threshold - index * this.ITEM_HEIGHT;
-            item.hidden = height <= currentThreshold;
-            if (item.hidden) {
-                this.anyItemHidden = true;
-                this.hiddenItems.unshift(item);
-            }
-        });
-    }
-
-    /** Calculate threshold levels based on the number of entries in the sidebar */
-    calculateThreshold(): number {
-        return this.sidebarItems.length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 
     /** initialize courses attribute by retrieving all courses from the server */
