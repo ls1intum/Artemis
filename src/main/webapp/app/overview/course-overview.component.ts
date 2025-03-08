@@ -1,4 +1,3 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -14,9 +13,20 @@ import {
     ViewContainerRef,
     inject,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, Subject, Subscription, firstValueFrom, of, throwError } from 'rxjs';
+import { catchError, map, takeUntil } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
+
+// Angular Material and Bootstrap imports
+import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+
+// Icon imports
 import {
-    IconDefinition,
     faChalkboardUser,
     faChartBar,
     faChartColumn,
@@ -39,11 +49,13 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { facSidebar } from 'app/icons/icons';
+
+// Service imports
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseManagementService } from '../course/manage/course-management.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
@@ -55,48 +67,24 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
-import dayjs from 'dayjs/esm';
-import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of, takeUntil, throwError } from 'rxjs';
-import { facSidebar } from 'app/icons/icons';
-import { CourseManagementService } from '../course/manage/course-management.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { LtiService } from 'app/shared/service/lti.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
+import { TranslateDirective } from '../shared/language/translate.directive';
+
+// Component imports
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
-import { LtiService } from 'app/shared/service/lti.service';
-import { CourseSidebarService } from 'app/overview/course-sidebar.service';
-import { PROFILE_ATLAS } from 'app/app.constants';
-import { NgClass, NgStyle, NgTemplateOutlet, SlicePipe } from '@angular/common';
-import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../shared/language/translate.directive';
-import { SecuredImageComponent } from '../shared/image/secured-image.component';
-import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
-import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
+import { sortCourses } from 'app/shared/util/course.util';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
-interface CourseActionItem {
-    title: string;
-    icon?: IconDefinition;
-    translation: string;
-    action?: (item?: CourseActionItem) => void;
-}
-
-interface SidebarItem {
-    routerLink: string;
-    icon?: IconDefinition;
-    title: string;
-    testId?: string;
-    translation: string;
-    hasInOrionProperty?: boolean;
-    showInOrionWindow?: boolean;
-    guidedTour?: boolean;
-    featureToggle?: FeatureToggle;
-    hidden: boolean;
-}
+// Sidebar component imports
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from './course-sidebar/course-sidebar.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -106,26 +94,18 @@ interface SidebarItem {
     imports: [
         NgClass,
         MatSidenavContainer,
-        MatSidenav,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgTemplateOutlet,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
-        FaIconComponent,
-        TranslateDirective,
-        NgbTooltip,
         MatSidenavContent,
+        MatSidenav,
+        NgbTooltip,
         NgStyle,
         RouterLink,
         RouterOutlet,
-        SecuredImageComponent,
-        OrionFilterDirective,
-        RouterLinkActive,
-        FeatureToggleHideDirective,
-        SlicePipe,
+        NgTemplateOutlet,
+        FaIconComponent,
+        TranslateDirective,
+        CourseSidebarComponent,
     ],
+    standalone: true,
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseService = inject(CourseManagementService);
@@ -210,8 +190,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // Using a list query to be able to listen for changes (late mount); need both as this only returns native nodes
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
-    @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
-
     // Icons
     faTimes = faTimes;
     faEye = faEye;
@@ -250,15 +228,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
         });
-        this.subscription = this.route.params.subscribe((params) => {
+        this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
             this.courseId = Number(params.courseId);
         });
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo: any) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
             this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
         });
-        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
+
+        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
             this.isExamStarted = isStarted;
         });
         this.getCollapseStateFromStorage();
@@ -287,7 +267,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
-        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti = isShownViaLti;
         });
     }
@@ -295,10 +275,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Listen window resize event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
-        if (this.itemsDrop) {
-            this.updateVisibleNavbarItems(window.innerHeight);
-            if (!this.anyItemHidden) this.itemsDrop.close();
-        }
+        this.updateVisibleNavbarItems(window.innerHeight);
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
@@ -780,6 +757,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         return observable;
     }
 
+    /**
+     * Fetch the course from the server including all exercises, lectures, exams and competencies
+     * @param refresh Whether this is a force refresh (displays loader animation)
+     */
     ngOnDestroy() {
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
