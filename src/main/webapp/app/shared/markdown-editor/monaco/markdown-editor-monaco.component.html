@@ -171,7 +171,7 @@
                                                 >
                                                     {{ unit.name }}
                                                 </button>
-                                                @for (slide of unit.slides; track slide.id; let index = $index) {
+                                                @for (slide of unit.slides; track slide.slideNumber; let index = $index) {
                                                     <button
                                                         class="ps-1 me-1"
                                                         mat-menu-item
@@ -182,6 +182,7 @@
                                                                 slide,
                                                                 attachmentUnit: unit,
                                                                 slideIndex: index + 1,
+                                                                slideId: slide.id,
                                                             })
                                                         "
                                                         type="button"

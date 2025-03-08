@@ -16,9 +16,11 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
+public interface SlideRepository extends ArtemisJpaRepository<Slide, String> {
 
     Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
+
+    Slide findByAttachmentUnitIdAndId(Long attachmentUnitId, String id);
 
     /**
      * Find all slides that have a non-null hidden timestamp
@@ -42,7 +44,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      * @param slideId The ID of the slide to unhide
      */
     @Transactional
-    default void unhideSlide(Long slideId) {
+    default void unhideSlide(String slideId) {
         findById(slideId).ifPresent(slide -> {
             slide.setHidden(null);
             save(slide);
