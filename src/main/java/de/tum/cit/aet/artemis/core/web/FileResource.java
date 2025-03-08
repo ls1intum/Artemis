@@ -130,22 +130,22 @@ public class FileResource {
 
     private final FileUploadService fileUploadService;
 
-    public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, SlideRepository slideRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            LectureUnitService lectureUnitService, FileUploadService fileUploadService) {
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
+            FileUploadService fileUploadService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
-        this.slideRepository = slideRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
+        this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
@@ -549,7 +549,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideId} : Get the lecture unit attachment slide by slide Id
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideId} : Get the lecture unit attachment slide by slide id
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
      * @param slideId          the slideId of the file
@@ -567,6 +567,11 @@ public class FileResource {
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         Slide slide = slideRepository.findByAttachmentUnitIdAndId(attachmentUnitId, slideId);
+
+        if (slide.getHidden() != null) {
+            throw new AccessForbiddenException("Slide is hidden");
+        }
+
         String directoryPath = slide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
@@ -577,7 +582,7 @@ public class FileResource {
             String fileName = matcher.group(1);
             return buildFileResponse(
                     FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    false);
+                    true);
         }
         else {
             throw new EntityNotFoundException("Slide", slideId);

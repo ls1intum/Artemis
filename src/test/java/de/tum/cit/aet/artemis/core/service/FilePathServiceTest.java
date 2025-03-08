@@ -33,7 +33,7 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
         actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/core/files/attachments/attachment-unit/4/slide/1/1.jpg"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "slide", "1", "1.jpg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/files/attachments/attachment-unit/4/student/download.pdf"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("/api/core/files/attachments/attachment-unit/4/student/download.pdf"));
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "student", "download.pdf"));
     }
 

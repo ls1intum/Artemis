@@ -165,7 +165,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
 
                     // Get the full path from within the parentheses
-                    // Get the full path from within the parentheses
                     const fullPath = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
 
                     const attachmentUnitRefDir = this.ATTACHMENT_DIR;
