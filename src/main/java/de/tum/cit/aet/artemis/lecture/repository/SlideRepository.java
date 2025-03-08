@@ -17,4 +17,6 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
     Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
 
+    Slide findByAttachmentUnitIdAndId(Long attachmentUnitId, String id);
+
 }
