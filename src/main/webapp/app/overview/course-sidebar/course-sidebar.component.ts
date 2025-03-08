@@ -5,11 +5,11 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTo
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../shared/language/translate.directive';
-import { SecuredImageComponent } from '../../shared/image/secured-image.component';
-import { OrionFilterDirective } from '../../shared/orion/orion-filter.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { FeatureToggleHideDirective } from '../../shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 export interface CourseActionItem {
     title: string;
@@ -111,7 +111,7 @@ export class CourseSidebarComponent implements OnInit, OnChanges {
     }
 
     /**  Applies the visibility threshold to sidebar items, determining which items should be hidden.*/
-    private applyThreshold(threshold: number, height: number) {
+    applyThreshold(threshold: number, height: number) {
         this.anyItemHidden = false;
         this.hiddenItems = [];
 

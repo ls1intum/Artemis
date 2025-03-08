@@ -83,8 +83,9 @@
         @if (courseActionItems?.length && !anyItemHidden) {
             <div ngbDropdown placement="top" class="navbar-nav mb-2">
                 <li class="nav-item">
-                    @for (courseActionItem of courseActionItems; track courseActionItem) {
+                    @for (courseActionItem of courseActionItems; track courseActionItem; let i = $index) {
                         <a
+                            [id]="'action-item-' + i"
                             class="nav-link nav-link-sidebar px-3"
                             [ngClass]="{ collapsed: isNavbarCollapsed }"
                             (click)="courseActionItemClick.emit(courseActionItem)"

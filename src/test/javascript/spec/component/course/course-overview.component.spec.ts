@@ -59,6 +59,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { CourseSidebarComponent } from 'app/overview/course-sidebar/course-sidebar.component';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -151,7 +152,6 @@ describe('CourseOverviewComponent', () => {
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
-    let itemsDrop: NgbDropdown;
     let courseSidebarService: CourseSidebarService;
 
     let metisConversationService: MetisConversationService;
@@ -184,6 +184,7 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(SecuredImageComponent),
+                MockComponent(CourseSidebarComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -227,7 +228,6 @@ describe('CourseOverviewComponent', () => {
                 jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
-                itemsDrop = component.itemsDrop;
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
@@ -265,7 +265,6 @@ describe('CourseOverviewComponent', () => {
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
         const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
         const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
-        const getUpdateVisibility = jest.spyOn(component, 'updateVisibleNavbarItems');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -286,7 +285,6 @@ describe('CourseOverviewComponent', () => {
             CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
-        expect(getUpdateVisibility).toHaveBeenCalledOnce();
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
@@ -584,102 +582,12 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.container-closed')).toBeNull();
     });
 
-    it('should display course title when navbar is not collapsed', () => {
-        component.isNavbarCollapsed = false;
-        fixture.detectChanges();
-
-        const titleElement = fixture.nativeElement.querySelector('#test-course-title');
-        expect(titleElement.textContent).toContain(component.course?.title);
-    });
-
-    it('should display course icon when available', () => {
-        fixture.detectChanges();
-
-        const iconElement = fixture.nativeElement.querySelector('jhi-secured-image');
-        expect(iconElement).not.toBeNull();
-    });
-
-    it('should not display course icon when not available', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        fixture.detectChanges();
-
-        const iconElement = fixture.nativeElement.querySelector('jhi-secured-image');
-        const iconElement2 = fixture.nativeElement.querySelector('.course-circle');
-        expect(iconElement).toBeNull();
-        expect(iconElement2).not.toBeNull();
-    });
-
     it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
         component.toggleCollapseState();
         expect(component.isNavbarCollapsed).toBeTrue();
 
         component.toggleCollapseState();
         expect(component.isNavbarCollapsed).toBeFalse();
-    });
-
-    it('should call courseActionItemClick on course action item click', () => {
-        // Mock a courseActionItem if not already done
-        component.courseActionItems = [
-            {
-                title: 'Unenroll',
-                translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
-            },
-        ];
-        fixture.detectChanges();
-
-        jest.spyOn(component, 'courseActionItemClick');
-        const actionItem = fixture.nativeElement.querySelector('.nav-link-sidebar');
-        actionItem.click();
-        expect(component.courseActionItemClick).toHaveBeenCalledWith(component.courseActionItems[0]);
-    });
-
-    it('should call updateVisibleNavbarItems after window resizement', async () => {
-        const getUpdateVisibility = jest.spyOn(component, 'updateVisibleNavbarItems');
-
-        await component.ngOnInit();
-        window.dispatchEvent(new Event('resize'));
-
-        expect(getUpdateVisibility).toHaveBeenCalled();
-    });
-
-    it('should display content of dropdown when dropdownOpen changes', () => {
-        if (component.itemsDrop) {
-            fixture.detectChanges();
-            itemsDrop.open();
-            expect(component.itemsDrop.isOpen()).toBeTrue();
-        }
-    });
-    it('should hide content of dropdown when dropdownOpen changes', () => {
-        if (component.itemsDrop) {
-            itemsDrop.close();
-            fixture.detectChanges();
-            expect(component.itemsDrop.isOpen()).toBeFalse();
-        }
-    });
-
-    it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
-        component.anyItemHidden = true;
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
-
-        component.anyItemHidden = false;
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
-    });
-
-    it('should change dropdownOpen when clicking on More', () => {
-        if (component.itemsDrop) {
-            fixture.detectChanges();
-            itemsDrop.close();
-            const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
-            clickOnMoreItem.click();
-            expect(fixture.nativeElement.querySelector('.dropdown-content')).toBeNull();
-        }
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {

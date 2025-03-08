@@ -18,14 +18,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, firstValueFrom, of, throwError } from 'rxjs';
 import { catchError, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-
-// Angular Material and Bootstrap imports
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-// Icon imports
 import {
     faChalkboardUser,
     faChartBar,
@@ -51,7 +48,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/icons/icons';
 
-// Service imports
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -82,7 +78,6 @@ import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.co
 import { sortCourses } from 'app/shared/util/course.util';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
-// Sidebar component imports
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from './course-sidebar/course-sidebar.component';
 
 @Component({
@@ -160,10 +155,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly MIN_DISPLAYED_COURSES: number = 6;
     isShownViaLti = false;
     private ltiSubscription: Subscription;
-
-    // Properties to track hidden items for dropdown menu - moved to sidebar component
-    anyItemHidden = false; // kept for backwards compatibility but no longer used
-    hiddenItems: SidebarItem[] = []; // kept for backwards compatibility but no longer used
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
