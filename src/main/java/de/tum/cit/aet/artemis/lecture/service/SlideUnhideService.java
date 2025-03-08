@@ -14,7 +14,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -56,7 +55,6 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
     /**
      * Loads all slides with a non-null hidden timestamp and schedules their unhiding.
      */
-    @Transactional(readOnly = true)
     public void scheduleAllHiddenSlides() {
         List<Slide> hiddenSlides = slideRepository.findAllByHiddenNotNull();
 
@@ -98,7 +96,6 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
      *
      * @param slideId The ID of the slide to unhide
      */
-    @Transactional
     public void unhideSlide(Long slideId) {
         slideRepository.findById(slideId).ifPresent(slide -> {
             AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
@@ -107,8 +104,8 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
                 attachment = attachmentUnit.getAttachment();
             }
 
-            slide.setHidden(null);
-            slideRepository.save(slide);
+            // Use repository method to handle transaction
+            slideRepository.unhideSlide(slideId);
             scheduledTasks.remove(slideId);
 
             // Regenerate student version of the attachment if applicable

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -34,4 +35,17 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      * @return List of hidden slides for the attachment unit
      */
     List<Slide> findByAttachmentUnitIdAndHiddenNotNull(Long attachmentUnitId);
+
+    /**
+     * Unhides a slide by setting its hidden property to null.
+     *
+     * @param slideId The ID of the slide to unhide
+     */
+    @Transactional
+    default void unhideSlide(Long slideId) {
+        findById(slideId).ifPresent(slide -> {
+            slide.setHidden(null);
+            save(slide);
+        });
+    }
 }

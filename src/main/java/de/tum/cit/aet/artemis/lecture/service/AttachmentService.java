@@ -16,7 +16,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -50,7 +49,6 @@ public class AttachmentService {
      *
      * @param attachment The attachment whose student version needs to be regenerated
      */
-    @Transactional
     public void regenerateStudentVersion(Attachment attachment) {
         AttachmentUnit attachmentUnit = attachment.getAttachmentUnit();
         if (attachmentUnit == null) {
@@ -64,7 +62,7 @@ public class AttachmentService {
             if (attachment.getStudentVersion() != null) {
                 deleteStudentVersionFile(attachment);
                 attachment.setStudentVersion(null);
-                attachmentRepository.save(attachment);
+                attachmentRepository.saveAttachmentWithStudentVersion(attachment);
             }
             return;
         }
@@ -76,7 +74,7 @@ public class AttachmentService {
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
             handleStudentVersionFile(studentVersionPdf, attachment, attachmentUnit.getId());
-            attachmentRepository.save(attachment);
+            attachmentRepository.saveAttachmentWithStudentVersion(attachment);
         }
         catch (Exception e) {
             throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());
