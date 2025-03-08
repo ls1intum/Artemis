@@ -26,10 +26,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -43,8 +41,6 @@ public class AttachmentUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final SlideRepository slideRepository;
-
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
     private final Optional<IrisSettingsRepository> irisSettingsRepository;
@@ -53,14 +49,13 @@ public class AttachmentUnitService {
 
     private final LectureUnitService lectureUnitService;
 
-    public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+    public AttachmentUnitService(SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository,
+            FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository,
+            Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.slideRepository = slideRepository;
         this.pyrisWebhookService = pyrisWebhookService;
         this.irisSettingsRepository = irisSettingsRepository;
         this.competencyProgressApi = competencyProgressApi;
@@ -139,13 +134,6 @@ public class AttachmentUnitService {
         evictCache(updateFile, savedAttachmentUnit);
 
         if (updateFile != null) {
-            if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
-                List<Slide> slides = existingAttachmentUnit.getSlides();
-                for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
-                }
-                slideRepository.deleteAll(existingAttachmentUnit.getSlides());
-            }
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages);

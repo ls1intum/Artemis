@@ -26,6 +26,7 @@ interface LectureAttachmentReferenceActionArgs {
     slide?: Slide;
     attachment?: Attachment;
     slideIndex?: number;
+    slideId?: string;
 }
 
 /**
@@ -106,8 +107,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide && args.slideIndex) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide, args.slideIndex);
+                if (args.attachmentUnit && args.slide && args.slideIndex && args.slideId) {
+                    this.insertSlideReference(editor, args.attachmentUnit, args.slide, args.slideIndex, args.slideId);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -135,13 +136,13 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number): void {
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number, slideId: string): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Extract just the first part of the path up to /slide/
         const shortLinkWithoutFileName = shortLink?.match(/attachment-unit\/\d+\/slide\//)?.[0];
         this.replaceTextAtCurrentSelection(
             editor,
-            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slideIndex}(${shortLinkWithoutFileName}${slideIndex})[/slide]`,
+            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slideIndex}(${shortLinkWithoutFileName}${slideId})[/slide]`,
         );
     }
 
