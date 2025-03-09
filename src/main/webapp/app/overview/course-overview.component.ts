@@ -710,11 +710,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         return observable;
     }
-
-    /**
-     * Fetch the course from the server including all exercises, lectures, exams and competencies
-     * @param refresh Whether this is a force refresh (displays loader animation)
-     */
     ngOnDestroy() {
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
