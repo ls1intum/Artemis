@@ -24,37 +24,31 @@
                     }
                 </div>
             </div>
-
-            <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics" class="mb-4" />
-            <div class="d-flex gap-5 mb-5">
-                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                    <div>
-                        <span class="bold">Status:</span>
-                        <fa-icon [icon]="buildAgent.status === 'PAUSED' ? faPauseCircle : faCircleCheck" />
-                        <span>{{ buildAgent.status }}</span>
-                    </div>
-                    <div>
-                        <span class="bold">Latest Build Date</span>
-                        <span>{{ buildAgent.buildAgentDetails?.lastBuildDate | artemisDate }}</span>
-                    </div>
+            <div class="mb-4">
+                <div>
+                    <span class="bold">Status:</span>
+                    <fa-icon [icon]="buildAgent.status === 'PAUSED' ? faPauseCircle : faCircleCheck" />
+                    <span>{{ buildAgent.status }}</span>
                 </div>
-                <div class="d-flex flex-column gap-3 justify-content-around stats-column">
-                    <div>
-                        <span class="bold">Average Build Duration:</span>
-                        <span>{{ buildAgent.buildAgentDetails?.averageBuildDuration }}</span>
-                    </div>
-                    <div>
-                        <span class="bold">Git Revision:</span>
-                        <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
-                    </div>
+                <div>
+                    <span class="bold">Start Date</span>
+                    <span>{{ buildAgent.buildAgentDetails?.startDate | artemisDate }}</span>
                 </div>
-                <div class="d-flex flex-column gap-3 justify-content-start stats-column">
-                    <div>
-                        <span class="bold">Start Date</span>
-                        <span>{{ buildAgent.buildAgentDetails?.startDate | artemisDate }}</span>
-                    </div>
+                <div>
+                    <span class="bold">Latest Build Date</span>
+                    <span>{{ buildAgent.buildAgentDetails?.lastBuildDate | artemisDate }}</span>
+                </div>
+                <div>
+                    <span class="bold">Average Build Duration:</span>
+                    <span>{{ buildAgent.buildAgentDetails?.averageBuildDuration }}</span>
+                </div>
+                <div>
+                    <span class="bold">Git Revision:</span>
+                    <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
                 </div>
             </div>
+
+            <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics" class="mb-4" />
 
             <div>
                 <h4 id="build-queue-running-heading" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h4>
