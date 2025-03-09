@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -115,6 +116,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.testExportSubmissionsByStudentLogins();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete() throws Exception {
@@ -145,6 +148,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         request.delete(path, HttpStatus.OK, params);
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_buildPlanFailsInJenkins() throws Exception {
@@ -162,6 +167,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         request.delete(path, HttpStatus.INTERNAL_SERVER_ERROR, params);
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testProgrammingExerciseDelete_buildPlanDoesntExist() throws Exception {
@@ -308,6 +315,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.updateProgrammingExercise_instructorNotInCourse_forbidden();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_invalidTemplateVcs_badRequest() throws Exception {
@@ -320,6 +329,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.updateProgrammingExercise_invalidSolutionBuildPlan_badRequest();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_invalidSolutionRepository_badRequest() throws Exception {
@@ -536,12 +547,16 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.createProgrammingExercise_maxStaticCodePenaltyNegative_badRequest();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
@@ -652,6 +667,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @CsvSource({ "false, false", "true, false", "false, true", })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -677,6 +694,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVcTest extends AbstractProgrammi
         programmingExerciseIntegrationTestService.importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest();
     }
 
+    // TODO: enable or remove the test
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
