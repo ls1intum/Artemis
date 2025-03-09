@@ -3,10 +3,6 @@
         <div class="type">
             {{ 'artemisApp.exam.events.type.' + event().eventType | artemisTranslate }}
         </div>
-        <div class="author">
-            <span jhiTranslate="artemisApp.exam.events.from"></span>
-            <span>{{ event().createdBy }}</span>
-        </div>
     </div>
     <div class="date">
         <span><fa-icon [icon]="faPaperPlane" /> {{ event().createdDate | artemisDate }}</span>

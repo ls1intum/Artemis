@@ -189,7 +189,6 @@
                     "examAttendanceCheck": "Anwesenheitskontrolle",
                     "problemStatementUpdate": "Aufgabenstellung Aktualisiert"
                 },
-                "from": "von",
                 "acknowledge": "Bestätigen",
                 "acknowledgeAll": "Alle bestätigen",
                 "navigateToExercise": "Navigiere zur Aufgabe",

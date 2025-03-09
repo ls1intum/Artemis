@@ -30,7 +30,7 @@ export class StudentsUploadImagesButtonComponent {
     exam = input.required<Exam>();
     buttonSize = input<ButtonSize>(ButtonSize.MEDIUM);
 
-    finish = output<void>();
+    uploadDone = output<void>();
 
     // Icons
     faPlus = faPlus;
@@ -46,7 +46,7 @@ export class StudentsUploadImagesButtonComponent {
         modalRef.componentInstance.courseId = this.courseId();
         modalRef.componentInstance.exam = this.exam();
         modalRef.result.then(
-            () => this.finish.emit(),
+            () => this.uploadDone.emit(),
             () => {},
         );
     }
