@@ -53,13 +53,28 @@ public class ScheduleService {
 
     private final ParticipationLifecycleService participationLifecycleService;
 
-    record ExerciseLifecycleKey(Long exerciseId, ExerciseLifecycle lifecycle) {
+    private interface LifecycleKey {
+
+        void logInformation(String taskName, String formattedTime, Future.State state, long delay);
     }
 
-    record ParticipationLifecycleKey(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
+    private record ExerciseLifecycleKey(Long exerciseId, ExerciseLifecycle lifecycle) implements LifecycleKey {
+
+        public void logInformation(String taskName, String formattedTime, Future.State state, long delay) {
+            log.debug("    Exercise: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", exerciseId(), lifecycle(), taskName, formattedTime,
+                    state, delay);
+        }
     }
 
-    record ScheduledTaskName(ScheduledFuture<?> future, String name) {
+    private record ParticipationLifecycleKey(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) implements LifecycleKey {
+
+        public void logInformation(String taskName, String formattedTime, Future.State state, long delay) {
+            log.debug("    Participation: {}, Exercise: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", participationId(), exerciseId(),
+                    lifecycle(), taskName, formattedTime, state, delay);
+        }
+    }
+
+    private record ScheduledTaskName(ScheduledFuture<?> future, String name) {
     }
 
     public record ScheduledExerciseEvent(Long exerciseId, ExerciseLifecycle lifecycle, String name, ZonedDateTime scheduledTime, Future.State state) {
@@ -136,18 +151,7 @@ public class ScheduleService {
             // if the map is not empty and there is at least still one future in the values map, log the tasks and remove the ones that are not running anymore
             if (!scheduledExerciseTasks.isEmpty() && scheduledExerciseTasks.values().stream().anyMatch(set -> !set.isEmpty())) {
                 log.debug("  Scheduled Exercise Tasks:");
-                scheduledExerciseTasks.forEach((key, taskNames) -> {
-                    taskNames.removeIf(taskName -> {
-                        long delay = taskName.future().getDelay(TimeUnit.SECONDS);
-                        var state = taskName.future().state();
-                        Instant scheduledTime = Instant.now().plusSeconds(delay);
-                        ZonedDateTime zonedScheduledTime = scheduledTime.atZone(systemDefault());
-                        String formattedTime = zonedScheduledTime.format(formatter);
-                        log.debug("    Exercise: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", key.exerciseId(), key.lifecycle(),
-                                taskName.name(), formattedTime, state, delay);
-                        return state != Future.State.RUNNING;
-                    });
-                });
+                scheduledExerciseTasks.forEach(this::removeNonRunningTasks);
             }
 
             // clean up empty entries in the map
@@ -158,24 +162,25 @@ public class ScheduleService {
             // if the map is not empty and there is at least still one future in the values map, log the tasks and remove the ones that are not running anymore
             if (!scheduledParticipationTasks.isEmpty() && scheduledParticipationTasks.values().stream().anyMatch(set -> !set.isEmpty())) {
                 log.debug("  Scheduled Participation Tasks:");
-                scheduledParticipationTasks.forEach((key, taskNames) -> {
-                    taskNames.removeIf(taskName -> {
-                        long delay = taskName.future().getDelay(TimeUnit.SECONDS);
-                        var state = taskName.future().state();
-                        Instant scheduledTime = Instant.now().plusSeconds(delay);
-                        ZonedDateTime zonedScheduledTime = scheduledTime.atZone(systemDefault());
-                        String formattedTime = zonedScheduledTime.format(formatter);
-                        log.debug("    Exercise: {}, Participation: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", key.exerciseId(),
-                                key.participationId(), key.lifecycle(), taskName.name(), formattedTime, state, delay);
-                        return state != Future.State.RUNNING;
-                    });
-                });
+                scheduledParticipationTasks.forEach(this::removeNonRunningTasks);
             }
 
             // clean up empty entries in the map
             scheduledParticipationTasks.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
         }, Duration.ofSeconds(15));
+    }
+
+    private void removeNonRunningTasks(LifecycleKey key, Set<ScheduledTaskName> taskNames) {
+        taskNames.removeIf(taskName -> {
+            long delay = taskName.future().getDelay(TimeUnit.SECONDS);
+            var state = taskName.future().state();
+            Instant scheduledTime = Instant.now().plusSeconds(delay);
+            ZonedDateTime zonedScheduledTime = scheduledTime.atZone(systemDefault());
+            String formattedTime = zonedScheduledTime.format(formatter);
+            key.logInformation(taskName.name(), formattedTime, state, delay);
+            return state != Future.State.RUNNING;
+        });
     }
 
     private void addScheduledExerciseTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<ScheduledFuture<?>> futures, String name) {
