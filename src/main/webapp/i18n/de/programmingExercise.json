@@ -110,8 +110,8 @@
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
-            "customizeBuildPlan": "Build Skript anpassen",
-            "customizeBuildPlanWithAeolus": "Build Skript anpassen",
+            "customizeBuildPlan": "Build Konfiguration anpassen",
+            "customizeBuildPlanWithAeolus": "Build Konfiguration anpassen",
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
@@ -737,6 +737,18 @@
                     "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
                     "addEnvVar": "Umgebungsvariable hinzufügen",
                     "removeEnvVar": "Entfernen"
+                },
+                "cpuCount": {
+                    "label": "Anzahl der CPUs bearbeiten",
+                    "help": "Die Anzahl der CPUs, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                },
+                "memory": {
+                    "label": "Maximale Arbeitsspeichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                },
+                "memorySwap": {
+                    "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
                 }
             },
             "artemisIntelligence": {

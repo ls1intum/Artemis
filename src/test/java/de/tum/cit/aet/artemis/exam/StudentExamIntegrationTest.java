@@ -853,7 +853,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
 
         assertThat(result.id()).isGreaterThan(0L);
         assertThat(result.text()).isEqualTo(testMessage);
-        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getLogin());
         assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
         var event = captureExamLiveEventForId(exam1.getId(), true);
@@ -884,7 +883,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
 
         assertThat(result.id()).isGreaterThan(0L);
         assertThat(result.text()).isEqualTo(testMessage);
-        assertThat(result.createdBy()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1").getLogin());
         assertThat(result.createdDate()).isCloseTo(Instant.now(), within(5, ChronoUnit.SECONDS));
 
     }

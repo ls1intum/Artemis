@@ -35,6 +35,9 @@ export class ProfileInfo {
     public buildTimeoutMin?: number;
     public buildTimeoutMax?: number;
     public buildTimeoutDefault?: number;
+    public defaultContainerCpuCount?: number;
+    public defaultContainerMemoryLimitInMB?: number;
+    public defaultContainerMemorySwapLimitInMB?: number;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;
