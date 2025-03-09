@@ -28,7 +28,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     eventsToDisplay?: ExamLiveEvent[];
     events: ExamLiveEvent[] = [];
 
-    examStartDate = model.required<dayjs.Dayjs>();
+    examStartDate = model<dayjs.Dayjs>();
     // Icons
     faCheck = faCheck;
 
@@ -48,10 +48,13 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe((event: ExamLiveEvent) => {
-            this.unacknowledgedEvents.unshift(event);
-            this.updateEventsToDisplay();
-        });
+        const examStartDate = this.examStartDate();
+        if (examStartDate) {
+            this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, examStartDate).subscribe((event: ExamLiveEvent) => {
+                this.unacknowledgedEvents.unshift(event);
+                this.updateEventsToDisplay();
+            });
+        }
     }
 
     acknowledgeEvent(event: ExamLiveEvent) {
