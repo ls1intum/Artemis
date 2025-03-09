@@ -16,7 +16,7 @@ export class ExerciseUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/lecture';
 
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         if (exerciseUnit.exercise) {

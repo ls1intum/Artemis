@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.SourceDTO;
@@ -31,7 +30,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 @Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.StandardizedCompetencies)
 @RestController
-@RequestMapping("api/standardized-competencies/")
+@RequestMapping("api/atlas/standardized-competencies/")
 public class StandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyResource.class);
@@ -81,22 +80,6 @@ public class StandardizedCompetencyResource {
         var knowledgeAreas = standardizedCompetencyService.getAllForTreeView();
 
         return ResponseEntity.ok().body(knowledgeAreas.stream().map(KnowledgeAreaResultDTO::of).toList());
-    }
-
-    /**
-     * GET api/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Gets a knowledge area with its children and competencies
-     *
-     * @param knowledgeAreaId the id of the knowledge area to get
-     * @return the ResponseEntity with status 200 (OK) and with body containing the knowledge area, or with status 404 (Not Found)
-     */
-    @GetMapping("knowledge-areas/{knowledgeAreaId}")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<KnowledgeArea> getKnowledgeArea(@PathVariable long knowledgeAreaId) {
-        log.debug("REST request to get knowledge area with id : {}", knowledgeAreaId);
-
-        var knowledgeArea = knowledgeAreaRepository.findWithChildrenAndCompetenciesByIdElseThrow(knowledgeAreaId);
-
-        return ResponseEntity.ok().body(knowledgeArea);
     }
 
     /**

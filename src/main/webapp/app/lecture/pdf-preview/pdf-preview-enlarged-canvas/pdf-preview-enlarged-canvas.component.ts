@@ -1,4 +1,5 @@
 import { Component, ElementRef, HostListener, effect, input, output, signal, viewChild } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -6,7 +7,7 @@ type NavigationDirection = 'next' | 'prev';
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    imports: [],
+    imports: [TranslateDirective],
 })
 export class PdfPreviewEnlargedCanvasComponent {
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');

@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class StatisticsResource {
 
     private final StatisticsService statisticsService;

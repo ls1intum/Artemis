@@ -12,7 +12,7 @@ type EntityResponseType = SearchResult<Lecture>;
 export class LecturePagingService extends PagingService<Lecture> {
     private http = inject(HttpClient);
 
-    private static readonly RESOURCE_URL = 'api/lectures';
+    private static readonly RESOURCE_URL = 'api/lecture/lectures';
 
     constructor() {
         super();

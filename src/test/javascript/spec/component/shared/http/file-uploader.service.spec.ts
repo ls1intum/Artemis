@@ -22,7 +22,7 @@ describe('FileUploaderService', () => {
         const expectedResponse = { path: 'some-path' };
         const promise = service.uploadMarkdownFile(file);
 
-        const request = httpMock.expectOne({ method: 'POST', url: '/api/markdown-file-upload' });
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/markdown-file-upload' });
         request.flush(expectedResponse);
 
         httpMock.verify();
@@ -34,7 +34,7 @@ describe('FileUploaderService', () => {
         const expectedResponse = { path: 'some-path' };
         const promise = service.uploadMarkdownFileInCurrentMetisConversation(file, 1, 2);
 
-        const request = httpMock.expectOne({ method: 'POST', url: '/api/files/courses/1/conversations/2' });
+        const request = httpMock.expectOne({ method: 'POST', url: '/api/core/files/courses/1/conversations/2' });
         request.flush(expectedResponse);
 
         httpMock.verify();

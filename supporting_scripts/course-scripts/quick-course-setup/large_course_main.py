@@ -69,8 +69,8 @@ def main() -> None:
             commit(user_session, participation_id, CLIENT_URL, COMMITS_PER_STUDENT)
             logging.info(f"Added commit for {username} in the programming exercise {exercise_Id} successfully")
 
-    # This is a measure in case developers forget to revert changes to programming exercise template
-    run_cleanup()
+    # This should be uncommented if randomize_results script is being used by the developer!
+    #run_cleanup()
 
 if __name__ == "__main__":
     main()

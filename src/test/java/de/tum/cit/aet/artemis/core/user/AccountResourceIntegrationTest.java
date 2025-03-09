@@ -69,7 +69,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userVM.setPassword(password);
 
         // make request
-        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.CREATED, null);
     }
 
     @Test
@@ -81,7 +81,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userVM.setPassword("e".repeat(Constants.PASSWORD_MAX_LENGTH + 1));
 
         // make request
-        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -97,7 +97,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userVM.setPassword("e".repeat(Constants.PASSWORD_MIN_LENGTH - 1));
 
         // make request
-        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -108,7 +108,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userVM.setPassword("");
 
         // make request
-        request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -120,7 +120,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             userVM.setPassword(getValidPassword());
 
             // make request
-            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.FORBIDDEN, null);
+            request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.FORBIDDEN, null);
         });
     }
 
@@ -133,7 +133,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             userVM.setPassword(getValidPassword());
 
             // make request
-            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.FORBIDDEN, null);
+            request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.FORBIDDEN, null);
         });
     }
 
@@ -148,7 +148,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             userVM.setPassword(getValidPassword());
 
             // make request
-            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+            request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
         });
     }
 
@@ -162,7 +162,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             userVM.setPassword(getValidPassword());
 
             // make request -> validation fails due to empty email is validated against min size
-            request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
+            request.postWithoutLocation("/api/core/public/register", userVM, HttpStatus.BAD_REQUEST, null);
         });
     }
 
@@ -178,7 +178,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // make request
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", testActivationKey);
-        request.get("/api/public/activate", HttpStatus.OK, String.class, params);
+        request.get("/api/core/public/activate", HttpStatus.OK, String.class, params);
 
         // check result
         Optional<User> updatedUser = userTestRepository.findById(user.getId());
@@ -196,7 +196,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             // make request
             LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("key", testActivationKey);
-            request.get("/api/public/activate", HttpStatus.FORBIDDEN, String.class, params);
+            request.get("/api/core/public/activate", HttpStatus.FORBIDDEN, String.class, params);
         });
     }
 
@@ -204,19 +204,19 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
-        request.get("/api/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+        request.get("/api/core/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
     }
 
     @Test
     @WithMockUser("authenticatedUser")
     void isAuthenticated() throws Exception {
-        String userLogin = request.get("/api/public/authenticate", HttpStatus.OK, String.class);
+        String userLogin = request.get("/api/core/public/authenticate", HttpStatus.OK, String.class);
         assertThat(userLogin).isNotNull().isEqualTo("authenticatedUser");
     }
 
     @Test
     void isAuthenticatedWithoutLoggedInUser() throws Exception {
-        String user = request.get("/api/public/authenticate", HttpStatus.OK, String.class);
+        String user = request.get("/api/core/public/authenticate", HttpStatus.OK, String.class);
         assertThat(user).isEmpty();
     }
 
@@ -225,14 +225,14 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void getAccount() throws Exception {
         // create user in repo
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        UserDTO account = request.get("/api/public/account", HttpStatus.OK, UserDTO.class);
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
     }
 
     @Test
     @WithAnonymousUser
     void getAccountWithoutLoggedInUser() throws Exception {
-        UserDTO user = request.get("/api/public/account", HttpStatus.NO_CONTENT, UserDTO.class);
+        UserDTO user = request.get("/api/core/public/account", HttpStatus.NO_CONTENT, UserDTO.class);
         assertThat(user).isNull();
     }
 
@@ -247,7 +247,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setFirstName(updatedFirstName);
 
         // make request
-        request.put("/api/account", new UserDTO(user), HttpStatus.OK);
+        request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
 
         // check if update successful
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -266,7 +266,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
             user.setFirstName(updatedFirstName);
 
             // make request
-            request.put("/api/account", new UserDTO(user), HttpStatus.FORBIDDEN);
+            request.put("/api/core/account", new UserDTO(user), HttpStatus.FORBIDDEN);
         });
     }
 
@@ -280,7 +280,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setEmail(userSameEmail.getEmail());
 
         // make request
-        request.put("/api/account", new UserDTO(user), HttpStatus.BAD_REQUEST);
+        request.put("/api/core/account", new UserDTO(user), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -293,7 +293,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         // make request
-        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -315,7 +315,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         // make request
-        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -325,7 +325,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String updatedPassword = "";
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         // make request
-        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -334,7 +334,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
         // make request
-        request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -347,7 +347,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
-        request.postStringWithoutLocation("/api/public/account/change-language", "de", HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/core/public/account/change-language", "de", HttpStatus.OK, null);
 
         // check result
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -365,7 +365,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
-        request.postStringWithoutLocation("/api/public/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
+        request.postStringWithoutLocation("/api/core/public/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -378,7 +378,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        request.postStringWithoutLocation("/api/public/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         verifyPasswordReset(createdUser, resetKeyBefore);
     }
@@ -393,7 +393,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        request.postStringWithoutLocation("/api/public/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
         verifyPasswordReset(createdUser, resetKeyBefore);
     }
 
@@ -413,7 +413,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         finishResetData.setNewPassword(newPassword);
 
         // finish password reset
-        request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
         Optional<User> userPasswordResetFinished = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -431,7 +431,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String resetKeyBefore = userBefore.get().getResetKey();
 
         // init password reset
-        request.postStringWithoutLocation("/api/public/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
 
         // check user data
         Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
@@ -452,7 +452,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setInternal(false);
         userTestRepository.saveAndFlush(user);
 
-        request.postStringWithoutLocation("/api/public/account/reset-password/init", email, HttpStatus.BAD_REQUEST, null);
+        request.postStringWithoutLocation("/api/core/public/account/reset-password/init", email, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -460,7 +460,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void passwordResetFinishInvalidPassword() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword("");
-        request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -468,7 +468,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void passwordResetFinishInvalidKey() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword(getValidPassword());
-        request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -479,7 +479,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setExternalLLMUsageAcceptedTimestamp(null);
         userTestRepository.save(user);
 
-        request.put("/api/users/accept-external-llm-usage", null, HttpStatus.OK);
+        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.OK);
 
         // Verify timestamp was set
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -496,7 +496,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setExternalLLMUsageAcceptedTimestamp(originalTimestamp);
         userTestRepository.save(user);
 
-        request.put("/api/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
 
         // Verify timestamp wasn't changed
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);

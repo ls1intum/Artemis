@@ -59,7 +59,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class ComplaintResource {
 
     private static final Logger log = LoggerFactory.getLogger(ComplaintResource.class);
