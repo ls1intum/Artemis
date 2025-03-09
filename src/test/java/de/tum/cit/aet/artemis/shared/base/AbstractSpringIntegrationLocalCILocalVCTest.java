@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
@@ -505,7 +504,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception {
+    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
         // Not implemented for local VC and local CI
     }
 
@@ -560,12 +559,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey1, boolean b) throws Exception {
+    public void mockRepositoryUriIsValid(VcsRepositoryUri vcsTemplateRepositoryUri, String projectKey1, boolean b) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception {
+    public void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not implemented for local VC and local CI
     }
 
@@ -575,12 +574,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException {
+    public void mockDefaultBranch(ProgrammingExercise programmingExercise) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockUserExists(String username) throws Exception {
+    public void mockUserExists(String username) {
         // Not implemented for local VC and local CI
     }
 

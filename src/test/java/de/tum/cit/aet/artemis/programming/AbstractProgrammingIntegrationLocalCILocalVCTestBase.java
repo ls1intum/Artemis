@@ -26,8 +26,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseGitDiffReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultService;
@@ -60,16 +58,10 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
-    protected ProgrammingExerciseGitDiffReportRepository reportRepository;
-
-    @Autowired
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     protected ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     // External Repositories
     @Autowired

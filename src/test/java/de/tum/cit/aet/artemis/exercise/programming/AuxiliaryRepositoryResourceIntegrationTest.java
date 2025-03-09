@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -35,6 +34,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -50,9 +51,8 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "auxiliaryrepositoryresourceint";
 
@@ -546,7 +546,8 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
     void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
-        var status = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, Map.class);
-        assertThat(status).isNotEmpty();
+        var status = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(status).isNotNull();
+        assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.CLEAN);
     }
 }

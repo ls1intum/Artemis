@@ -44,11 +44,11 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "examuser";
 
@@ -108,7 +108,6 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTes
         exam1 = examRepository.save(exam1);
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @AfterEach

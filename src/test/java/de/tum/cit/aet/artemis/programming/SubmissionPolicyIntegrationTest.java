@@ -13,11 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -26,10 +26,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    @Autowired
+    private ProgrammingExerciseGradingService gradingService;
 
     private static final String TEST_PREFIX = "submissionpolicyintegration";
 
@@ -239,7 +243,6 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(20.0), participation1, TEST_PREFIX + "commit1");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, TEST_PREFIX + "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
-        User student2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
     }
 
@@ -370,7 +373,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_enforceLockRepositoryPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {
+    void test_enforceLockRepositoryPolicyOnStudentParticipation(EnforcePolicyTestType type) {
         if (type != EnforcePolicyTestType.POLICY_NULL) {
             addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().limit(1).active(type == EnforcePolicyTestType.POLICY_ACTIVE).policy());
         }
@@ -397,7 +400,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationJenk
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_enforceSubmissionPenaltyPolicyOnStudentParticipation(EnforcePolicyTestType type) throws Exception {
+    void test_enforceSubmissionPenaltyPolicyOnStudentParticipation(EnforcePolicyTestType type) {
         programmingExercise.setMaxPoints(10.0);
         programmingExerciseRepository.save(programmingExercise);
         if (type != EnforcePolicyTestType.POLICY_NULL) {
