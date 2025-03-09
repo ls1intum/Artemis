@@ -40,7 +40,7 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     exercises = input<Exercise[]>([]);
     exerciseIndex = model(0);
-    endDate = input<dayjs.Dayjs>();
+    endDate = input<dayjs.Dayjs>(dayjs());
     overviewPageOpen = input<boolean>();
     examSessions = input<ExamSession[]>([]);
     examTimeLineView = input(false);
