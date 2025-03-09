@@ -87,7 +87,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionWithInvalidLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        request.put("/api/lecture/lectures/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/lecture/lectures/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.NOT_FOUND);
     }
 
     @Test
