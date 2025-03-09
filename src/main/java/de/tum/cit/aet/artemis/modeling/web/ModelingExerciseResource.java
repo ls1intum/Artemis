@@ -252,6 +252,7 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
+        exerciseService.handleDueDateChange(modelingExerciseBeforeUpdate, updatedModelingExercise);
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 

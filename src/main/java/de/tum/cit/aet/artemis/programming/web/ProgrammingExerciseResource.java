@@ -373,6 +373,7 @@ public class ProgrammingExerciseResource {
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        exerciseService.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         return ResponseEntity.ok(savedProgrammingExercise);
     }

@@ -293,6 +293,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         exerciseService.notifyAboutExerciseChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
+        exerciseService.handleDueDateChange(textExerciseBeforeUpdate, updatedTextExercise);
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 

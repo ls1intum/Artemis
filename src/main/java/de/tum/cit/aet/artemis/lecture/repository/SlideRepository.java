@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,15 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, String> {
      * @return List of hidden slides for the attachment unit
      */
     List<Slide> findByAttachmentUnitIdAndHiddenNotNull(Long attachmentUnitId);
+
+    /**
+     * Find all slides associated with a specific exercise
+     *
+     * @param exerciseId The ID of the exercise
+     * @return List of slides associated with the exercise
+     */
+    @Query("SELECT s FROM Slide s WHERE s.exercise.id = :exerciseId")
+    List<Slide> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Unhides a slide by setting its hidden property to null.

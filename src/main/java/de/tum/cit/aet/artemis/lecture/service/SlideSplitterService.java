@@ -11,8 +11,10 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,6 +38,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -55,10 +59,13 @@ public class SlideSplitterService {
 
     private final SlideUnhideService slideUnhideService;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, SlideUnhideService slideUnhideService) {
+    private final ExerciseRepository exerciseRepository;
+
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, SlideUnhideService slideUnhideService, ExerciseRepository exerciseRepository) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -117,11 +124,22 @@ public class SlideSplitterService {
             int numPages = document.getNumberOfPages();
             PDFRenderer pdfRenderer = new PDFRenderer(document);
 
-            Map<Integer, java.sql.Timestamp> hiddenPagesMap = hiddenPages != null ? new ObjectMapper().readValue(hiddenPages, new TypeReference<List<Map<String, Object>>>() {
-            }).stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> {
-                String dateStr = (String) map.get("date");
-                return Timestamp.from(Instant.parse(dateStr));
-            })) : Collections.emptyMap();
+            Map<Integer, Map<String, Object>> hiddenPagesData = Collections.emptyMap();
+            if (hiddenPages != null) {
+                List<Map<String, Object>> hiddenPagesList = new ObjectMapper().readValue(hiddenPages, new TypeReference<List<Map<String, Object>>>() {
+                });
+                hiddenPagesData = hiddenPagesList.stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> {
+                    Map<String, Object> data = new HashMap<>();
+                    String dateStr = (String) map.get("date");
+                    data.put("date", Timestamp.from(Instant.parse(dateStr)));
+
+                    // Include exercise ID if it exists
+                    if (map.get("exerciseId") != null) {
+                        data.put("exerciseId", map.get("exerciseId"));
+                    }
+                    return data;
+                }));
+            }
 
             for (int page = 0; page < numPages; page++) {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
@@ -138,17 +156,33 @@ public class SlideSplitterService {
                 slide.setSlideNumber(slideNumber);
                 slide.setAttachmentUnit(attachmentUnit);
 
-                // Check if the hidden status is changing
+                // Get the hidden data for this slide
+                Map<String, Object> hiddenData = hiddenPagesData.get(slideNumber);
                 java.util.Date previousHiddenValue = slide.getHidden();
-                java.util.Date newHiddenValue = hiddenPagesMap.getOrDefault(slideNumber, null);
-                slide.setHidden(newHiddenValue);
+
+                if (hiddenData != null && hiddenData.containsKey("date")) {
+                    slide.setHidden((java.util.Date) hiddenData.get("date"));
+
+                    if (hiddenData.containsKey("exerciseId") && hiddenData.get("exerciseId") != null) {
+                        Number exerciseId = (Number) hiddenData.get("exerciseId");
+                        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId.longValue());
+                        exercise.ifPresent(slide::setExercise);
+                    }
+                    else {
+                        slide.setExercise(null);
+                    }
+                }
+                else {
+                    slide.setHidden(null);
+                    slide.setExercise(null);
+                }
 
                 Slide savedSlide = slideRepository.save(slide);
 
-                // Schedule unhiding if the hidden value is set or has changed
-                if (previousHiddenValue != newHiddenValue) {
+                // Schedule unhiding if the hidden date has changed
+                if (!Objects.equals(previousHiddenValue, slide.getHidden())) {
                     slideUnhideService.handleSlideHiddenUpdate(savedSlide);
-                    log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+                    log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), slide.getHidden());
                 }
             }
         }

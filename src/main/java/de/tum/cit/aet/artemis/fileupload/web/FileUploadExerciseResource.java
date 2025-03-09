@@ -284,6 +284,7 @@ public class FileUploadExerciseResource {
         var updatedExercise = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
+        exerciseService.handleDueDateChange(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
 
         exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
