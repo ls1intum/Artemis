@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20250309000014-1" author="ece.eren">
+    <changeSet id="20250308010500-1" author="ece.eren">
         <addColumn tableName="slide">
             <column name="uuid_id" type="varchar(36)">
                 <constraints nullable="true"/>
@@ -11,26 +11,26 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="20250309000014-2a" author="ece.eren">
+    <changeSet id="20250308010500-2a" author="ece.eren">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
         </preConditions>
         <sql>UPDATE slide SET uuid_id = uuid_generate_v4()::text WHERE uuid_id IS NULL</sql>
     </changeSet>
 
-    <changeSet id="20250309000014-2b" author="ece.eren">
+    <changeSet id="20250308010500-2b" author="ece.eren">
         <preConditions onFail="MARK_RAN">
             <dbms type="mysql"/>
         </preConditions>
         <sql>UPDATE slide SET uuid_id = UUID() WHERE uuid_id IS NULL</sql>
     </changeSet>
 
-    <changeSet id="20250309000014-3" author="ece.eren">
+    <changeSet id="20250308010500-3" author="ece.eren">
         <addNotNullConstraint tableName="slide" columnName="uuid_id" columnDataType="varchar(36)"/>
     </changeSet>
 
     <!-- Store the FK relationship before we drop the table -->
-    <changeSet id="20250309000014-4" author="ece.eren">
+    <changeSet id="20250308010500-4" author="ece.eren">
         <createTable tableName="slide_new">
             <column name="id" type="varchar(36)">
                 <constraints primaryKey="true" nullable="false"/>
@@ -39,28 +39,27 @@
             <column name="slide_image_path" type="varchar(150)"/>
             <column name="slide_number" type="int"/>
             <column name="hidden" type="datetime"/>
-            <column name="exercise_id" type="bigint"/>
         </createTable>
     </changeSet>
 
     <!-- Copy data from old table to new table -->
-    <changeSet id="20250309000014-5" author="ece.eren">
-        <sql>INSERT INTO slide_new (id, attachment_unit_id, slide_image_path, slide_number, hidden, exercise_id)
-             SELECT uuid_id, attachment_unit_id, slide_image_path, slide_number, hidden, exercise_id FROM slide</sql>
+    <changeSet id="20250308010500-5" author="ece.eren">
+        <sql>INSERT INTO slide_new (id, attachment_unit_id, slide_image_path, slide_number, hidden)
+             SELECT uuid_id, attachment_unit_id, slide_image_path, slide_number, hidden FROM slide</sql>
     </changeSet>
 
     <!-- Drop old table -->
-    <changeSet id="20250309000014-6" author="ece.eren">
+    <changeSet id="20250308010500-6" author="ece.eren">
         <dropTable tableName="slide"/>
     </changeSet>
 
     <!-- Rename new table to original name -->
-    <changeSet id="20250309000014-7" author="ece.eren">
+    <changeSet id="20250308010500-7" author="ece.eren">
         <renameTable oldTableName="slide_new" newTableName="slide"/>
     </changeSet>
 
     <!-- Add foreign key constraint only if the lecture_unit table exists -->
-    <changeSet id="20250309000014-8" author="ece.eren">
+    <changeSet id="20250308010500-8" author="ece.eren">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="lecture_unit"/>
             <columnExists tableName="lecture_unit" columnName="id"/>
@@ -68,15 +67,5 @@
         <addForeignKeyConstraint baseTableName="slide" baseColumnNames="attachment_unit_id"
                                  constraintName="fk_slide_attachment_unit_id"
                                  referencedTableName="lecture_unit" referencedColumnNames="id"/>
-    </changeSet>
-
-    <changeSet id="20250309000014-9" author="ece.eren">
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="exercise"/>
-            <columnExists tableName="exercise" columnName="id"/>
-        </preConditions>
-        <addForeignKeyConstraint baseTableName="slide" baseColumnNames="exercise_id"
-                                 constraintName="fk_slide_exercise_id"
-                                 referencedTableName="exercise" referencedColumnNames="id"/>
     </changeSet>
 </databaseChangeLog>
