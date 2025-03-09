@@ -15,6 +15,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, NgClass, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFileComponent extends CodeEditorFileBrowserNodeComponent {
+    @Input() disableReopenFeedbackButton: boolean = true;
     @Input() disableActions: boolean;
     @Input() hasChanges = false;
     @Input() badges: FileBadge[] = [];

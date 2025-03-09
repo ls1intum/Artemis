@@ -88,6 +88,8 @@ export class CodeEditorContainerComponent implements OnChanges {
     highlightDifferences: boolean;
     @Input()
     disableAutoSave = false;
+    @Input()
+    disableReopenFeedbackButton = true;
 
     @Output()
     onCommitStateChange = new EventEmitter<CommitState>();

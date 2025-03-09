@@ -105,6 +105,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     fileBadges: { [path: string]: FileBadge[] } = {};
     @Input()
     allowHiddenFiles = false;
+    @Input()
+    disableReopenFeedbackButton: boolean = true;
 
     @Output()
     onToggleCollapse = new EventEmitter<InteractableEvent>();

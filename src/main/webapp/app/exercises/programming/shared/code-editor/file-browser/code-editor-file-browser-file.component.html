@@ -30,9 +30,11 @@
     <!-- File level actions -->
     @if (!disableActions) {
         <span class="file-icons" [ngClass]="item.checked ? 'text-white' : 'primary'">
-            <button (click)="reopenFeedback($event)" class="btn btn-small">
-                <fa-icon id="file-browser-reopen-feedback" [icon]="faEye" title="{{ 'artemisApp.editor.fileBrowser.reopenFeedback' | artemisTranslate }}" />
-            </button>
+            @if (!disableReopenFeedbackButton) {
+                <button (click)="reopenFeedback($event)" class="btn btn-small">
+                    <fa-icon id="file-browser-reopen-feedback" [icon]="faEye" title="{{ 'artemisApp.editor.fileBrowser.reopenFeedback' | artemisTranslate }}" />
+                </button>
+            }
             <button (click)="setRenamingNode($event)" class="btn btn-small">
                 <fa-icon id="file-browser-file-edit" [icon]="faEdit" title="{{ 'artemisApp.editor.fileBrowser.renameFile' | artemisTranslate }}" />
             </button>
