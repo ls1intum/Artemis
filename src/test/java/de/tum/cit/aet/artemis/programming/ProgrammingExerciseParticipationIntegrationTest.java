@@ -677,10 +677,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void checkResetRepository_participationLocked_forbidden() throws Exception {
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        programmingExerciseStudentParticipation.setLocked(true);
-        programmingExerciseParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
+        // TODO: make sure to activate one condition in which the participation would be locked, see ParticipationAuthorizationService#isLocked
 
-        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
+        request.put("/api/programming/programming-exercise-participations/" + programmingExerciseStudentParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     @Test

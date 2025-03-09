@@ -102,7 +102,6 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -586,22 +585,6 @@ public class ExamService {
 
             // we might need this information for programming exercises with submission policy
             participation.setSubmissionCount(participation.getSubmissions().size());
-
-            // set the locked property of the participation properly
-            if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
-                    && exercise instanceof ProgrammingExercise programmingExercise) {
-                var submissionPolicy = programmingExercise.getSubmissionPolicy();
-                // in the unlikely case the student exam was already submitted, set all participations to locked
-                if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
-                    programmingExerciseStudentParticipation.setLocked(true);
-                }
-                else if (submissionPolicy != null && Boolean.TRUE.equals(submissionPolicy.isActive()) && submissionPolicy instanceof LockRepositoryPolicy) {
-                    programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
-                }
-                else {
-                    programmingExerciseStudentParticipation.setLocked(false);
-                }
-            }
 
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();

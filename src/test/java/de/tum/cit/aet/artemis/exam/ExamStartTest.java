@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -236,9 +235,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
             assertThat(participation.getExercise().getExerciseGroup()).isEqualTo(exam.getExerciseGroups().getFirst());
             // No initial submissions should be created for programming exercises
             assertThat(participation.getSubmissions()).isEmpty();
-            ProgrammingExerciseStudentParticipation studentParticipation = (ProgrammingExerciseStudentParticipation) participation;
-            // The participation should not get locked if it gets created after the exam already started
-            assertThat(studentParticipation.isLocked()).isFalse();
         }
     }
 

@@ -1013,22 +1013,21 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        var participation = programmingExerciseStudentParticipation;
-        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
-        studentParticipationRepository.save(participation);
+        programmingExerciseStudentParticipation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
-        Result result = participation.getResults().stream().findFirst().orElseThrow();
+        Result result = programmingExerciseStudentParticipation.getResults().stream().findFirst().orElseThrow();
         result.setScore(100D);
         resultRepository.save(result);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", "true");
-        var response = request.putWithResponseBodyAndParams("/api/programming/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK,
-                params);
+        var responseResult = request.putWithResponseBodyAndParams("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result,
+                Result.class, HttpStatus.OK, params);
 
-        var responseParticipation = (ProgrammingExerciseStudentParticipation) response.getParticipation();
+        var responseParticipation = (ProgrammingExerciseStudentParticipation) responseResult.getParticipation();
         assertThat(responseParticipation.getIndividualDueDate()).isNull();
-        assertThat(responseParticipation.isLocked()).isFalse();
+        // TODO: add some meaningful assertions here related to the feedback request
     }
 
     @Test
