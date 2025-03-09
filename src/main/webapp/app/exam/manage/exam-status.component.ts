@@ -240,7 +240,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      */
     private examAlreadyStarted(): boolean {
         const exam = this.exam();
-        return exam.startDate! && exam.startDate.isBefore(dayjs());
+        return !!exam.startDate && exam.startDate.isBefore(dayjs());
     }
 
     /**
@@ -248,7 +248,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
      */
     private examAlreadyEnded(): boolean {
         const exam = this.exam();
-        return exam.endDate! && exam.endDate.isBefore(dayjs());
+        return !!exam.endDate && exam.endDate.isBefore(dayjs());
     }
 
     /**
