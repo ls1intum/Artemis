@@ -33,7 +33,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.util.Tuple;
+import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -243,7 +243,7 @@ public class ScheduleService {
      * @param scheduledTask One runnable tasks to be executed at the associated ZonedDateTimes
      * @param name          Name of the task
      */
-    public void scheduleExerciseTask(Exercise exercise, ExerciseLifecycle lifecycle, Tuple<ZonedDateTime, Runnable> scheduledTask, String name) {
+    public void scheduleExerciseTask(Exercise exercise, ExerciseLifecycle lifecycle, Pair<ZonedDateTime, Runnable> scheduledTask, String name) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled more than once for each lifecycle
         cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
@@ -259,7 +259,7 @@ public class ScheduleService {
      * @param tasks     Runnable tasks to be executed at the associated ZonedDateTimes, must be a mutable set
      * @param name      Name of the task
      */
-    public void scheduleExerciseTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks, String name) {
+    public void scheduleExerciseTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Pair<ZonedDateTime, Runnable>> tasks, String name) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);

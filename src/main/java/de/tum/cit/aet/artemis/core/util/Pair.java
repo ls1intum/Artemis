@@ -8,5 +8,5 @@ import java.io.Serializable;
  * @param <F> first param.
  * @param <S> second param.
  */
-public record Tuple<F, S>(F first, S second) implements Serializable {
+public record Pair<F, S>(F first, S second) implements Serializable {
 }

@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
-import de.tum.cit.aet.artemis.core.util.Tuple;
+import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -105,7 +105,7 @@ public class QuizScheduleService {
         if (quizExercise.getDueDate() != null && !quizExercise.isQuizEnded()) {
             // we only schedule the task if the quiz is not over yet
             scheduleService.scheduleExerciseTask(quizExercise, ExerciseLifecycle.DUE,
-                    new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> quizSubmissionService.calculateAllResults(quizExercise.getId())), "calculate all quiz results");
+                    new Pair<>(quizExercise.getDueDate().plusSeconds(5), () -> quizSubmissionService.calculateAllResults(quizExercise.getId())), "calculate all quiz results");
         }
     }
 

@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.util.Tuple;
+import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
@@ -98,7 +98,7 @@ public class ExerciseLifecycleService {
      * @param tasks     The tasks to be executed at distinct points in time
      * @return The {@code ScheduledFuture<?>}s allow to later cancel the tasks or check whether they have been executed.
      */
-    public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
+    public Set<ScheduledFuture<?>> scheduleMultipleTasks(Exercise exercise, ExerciseLifecycle lifecycle, Set<Pair<ZonedDateTime, Runnable>> tasks) {
         final Set<ScheduledFuture<?>> futures = new HashSet<>();
         for (var task : tasks) {
             var future = scheduler.schedule(task.second(), task.first().toInstant());
