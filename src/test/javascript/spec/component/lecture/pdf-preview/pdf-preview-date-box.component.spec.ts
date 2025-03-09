@@ -7,11 +7,13 @@ import dayjs from 'dayjs/esm';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('PdfPreviewDateBoxComponent', () => {
     let component: PdfPreviewDateBoxComponent;
     let fixture: ComponentFixture<PdfPreviewDateBoxComponent>;
     let courseExerciseServiceMock: any;
+    let alertServiceMock: any;
 
     const mockCourse = { id: 1, title: 'Test Course' };
     const mockExercises = [
@@ -26,11 +28,16 @@ describe('PdfPreviewDateBoxComponent', () => {
             findAllExercisesForCourse: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
         };
 
+        alertServiceMock = {
+            error: jest.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [PdfPreviewDateBoxComponent],
             providers: [
                 { provide: CourseExerciseService, useValue: courseExerciseServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useValue: alertServiceMock },
             ],
         }).compileComponents();
 
@@ -38,7 +45,7 @@ describe('PdfPreviewDateBoxComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('course', mockCourse);
-        fixture.componentRef.setInput('pageIndex', 1);
+        fixture.componentRef.setInput('pageIndices', [1, 2]);
 
         fixture.detectChanges();
     });
@@ -64,6 +71,15 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             expect(component.exercises()).toEqual([]);
         }));
+
+        it('should set isMultiplePages correctly', () => {
+            component.ngOnInit();
+            expect(component.isMultiplePages()).toBeTruthy();
+
+            fixture.componentRef.setInput('pageIndices', [1]);
+            component.ngOnInit();
+            expect(component.isMultiplePages()).toBeFalsy();
+        });
     });
 
     describe('Exercise Processing', () => {
@@ -138,20 +154,24 @@ describe('PdfPreviewDateBoxComponent', () => {
 
     describe('Form Submission', () => {
         let hiddenPagesOutputSpy: jest.SpyInstance;
-        let alertServiceSpy: jest.SpyInstance;
 
         beforeEach(() => {
             hiddenPagesOutputSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
-            alertServiceSpy = jest.spyOn(component['alertService'], 'error');
         });
 
         it('should emit hidden pages with forever date when hide forever is selected', () => {
             component.hideForever.set(true);
+            fixture.componentRef.setInput('pageIndices', [1, 2]);
             component.onSubmit();
 
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
                     pageIndex: 1,
+                    date: dayjs('9999-12-31'),
+                    exerciseId: null,
+                },
+                {
+                    pageIndex: 2,
                     date: dayjs('9999-12-31'),
                     exerciseId: null,
                 },
@@ -165,13 +185,14 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.calendarSelected.set(true);
             component.defaultDate.set(testDate);
+            fixture.componentRef.setInput('pageIndices', [3]);
 
             component.onSubmit();
 
-            expect(alertServiceSpy).not.toHaveBeenCalled();
+            expect(alertServiceMock.error).not.toHaveBeenCalled();
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
-                    pageIndex: 1,
+                    pageIndex: 3,
                     date: dayjs(testDate),
                     exerciseId: null,
                 },
@@ -188,12 +209,18 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.exerciseSelected.set(true);
             component.selectedExercise.set(futureExercise);
+            fixture.componentRef.setInput('pageIndices', [5, 6]);
 
             component.onSubmit();
 
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
-                    pageIndex: 1,
+                    pageIndex: 5,
+                    date: futureDate,
+                    exerciseId: 123,
+                },
+                {
+                    pageIndex: 6,
                     date: futureDate,
                     exerciseId: 123,
                 },
@@ -213,8 +240,15 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.onSubmit();
 
-            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateError');
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateError');
             expect(hiddenPagesOutputSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Computed Properties', () => {
+        it('should correctly sort and format page indices', () => {
+            fixture.componentRef.setInput('pageIndices', [3, 1, 2]);
+            expect(component.pageIndicesSorted()).toBe('1, 2, 3');
         });
     });
 });
