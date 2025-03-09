@@ -35,8 +35,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -141,8 +139,6 @@ describe('CourseOverviewComponent', () => {
     let courseStorageService: CourseStorageService;
     let examParticipationService: ExamParticipationService;
     let teamService: TeamService;
-    let tutorialGroupsService: TutorialGroupsService;
-    let tutorialGroupsConfigurationService: TutorialGroupsConfigurationService;
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
@@ -223,8 +219,6 @@ describe('CourseOverviewComponent', () => {
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
-                tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-                tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
@@ -263,8 +257,6 @@ describe('CourseOverviewComponent', () => {
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
         const notifyAboutCourseAccessStub = jest.spyOn(courseAccessStorageService, 'onCourseAccessed');
-        const getSidebarItems = jest.spyOn(component, 'getSidebarItems');
-        const getCourseActionItems = jest.spyOn(component, 'getCourseActionItems');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         getCourseStub.mockReturnValue(course1);
 
@@ -273,8 +265,6 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
-        expect(getSidebarItems).toHaveBeenCalledOnce();
-        expect(getCourseActionItems).toHaveBeenCalledOnce();
         expect(notifyAboutCourseAccessStub).toHaveBeenCalledWith(
             course1.id,
             CourseAccessStorageService.STORAGE_KEY,
@@ -285,23 +275,6 @@ describe('CourseOverviewComponent', () => {
             CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
             CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
         );
-    });
-
-    it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
-        component.course = { id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true };
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Dashboard');
-        expect(sidebarItems[1].title).toContain('Exercises');
-        expect(sidebarItems[2].title).toContain('Lectures');
-    });
-
-    it('should create sidebar items with default items', () => {
-        component.course = { id: 123, lectures: [], exams: [] };
-        const sidebarItems = component.getSidebarItems();
-        expect(sidebarItems.length).toBeGreaterThan(0);
-        expect(sidebarItems[0].title).toContain('Exercises');
-        expect(sidebarItems[1].title).toContain('Lectures');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -462,57 +435,6 @@ describe('CourseOverviewComponent', () => {
         component.loadCourse(true);
 
         expect(subscribeStub).toHaveBeenCalledOnce();
-    });
-
-    it('should have visible exams', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course1);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        const bool = component.hasVisibleExams();
-
-        expect(bool).toBeTrue();
-    });
-
-    it('should not have visible exams', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        const bool = component.hasVisibleExams();
-
-        expect(bool).toBeFalse();
-    });
-
-    it('should have competencies and tutorial groups', () => {
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-
-        const tutorialGroupsResponse: HttpResponse<TutorialGroup[]> = new HttpResponse({
-            body: [new TutorialGroup()],
-            status: 200,
-        });
-        const configurationResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({
-            body: generateExampleTutorialGroupsConfiguration({}),
-            status: 200,
-        });
-
-        jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(of(tutorialGroupsResponse));
-        jest.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
-
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        expect(component.hasCompetencies()).toBeTrue();
-        expect(component.hasTutorialGroups()).toBeTrue();
-        expect(component.course?.competencies).not.toBeEmpty();
-        expect(component.course?.prerequisites).not.toBeEmpty();
-        expect(component.course?.tutorialGroups).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {

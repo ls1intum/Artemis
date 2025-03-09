@@ -7,7 +7,7 @@ import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,6 +20,8 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import dayjs from 'dayjs/esm';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -32,6 +34,10 @@ describe('CourseSidebarComponent', () => {
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         courseIcon: 'path/to/icon.png',
         studentCourseAnalyticsDashboardEnabled: true,
+        numberOfCompetencies: 0,
+        numberOfTutorialGroups: 1,
+        numberOfPrerequisites: 1,
+        lectures: [{ id: 1, title: 'Lecture1' }],
     };
 
     const course2: Course = {
@@ -39,6 +45,7 @@ describe('CourseSidebarComponent', () => {
         title: 'Course2',
         description: 'Description of course 2',
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+        numberOfCompetencies: 1,
     };
 
     const mockSidebarItems: SidebarItem[] = [
@@ -118,10 +125,10 @@ describe('CourseSidebarComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                MockProvider(ArtemisServerDateService),
             ],
         }).compileComponents();
 
@@ -129,25 +136,25 @@ describe('CourseSidebarComponent', () => {
         component = fixture.componentInstance;
 
         // Set up initial inputs
-        component.course = course1;
-        component.courses = [course1, course2];
-        component.sidebarItems = [...mockSidebarItems];
-        component.courseActionItems = [...mockActionItems];
-        component.isNavbarCollapsed = false;
-        component.isExamStarted = false;
-        component.isProduction = true;
-        component.isTestServer = false;
-        component.hasUnreadMessages = false;
-        component.communicationRouteLoaded = false;
+        fixture.componentRef.setInput('course', course1);
+        fixture.componentRef.setInput('courses', [course1, course2]);
+        fixture.componentRef.setInput('isNavbarCollapsed', false);
+        fixture.componentRef.setInput('isExamStarted', false);
+        fixture.componentRef.setInput('isProduction', true);
+        fixture.componentRef.setInput('isTestServer', false);
+        fixture.componentRef.setInput('hasUnreadMessages', false);
+        fixture.componentRef.setInput('communicationRouteLoaded', false);
         fixture.detectChanges();
     });
 
     it('should initialize visible/hidden items on component initialization', () => {
         const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
-
+        const getSidebarItemsSpy = jest.spyOn(component, 'getSidebarItems');
+        const courseActionItemsSpy = jest.spyOn(component, 'getCourseActionItems');
         component.ngOnInit();
-
-        expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
+        expect(getSidebarItemsSpy).toHaveBeenCalledOnce();
+        expect(courseActionItemsSpy).toHaveBeenCalledOnce();
+        expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledExactlyOnceWith(window.innerHeight);
     });
 
     it('should recalculate hidden items when sidebarItems change', () => {
@@ -183,8 +190,8 @@ describe('CourseSidebarComponent', () => {
         component.itemsDrop = mockDropdown as unknown as NgbDropdown;
 
         jest.spyOn(component, 'applyThreshold').mockImplementation((threshold, height) => {
-            component.anyItemHidden = false;
-            component.hiddenItems = [];
+            component.anyItemHidden.set(false);
+            component.hiddenItems.set([]);
         });
 
         component.updateVisibleNavbarItems(window.innerHeight);
@@ -194,9 +201,10 @@ describe('CourseSidebarComponent', () => {
 
     it('should calculate threshold based on sidebar items length', () => {
         const threshold = component.calculateThreshold();
+        const numberOfItems = component.getSidebarItems().length;
 
         // WINDOW_OFFSET = 300, ITEM_HEIGHT = 38, sidebarItems.length = 5
-        const expectedThreshold = 300 + 5 * 38;
+        const expectedThreshold = 300 + numberOfItems * 38;
 
         expect(threshold).toBe(expectedThreshold);
     });
@@ -207,17 +215,17 @@ describe('CourseSidebarComponent', () => {
 
         component.applyThreshold(threshold, height);
 
-        expect(component.anyItemHidden).toBe(true);
-        expect(component.hiddenItems.length).toBeGreaterThan(0);
+        expect(component.anyItemHidden()).toBe(true);
+        expect(component.hiddenItems().length).toBeGreaterThan(0);
 
         component.applyThreshold(100, 1000);
 
-        expect(component.anyItemHidden).toBe(false);
-        expect(component.hiddenItems.length).toBe(0);
+        expect(component.anyItemHidden()).toBe(false);
+        expect(component.hiddenItems().length).toBe(0);
     });
 
     it('should display course title when navbar is not collapsed', () => {
-        component.isNavbarCollapsed = false;
+        fixture.componentRef.setInput('isNavbarCollapsed', false);
         fixture.detectChanges();
 
         const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
@@ -226,11 +234,11 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
-        component.anyItemHidden = true;
+        component.anyItemHidden.set(true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
 
-        component.anyItemHidden = false;
+        component.anyItemHidden.set(false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
     });
@@ -243,8 +251,8 @@ describe('CourseSidebarComponent', () => {
 
     it('should not display course icon when not available', () => {
         // course without icon
-        component.course = course2;
-        component.courses = [course2];
+        fixture.componentRef.setInput('course', course2);
+        fixture.componentRef.setInput('courses', [course2]);
         fixture.detectChanges();
 
         const iconElement = fixture.debugElement.query(By.directive(SecuredImageComponent));
@@ -264,7 +272,7 @@ describe('CourseSidebarComponent', () => {
 
     it('should emit switchCourse when a course is selected from dropdown', () => {
         const switchCourseSpy = jest.spyOn(component.switchCourse, 'emit');
-        component.courses = [course1, course2];
+        fixture.componentRef.setInput('courses', [course1, course2]);
         fixture.detectChanges();
 
         const courseDropdownItem = fixture.debugElement.query(By.css('[ngbDropdownItem]'));
@@ -274,11 +282,108 @@ describe('CourseSidebarComponent', () => {
 
     it('should emit courseActionItemClick when an action item is clicked', () => {
         const courseActionItemClickSpy = jest.spyOn(component.courseActionItemClick, 'emit');
-        component.courseActionItems = [mockActionItems[0]];
-        component.anyItemHidden = false;
+        component.courseActionItems.set([mockActionItems[0]]);
+        component.anyItemHidden.set(false);
         fixture.detectChanges();
         const actionItem = fixture.debugElement.query(By.css('#action-item-0'));
         actionItem.nativeElement.click();
         expect(courseActionItemClickSpy).toHaveBeenCalledWith(mockActionItems[0]);
+    });
+
+    it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
+        fixture.componentRef.setInput('course', { ...course1, studentCourseAnalyticsDashboardEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Dashboard');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Lectures');
+        expect(sidebarItems[3].title).toContain('Statistics');
+        expect(sidebarItems[4].title).toContain('Communication');
+    });
+
+    it('should create sidebar items with default items', () => {
+        fixture.componentRef.setInput('course', { ...course1, studentCourseAnalyticsDashboardEnabled: false });
+        fixture.detectChanges();
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Lectures');
+    });
+
+    it('should create sidebar with exams tab', () => {
+        fixture.componentRef.setInput('course', { ...course1, studentCourseAnalyticsDashboardEnabled: false, exams: [{ visibleDate: dayjs() }] });
+        jest.spyOn(component, 'hasVisibleExams').mockReturnValue(true);
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exams');
+        expect(sidebarItems[1].title).toContain('Exercises');
+        expect(sidebarItems[2].title).toContain('Lectures');
+    });
+
+    it('should create sidebar with learning path and competencies tab', () => {
+        fixture.componentRef.setInput('course', { ...course1, studentCourseAnalyticsDashboardEnabled: false, learningPathsEnabled: true });
+        fixture.componentRef.setInput('atlasEnabled', true);
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Lectures');
+        expect(sidebarItems[2].title).toContain('Statistics');
+        expect(sidebarItems[3].title).toContain('Communication');
+        expect(sidebarItems[4].title).toContain('Tutorials');
+        expect(sidebarItems[5].title).toContain('Competencies');
+        expect(sidebarItems[6].title).toContain('Learning Path');
+    });
+
+    it('should create sidebar with faq tab', () => {
+        fixture.componentRef.setInput('course', { ...course1, studentCourseAnalyticsDashboardEnabled: false, faqEnabled: true, numberOfTutorialGroups: 0 });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems.length).toBeGreaterThan(0);
+        expect(sidebarItems[0].title).toContain('Exercises');
+        expect(sidebarItems[1].title).toContain('Lectures');
+        expect(sidebarItems[2].title).toContain('Statistics');
+        expect(sidebarItems[3].title).toContain('Communication');
+        expect(sidebarItems[4].title).toContain('FAQ');
+    });
+
+    it('should have visible exams', () => {
+        fixture.componentRef.setInput('course', {
+            ...course1,
+            exams: [
+                {
+                    visibleDate: dayjs('2025-01-01'),
+                },
+            ],
+        });
+        jest.spyOn(component.serverDateService, 'now').mockReturnValue(dayjs('2025-01-01').add(1));
+        expect(component.hasVisibleExams()).toBeTrue();
+    });
+
+    it('should not have visible exams', () => {
+        fixture.componentRef.setInput('course', {
+            ...course1,
+            exams: [
+                {
+                    visibleDate: dayjs('2025-01-01'),
+                },
+            ],
+        });
+        jest.spyOn(component.serverDateService, 'now').mockReturnValue(dayjs('2025-01-01').subtract(1));
+        expect(component.hasVisibleExams()).toBeFalse();
+    });
+
+    it('should have competencies and tutorial groups', () => {
+        fixture.componentRef.setInput('course', course1);
+        expect(component.hasCompetencies()).toBeTrue();
+        expect(component.hasTutorialGroups()).toBeTrue();
+
+        fixture.componentRef.setInput('course', course2);
+        expect(component.hasCompetencies()).toBeTrue();
+        expect(component.hasTutorialGroups()).toBeFalse();
+    });
+
+    it('should have unenroll as action item', () => {
+        fixture.componentRef.setInput('course', { ...course1, unenrollmentEnabled: true, unenrollmentEndDate: dayjs().add(1, 'day'), isAtLeastTutor: false });
+        expect(component.getCourseActionItems().length).toBe(1);
+        expect(component.getCourseActionItems()[0].title).toContain('Unenroll');
     });
 });

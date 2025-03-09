@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, inject, input, output, signal } from '@angular/core';
+import { Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, inject, input, output, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import {
     IconDefinition,
@@ -61,7 +61,6 @@ export interface SidebarItem {
     selector: 'jhi-course-sidebar',
     templateUrl: './course-sidebar.component.html',
     styleUrls: ['./course-sidebar.component.scss'],
-    standalone: true,
     imports: [
         NgClass,
         NgbDropdown,
@@ -80,7 +79,7 @@ export interface SidebarItem {
         SlicePipe,
     ],
 })
-export class CourseSidebarComponent implements OnInit {
+export class CourseSidebarComponent implements OnInit, OnChanges {
     course = input<Course>();
     courses = input<Course[]>();
     isNavbarCollapsed = input<boolean>(false);
@@ -124,13 +123,19 @@ export class CourseSidebarComponent implements OnInit {
     faChevronLeft = faChevronLeft;
     faQuestion = faQuestion;
 
-    private serverDateService = inject(ArtemisServerDateService);
+    serverDateService = inject(ArtemisServerDateService);
     private modalService = inject(NgbModal);
 
     ngOnInit() {
         this.updateVisibleNavbarItems(window.innerHeight);
         this.sidebarItems.set(this.getSidebarItems());
         this.courseActionItems.set(this.getCourseActionItems());
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.sidebarItems && !changes.sidebarItems.firstChange) {
+            this.updateVisibleNavbarItems(window.innerHeight);
+        }
     }
 
     /** Listen window resize event by height */
