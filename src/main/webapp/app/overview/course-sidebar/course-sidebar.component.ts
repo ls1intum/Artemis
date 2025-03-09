@@ -84,7 +84,6 @@ export class CourseSidebarComponent {
     faEllipsis = faEllipsis;
 
     constructor() {
-        // Initialize visible items when component is created
         this.updateVisibleNavbarItems(window.innerHeight);
     }
 
@@ -109,7 +108,6 @@ export class CourseSidebarComponent {
         const newHiddenItems: SidebarItem[] = [];
         let newAnyItemHidden = false;
 
-        // Reverse the sidebar items to remove items starting from the bottom
         const reversedSidebarItems = [...this.sidebarItems()].reverse();
         reversedSidebarItems.forEach((item, index) => {
             const currentThreshold = threshold - index * this.ITEM_HEIGHT;
