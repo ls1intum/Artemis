@@ -24,7 +24,6 @@ export enum ExamLiveEventType {
 
 export type ExamLiveEvent = {
     id: number;
-    createdBy: string;
     createdDate: dayjs.Dayjs;
     eventType: ExamLiveEventType;
     acknowledgeTimestamps?: AcknowledgeTimestamps;
