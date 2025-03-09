@@ -44,6 +44,12 @@ export interface HiddenPageMap {
     };
 }
 
+export interface OrderedPage {
+    pageIndex: number;
+    slideId?: string;
+    order: number;
+}
+
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
@@ -90,6 +96,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     initialHiddenPages = signal<HiddenPageMap>({});
     hiddenPages = signal<HiddenPageMap>({});
     isSaving = signal<boolean>(false);
+
+    pageOrder = signal<OrderedPage[]>([]);
+    pageOrderChanged = computed(() => {
+        if (this.pageOrder().length === 0) return false;
+        return this.pageOrder().some((page) => page.pageIndex !== page.order);
+    });
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -146,6 +158,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
+
+                // Initialize page order from slides if available
+                if (data.attachmentUnit.slides && data.attachmentUnit.slides.length > 0) {
+                    const orderedPages: OrderedPage[] = data.attachmentUnit.slides.map((slide: Slide) => ({
+                        pageIndex: slide.slideNumber,
+                        slideId: slide.id,
+                        order: slide.slideNumber,
+                    }));
+                    this.pageOrder.set(orderedPages);
+                }
+
                 this.attachmentUnitSub = this.attachmentUnitService
                     .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
                     .pipe(finalize(() => this.isPdfLoading.set(false)))
@@ -327,6 +350,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.updateHiddenPages(pagesToDelete);
             pagesToDelete.forEach((pageIndex) => pdfDoc.removePage(pageIndex));
 
+            this.updatePageOrderAfterDeletion(pagesToDelete.map((p) => p + 1));
+
             this.isFileChanged.set(true);
             const pdfBytes = await pdfDoc.save();
             this.currentPdfBlob.set(new Blob([pdfBytes], { type: 'application/pdf' }));
@@ -341,6 +366,34 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } finally {
             this.isPdfLoading.set(false);
         }
+    }
+
+    /**
+     * Updates the page order after deleting pages
+     * @param deletedPageIndices Array of page indices that were deleted
+     */
+    updatePageOrderAfterDeletion(deletedPageIndices: number[]): void {
+        const updatedOrder: OrderedPage[] = [];
+        let newOrder = 1;
+
+        this.pageOrder().forEach((page) => {
+            if (!deletedPageIndices.includes(page.pageIndex)) {
+                let adjustedPageIndex = page.pageIndex;
+                for (const deletedIndex of deletedPageIndices) {
+                    if (adjustedPageIndex > deletedIndex) {
+                        adjustedPageIndex--;
+                    }
+                }
+
+                updatedOrder.push({
+                    pageIndex: adjustedPageIndex,
+                    slideId: page.slideId,
+                    order: newOrder++,
+                });
+            }
+        });
+
+        this.pageOrder.set(updatedOrder);
     }
 
     /**
@@ -403,8 +456,24 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
             const newPdfDoc = await PDFDocument.load(newPdfBytes);
 
+            const currentPageCount = existingPdfDoc.getPageCount();
+            const newPagesCount = newPdfDoc.getPageCount();
+
             const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
             copiedPages.forEach((page) => existingPdfDoc.addPage(page));
+
+            const currentOrderEntries = this.pageOrder();
+            const newEntries: OrderedPage[] = [];
+
+            for (let i = 0; i < newPagesCount; i++) {
+                const newPageIndex = currentPageCount + i + 1;
+                newEntries.push({
+                    pageIndex: newPageIndex,
+                    order: newPageIndex,
+                });
+            }
+
+            this.pageOrder.set([...currentOrderEntries, ...newEntries]);
 
             this.isFileChanged.set(true);
             const mergedPdfBytes = await existingPdfDoc.save();
@@ -483,5 +552,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Handles updated page order from the thumbnail grid component
+     * @param newOrder The updated page order
+     */
+    onPageOrderChanged(newOrder: OrderedPage[]): void {
+        this.pageOrder.set(newOrder);
     }
 }

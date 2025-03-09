@@ -1,6 +1,22 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
-    @for (page of totalPagesArray(); track page) {
-        <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
+    @for (page of getSortedPages(); track page) {
+        <div
+            [id]="'pdf-page-' + page"
+            class="pdf-canvas-container"
+            [class.dragging]="dragIndex() === page"
+            draggable="true"
+            (dragstart)="onDragStart($event, page)"
+            (dragover)="onDragOver($event)"
+            (drop)="onDrop($event, page)"
+            (dragenter)="onDragEnter($event, page)"
+            (dragleave)="onDragLeave($event, page)"
+            (dragend)="onDragEnd()"
+            (click)="displayEnlargedCanvas(page); $event.stopPropagation()"
+        >
+            <div class="drag-handle">
+                <fa-icon [icon]="faGripLines" />
+            </div>
+
             @if (newHiddenPages()[page]) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
@@ -11,7 +27,7 @@
                 </ng-container>
             }
             <span class="pdf-overlay" [id]="'overlay-' + page">
-                <span>{{ page }}</span>
+                <span>{{ getPageDisplayOrder(page) }}</span>
             </span>
             @if (loadedPages().has(page)) {
                 <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" (change)="togglePageSelection(page, $event)" />

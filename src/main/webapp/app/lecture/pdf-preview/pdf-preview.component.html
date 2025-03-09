@@ -134,6 +134,7 @@
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
                 (newHiddenPagesOutput)="hiddenPages.set($event)"
+                (pageOrderOutput)="onPageOrderChanged($event)"
             />
         } @else {
             <div class="empty-pdf-container">
@@ -156,7 +157,7 @@
                 type="submit"
                 (click)="updateAttachmentWithFile()"
                 class="btn btn-primary"
-                [disabled]="isSaving() || ((isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged())"
+                [disabled]="isSaving() || ((isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged() && !pageOrderChanged())"
             >
                 @if (isSaving()) {
                     <div class="spinner-border spinner-border-sm me-1" role="status">
