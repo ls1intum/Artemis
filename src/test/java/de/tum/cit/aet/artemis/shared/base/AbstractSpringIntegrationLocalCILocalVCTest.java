@@ -222,7 +222,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final Path PMD_RESULTS_PATH = SCA_REPORTS_PATH.resolve("pmd.xml");
 
-    private static DockerClient dockerClientMock;
+    protected static DockerClient dockerClientMock;
 
     @BeforeAll
     protected static void mockDockerClient() throws InterruptedException {

@@ -60,7 +60,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -286,6 +286,12 @@ public final class Constants {
     public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "buildTimeoutMax";
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
+
+    public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
+
+    public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
+
+    public static final String DOCKER_FLAG_MEMORY_SWAP_MB = "defaultContainerMemorySwapLimitInMB";
 
     public static final String USE_EXTERNAL = "useExternal";
 

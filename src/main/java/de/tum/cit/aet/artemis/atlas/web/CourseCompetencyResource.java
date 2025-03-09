@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyE
 
 @Conditional(AtlasEnabled.class)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class CourseCompetencyResource {
 
     private static final String ENTITY_NAME = "courseCompetency";
@@ -262,7 +262,7 @@ public class CourseCompetencyResource {
         var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
         Set<CompetencyWithTailRelationDTO> importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies, importOptions);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     // Competency Relation Endpoints

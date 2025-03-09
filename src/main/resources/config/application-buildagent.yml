@@ -40,6 +40,10 @@ artemis:
         build-logs:
             max-lines-per-job: 10000
             max-chars-per-line: 1024
+        container-flags-limit:
+            max-cpu-count: 4
+            max-memory: 8096
+            max-memory-swap: 8096
     git:
         name: Artemis
         email: artemis@xcit.tum.de

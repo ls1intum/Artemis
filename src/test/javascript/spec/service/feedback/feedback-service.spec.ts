@@ -37,7 +37,7 @@ describe('FeedbackService', () => {
         const expectedResponse = 'This is a long feedback text.';
         const promise = service.getLongFeedbackText(feedbackId);
 
-        const req = httpMock.expectOne(`api/feedbacks/${feedbackId}/long-feedback`);
+        const req = httpMock.expectOne(`api/assessment/feedbacks/${feedbackId}/long-feedback`);
         expect(req.request.method).toBe('GET');
 
         req.flush(expectedResponse);

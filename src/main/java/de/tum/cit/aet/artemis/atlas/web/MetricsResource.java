@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 
 @Conditional(AtlasEnabled.class)
 @RestController
-@RequestMapping("api/metrics/")
+@RequestMapping("api/atlas/metrics/")
 public class MetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsResource.class);

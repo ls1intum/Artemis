@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Conditional(AtlasEnabled.class)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class PrerequisiteResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -140,7 +140,7 @@ public class PrerequisiteResource {
 
         final var persistedPrerequisite = prerequisiteService.createCourseCompetency(prerequisite, course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/" + persistedPrerequisite.getId())).body(persistedPrerequisite);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/" + persistedPrerequisite.getId())).body(persistedPrerequisite);
     }
 
     /**
@@ -162,7 +162,7 @@ public class PrerequisiteResource {
 
         var createdPrerequisites = prerequisiteService.createPrerequisites(prerequisites, course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(createdPrerequisites);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(createdPrerequisites);
     }
 
     /**
@@ -194,7 +194,7 @@ public class PrerequisiteResource {
         Set<CompetencyWithTailRelationDTO> createdPrerequisites = prerequisiteService.importPrerequisites(course, Set.of(prerequisiteToImport), importOptions);
         Prerequisite createdPrerequisite = (Prerequisite) createdPrerequisites.iterator().next().competency();
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/" + createdPrerequisite.getId())).body(createdPrerequisite);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/" + createdPrerequisite.getId())).body(createdPrerequisite);
     }
 
     /**
@@ -229,7 +229,7 @@ public class PrerequisiteResource {
 
         Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(course, prerequisitesToImport, importOptions);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
     }
 
     /**
@@ -259,7 +259,7 @@ public class PrerequisiteResource {
         var prerequisites = prerequisiteRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
         Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites, importOptions);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
     }
 
     /**
@@ -279,7 +279,8 @@ public class PrerequisiteResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var importedPrerequisites = prerequisiteService.importStandardizedPrerequisites(prerequisiteIdsToImport, course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites.stream().map(CompetencyImportResponseDTO::of).toList());
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/prerequisites/"))
+                .body(importedPrerequisites.stream().map(CompetencyImportResponseDTO::of).toList());
     }
 
     /**

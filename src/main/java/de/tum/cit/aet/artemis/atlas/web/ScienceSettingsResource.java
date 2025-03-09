@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 @Conditional(AtlasEnabled.class)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class ScienceSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(ScienceSettingsResource.class);

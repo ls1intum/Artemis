@@ -28,8 +28,8 @@ export class SubmissionService {
     private complaintResponseService = inject(ComplaintResponseService);
     private accountService = inject(AccountService);
 
-    public resourceUrl = 'api/submissions';
-    public resourceUrlParticipation = 'api/participations';
+    public resourceUrl = 'api/exercise/submissions';
+    public resourceUrlParticipation = 'api/exercise/participations';
 
     /**
      * Delete an existing submission
@@ -64,7 +64,7 @@ export class SubmissionService {
      */
     getSubmissionsWithComplaintsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
+            .get<SubmissionWithComplaintDTO[]>(`api/exercise/exercises/${exerciseId}/submissions-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
@@ -74,7 +74,7 @@ export class SubmissionService {
      */
     getSubmissionsWithMoreFeedbackRequestsForTutor(exerciseId: number): Observable<HttpResponse<SubmissionWithComplaintDTO[]>> {
         return this.http
-            .get<SubmissionWithComplaintDTO[]>(`api/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
+            .get<SubmissionWithComplaintDTO[]>(`api/exercise/exercises/${exerciseId}/more-feedback-requests-with-complaints`, { observe: 'response' })
             .pipe(map((res) => this.convertDTOsFromServer(res)));
     }
 
@@ -151,7 +151,7 @@ export class SubmissionService {
 
     getTestRunSubmissionsForExercise(exerciseId: number): Observable<HttpResponse<Submission[]>> {
         return this.http
-            .get<TextSubmission[]>(`api/exercises/${exerciseId}/test-run-submissions`, {
+            .get<TextSubmission[]>(`api/exercise/exercises/${exerciseId}/test-run-submissions`, {
                 observe: 'response',
             })
             .pipe(map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res)));
