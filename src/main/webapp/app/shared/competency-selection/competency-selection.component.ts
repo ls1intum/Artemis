@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, forwardRef, inject } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -13,7 +13,7 @@ import {
 } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { finalize } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +35,7 @@ import { PROFILE_ATLAS } from 'app/app.constants';
     ],
     imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
-export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
+export class CompetencySelectionComponent implements OnInit, ControlValueAccessor, OnDestroy {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
@@ -68,14 +68,20 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
 
+    private profileSubscription?: Subscription = undefined;
+
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
             if (atlasEnabled) {
                 this.initialize();
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        this.profileSubscription?.unsubscribe();
     }
 
     initialize(): void {
