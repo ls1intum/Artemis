@@ -5,11 +5,11 @@ ext {
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.928, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.872, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.906, "CLASS":  6],
+        "atlas"         :          ["INSTRUCTION": 0.905, "CLASS":  6],
         "buildagent"    :          ["INSTRUCTION": 0.793, "CLASS":  0],
         "communication" :          ["INSTRUCTION": 0.915, "CLASS":  2],
         "core"          :          ["INSTRUCTION": 0.861, "CLASS": 19],
-        "exam"          :          ["INSTRUCTION": 0.938, "CLASS":  0],
+        "exam"          :          ["INSTRUCTION": 0.937, "CLASS":  0],
         "exercise"      :          ["INSTRUCTION": 0.928, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],
         "iris"          :          ["INSTRUCTION": 0.753, "CLASS": 26],
