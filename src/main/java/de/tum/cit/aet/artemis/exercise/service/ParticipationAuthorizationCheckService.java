@@ -186,15 +186,10 @@ public class ParticipationAuthorizationCheckService {
         }
 
         if (exercise.isExamExercise()) {
-            var studentExam = studentExamRepository.findByExamIdAndUserId(exercise.getExam().getId(), participation.getParticipant().getId());
+            var studentExamSubmitted = studentExamRepository.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
             // if the corresponding student exam was already submitted, the participation is locked
-            if (studentExam.isPresent()) {
-                return studentExam.get().isSubmitted();
-            }
-            else {
-                // if the student exam does not exist yet, the participation should not exist either
-                return true;
-            }
+            // if the student exam does not exist yet, the participation should not exist either
+            return studentExamSubmitted.orElse(true);
         }
 
         var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exercise.getId());
@@ -202,7 +197,7 @@ public class ParticipationAuthorizationCheckService {
         // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
         if (submissionPolicy != null && submissionPolicy.isActive() && submissionPolicy instanceof LockRepositoryPolicy) {
 
-            // we set the participation to locked when the new submission count is at least as high as the submission limit
+            // the participation is locked when the submission count is at least as high as the submission limit
             return submissionRepository.countByParticipationId(participation.getId()) >= submissionPolicy.getSubmissionLimit();
         }
         return false;
