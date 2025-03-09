@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -32,7 +32,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
     eventCount = 0;
-    @Input() examStartDate: dayjs.Dayjs;
+    examStartDate = input<dayjs.Dayjs>();
 
     // Icons
     faBullhorn = faBullhorn;
@@ -40,16 +40,19 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             // do not count the problem statements events that are made before the start of the exam
-            const filteredEvents = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate)));
+            const filteredEvents = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate())));
             this.eventCount = filteredEvents.length;
         });
 
-        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe(() => {
-            // If any unacknowledged event comes in, open the dialog to display it
-            if (!this.modalRef) {
-                this.openDialog();
-            }
-        });
+        const examStartDate = this.examStartDate();
+        if (examStartDate) {
+            this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, examStartDate).subscribe(() => {
+                // If any unacknowledged event comes in, open the dialog to display it
+                if (!this.modalRef) {
+                    this.openDialog();
+                }
+            });
+        }
     }
 
     ngOnDestroy(): void {
@@ -69,7 +72,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             windowClass: 'live-events-modal-window',
         });
 
-        this.modalRef.componentInstance.examStartDate = this.examStartDate;
+        this.modalRef.componentInstance.examStartDate.update(() => this.examStartDate());
 
         from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
     }

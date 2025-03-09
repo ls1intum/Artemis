@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -142,8 +142,7 @@ export class ExamResultSummaryComponent implements OnInit {
     isGradingKeyCollapsed = true;
     isBonusGradingKeyCollapsed = true;
 
-    @Input()
-    instructorView = false;
+    instructorView = input(false);
 
     courseId: number;
 

@@ -8,6 +8,8 @@ import { of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockExamParticipationLiveEventsService } from '../../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
+import { input } from '@angular/core';
+import dayjs from 'dayjs/esm';
 
 describe('ExamLiveEventsButtonComponent', () => {
     let component: ExamLiveEventsButtonComponent;
@@ -21,13 +23,13 @@ describe('ExamLiveEventsButtonComponent', () => {
             imports: [MockModule(FontAwesomeModule)],
             providers: [MockProvider(AlertService), MockProvider(NgbModal), { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService }],
         }).compileComponents();
-    });
-
-    beforeEach(() => {
         fixture = TestBed.createComponent(ExamLiveEventsButtonComponent);
         component = fixture.componentInstance;
         mockModalService = TestBed.inject(NgbModal);
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
+        TestBed.runInInjectionContext(() => {
+            component.examStartDate = input(dayjs());
+        });
         fixture.detectChanges();
     });
 

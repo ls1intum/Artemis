@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, model } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import { Subscription } from 'rxjs';
@@ -28,7 +28,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     eventsToDisplay?: ExamLiveEvent[];
     events: ExamLiveEvent[] = [];
 
-    @Input() examStartDate: dayjs.Dayjs;
+    examStartDate = model.required<dayjs.Dayjs>();
     // Icons
     faCheck = faCheck;
 
@@ -42,13 +42,13 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             // display the problem statements events only after the start of the exam
-            this.events = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate)));
+            this.events = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate())));
             if (!this.eventsToDisplay) {
                 this.updateEventsToDisplay();
             }
         });
 
-        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe((event: ExamLiveEvent) => {
+        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe((event: ExamLiveEvent) => {
             this.unacknowledgedEvents.unshift(event);
             this.updateEventsToDisplay();
         });

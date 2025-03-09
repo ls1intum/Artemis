@@ -142,7 +142,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         let summedPercentages = 0;
         let numberOfExercises = 0;
 
-        Object.entries(this.exerciseInfos()).forEach(([, exerciseInfo]) => {
+        Object.entries(this.exerciseInfos).forEach(([, exerciseInfo]) => {
             summedPercentages += exerciseInfo.achievedPercentage ?? 0;
             numberOfExercises++;
         });
