@@ -15,21 +15,24 @@
             "onlyYou": "Only you",
             "archived": "Archived",
             "sendMessage": "Send",
+            "saveMessage": "Save",
             "goToExercise": "Go to exercise",
             "goToLecture": "Go to lecture",
             "goToExam": "Go to exam",
             "conversationMessages": {
                 "searchLabel": "Search messages",
                 "clearSearch": "Clear search",
-                "searchBarPlaceholder": "Search for messages within the current conversation",
-                "searchResultsMultiple": "{{ count }} messages found",
-                "searchResultsSingle": "1 message found",
-                "searchResultsNone": "No messages found"
+                "searchBarPlaceholder": "Search within current channel",
+                "searchResultsMultiple": "{{ count }} results",
+                "searchResultsSingle": "1 result",
+                "searchResultsNone": "No results"
             },
             "threadSideBar": {
                 "label": "Thread",
                 "close": "Close thread",
-                "reply": "Reply in thread"
+                "reply": "Reply in thread",
+                "expand": "Expand thread",
+                "collapse": "Collapse thread"
             },
             "conversationSelectionSideBar": {
                 "header": "Conversations",
@@ -51,8 +54,8 @@
                 "sideBarSection": {
                     "shown": "shown",
                     "hidden": "hidden",
-                    "show": "Show",
-                    "hide": "Hide",
+                    "show": "Unarchive",
+                    "hide": "Archive",
                     "favorite": "Favorite",
                     "unfavorite": "Unfavorite",
                     "mute": "Mute",

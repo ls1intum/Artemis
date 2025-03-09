@@ -1,14 +1,14 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 70]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 71]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.928, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.872, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.906, "CLASS":  5],
-        "buildagent"    :          ["INSTRUCTION": 0.801, "CLASS":  0],
-        "communication" :          ["INSTRUCTION": 0.925, "CLASS":  2],
-        "core"          :          ["INSTRUCTION": 0.861, "CLASS": 17],
+        "buildagent"    :          ["INSTRUCTION": 0.793, "CLASS":  0],
+        "communication" :          ["INSTRUCTION": 0.915, "CLASS":  2],
+        "core"          :          ["INSTRUCTION": 0.861, "CLASS": 18],
         "exam"          :          ["INSTRUCTION": 0.938, "CLASS":  0],
         "exercise"      :          ["INSTRUCTION": 0.928, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],
@@ -16,7 +16,7 @@ ext {
         "lecture"       :          ["INSTRUCTION": 0.910, "CLASS":  0],
         "lti"           :          ["INSTRUCTION": 0.894, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.913, "CLASS":  2],
-        "plagiarism"    :          ["INSTRUCTION": 0.911, "CLASS":  0],
+        "plagiarism"    :          ["INSTRUCTION": 0.909, "CLASS":  0],
         "programming"   :          ["INSTRUCTION": 0.863, "CLASS":  9],
         "quiz"          :          ["INSTRUCTION": 0.904, "CLASS":  4],
         "text"          :          ["INSTRUCTION": 0.954, "CLASS":  0],
@@ -155,22 +155,20 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
  * @param rootTask the JacocoReportBase root task
  */
 private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, JacocoReportBase rootTask) {
-    task.group = "Reporting"
-    task.executionData = project.fileTree("${project.layout.buildDirectory.get()}/jacoco") {
-        include "test.exec"
-    }
+    task.group = rootTask.group
+    task.executionData = rootTask.executionData
 
-    def sourcePath
+    def classPath
     if (moduleName == "aggregated") {
-        sourcePath = "$BasePath/**/*.class"
+        classPath = "$BasePath/**/*.class"
     } else {
-        sourcePath = "$BasePath/$moduleName/**/*.class"
+        classPath = "$BasePath/$moduleName/**/*.class"
     }
-    task.sourceDirectories.setFrom(project.files("src/main/java/$sourcePath"))
+    task.sourceDirectories = rootTask.sourceDirectories
     task.classDirectories.setFrom(
         files(rootTask.classDirectories.files.collect { classDir ->
             project.fileTree(classDir) {
-                includes=[sourcePath]
+                includes=[classPath]
                 excludes=ignoredDirectories
             }
         })

@@ -68,7 +68,7 @@ class OnlineCourseConfigurationServiceTest {
         assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(LTIAuthorizationGrantType.IMPLICIT);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
         assertThat(clientRegistration.getRegistrationId()).isEqualTo("reg");
-        assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + "/api/public/lti13/auth-callback");
+        assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + "/api/lti/public/lti13/auth-callback");
     }
 
     @Test

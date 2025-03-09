@@ -296,7 +296,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
         assertThat(map).hasSize(5).containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
-                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar"), localRepo), FileType.FILE)
+                .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4 + ".jar"), localRepo), FileType.FILE)
                 .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER);
     }
 
@@ -310,7 +310,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo), FileType.FILE)
                 .containsEntry(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE3), localRepo), FileType.FILE)
                 .containsEntry(new File(localRepo.getLocalPath().toFile(), localRepo), FileType.FOLDER)
-                .doesNotContainKey(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4.toString() + ".jar"), localRepo));
+                .doesNotContainKey(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE4 + ".jar"), localRepo));
     }
 
     @Test

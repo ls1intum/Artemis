@@ -35,7 +35,6 @@ describe('ExamParticipationLiveEventsService', () => {
         mockWebsocketService = tmpMockWebsocketService as unknown as WebsocketService;
 
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -78,7 +77,6 @@ describe('ExamParticipationLiveEventsService', () => {
             const mockEvents: ExamLiveEvent[] = [
                 {
                     id: 1,
-                    createdBy: 'user',
                     createdDate: dayjs(),
                     eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
                 },
@@ -88,7 +86,7 @@ describe('ExamParticipationLiveEventsService', () => {
 
             if (connected && wasEverConnectedBefore) {
                 expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
-                const req = httpMock.expectOne({ method: 'GET', url: `/api/courses/1/exams/1/student-exams/live-events` });
+                const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/1/exams/1/student-exams/live-events` });
                 req.flush(mockEvents);
                 expect(service['events']).toEqual(mockEvents);
                 expect(service['allEventsSubject'].getValue()).toEqual(mockEvents);
@@ -202,7 +200,6 @@ describe('ExamParticipationLiveEventsService', () => {
         const nowUnix = dayjs().unix();
         const mockEvent: ExamLiveEvent = {
             id: 1,
-            createdBy: 'user',
             createdDate: dayjs(),
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
         };

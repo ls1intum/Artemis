@@ -10,7 +10,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 export class AeolusService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/aeolus';
+    private resourceUrl = 'api/programming/aeolus';
 
     /**
      * Fetches the aeolus template file for the given programming language

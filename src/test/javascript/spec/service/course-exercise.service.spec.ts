@@ -26,7 +26,6 @@ describe('Course Management Service', () => {
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
-    const resourceUrl = 'api/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -46,7 +45,6 @@ describe('Course Management Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -135,7 +133,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([programmingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
+        requestAndExpectDateConversion('GET', `api/programming/courses/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
         tick();
     }));
 
@@ -146,7 +144,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([modelingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
+        requestAndExpectDateConversion('GET', `api/modeling/courses/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
         tick();
     }));
 
@@ -157,7 +155,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([textExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/text-exercises`, returnedFromService, textExercise);
+        requestAndExpectDateConversion('GET', `api/text/courses/${course.id}/text-exercises`, returnedFromService, textExercise);
         tick();
     }));
 
@@ -168,7 +166,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
+        requestAndExpectDateConversion('GET', `api/fileupload/courses/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
         tick();
     }));
 
@@ -191,7 +189,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('POST', `api/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion('POST', `api/exercise/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
@@ -219,7 +217,7 @@ describe('Course Management Service', () => {
 
             requestAndExpectDateConversion(
                 'POST',
-                `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+                `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
                 returnedFromService,
                 participation.exercise,
                 true,
@@ -248,7 +246,13 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('PUT', `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion(
+            'PUT',
+            `api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
+            returnedFromService,
+            participation.exercise,
+            true,
+        );
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));

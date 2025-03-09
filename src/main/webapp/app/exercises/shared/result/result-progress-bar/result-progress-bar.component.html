@@ -1,10 +1,10 @@
 <div
     class="mw-custom text-nowrap"
-    [ngClass]="{ 'rounded-3 p-2 border border-1 bg-module fw-semibold': showBorder() }"
+    [ngClass]="{ 'rounded-3 p-1 border border-1 bg-module fw-semibold': showBorder() }"
     [ngbTooltip]="'artemisApp.editor.toolTip' | artemisTranslate"
 >
-    <div class="mb-2">
-        <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+    <div class="mb-1 progress-bar-status-text">
+        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
         @if (isQueued()) {
             <span jhiTranslate="artemisApp.editor.queued"></span>
         } @else {

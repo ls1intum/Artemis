@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
@@ -7,6 +6,8 @@ import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/pr
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../../../main/webapp/app/entities/programming/programming-exercise.model';
 import { Course } from '../../../../../main/webapp/app/entities/course.model';
 import { ProgrammingExerciseBuildConfig } from '../../../../../main/webapp/app/entities/programming/programming-exercise-build.config';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
@@ -21,8 +22,11 @@ describe('ProgrammingExercise Docker Image', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
-            providers: [{ provide: ProfileService, useValue: profileServiceMock }],
+            imports: [FormsModule],
+            providers: [
+                { provide: ProfileService, useValue: profileServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then();
@@ -49,12 +53,15 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.timeoutChange.emit(20);
     });
 
-    it('should set timeout options', () => {
+    it('should set profile values', () => {
         profileServiceMock.getProfileInfo.mockReturnValue(
             of({
                 buildTimeoutMin: undefined,
                 buildTimeoutMax: undefined,
                 buildTimeoutDefault: undefined,
+                defaultContainerCpuCount: undefined,
+                defaultContainerMemoryLimitInMB: undefined,
+                defaultContainerMemorySwapLimitInMB: undefined,
             }),
         );
 
@@ -62,18 +69,27 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.timeoutMinValue).toBe(10);
         expect(comp.timeoutMaxValue).toBe(240);
         expect(comp.timeoutDefaultValue).toBe(120);
+        expect(comp.cpuCount).toBeUndefined();
+        expect(comp.memory).toBeUndefined();
+        expect(comp.memorySwap).toBeUndefined();
 
         profileServiceMock.getProfileInfo.mockReturnValue(
             of({
                 buildTimeoutMin: 0,
                 buildTimeoutMax: 360,
                 buildTimeoutDefault: 60,
+                defaultContainerCpuCount: 1,
+                defaultContainerMemoryLimitInMB: 1024,
+                defaultContainerMemorySwapLimitInMB: 2048,
             }),
         );
         comp.ngOnInit();
         expect(comp.timeoutMinValue).toBe(0);
         expect(comp.timeoutMaxValue).toBe(360);
         expect(comp.timeoutDefaultValue).toBe(60);
+        expect(comp.cpuCount).toBe(1);
+        expect(comp.memory).toBe(1024);
+        expect(comp.memorySwap).toBe(2048);
 
         profileServiceMock.getProfileInfo.mockReturnValue(
             of({
@@ -112,8 +128,14 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
 
         comp.addEnvVar();
+        const mockEventMemory = { target: { value: 1024 } };
+        const mockEventCpu = { target: { value: 1 } };
+        const mockEventMemorySwap = { target: { value: 2048 } };
+        comp.onMemoryChange(mockEventMemory);
+        comp.onCpuCountChange(mockEventCpu);
+        comp.onMemorySwapChange(mockEventMemorySwap);
         comp.parseDockerFlagsToString();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{},"cpuCount":1,"memory":1024,"memorySwap":2048}');
     });
 
     it('should parse existing docker flags', () => {
@@ -132,11 +154,11 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should set supported languages', () => {
-        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
         comp.setIsLanguageSupported();
         expect(comp.isLanguageSupported).toBeFalse();
 
-        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
         comp.setIsLanguageSupported();
         expect(comp.isLanguageSupported).toBeTrue();
     });

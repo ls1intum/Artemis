@@ -44,7 +44,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
                 AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
                 AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
-                AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
+                AND (
+                  :searchTerm IS NULL
+                  OR b.repositoryName LIKE CONCAT('%', :searchTerm, '%')
+                  OR c.title LIKE CONCAT('%', :searchTerm, '%')
+                )
                 AND (:courseId IS NULL OR b.courseId = :courseId)
                 AND (:durationLower IS NULL OR (b.buildCompletionDate - b.buildStartDate) >= :durationLower)
                 AND (:durationUpper IS NULL OR (b.buildCompletionDate - b.buildStartDate) <= :durationUpper)
@@ -123,7 +127,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     @Transactional
     @Modifying
-    @Query("UPDATE BuildJob b SET b.buildStatus = :newStatus WHERE b.buildJobId = :buildJobId")
+    @Query("""
+            UPDATE BuildJob b
+            SET b.buildStatus = :newStatus
+            WHERE b.buildJobId = :buildJobId
+            """)
     void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
 
     /**

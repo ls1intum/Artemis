@@ -84,9 +84,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
-    private final String studentRepoBaseUrl = "/api/repository/";
+    private final String studentRepoBaseUrl = "/api/programming/repository/";
 
-    private final String filesContentBaseUrl = "/api/repository-files-content/";
+    private final String filesContentBaseUrl = "/api/programming/repository-files-content/";
 
     private ProgrammingExercise programmingExercise;
 

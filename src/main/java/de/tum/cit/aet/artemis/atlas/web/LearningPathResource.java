@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,10 +57,10 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.LearningPaths)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class LearningPathResource {
 
     private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);

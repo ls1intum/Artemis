@@ -15,7 +15,7 @@ const REPEATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseA
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
  */
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseInstructionAnalysisService {
     private translateService = inject(TranslateService);
 

@@ -9,6 +9,8 @@ import { Post } from 'app/entities/metis/post.model';
 import { post } from '../../../../../helpers/sample/metis-sample-data';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { runInInjectionContext, signal } from '@angular/core';
 
 describe('ConversationThreadSidebarComponent', () => {
     let component: ConversationThreadSidebarComponent;
@@ -16,7 +18,6 @@ describe('ConversationThreadSidebarComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [],
             declarations: [
                 ConversationThreadSidebarComponent,
                 MockComponent(FaIconComponent),
@@ -64,5 +65,23 @@ describe('ConversationThreadSidebarComponent', () => {
 
         expandedThreadElement.style.width = `${maxWidth}px`;
         expect(parseFloat(expandedThreadElement.style.width)).toBeLessThanOrEqual(maxWidth);
+    });
+
+    it('should toggle isExpanded and call close() on expandTooltip signal when toggleExpand() is called', () => {
+        const closeMock = jest.fn();
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.expandTooltip = signal<NgbTooltip | undefined>({ close: closeMock } as unknown as NgbTooltip);
+        });
+
+        expect(component.isExpanded).toBe(false);
+
+        component.toggleExpand();
+        expect(component.isExpanded).toBe(true);
+        expect(closeMock).toHaveBeenCalledTimes(1);
+
+        component.toggleExpand();
+        expect(component.isExpanded).toBe(false);
+        expect(closeMock).toHaveBeenCalledTimes(2);
     });
 });

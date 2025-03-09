@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,6 +10,9 @@ import { ScienceSettingsComponent } from 'app/shared/user-settings/science-setti
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ScienceSettingsComponent', () => {
     let comp: ScienceSettingsComponent;
@@ -26,7 +28,6 @@ describe('ScienceSettingsComponent', () => {
         changed: false,
     };
 
-    const imports = [ArtemisTestModule];
     const declarations = [ScienceSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),
@@ -34,11 +35,12 @@ describe('ScienceSettingsComponent', () => {
         MockProvider(UrlSerializer),
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
+        { provide: TranslateService, useClass: MockTranslateService },
+        provideHttpClient(),
     ];
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports,
             declarations,
             providers,
         })
