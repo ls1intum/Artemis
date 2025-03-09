@@ -20,6 +20,7 @@ export class ScienceSettingsService {
     private currentScienceSettingsSubject = new ReplaySubject<ScienceSetting[]>(1);
 
     constructor() {
+        // we need to handle the subscription here as this service is initialized independently of any component
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo.activeProfiles.includes(PROFILE_ATLAS)) {
                 this.initialize();
