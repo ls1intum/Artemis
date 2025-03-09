@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, model, output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
@@ -44,14 +44,14 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     private repositoryService = inject(CodeEditorRepositoryService);
     private conflictService = inject(CodeEditorConflictStateService);
 
-    @Input() sidebarData: SidebarData;
-    @Input() exercises: Exercise[] = [];
-    @Input() exerciseIndex = 0;
-    @Input() overviewPageOpen: boolean;
-    @Input() examSessions?: ExamSession[] = [];
-    @Input() examTimeLineView = false;
-    @Input() isTestRun = 0;
-    @Output() onPageChanged = new EventEmitter<{
+    sidebarData = input<SidebarData>();
+    exercises = input<Exercise[]>([]);
+    exerciseIndex = model(0);
+    overviewPageOpen = input<boolean>();
+    examSessions = input<ExamSession[] | undefined>();
+    examTimeLineView = input(false);
+    isTestRun = input(0);
+    onPageChanged = output<{
         overViewChange: boolean;
         exercise?: Exercise;
         forceSave: boolean;
@@ -82,7 +82,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             this.isTestServer = profileInfo?.testServer ?? false;
         });
 
-        if (!this.examTimeLineView) {
+        if (!this.examTimeLineView()) {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(exerciseIdToNavigateTo);
@@ -90,13 +90,14 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         }
 
         // TODO: avoid duplicated code
-        const isInitialSession = this.examSessions && this.examSessions.length > 0 && this.examSessions[0].initialSession;
+        const examSessions = this.examSessions();
+        const isInitialSession = examSessions && examSessions.length > 0 && examSessions[0].initialSession;
         if (isInitialSession || isInitialSession == undefined) {
             return;
         }
 
         // If it is not an initial session, update the isSynced variable for out of sync submissions.
-        this.exercises
+        this.exercises()
             .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
             .forEach((exercise) => {
                 const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
@@ -140,24 +141,24 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
         if (!overviewPage) {
             // out of index -> do nothing
-            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
+            if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
             // set index and emit event
-            this.exerciseIndex = exerciseIndex;
+            this.exerciseIndex.update(() => exerciseIndex);
             this.onPageChanged.emit({
                 overViewChange: false,
-                exercise: this.exercises[this.exerciseIndex],
+                exercise: this.exercises()[this.exerciseIndex()],
                 forceSave: !!forceSave,
                 submission: submission,
             });
         } else if (overviewPage) {
             // set index and emit event
-            this.exerciseIndex = this.EXERCISE_OVERVIEW_INDEX;
+            this.exerciseIndex.update(() => this.EXERCISE_OVERVIEW_INDEX);
             // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
-        this.setExerciseButtonStatus(this.exerciseIndex);
+        this.setExerciseButtonStatus(this.exerciseIndex());
     }
 
     /**
@@ -165,13 +166,13 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @param exerciseId the unique identifier of an exercise that stays the same regardless of student exam ordering
      */
     changeExerciseById(exerciseId: number) {
-        const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
+        const foundIndex = this.exercises().findIndex((exercise) => exercise.id === exerciseId);
         this.changePage(false, foundIndex, true);
     }
 
     refreshExerciseSaveCount() {
         this.numberOfSavedExercises = 0;
-        this.exercises.forEach((exercise) => {
+        this.exercises().forEach((exercise) => {
             const submission = ExamParticipationService.getSubmissionForExercise(exercise);
             if (submission && submission.submitted) {
                 this.numberOfSavedExercises++;
@@ -192,15 +193,15 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         this.icon = facSaveSuccess;
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
-        if (this.examTimeLineView) {
-            return this.exerciseIndex === exerciseIndex ? ExerciseButtonStatus.SyncedSaved : ExerciseButtonStatus.Synced;
+        if (this.examTimeLineView()) {
+            return this.exerciseIndex() === exerciseIndex ? ExerciseButtonStatus.SyncedSaved : ExerciseButtonStatus.Synced;
         }
 
         // start with a yellow status (save warning icon)
         // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faHourglassHalf;
-        const exercise = this.exercises[exerciseIndex];
+        const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
