@@ -99,7 +99,6 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from './course-
         TranslateDirective,
         CourseSidebarComponent,
     ],
-    standalone: true,
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseService = inject(CourseManagementService);
