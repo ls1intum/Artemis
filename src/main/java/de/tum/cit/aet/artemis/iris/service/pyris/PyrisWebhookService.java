@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -103,10 +104,14 @@ public class PyrisWebhookService {
             throw new IllegalArgumentException("All transcriptions must be associated with the same lecture");
         }
 
-        PyrisTranscriptionIngestionWebhookDTO pyrisTranscriptionIngestionWebhookDTO = new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(),
-                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId());
+        if (lectureUnit instanceof VideoUnit) {
+            String lectureUnitLink = artemisBaseUrl + ((VideoUnit) lectureUnit).getSource();
+            PyrisTranscriptionIngestionWebhookDTO pyrisTranscriptionIngestionWebhookDTO = new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(),
+                    lecture.getTitle(), course.getId(), course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), lectureUnitLink);
+            return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTO, course, lecture, lectureUnit);
+        }
+        return null;
 
-        return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTO, course, lecture, lectureUnit);
     }
 
     /**
@@ -133,8 +138,13 @@ public class PyrisWebhookService {
     public String deleteLectureTranscription(LectureTranscription lectureTranscription) {
         Lecture lecture = lectureTranscription.getLectureUnit().getLecture();
         Course course = lecture.getCourse();
-        return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
-                course.getTitle(), course.getDescription(), lectureTranscription.getLectureUnit().getId()));
+        LectureUnit lectureUnit = lectureTranscription.getLectureUnit();
+        if (lectureUnit instanceof VideoUnit) {
+            String lectureUnitLink = artemisBaseUrl + ((VideoUnit) lectureUnit).getSource();
+            return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
+                    course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), lectureUnitLink));
+        }
+        return null;
     }
 
     /**
