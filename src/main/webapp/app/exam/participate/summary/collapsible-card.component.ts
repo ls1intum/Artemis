@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
@@ -10,8 +10,8 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
     imports: [FaIconComponent, NgbCollapse],
 })
 export class CollapsibleCardComponent {
-    @Input() isCardContentCollapsed: boolean;
-    @Input() toggleCollapse: () => void;
+    isCardContentCollapsed = input.required<boolean>();
+    toggleCollapse = input.required<() => void>();
 
     faAngleRight = faAngleRight;
 }
