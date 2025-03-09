@@ -36,7 +36,7 @@
                 <ng-template #hidePageBox>
                     <jhi-pdf-preview-date-box-component
                         [course]="course()"
-                        [pageIndex]="activeButtonIndex()!"
+                        [pageIndices]="[activeButtonIndex()!]"
                         (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
                         (selectionCancelledOutput)="popover.close()"
                     />

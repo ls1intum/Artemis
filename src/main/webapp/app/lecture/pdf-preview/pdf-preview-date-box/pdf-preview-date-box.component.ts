@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -29,7 +29,6 @@ const FOREVER = dayjs('9999-12-31');
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
-    pageIndex = input<number>();
     pageIndices = input<number[]>([]);
 
     // Signals
@@ -46,13 +45,19 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     hiddenPagesOutput = output<HiddenPage[]>();
     selectionCancelledOutput = output<boolean>();
 
+    // Computed properties
+    pageIndicesSorted = computed(() => {
+        const indices = [...this.pageIndices()];
+        return indices.sort((a, b) => a - b).join(', ');
+    });
+
     // Injected services
     private readonly alertService = inject(AlertService);
     private readonly courseExerciseService = inject(CourseExerciseService);
 
     ngOnInit(): void {
         this.loadExercises();
-        this.isMultiplePages.set(this.pageIndices().length > 0);
+        this.isMultiplePages.set(this.pageIndices().length > 1);
     }
 
     /**
@@ -164,9 +169,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const pageIndices = this.isMultiplePages() ? this.pageIndices() : [this.pageIndex()!];
-
-        const hiddenPages: HiddenPage[] = pageIndices.map((pageIndex) => ({
+        const hiddenPages: HiddenPage[] = this.pageIndices().map((pageIndex) => ({
             pageIndex,
             date: selectedDate,
             exerciseId: this.selectedExercise()?.id ?? null,
