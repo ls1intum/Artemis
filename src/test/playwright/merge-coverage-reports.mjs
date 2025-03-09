@@ -7,6 +7,7 @@ import reports from 'istanbul-reports';
 import libReport from 'istanbul-lib-report';
 import fsAsync from 'fs/promises';
 import fs from 'fs';
+import { coverageFilters } from './playwright.config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,8 +22,12 @@ console.log(`Merging coverage reports`);
 const coverageParallel = JSON.parse(fs.readFileSync(path.join(coverageParallelDir, '/coverage/coverage-final.json'), 'utf8'));
 const coverageSequential = JSON.parse(fs.readFileSync(path.join(coverageSequentialDir, '/coverage/coverage-final.json'), 'utf8'));
 
-const mapA = coverage.createCoverageMap(coverageParallel);
-const mapB = coverage.createCoverageMap(coverageSequential);
+// Apply filters to coverage data before merging
+const filteredCoverageParallel = filterCoverageData(coverageParallel, coverageFilters);
+const filteredCoverageSequential = filterCoverageData(coverageSequential, coverageFilters);
+
+const mapA = coverage.createCoverageMap(filteredCoverageParallel);
+const mapB = coverage.createCoverageMap(filteredCoverageSequential);
 mapA.merge(mapB);
 
 const context = libReport.createContext({
@@ -67,4 +72,18 @@ async function createArchive(outputPath, inputDirectory) {
     archive.pipe(output);
     archive.directory(inputDirectory, '', (entry) => entry);
     await archive.finalize();
+}
+
+/**
+ * Filter coverage data based on include and exclude path filters
+ * @param {Object} coverageData - The coverage data to filter
+ * @param {Object} filters - The filters to apply
+ * @returns {Object} - The filtered coverage data
+ */
+function filterCoverageData(coverageData, filters) {
+    return coverageData.filter(([filePath]) => {
+        const shouldInclude = filters.includePaths.some((includePath) => filePath.includes(includePath));
+        const shouldExclude = filters.excludePaths.some((excludePath) => filePath.includes(excludePath));
+        return shouldInclude && !shouldExclude;
+    });
 }
