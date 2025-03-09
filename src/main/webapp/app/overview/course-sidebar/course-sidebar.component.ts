@@ -34,7 +34,7 @@ export interface SidebarItem {
 @Component({
     selector: 'jhi-course-sidebar',
     templateUrl: './course-sidebar.component.html',
-    styleUrls: ['../../overview/course-overview.scss', './course-sidebar.component.scss'],
+    styleUrls: ['./course-sidebar.component.scss'],
     standalone: true,
     imports: [
         NgClass,
