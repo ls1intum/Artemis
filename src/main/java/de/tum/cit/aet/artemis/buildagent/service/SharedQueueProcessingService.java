@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -74,7 +73,7 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
-    private final BuildAgentSshKeyService buildAgentSSHKeyService;
+    private final BuildAgentInformationService buildAgentInformationService;
 
     private final TaskScheduler taskScheduler;
 
@@ -129,13 +128,13 @@ public class SharedQueueProcessingService {
     private String buildAgentDisplayName;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler,
-            BuildAgentDockerService buildAgentDockerService) {
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService,
+            BuildAgentInformationService buildAgentInformationService) {
         this.hazelcastInstance = hazelcastInstance;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
-        this.buildAgentSSHKeyService = buildAgentSSHKeyService;
+        this.buildAgentInformationService = buildAgentInformationService;
         this.taskScheduler = taskScheduler;
         this.buildAgentDockerService = buildAgentDockerService;
     }
@@ -229,7 +228,7 @@ public class SharedQueueProcessingService {
 
         // Add build agent information of local hazelcast member to map if not already present
         if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
-            updateLocalBuildAgentInformation();
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
     }
 
@@ -246,7 +245,7 @@ public class SharedQueueProcessingService {
         if (!nodeIsAvailable()) {
             // Add build agent information of local hazelcast member to map if not already present
             if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
-                updateLocalBuildAgentInformation();
+                buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             }
 
             log.debug("Node has no available threads currently");
@@ -293,7 +292,7 @@ public class SharedQueueProcessingService {
                 localProcessingJobs.decrementAndGet();
             }
 
-            updateLocalBuildAgentInformation();
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
         finally {
             instanceLock.unlock();
@@ -317,73 +316,10 @@ public class SharedQueueProcessingService {
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
 
-            updateLocalBuildAgentInformation();
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             return processingJob;
         }
         return null;
-    }
-
-    private void updateLocalBuildAgentInformation() {
-        updateLocalBuildAgentInformationWithRecentJob(null);
-    }
-
-    private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        try {
-            buildAgentInformation.lock(memberAddress);
-            // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
-            try {
-                buildAgentInformation.put(info.buildAgent().memberAddress(), info);
-            }
-            catch (Exception e) {
-                log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
-            }
-        }
-        catch (Exception e) {
-            log.error("Error while updating build agent information for agent with address {}", memberAddress, e);
-        }
-        finally {
-            buildAgentInformation.unlock(memberAddress);
-        }
-    }
-
-    private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
-        int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
-                : buildAgentConfiguration.getThreadPoolSize();
-        boolean hasJobs = numberOfCurrentBuildJobs > 0;
-        BuildAgentInformation.BuildAgentStatus status = isPaused.get() ? BuildAgentInformation.BuildAgentStatus.PAUSED
-                : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
-        BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
-        List<BuildJobQueueItem> recentBuildJobs;
-        if (agent != null) {
-            recentBuildJobs = agent.recentBuildJobs();
-        }
-        else {
-            recentBuildJobs = new ArrayList<>();
-        }
-        // TODO: Make this number configurable
-        if (recentBuildJob != null) {
-            if (recentBuildJobs.size() >= 20) {
-                recentBuildJobs.removeFirst();
-            }
-            recentBuildJobs.add(recentBuildJob);
-        }
-
-        String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
-
-        BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
-
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
-    }
-
-    private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        List<BuildJobQueueItem> processingJobsList = new ArrayList<>(processingJobs.values());
-        return processingJobsList.stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 
     private void removeOfflineNodes() {
@@ -435,7 +371,7 @@ public class SharedQueueProcessingService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformationWithRecentJob(finishedJob);
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get());
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
@@ -485,7 +421,7 @@ public class SharedQueueProcessingService {
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
-            updateLocalBuildAgentInformationWithRecentJob(job);
+            buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get());
 
             checkAvailabilityAndProcessNextBuild();
             return null;
@@ -504,7 +440,7 @@ public class SharedQueueProcessingService {
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
-            updateLocalBuildAgentInformation();
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
 
             log.info("Gracefully cancelling running build jobs");
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
@@ -575,7 +511,7 @@ public class SharedQueueProcessingService {
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
-            updateLocalBuildAgentInformation();
+            buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
         finally {
             pauseResumeLock.unlock();

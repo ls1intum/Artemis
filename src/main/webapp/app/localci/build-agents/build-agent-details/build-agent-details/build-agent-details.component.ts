@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPauseCircle, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -17,6 +17,8 @@ import { CommonModule } from '@angular/common';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BuildJobStatisticsComponent } from 'app/localci/build-queue/build-job-statistics/build-job-statistics.component';
+import { BuildJob, BuildJobStatistics } from 'app/entities/programming/build-job.model';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -32,6 +34,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         CommonModule,
         ResultComponent,
         TranslateDirective,
+        BuildJobStatisticsComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -43,6 +46,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgent: BuildAgentInformation;
+    buildJobStatistics: BuildJobStatistics = new BuildJobStatistics();
+    runningBuildJobs: BuildJob[] = [];
     agentName: string;
     websocketSubscription: Subscription;
     restSubscription: Subscription;
@@ -50,10 +55,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     channel: string;
 
     //icons
-    faCircleCheck = faCircleCheck;
-    faExclamationCircle = faExclamationCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faTimes = faTimes;
+    readonly faCircleCheck = faCircleCheck;
+    readonly faExclamationCircle = faExclamationCircle;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faTimes = faTimes;
+    readonly faPauseCircle = faPauseCircle;
     readonly faPause = faPause;
     readonly faPlay = faPlay;
 
@@ -96,6 +102,19 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent = buildAgent;
+        if (buildAgent.runningBuildJobs) {
+            this.runningBuildJobs = buildAgent.runningBuildJobs;
+        } else {
+            this.runningBuildJobs = [];
+        }
+        this.buildJobStatistics = {
+            successfulBuilds: this.buildAgent.buildAgentDetails?.successfulBuilds || 0,
+            failedBuilds: this.buildAgent.buildAgentDetails?.failedBuilds || 0,
+            cancelledBuilds: this.buildAgent.buildAgentDetails?.cancelledBuilds || 0,
+            timeOutBuilds: this.buildAgent.buildAgentDetails?.timedOutBuild || 0,
+            totalBuilds: this.buildAgent.buildAgentDetails?.totalBuilds || 0,
+            missingBuilds: 0,
+        };
         this.setRecentBuildJobsDuration();
     }
 
