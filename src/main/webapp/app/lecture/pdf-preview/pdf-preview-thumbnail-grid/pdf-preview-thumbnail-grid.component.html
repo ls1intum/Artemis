@@ -54,6 +54,13 @@
                                         {{ newHiddenPages()[activeButtonIndex()!]?.date!.format('MMM D, YYYY - HH:mm') }}
                                     </span>
                                 }
+                                @if (newHiddenPages()[activeButtonIndex()!]?.exerciseId) {
+                                    <span
+                                        class="text-primary"
+                                        jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
+                                        [translateValues]="{ param: newHiddenPages()[activeButtonIndex()!].exerciseId }"
+                                    ></span>
+                                }
                                 <br />
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>

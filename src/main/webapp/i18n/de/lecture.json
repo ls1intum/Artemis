@@ -117,7 +117,8 @@
                     "showPage": "Seite {{ param }} anzeigen",
                     "hiddenUntil": "Diese Seite ist ausgeblendet bis:",
                     "showPageConfirmation": "Möchtest du diese Seite anzeigen?",
-                    "forever": "IMMER"
+                    "forever": "IMMER",
+                    "exerciseId": "(Übung Id: {{ param }})"
                 },
                 "dateBox": {
                     "hidePage": "Seite {{ param }} ausblenden",

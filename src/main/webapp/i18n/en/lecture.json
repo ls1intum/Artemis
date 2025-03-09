@@ -117,7 +117,8 @@
                     "showPage": "Show Page {{ param }}",
                     "hiddenUntil": "This page is hidden until:",
                     "showPageConfirmation": "Would you like to show this page?",
-                    "forever": "FOREVER"
+                    "forever": "FOREVER",
+                    "exerciseId": "(Exercise Id: {{ param }})"
                 },
                 "dateBox": {
                     "hidePage": "Hide Page {{ param }}",

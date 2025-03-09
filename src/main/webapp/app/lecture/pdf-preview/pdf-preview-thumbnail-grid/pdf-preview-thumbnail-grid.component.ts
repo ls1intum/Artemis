@@ -11,7 +11,6 @@ import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap } from 'app/lecture/pdf-preview/pdf-preview.component';
-import { Exercise } from 'app/entities/exercise.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -44,7 +43,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
     activeButtonIndex = signal<number | null>(null);
     isPopoverOpen = signal<boolean>(false);
-    connectedExercise = signal<Exercise | null>(null);
 
     // Outputs
     totalPagesOutput = output<number>();

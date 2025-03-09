@@ -62,8 +62,11 @@
                                                     </span>
                                                 }
                                                 @if (hiddenPages()[pageIndex]!.exerciseId) {
-                                                    <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forExercise"></span>
-                                                    <span class="text-primary">{{ hiddenPages()[pageIndex]!.exerciseId }}</span>
+                                                    <span
+                                                        class="text-primary"
+                                                        jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
+                                                        [translateValues]="{ param: hiddenPages()[pageIndex]!.exerciseId }"
+                                                    ></span>
                                                 }
                                             </div>
                                         }
