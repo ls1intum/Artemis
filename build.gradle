@@ -25,6 +25,7 @@ plugins {
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.0"
     id "org.springframework.boot" version "${spring_boot_version}"
+    id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -69,6 +70,22 @@ defaultTasks "bootRun"
 
 springBoot {
     mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
+}
+
+// Configure the openApi extension provided by the plugin:
+openApi {
+    // URL to your API docs endpoint (change if needed)
+    apiDocsUrl.set("http://localhost:8080/v3/api-docs")
+    // Where to output the generated spec file
+    outputDir.set(file("$rootDir/openapi"))
+    // Name of the output file (if ends with .yaml, output will be YAML)
+    outputFileName.set("openapi.yaml")
+    // How long to wait (in seconds) for the server to start
+    waitTimeInSeconds.set(30)
+    customBootRun {
+        args.set(["--spring.profiles.active=test,artemis,core,atlas,scheduling,athena, apollon, iris,aeolus,theia,lti,dev", "--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=", "--artemis.iris.secret-token=token"])
+
+    }
 }
 
 modernizer {
