@@ -56,27 +56,29 @@ public class ProgrammingExerciseBuildConfigService {
     public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig) {
         DockerFlagsDTO dockerFlagsDTO = parseDockerFlags(buildConfig);
 
-        String network;
-        Map<String, String> exerciseEnvironment;
+        String network = null;
+        Map<String, String> exerciseEnvironment = null;
+        int cpuCount = 0;
+        int memory = 0;
+        int memorySwap = 0;
         if (dockerFlagsDTO != null) {
             network = dockerFlagsDTO.network();
             exerciseEnvironment = dockerFlagsDTO.env();
-        }
-        else {
-            network = null;
-            exerciseEnvironment = null;
+            cpuCount = dockerFlagsDTO.cpuCount();
+            memory = dockerFlagsDTO.memory();
+            memorySwap = dockerFlagsDTO.memorySwap();
         }
 
         ProgrammingExercise exercise = buildConfig.getProgrammingExercise();
         if (exercise == null) {
-            return createDockerRunConfig(network, exerciseEnvironment);
+            return createDockerRunConfig(network, exerciseEnvironment, cpuCount, memory, memorySwap);
         }
 
         ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         ProjectType projectType = exercise.getProjectType();
         Map<String, String> environment = addLanguageSpecificEnvironment(exerciseEnvironment, programmingLanguage, projectType);
 
-        return createDockerRunConfig(network, environment);
+        return createDockerRunConfig(network, environment, cpuCount, memory, memorySwap);
     }
 
     @Nullable
@@ -94,8 +96,8 @@ public class ProgrammingExerciseBuildConfigService {
         return env;
     }
 
-    DockerRunConfig createDockerRunConfig(String network, Map<String, String> environmentMap) {
-        if (network == null && environmentMap == null) {
+    DockerRunConfig createDockerRunConfig(String network, Map<String, String> environmentMap, int cpuCount, int memory, int memorySwap) {
+        if (network == null && environmentMap == null && cpuCount == 0 && memory == 0 && memorySwap == 0) {
             return null;
         }
         List<String> environmentStrings = new ArrayList<>();
@@ -109,7 +111,7 @@ public class ProgrammingExerciseBuildConfigService {
             }
         }
 
-        return new DockerRunConfig(isNetworkDisabled, environmentStrings);
+        return new DockerRunConfig(isNetworkDisabled, environmentStrings, cpuCount, memory, memorySwap);
     }
 
     /**
