@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/cleanup/")
+@RequestMapping("api/core/admin/cleanup/")
 @EnforceAdmin
 public class AdminCleanupResource {
 

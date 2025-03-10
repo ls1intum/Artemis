@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lecture/")
 public class ExerciseUnitResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);

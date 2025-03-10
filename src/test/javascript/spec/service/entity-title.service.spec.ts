@@ -38,12 +38,12 @@ describe('EntityTitleService', () => {
     });
 
     it.each([
-        { type: EntityType.EXERCISE, ids: [1], url: 'exercises/1' },
-        { type: EntityType.LECTURE, ids: [1], url: 'lectures/1' },
-        { type: EntityType.COURSE, ids: [1], url: 'courses/1' },
-        { type: EntityType.DIAGRAM, ids: [1], url: 'apollon-diagrams/1' },
-        { type: EntityType.EXAM, ids: [1], url: 'exams/1' },
-        { type: EntityType.ORGANIZATION, ids: [1], url: 'organizations/1' },
+        { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
+        { type: EntityType.LECTURE, ids: [1], url: 'lecture/lectures/1' },
+        { type: EntityType.COURSE, ids: [1], url: 'core/courses/1' },
+        { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
+        { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
+        { type: EntityType.ORGANIZATION, ids: [1], url: 'core/organizations/1' },
     ])(
         'fires a request to fetch the title after 3 seconds',
         fakeAsync(({ type, ids, url }: { type: EntityType; ids: number[]; url: string }) => {

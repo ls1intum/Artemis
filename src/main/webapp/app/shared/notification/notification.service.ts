@@ -75,7 +75,7 @@ export class NotificationService {
     private notificationSettingsService = inject(NotificationSettingsService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    public resourceUrl = 'api/notifications';
+    public resourceUrl = 'api/communication/notifications';
     notificationSubject: ReplaySubject<Notification[]>;
     singleNotificationSubject: Subject<Notification>;
     notifications: Notification[] = [];
@@ -650,7 +650,7 @@ export class NotificationService {
 
     private getMutedConversations(courses: Course[]) {
         if (courses.find((course) => course.courseInformationSharingConfiguration !== CourseInformationSharingConfiguration.DISABLED)) {
-            this.http.get<number[]>('api/muted-conversations', { observe: 'response' }).subscribe({
+            this.http.get<number[]>('api/communication/muted-conversations', { observe: 'response' }).subscribe({
                 next: (res: HttpResponse<number[]>) => {
                     this.mutedConversations.push(...res.body!);
                 },

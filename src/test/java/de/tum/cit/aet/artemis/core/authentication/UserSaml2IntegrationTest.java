@@ -62,7 +62,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     @Test
     void testAuthenticationRedirect() throws Exception {
-        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         final String redirectTarget = request.getRedirectTarget("/saml2/authenticate", HttpStatus.FOUND);
         assertThat(redirectTarget).endsWith("/login");
     }
@@ -160,7 +160,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
         // Create user
         mockSAMLAuthentication();
-        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
         assertStudentExists();
 
         // Change Password
@@ -173,7 +173,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        request.postWithoutResponseBody("/api/public/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
+        request.postWithoutResponseBody("/api/core/public/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
         // Check SAML Login afterwards ..
 
@@ -181,7 +181,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         // Mock existing SAML2 Auth
         mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
-        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     /**
@@ -193,13 +193,13 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     void testInvalidAuthenticationSaml2Login() throws Exception {
         assertStudentNotExists();
         // Test whether authorizeSAML2 generates a no token
-        request.post("/api/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
+        request.post("/api/core/public/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         assertStudentNotExists();
     }
 
     private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
         mockSAMLAuthentication(principal);
-        request.postWithoutResponseBody("/api/public/saml2", Boolean.FALSE, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/core/public/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     private void mockSAMLAuthentication() throws Exception {

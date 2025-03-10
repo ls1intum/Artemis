@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @Profile(PROFILE_CORE)
 @RestController
 @EnforceAdmin
-@RequestMapping("api/admin/metrics/")
+@RequestMapping("api/atlas/admin/metrics/")
 public class AdminMetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminMetricsResource.class);

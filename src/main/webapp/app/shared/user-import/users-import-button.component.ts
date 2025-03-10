@@ -30,7 +30,7 @@ export class UsersImportButtonComponent {
     @Input() buttonType: ButtonType = ButtonType.PRIMARY;
     @Input() exam: Exam;
 
-    @Output() finish: EventEmitter<void> = new EventEmitter();
+    @Output() importDone: EventEmitter<void> = new EventEmitter();
 
     // Icons
     faFileImport = faFileImport;
@@ -49,7 +49,7 @@ export class UsersImportButtonComponent {
         modalRef.componentInstance.examUserMode = this.examUserMode;
         modalRef.componentInstance.adminUserMode = this.adminUserMode;
         modalRef.result.then(
-            () => this.finish.emit(),
+            () => this.importDone.emit(),
             () => {},
         );
     }

@@ -99,7 +99,7 @@ describe('CourseArchiveComponent', () => {
             const emptyCourses: CourseForArchiveDTO[] = [];
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-archive` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-archive` });
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
