@@ -153,12 +153,14 @@ jobs:
     name: Build and Push Docker Image
     if: ${{ inputs.docker }}
     needs: validate-inputs
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@13eabc7dc732414c6e76c2386839983777b07e55
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@feat/multi-tag-support
     with:
       ref: ${{ inputs.docker_ref }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
-      tags: ${{ inputs.docker_build_tag }}
+      tags: |
+        chore-refactor-workflows-test-multi-tag-step
+        ${{ inputs.docker_build_tag }}
 
       # TODO: Push to Docker Hub (develop + tag)
 
