@@ -163,7 +163,7 @@ public class LectureTranscriptionResource {
     @DeleteMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         Course course = lecture.getCourse();
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         if (!course.getId().equals(courseId)) {

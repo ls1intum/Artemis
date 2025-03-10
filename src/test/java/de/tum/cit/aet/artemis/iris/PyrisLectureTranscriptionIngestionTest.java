@@ -100,4 +100,36 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteTranscriptionInPyris() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        request.delete("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription",
+                HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteTranscriptionInPyrisInvalidLecture() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        request.delete("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription",
+                HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testDeleteTranscriptionInPyrisWithoutPermission() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        request.delete("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription",
+                HttpStatus.FORBIDDEN);
+    }
 }
