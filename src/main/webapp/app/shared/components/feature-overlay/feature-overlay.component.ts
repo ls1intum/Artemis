@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-feature-overlay',
     template: `
-        <div ngbTooltip="{{ enabled() ? null : ('artemisApp.featureOverlay.title' | artemisTranslate) }}" placement="left">
+        <div ngbTooltip="{{ enabled() ? null : ('artemisApp.featureToggles.title' | artemisTranslate) }}" placement="left">
             <div [class.disabled]="!enabled()">
                 <ng-content></ng-content>
             </div>

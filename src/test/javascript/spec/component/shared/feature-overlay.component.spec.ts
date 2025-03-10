@@ -30,7 +30,7 @@ describe('Feature Overlay Component Tests', () => {
         expect(tooltipDebugEl).not.toBeNull();
 
         const tooltipInstance = tooltipDebugEl.injector.get(NgbTooltip);
-        const expectedTooltip = 'artemisApp.featureOverlay.title';
+        const expectedTooltip = 'artemisApp.featureToggles.title';
         expect(tooltipInstance.ngbTooltip).toEqual(expectedTooltip);
 
         const innerDivDebugEl = fixture.debugElement.query(By.css('div.disabled'));
