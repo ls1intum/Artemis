@@ -62,6 +62,6 @@ public class ProblemStatementUpdateEvent extends ExamLiveEvent {
 
     @Override
     public ProblemStatementUpdateEventDTO asDTO() {
-        return new ProblemStatementUpdateEventDTO(this.getId(), this.getCreatedBy(), this.getCreatedDate(), textContent, problemStatement, exerciseId, exerciseName);
+        return new ProblemStatementUpdateEventDTO(this.getId(), this.getCreatedDate(), textContent, problemStatement, exerciseId, exerciseName);
     }
 }
