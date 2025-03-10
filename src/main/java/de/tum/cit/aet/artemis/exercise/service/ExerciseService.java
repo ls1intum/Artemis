@@ -760,7 +760,6 @@ public class ExerciseService {
         // start sending problem statement updates within the last 5 minutes before the exam starts
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
                 && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            User instructor = userRepository.getUser();
             this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
     }
