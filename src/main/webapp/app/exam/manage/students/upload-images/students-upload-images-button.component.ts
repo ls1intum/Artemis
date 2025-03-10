@@ -29,7 +29,7 @@ export class StudentsUploadImagesButtonComponent {
     @Input() exam: Exam;
     @Input() buttonSize: ButtonSize = ButtonSize.MEDIUM;
 
-    @Output() finish: EventEmitter<void> = new EventEmitter();
+    @Output() uploadDone: EventEmitter<void> = new EventEmitter();
 
     // Icons
     faPlus = faPlus;
@@ -45,7 +45,7 @@ export class StudentsUploadImagesButtonComponent {
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.exam = this.exam;
         modalRef.result.then(
-            () => this.finish.emit(),
+            () => this.uploadDone.emit(),
             () => {},
         );
     }
