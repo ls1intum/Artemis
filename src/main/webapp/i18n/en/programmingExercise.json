@@ -120,8 +120,8 @@
             "buildConfiguration": "Build Configuration",
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
-            "customizeBuildPlan": "Customize Build Script",
-            "customizeBuildPlanWithAeolus": "Customize Build Script",
+            "customizeBuildPlan": "Customize Build Configuration",
+            "customizeBuildPlanWithAeolus": "Customize Build Configuration",
             "revertToTemplateBuildPlan": "Artemis executes the following build script for each submission in a Docker container. You can customize the build script and reset it to its default value by using the Reset button above.",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",
@@ -742,6 +742,18 @@
                     "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
                     "addEnvVar": "Add Environment Variable",
                     "removeEnvVar": "Remove"
+                },
+                "cpuCount": {
+                    "label": "Edit CPU count",
+                    "help": "The number of CPUs that are available to the Docker container. For more information, refer to the Docker documentation."
+                },
+                "memory": {
+                    "label": "Edit memory limit (in MB)",
+                    "help": "The maximum amount of memory that the Docker container can use. For more information, refer to the Docker documentation."
+                },
+                "memorySwap": {
+                    "label": "Edit memory swap limit (in MB)",
+                    "help": "The maximum amount of memory and swap space that the Docker container can use. For more information, refer to the Docker documentation."
                 }
             },
             "artemisIntelligence": {
