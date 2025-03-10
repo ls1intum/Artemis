@@ -49,23 +49,25 @@
                                     <span jhiTranslate="artemisApp.attachment.pdfPreview.showPagesTitle" [translateValues]="{ param: selectedPages().size }"> </span>
                                 </h5>
                                 <div class="mt-3 mb-3">
-                                    @for (pageIndex of Array.from(selectedPages()); track pageIndex) {
-                                        @if (hiddenPages()[pageIndex]) {
+                                    @for (slideId of Array.from(selectedPages()); track slideId) {
+                                        @if (hiddenPages()[slideId]) {
                                             <div class="page-info mb-2">
-                                                <strong>Page {{ pageIndex }}:</strong>
+                                                <strong
+                                                    >Page <strong>Page {{ getPageNumberForSlide(slideId) }}:</strong>
+                                                </strong>
                                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                                @if (hiddenPages()[pageIndex]!.date!.isSame(forever)) {
+                                                @if (hiddenPages()[slideId]!.date!.isSame(forever)) {
                                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                                 } @else {
                                                     <span>
-                                                        {{ hiddenPages()[pageIndex]!.date!.format('MMM D, YYYY - HH:mm') }}
+                                                        {{ hiddenPages()[slideId]!.date!.format('MMM D, YYYY - HH:mm') }}
                                                     </span>
                                                 }
-                                                @if (hiddenPages()[pageIndex]!.exerciseId) {
+                                                @if (hiddenPages()[slideId]!.exerciseId) {
                                                     <span
                                                         class="text-primary"
                                                         jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
-                                                        [translateValues]="{ param: hiddenPages()[pageIndex]!.exerciseId }"
+                                                        [translateValues]="{ param: hiddenPages()[slideId]!.exerciseId }"
                                                     ></span>
                                                 }
                                             </div>
@@ -86,7 +88,7 @@
                     <ng-template #hidePageBox>
                         <jhi-pdf-preview-date-box-component
                             [course]="course()"
-                            [pageIndices]="Array.from(selectedPages())"
+                            [slideIds]="Array.from(selectedPages())"
                             (hiddenPagesOutput)="onHiddenPagesReceived($event); hidePopover.close()"
                             (selectionCancelledOutput)="hidePopover.close()"
                         />
@@ -130,10 +132,11 @@
                 [appendFile]="appendFile()"
                 [hiddenPages]="hiddenPages()"
                 [isAttachmentUnit]="!!attachmentUnit()"
+                [attachmentUnit]="attachmentUnit()"
                 [updatedSelectedPages]="selectedPages()"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
-                (newHiddenPagesOutput)="hiddenPages.set($event)"
+                (hiddenPagesOutput)="hiddenPages.set($event)"
                 (pageOrderOutput)="onPageOrderChanged($event)"
             />
         } @else {

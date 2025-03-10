@@ -1,13 +1,21 @@
 import { Component, ElementRef, HostListener, OnInit, input, output, signal, viewChild } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommonModule } from '@angular/common';
 
 type NavigationDirection = 'next' | 'prev';
+
+// Define interface for page information
+interface PageInfo {
+    pageIndex: number;
+    slideId: string;
+}
 
 @Component({
     selector: 'jhi-pdf-preview-enlarged-canvas-component',
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, CommonModule],
+    standalone: true,
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit {
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
@@ -20,9 +28,12 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
     originalCanvas = input<HTMLCanvasElement>();
     totalPages = input<number>(0);
     initialPage = input<number>();
+    initialSlideId = input<string>(); // New input for the slide ID
 
     // Signals
     currentPage = signal<number>(1);
+    currentSlideId = signal<string>('');
+    pageInfoList = signal<PageInfo[]>([]);
     isEnlargedCanvasLoading = signal<boolean>(false);
 
     //Outputs
@@ -30,8 +41,52 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
 
     ngOnInit() {
         this.currentPage.set(this.initialPage()!);
+        this.currentSlideId.set(this.initialSlideId()!);
+
+        // Initialize page info list by examining the container
+        this.initializePageInfoList();
+
         this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
         this.displayEnlargedCanvas(this.originalCanvas()!);
+    }
+
+    /**
+     * Initialize the page info list by examining the DOM to map page indices to slide IDs
+     */
+    initializePageInfoList(): void {
+        const pageContainers = this.pdfContainer().querySelectorAll('.pdf-canvas-container');
+        const infoList: PageInfo[] = [];
+
+        pageContainers.forEach((container) => {
+            const id = container.id;
+            if (id && id.startsWith('pdf-page-')) {
+                const slideId = id.substring('pdf-page-'.length);
+                const orderElem = container.querySelector('.pdf-overlay span');
+                const pageIndex = orderElem ? parseInt(orderElem.textContent || '0', 10) : 0;
+
+                if (pageIndex > 0) {
+                    infoList.push({ pageIndex, slideId });
+                }
+            }
+        });
+
+        // Sort by page index
+        infoList.sort((a, b) => a.pageIndex - b.pageIndex);
+        this.pageInfoList.set(infoList);
+    }
+
+    /**
+     * Get the slide ID for a specific page index
+     */
+    getSlideIdForPageIndex(pageIndex: number): string | undefined {
+        return this.pageInfoList().find((info) => info.pageIndex === pageIndex)?.slideId;
+    }
+
+    /**
+     * Get the page index for a specific slide ID
+     */
+    getPageIndexForSlideId(slideId: string): number | undefined {
+        return this.pageInfoList().find((info) => info.slideId === slideId)?.pageIndex;
     }
 
     /**
@@ -59,10 +114,15 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
      * Dynamically updates the canvas size within an enlarged view based on the viewport.
      */
     adjustCanvasSize() {
-        const canvasElements = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas');
-        if (this.currentPage() - 1 < canvasElements.length) {
-            const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
-            this.updateEnlargedCanvas(canvas);
+        // Find the canvas for the current slide ID
+        const currentContainerId = `pdf-page-${this.currentSlideId()}`;
+        const currentContainer = this.pdfContainer().querySelector(`#${currentContainerId}`);
+
+        if (currentContainer) {
+            const canvas = currentContainer.querySelector('canvas') as HTMLCanvasElement;
+            if (canvas) {
+                this.updateEnlargedCanvas(canvas);
+            }
         }
     }
 
@@ -210,11 +270,41 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
      * @param direction The navigation direction (next or previous).
      */
     navigatePages(direction: NavigationDirection) {
-        const nextPageIndex = direction === 'next' ? this.currentPage() + 1 : this.currentPage() - 1;
-        if (nextPageIndex > 0 && nextPageIndex <= this.totalPages()) {
-            this.currentPage.set(nextPageIndex);
-            const canvas = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
-            this.updateEnlargedCanvas(canvas);
+        // Find the current index in our ordered page list
+        const currentIndex = this.pageInfoList().findIndex((info) => info.slideId === this.currentSlideId());
+        if (currentIndex === -1) return;
+
+        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+
+        if (newIndex >= 0 && newIndex < this.pageInfoList().length) {
+            const newPageInfo = this.pageInfoList()[newIndex];
+            this.currentPage.set(newPageInfo.pageIndex);
+            this.currentSlideId.set(newPageInfo.slideId);
+
+            // Find the canvas for the new slide
+            const slideContainer = this.pdfContainer().querySelector(`#pdf-page-${newPageInfo.slideId}`);
+            if (slideContainer) {
+                const canvas = slideContainer.querySelector('canvas') as HTMLCanvasElement;
+                if (canvas) {
+                    this.updateEnlargedCanvas(canvas);
+                }
+            }
         }
+    }
+
+    /**
+     * Check if this is the first page in the document
+     */
+    isFirstPage(): boolean {
+        const firstPageInfo = this.pageInfoList()[0];
+        return firstPageInfo?.slideId === this.currentSlideId();
+    }
+
+    /**
+     * Check if this is the last page in the document
+     */
+    isLastPage(): boolean {
+        const lastPageInfo = this.pageInfoList()[this.pageInfoList().length - 1];
+        return lastPageInfo?.slideId === this.currentSlideId();
     }
 }

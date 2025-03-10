@@ -1,23 +1,23 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
-    @for (page of getSortedPages(); track page) {
+    @for (page of orderedPages(); track page.slideId) {
         <div
-            [id]="'pdf-page-' + page"
+            [id]="'pdf-page-' + page.slideId"
             class="pdf-canvas-container"
-            [class.dragging]="dragIndex() === page"
+            [class.dragging]="dragSlideId() === page.slideId"
             draggable="true"
-            (dragstart)="onDragStart($event, page)"
+            (dragstart)="onDragStart($event, page.slideId)"
             (dragover)="onDragOver($event)"
-            (drop)="onDrop($event, page)"
-            (dragenter)="onDragEnter($event, page)"
-            (dragleave)="onDragLeave($event, page)"
+            (drop)="onDrop($event, page.slideId)"
+            (dragenter)="onDragEnter($event, page.slideId)"
+            (dragleave)="onDragLeave($event, page.slideId)"
             (dragend)="onDragEnd()"
-            (click)="displayEnlargedCanvas(page); $event.stopPropagation()"
+            (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()"
         >
             <div class="drag-handle">
                 <fa-icon [icon]="faGripLines" />
             </div>
 
-            @if (newHiddenPages()[page]) {
+            @if (hiddenPages()[page.slideId]) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
@@ -26,33 +26,33 @@
                     </div>
                 </ng-container>
             }
-            <span class="pdf-overlay" [id]="'overlay-' + page">
-                <span>{{ getPageDisplayOrder(page) }}</span>
+            <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+                <span>{{ getPageOrder(page.slideId) }}</span>
             </span>
-            @if (loadedPages().has(page)) {
-                <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" (change)="togglePageSelection(page, $event)" />
+            @if (loadedPages().has(page.pageIndex)) {
+                <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
             }
             @if (isAttachmentUnit()) {
                 <button
-                    [id]="'hide-show-button-' + page"
-                    style="'opacity' : activeButtonIndex === page '1' : '0'"
-                    [class]="'hide-show-btn btn ' + (newHiddenPages()[page] ? 'btn-success' : 'btn-secondary')"
-                    (click)="toggleVisibility(page, $event)"
-                    [ngbPopover]="newHiddenPages()[page] ? showPageBox : hidePageBox"
+                    [id]="'hide-show-button-' + page.slideId"
+                    style="'opacity' : activeButtonSlideId() === page.slideId '1' : '0'"
+                    [class]="'hide-show-btn btn ' + (hiddenPages()[page.slideId] ? 'btn-success' : 'btn-secondary')"
+                    (click)="toggleVisibility(page.slideId, $event)"
+                    [ngbPopover]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
                     [autoClose]="'outside'"
                     placement="right auto"
                     container="body"
                     (shown)="isPopoverOpen.set(true)"
-                    (hidden)="this.hideActionButton(page); isPopoverOpen.set(false)"
+                    (hidden)="this.hideActionButton(page.slideId); isPopoverOpen.set(false)"
                 >
-                    <fa-icon [icon]="newHiddenPages()[page] ? faEye : faEyeSlash" />
+                    <fa-icon [icon]="hiddenPages()[page.slideId] ? faEye : faEyeSlash" />
                 </button>
 
                 <ng-template #hidePageBox>
                     <jhi-pdf-preview-date-box-component
                         [course]="course()"
-                        [pageIndices]="[activeButtonIndex()!]"
+                        [slideIds]="[activeButtonSlideId()!]"
                         (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
                         (selectionCancelledOutput)="popover.close()"
                     />
@@ -60,31 +60,36 @@
                 <ng-template #showPageBox>
                     <div class="confirmation-box">
                         <div class="popover-title mb-2">
-                            <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage" [translateValues]="{ param: activeButtonIndex()! }"></span></h5>
+                            <h5>
+                                <span
+                                    jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage"
+                                    [translateValues]="{ param: getPageOrder(activeButtonSlideId()!) }"
+                                ></span>
+                            </h5>
                             <p>
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                @if (newHiddenPages()[activeButtonIndex()!]?.date!.isSame(forever)) {
+                                @if (hiddenPages()[activeButtonSlideId()!]?.date!.isSame(forever)) {
                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                 } @else {
                                     <span>
-                                        {{ newHiddenPages()[activeButtonIndex()!]?.date!.format('MMM D, YYYY - HH:mm') }}
+                                        {{ hiddenPages()[activeButtonSlideId()!]?.date!.format('MMM D, YYYY - HH:mm') }}
                                     </span>
                                 }
-                                @if (newHiddenPages()[activeButtonIndex()!]?.exerciseId) {
+                                @if (hiddenPages()[activeButtonSlideId()!]?.exerciseId) {
                                     <span
                                         class="text-primary"
                                         jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
-                                        [translateValues]="{ param: newHiddenPages()[activeButtonIndex()!].exerciseId }"
+                                        [translateValues]="{ param: hiddenPages()[activeButtonSlideId()!].exerciseId }"
                                     ></span>
                                 }
                                 <br />
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>
                             <div class="submit-container mt-3 d-flex justify-content-between">
-                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonIndex()!); popover.close()">
+                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonSlideId()!); popover.close()">
                                     <span jhiTranslate="entity.action.cancel"></span>
                                 </button>
-                                <button class="btn btn-primary" (click)="showPage(activeButtonIndex()!); popover.close()">
+                                <button class="btn btn-primary" (click)="showPage(activeButtonSlideId()!); popover.close()">
                                     <span jhiTranslate="entity.action.show"></span>
                                 </button>
                             </div>
@@ -101,6 +106,7 @@
             [totalPages]="totalPagesArray().size"
             [originalCanvas]="originalCanvas()"
             [initialPage]="initialPageNumber()"
+            [initialSlideId]="initialSlideId()"
             (isEnlargedViewOutput)="isEnlargedView.set($event)"
         />
     }

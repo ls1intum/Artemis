@@ -29,7 +29,7 @@ const FOREVER = dayjs('9999-12-31');
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
-    pageIndices = input<number[]>([]);
+    slideIds = input<string[]>([]); // Changed from pageIndices to slideIds
 
     // Signals
     calendarSelected = signal<boolean>(false);
@@ -46,9 +46,10 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     selectionCancelledOutput = output<boolean>();
 
     // Computed properties
-    pageIndicesSorted = computed(() => {
-        const indices = [...this.pageIndices()];
-        return indices.sort((a, b) => a - b).join(', ');
+    slideIdsDisplay = computed(() => {
+        const ids = [...this.slideIds()];
+        // For display purposes, we'll just show the count rather than the complex IDs
+        return ids.length > 3 ? `${ids.length} slides` : `slides ${ids.length}`;
     });
 
     // Injected services
@@ -57,7 +58,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadExercises();
-        this.isMultiplePages.set(this.pageIndices().length > 1);
+        this.isMultiplePages.set(this.slideIds().length > 1);
     }
 
     /**
@@ -169,8 +170,8 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const hiddenPages: HiddenPage[] = this.pageIndices().map((pageIndex) => ({
-            pageIndex,
+        const hiddenPages: HiddenPage[] = this.slideIds().map((slideId) => ({
+            slideId,
             date: selectedDate,
             exerciseId: this.selectedExercise()?.id ?? null,
         }));

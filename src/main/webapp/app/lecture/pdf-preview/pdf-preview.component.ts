@@ -31,23 +31,22 @@ import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 type VisibilityAction = 'hide' | 'show';
 
-export interface HiddenPage {
+export interface OrderedPage {
     pageIndex: number;
+    slideId: string;
+}
+
+export interface HiddenPage {
+    slideId: string;
     date: dayjs.Dayjs;
     exerciseId: number | null;
 }
 
 export interface HiddenPageMap {
-    [pageIndex: number]: {
+    [slideId: string]: {
         date: dayjs.Dayjs;
         exerciseId: number | null;
     };
-}
-
-export interface OrderedPage {
-    pageIndex: number;
-    slideId?: string;
-    order: number;
 }
 
 @Component({
@@ -91,7 +90,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     totalPages = signal<number>(0);
     appendFile = signal<boolean>(false);
     isFileChanged = signal<boolean>(false);
-    selectedPages = signal<Set<number>>(new Set());
+    selectedPages = signal<Set<string>>(new Set());
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     initialHiddenPages = signal<HiddenPageMap>({});
     hiddenPages = signal<HiddenPageMap>({});
@@ -100,7 +99,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     pageOrder = signal<OrderedPage[]>([]);
     pageOrderChanged = computed(() => {
         if (this.pageOrder().length === 0) return false;
-        return this.pageOrder().some((page) => page.pageIndex !== page.order);
+        return this.pageOrder().some((page, index) => page.pageIndex !== index + 1);
     });
 
     // Injected services
@@ -145,11 +144,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
+
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
                     data.attachmentUnit.slides
                         .filter((page: Slide) => page.hidden)
                         .map((page: Slide) => [
-                            page.slideNumber,
+                            page.id,
                             {
                                 date: dayjs(page.hidden),
                                 exerciseId: page.exercise?.id ?? null,
@@ -159,12 +159,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
 
-                // Initialize page order from slides if available
                 if (data.attachmentUnit.slides && data.attachmentUnit.slides.length > 0) {
                     const orderedPages: OrderedPage[] = data.attachmentUnit.slides.map((slide: Slide) => ({
                         pageIndex: slide.slideNumber,
                         slideId: slide.id,
-                        order: slide.slideNumber,
                     }));
                     this.pageOrder.set(orderedPages);
                 }
@@ -209,7 +207,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Checks if any of the currently selected pages are in the hidden pages collection.
      */
     hasHiddenSelectedPages(): boolean {
-        return Array.from(this.selectedPages()).some((pageId) => this.hiddenPages()[pageId]);
+        return Array.from(this.selectedPages()).some((slideId) => this.hiddenPages()[slideId]);
+    }
+
+    getPageNumberForSlide(slideId: unknown): number | string {
+        const page = this.pageOrder().find((page) => page.slideId === slideId);
+        return page?.pageIndex || '?';
     }
 
     /**
@@ -231,12 +234,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     getHiddenPages(): HiddenPage[] {
         return Array.from(document.querySelectorAll('.hide-show-btn.btn-success'))
             .map((el) => {
-                const match = el.id.match(/hide-show-button-(\d+)/);
-                const pageIndex = match ? parseInt(match[1], 10) : null;
-                if (pageIndex && this.hiddenPages()![pageIndex]) {
-                    const pageData = this.hiddenPages()![pageIndex];
+                const match = el.id.match(/hide-show-button-(.+)/);
+                const slideId = match ? match[1] : null;
+                if (slideId && this.hiddenPages()![slideId]) {
+                    const pageData = this.hiddenPages()![slideId];
                     return {
-                        pageIndex,
+                        slideId,
                         date: pageData.date,
                         exerciseId: pageData.exerciseId ?? null,
                     };
@@ -343,19 +346,28 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
             const pdfDoc = await PDFDocument.load(existingPdfBytes);
 
-            const pagesToDelete = Array.from(this.selectedPages()!)
-                .map((page) => page - 1)
-                .sort((a, b) => b - a);
+            const selectedSlideIds = Array.from(this.selectedPages());
+            const pageIndices = selectedSlideIds
+                .map((slideId) => {
+                    const page = this.pageOrder().find((p) => p.slideId === slideId);
+                    return page ? page.pageIndex - 1 : -1; // PDF page indices are 0-based
+                })
+                .filter((index) => index >= 0)
+                .sort((a, b) => b - a); // Sort in descending order for deletion
 
-            this.updateHiddenPages(pagesToDelete);
-            pagesToDelete.forEach((pageIndex) => pdfDoc.removePage(pageIndex));
+            // Update hidden pages by removing deleted slides
+            this.updateHiddenPages(selectedSlideIds);
 
-            this.updatePageOrderAfterDeletion(pagesToDelete.map((p) => p + 1));
+            // Delete the pages from the PDF
+            pageIndices.forEach((pageIndex) => pdfDoc.removePage(pageIndex));
+
+            // Update page order after deletion
+            this.updatePageOrderAfterDeletion(selectedSlideIds);
 
             this.isFileChanged.set(true);
             const pdfBytes = await pdfDoc.save();
             this.currentPdfBlob.set(new Blob([pdfBytes], { type: 'application/pdf' }));
-            this.selectedPages()!.clear();
+            this.selectedPages.set(new Set());
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
@@ -370,27 +382,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the page order after deleting pages
-     * @param deletedPageIndices Array of page indices that were deleted
+     * @param deletedSlideIds Array of slide IDs that were deleted
      */
-    updatePageOrderAfterDeletion(deletedPageIndices: number[]): void {
-        const updatedOrder: OrderedPage[] = [];
-        let newOrder = 1;
+    updatePageOrderAfterDeletion(deletedSlideIds: string[]): void {
+        // Filter out deleted pages from the page order
+        const updatedOrder = this.pageOrder().filter((page) => !deletedSlideIds.includes(page.slideId));
 
-        this.pageOrder().forEach((page) => {
-            if (!deletedPageIndices.includes(page.pageIndex)) {
-                let adjustedPageIndex = page.pageIndex;
-                for (const deletedIndex of deletedPageIndices) {
-                    if (adjustedPageIndex > deletedIndex) {
-                        adjustedPageIndex--;
-                    }
-                }
-
-                updatedOrder.push({
-                    pageIndex: adjustedPageIndex,
-                    slideId: page.slideId,
-                    order: newOrder++,
-                });
-            }
+        // Update page indices to maintain sequence
+        updatedOrder.forEach((page, index) => {
+            page.pageIndex = index + 1;
         });
 
         this.pageOrder.set(updatedOrder);
@@ -399,19 +399,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Updates the mapping of hidden pages after deleting specified pages.
      *
-     * @param pagesToDelete - An array of page indices to delete. Each index represents a page to be removed.
+     * @param slidesToDelete - An array of slide IDs to delete.
      */
-    updateHiddenPages(pagesToDelete: number[]) {
+    updateHiddenPages(slidesToDelete: string[]) {
         const updated: HiddenPageMap = {};
 
-        Object.entries(this.hiddenPages()!).forEach(([pageIndex, date]) => {
-            const adjustedIndex = pagesToDelete.reduce((acc, pageToDelete) => {
-                if (acc === pageToDelete + 1) return acc;
-                return pageToDelete < acc - 1 ? acc - 1 : acc;
-            }, parseInt(pageIndex));
-
-            if (adjustedIndex !== -1) {
-                updated[adjustedIndex] = date;
+        Object.entries(this.hiddenPages()!).forEach(([slideId, data]) => {
+            if (!slidesToDelete.includes(slideId)) {
+                updated[slideId] = data;
             }
         });
 
@@ -421,7 +416,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Creates a student version of the current PDF attachment by removing specified pages.
      *
-     * @param hiddenPages - An array of page numbers to be removed from the original PDF.
+     * @param hiddenPages - An array of hidden pages data
      * @returns A promise that resolves to a new `File` object representing the modified PDF, or undefined if an error occurs.
      */
     async createStudentVersionOfAttachment(hiddenPages: HiddenPage[]) {
@@ -430,7 +425,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
             const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
 
-            const pagesToDelete = hiddenPages.map(({ pageIndex }) => pageIndex - 1).sort((a, b) => b - a);
+            // Map slide IDs to page indices for deletion
+            const pagesToDelete = hiddenPages
+                .map(({ slideId }) => {
+                    const page = this.pageOrder().find((p) => p.slideId === slideId);
+                    return page ? page.pageIndex - 1 : -1; // PDF page indices are 0-based
+                })
+                .filter((index) => index >= 0)
+                .sort((a, b) => b - a);
+
             pagesToDelete.forEach((pageIndex) => {
                 hiddenPdfDoc.removePage(pageIndex);
             });
@@ -462,24 +465,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
             copiedPages.forEach((page) => existingPdfDoc.addPage(page));
 
-            const currentOrderEntries = this.pageOrder();
+            // Create temp IDs for new pages
+            const currentOrder = this.pageOrder();
             const newEntries: OrderedPage[] = [];
 
             for (let i = 0; i < newPagesCount; i++) {
                 const newPageIndex = currentPageCount + i + 1;
                 newEntries.push({
+                    slideId: `temp_${Date.now()}_${i}`, // Temporary ID until saved
                     pageIndex: newPageIndex,
-                    order: newPageIndex,
                 });
             }
 
-            this.pageOrder.set([...currentOrderEntries, ...newEntries]);
+            this.pageOrder.set([...currentOrder, ...newEntries]);
 
             this.isFileChanged.set(true);
             const mergedPdfBytes = await existingPdfDoc.save();
             this.currentPdfBlob.set(new Blob([mergedPdfBytes], { type: 'application/pdf' }));
 
-            this.selectedPages()!.clear();
+            this.selectedPages.set(new Set());
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
@@ -495,21 +499,21 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Toggles visibility of selected pages by updating the hiddenPages map
      */
-    toggleVisibility(action: VisibilityAction, selectedPages: Set<number>): void {
+    toggleVisibility(action: VisibilityAction, selectedPages: Set<string>): void {
         this.hiddenPages.update((currentMap) => {
             const updatedMap = { ...currentMap };
 
-            selectedPages.forEach((pageIndex) => {
+            selectedPages.forEach((slideId) => {
                 if (action === 'hide') {
-                    if (!updatedMap[pageIndex]) {
-                        updatedMap[pageIndex] = {
+                    if (!updatedMap[slideId]) {
+                        updatedMap[slideId] = {
                             date: dayjs(),
                             exerciseId: null,
                         };
                     }
                 } else {
-                    if (pageIndex in updatedMap) {
-                        delete updatedMap[pageIndex];
+                    if (slideId in updatedMap) {
+                        delete updatedMap[slideId];
                     }
                 }
             });
@@ -542,7 +546,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const updatedMap = { ...currentMap };
 
             pages.forEach((page) => {
-                updatedMap[page.pageIndex] = {
+                updatedMap[page.slideId] = {
                     date: page.date,
                     exerciseId: page.exerciseId,
                 };
