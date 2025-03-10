@@ -630,6 +630,24 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPerfDockerFlags() {
+        var buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setDockerFlags("{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048}");
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
+        verify(AbstractProgrammingIntegrationLocalCILocalVCTestBase.dockerClientMock.createContainerCmd(anyString())).withHostConfig(argThat(hostConfig -> {
+            assertThat(hostConfig.getCpuQuota()).isEqualTo(4L * 100000);
+            assertThat(hostConfig.getMemory()).isEqualTo(3072L * 1024 * 1024);
+            assertThat(hostConfig.getMemorySwap()).isEqualTo(2048L * 1024 * 1024);
+            return true;
+        }));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
         String buildAgentName = "artemis-build-agent-test";
         redissonClient.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
