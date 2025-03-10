@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
 import de.tum.cit.aet.artemis.modeling.domain.ModelElement;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -148,8 +147,7 @@ public class CompassService {
 
         if (result == null || AssessmentType.MANUAL != result.getAssessmentType()) {
             if (result == null) {
-                StudentParticipation studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
-                result = new Result().submission(modelingSubmission).participation(studentParticipation);
+                result = new Result().submission(modelingSubmission);
             }
             return result;
         }
