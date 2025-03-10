@@ -24,13 +24,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ComponentRef } from '@angular/core';
 
 describe('MarkdownEditorMonacoComponent', () => {
     let fixture: ComponentFixture<MarkdownEditorMonacoComponent>;
     let comp: MarkdownEditorMonacoComponent;
     let fileUploaderService: FileUploaderService;
-    let compRef: ComponentRef<MarkdownEditorMonacoComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -55,7 +53,6 @@ describe('MarkdownEditorMonacoComponent', () => {
         });
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
-        compRef = fixture.componentRef;
         comp.initialEditorHeight = 'external';
         comp.domainActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
         fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
@@ -407,14 +404,4 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(renderedHtml).toContain('<ul>');
         expect(renderedHtml).toContain('<blockquote>');
     });
-
-    it('should add the message as payload when redirectToIrisButton is pressed', fakeAsync(() => {
-        compRef.setInput('channelSubTypeReferenceRouterLink', '/courses/1/exercises/1');
-
-        const routerNavigateSpy = jest.spyOn(comp.router, 'navigate').mockImplementation(() => Promise.resolve(true));
-        comp.redirectToIris();
-        let correctLink = '/courses/1/exercises/1';
-
-        expect(routerNavigateSpy).toHaveBeenCalledWith([correctLink], { queryParams: { irisQuestion: comp._markdown } });
-    }));
 });

@@ -46,9 +46,7 @@
                                     <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                                 </a>
                                 @if (editType() !== EditType.UPDATE) {
-                                    @if (channelSubTypeReferenceRouterLink().length > 0) {
-                                        <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
-                                    }
+                                    <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto' }" />
                                     <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
                                 }
                             </div>
@@ -79,9 +77,7 @@
                         </ng-content>
                         @if (editType() !== EditType.UPDATE) {
                             <!-- <ng-container *ngTemplateOutlet="sendButton; context: {text: 'hallo'}" /> -->
-                            @if (channelSubTypeReferenceRouterLink().length > 0) {
-                                <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
-                            }
+                            <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
                             <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
                         }
                     </div>
@@ -294,13 +290,5 @@
 </ng-template>
 
 <ng-template #irisButton>
-    <button
-        jhi-redirect-to-iris-button
-        [buttonLoading]="isButtonLoading()"
-        [disabled]="isButtonLoading() || !isFormGroupValid()"
-        class="btn btn-sm btn-outline-secondary"
-        id="redirect-iris"
-        type="button"
-        (click)="redirectToIris()"
-    ></button>
+    <jhi-redirect-to-iris-button [question]="_markdown" [course]="course()" [buttonLoading]="isButtonLoading()" [disabled]="isButtonLoading() || !isFormGroupValid()" />
 </ng-template>

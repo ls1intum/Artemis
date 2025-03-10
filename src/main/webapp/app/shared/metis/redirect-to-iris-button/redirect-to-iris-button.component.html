@@ -1,5 +1,5 @@
-<div [hidden]="buttonLoading()">
-    <jhi-iris-logo [size]="TEXT" id="redirect-to-iris-img" />
-</div>
-
-<fa-icon #loadingIcon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />
+@if (irisEnabled()) {
+    <button [disabled]="disabled()" class="btn btn-sm btn-outline-secondary" id="redirect-iris" type="button" (click)="redirectToIris()">
+        <jhi-iris-logo [size]="TEXT" id="redirect-to-iris-img" />
+    </button>
+}

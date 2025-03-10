@@ -22,7 +22,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { isCommunicationEnabled, isFaqEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -83,8 +83,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     editType = input<PostingEditType>();
-
-    channelSubTypeReferenceRouterLink = input<string>('');
+    course = input<Course>();
 
     readonly EditType = PostingEditType.CREATE;
     /**
