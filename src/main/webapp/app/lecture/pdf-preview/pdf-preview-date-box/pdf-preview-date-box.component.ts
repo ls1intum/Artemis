@@ -29,7 +29,7 @@ const FOREVER = dayjs('9999-12-31');
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
-    selectedPages = input<OrderedPage[]>([]); // Changed from slideIds to OrderedPage objects
+    selectedPages = input<OrderedPage[]>([]);
 
     // Signals
     calendarSelected = signal<boolean>(false);
@@ -47,15 +47,16 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     // Computed properties
     pagesDisplay = computed(() => {
-        const pages = [...this.selectedPages()];
-        if (pages.length < 1) {
-            return `${pages[0]}`;
-        } else {
-            return `${pages
-                .map((p) => p.pageIndex)
-                .sort()
-                .join(', ')}`;
+        const pages = this.selectedPages();
+
+        if (pages.length === 1) {
+            return `${pages[0].pageIndex}`;
         }
+
+        return pages
+            .map((p) => p.pageIndex)
+            .sort()
+            .join(', ');
     });
 
     // Injected services

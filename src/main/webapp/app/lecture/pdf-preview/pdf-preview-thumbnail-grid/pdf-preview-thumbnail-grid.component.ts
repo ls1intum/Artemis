@@ -37,10 +37,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     updatedSelectedPages = input<Set<OrderedPage>>(new Set());
     attachmentUnit = input<AttachmentUnit>();
 
-    // Drag and drop properties
-    dragSlideId = signal<string | null>(null);
-    isDragging = signal<boolean>(false);
-
     // Signals
     isEnlargedView = signal<boolean>(false);
     totalPagesArray = signal<Set<number>>(new Set());
@@ -51,9 +47,9 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialSlideId = signal<string>('');
     activeButtonPage = signal<OrderedPage | null>(null);
     isPopoverOpen = signal<boolean>(false);
-
-    // Store the ordered pages as a signal
     orderedPages = signal<OrderedPage[]>([]);
+    dragSlideId = signal<string | null>(null);
+    isDragging = signal<boolean>(false);
 
     // Outputs
     totalPagesOutput = output<number>();
@@ -69,9 +65,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     protected readonly faGripLines = faGripLines;
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['hiddenPages']) {
-            // No need to update, we're already using the input directly
-        }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
         }
@@ -171,16 +164,14 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param slides Existing slides from the attachment unit
      */
     initializePageOrderFromSlides(slides: Slide[]): void {
-        // Filter out any slides with missing id or slideNumber
         const validSlides = slides.filter((slide) => slide.id && slide.slideNumber !== undefined);
 
         const initialOrder: OrderedPage[] = validSlides.map((slide) => ({
-            slideId: slide.id!, // Use non-null assertion since we filtered them above
-            pageIndex: slide.slideNumber!, // Use non-null assertion since we filtered them above
+            slideId: slide.id!,
+            pageIndex: slide.slideNumber!,
             order: slide.slideNumber!,
         }));
 
-        // Sort by page index to ensure correct order
         initialOrder.sort((a, b) => a.pageIndex - b.pageIndex);
         this.orderedPages.set(initialOrder);
     }
@@ -329,8 +320,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             const match = checkbox.id.match(/checkbox-(.+)/);
             if (match) {
                 const slideId = match[1];
-                const isSelected = Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
-                checkbox.checked = isSelected;
+                checkbox.checked = Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
             }
         });
     }
@@ -342,14 +332,12 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onDragStart(event: DragEvent, slideId: string): void {
         if (event.dataTransfer) {
-            // Set the drag data and effect
             event.dataTransfer.setData('text/plain', slideId);
             event.dataTransfer.effectAllowed = 'move';
 
             this.dragSlideId.set(slideId);
             this.isDragging.set(true);
 
-            // Add a class to the dragged element
             const element = document.getElementById(`pdf-page-${slideId}`);
             if (element) {
                 element.classList.add('dragging');
@@ -385,7 +373,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.isDragging.set(false);
         this.dragSlideId.set(null);
 
-        // Remove dragging class from all elements
         document.querySelectorAll('.pdf-canvas-container').forEach((el) => {
             el.classList.remove('dragging');
             el.classList.remove('drag-over');
@@ -425,7 +412,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.isDragging.set(false);
         this.dragSlideId.set(null);
 
-        // Remove dragging class from all elements
         document.querySelectorAll('.pdf-canvas-container').forEach((el) => {
             el.classList.remove('dragging');
             el.classList.remove('drag-over');
@@ -445,18 +431,14 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
         if (sourceIndex === -1 || targetIndex === -1) return;
 
-        // Remove the item from its original position
         const [movedPage] = pages.splice(sourceIndex, 1);
 
-        // Insert it at the target position
         pages.splice(targetIndex, 0, movedPage);
 
-        // Update page indices to reflect new order
         pages.forEach((page, index) => {
             page.pageIndex = index + 1;
         });
 
-        // Update the ordered pages
         this.orderedPages.set(pages);
         this.pageOrderOutput.emit(pages);
     }
@@ -469,21 +451,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     getPageOrder(slideId: string): number {
         const index = this.orderedPages().findIndex((page) => page.slideId === slideId);
         return index !== -1 ? index + 1 : -1;
-    }
-
-    /**
-     * Returns all pages in their current order for rendering in the template
-     */
-    getOrderedPages(): OrderedPage[] {
-        return this.orderedPages();
-    }
-
-    /**
-     * Find a page by its index
-     * @param index The page index to search for
-     */
-    findPageByIndex(index: number): OrderedPage | undefined {
-        return this.orderedPages().find((page) => page.pageIndex === index);
     }
 
     /**

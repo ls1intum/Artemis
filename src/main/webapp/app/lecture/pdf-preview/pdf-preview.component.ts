@@ -273,6 +273,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             formData.append('file', pdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
             formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+            formData.append('pageOrder', JSON.stringify(this.pageOrder()));
 
             const finalHiddenPages = this.getHiddenPages();
 
