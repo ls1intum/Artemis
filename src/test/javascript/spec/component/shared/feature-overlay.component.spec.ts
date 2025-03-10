@@ -16,9 +16,6 @@ describe('Feature Overlay Component Tests', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FeatureOverlayComponent);
-            })
-            .catch((error) => {
-                console.log(error);
             });
     });
 
@@ -33,8 +30,10 @@ describe('Feature Overlay Component Tests', () => {
         const expectedTooltip = 'artemisApp.featureToggles.title';
         expect(tooltipInstance.ngbTooltip).toEqual(expectedTooltip);
 
-        const innerDivDebugEl = fixture.debugElement.query(By.css('div.disabled'));
-        expect(innerDivDebugEl).not.toBeNull();
+        const peElement = fixture.debugElement.query(By.css('div.pe-none'));
+        expect(peElement).not.toBeNull();
+        const opacityElement = fixture.debugElement.query(By.css('div.opacity-50'));
+        expect(opacityElement).not.toBeNull();
     });
 
     it('should not display tooltip nor add "disabled" class when enabled is true', () => {
@@ -47,7 +46,9 @@ describe('Feature Overlay Component Tests', () => {
         const tooltipInstance = tooltipDebugEl.injector.get(NgbTooltip);
         expect(tooltipInstance.ngbTooltip).toEqual('');
 
-        const innerDivDebugEl = fixture.debugElement.query(By.css('div.disabled'));
-        expect(innerDivDebugEl).toBeNull();
+        const peElement = fixture.debugElement.query(By.css('div.pe-none'));
+        expect(peElement).toBeNull();
+        const opacityElement = fixture.debugElement.query(By.css('div.opacity-50'));
+        expect(opacityElement).toBeNull();
     });
 });
