@@ -237,13 +237,19 @@ public class BuildJobExecutionService {
 
         List<String> envVars = null;
         boolean isNetworkDisabled = false;
+        int cpuCount = 0;
+        int memory = 0;
+        int memorySwap = 0;
         if (buildJob.buildConfig().dockerRunConfig() != null) {
             envVars = buildJob.buildConfig().dockerRunConfig().env();
             isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
+            cpuCount = buildJob.buildConfig().dockerRunConfig().cpuCount();
+            memory = buildJob.buildConfig().dockerRunConfig().memory();
+            memorySwap = buildJob.buildConfig().dockerRunConfig().memorySwap();
         }
 
         CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
-                envVars);
+                envVars, cpuCount, memory, memorySwap);
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
                 assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);

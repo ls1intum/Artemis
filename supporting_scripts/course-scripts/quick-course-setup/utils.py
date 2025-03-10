@@ -16,7 +16,7 @@ def login_as_admin(session: requests.Session) -> None:
 
 def add_user_to_course(session: requests.Session, course_id: int, user_group: str, user_name: str) -> None:
     """Add a user to a specified course and group."""
-    url: str = f"{SERVER_URL}/courses/{course_id}/{user_group}/{user_name}"
+    url: str = f"{SERVER_URL}/core/courses/{course_id}/{user_group}/{user_name}"
     response: requests.Response = session.post(url)
     if response.status_code == 200:
         logging.info(f"Added user {user_name} to group {user_group}")
@@ -25,7 +25,7 @@ def add_user_to_course(session: requests.Session, course_id: int, user_group: st
 
 def authenticate_user(username: str, password: str, session: requests.Session = requests.Session()) -> requests.Response:
     """Authenticate a user and return the session response."""
-    url: str = f"{SERVER_URL}/public/authenticate"
+    url: str = f"{SERVER_URL}/core/public/authenticate"
     headers: Dict[str, str] = {
         "Content-Type": "application/json"
     }
