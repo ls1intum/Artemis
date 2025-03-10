@@ -7,7 +7,6 @@ import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
-import { LocalStorageService } from 'ngx-webstorage';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
 
@@ -22,6 +21,11 @@ export class FinishedBuildJobFilter {
     appliedFilters = new Map<string, boolean>();
     areDurationFiltersValid = true;
     areDatesValid = true;
+
+    // Constructor needed for when the filter is used in the Build Agent details page
+    constructor(buildAgentAddress?: string) {
+        this.buildAgentAddress = buildAgentAddress;
+    }
 
     /**
      * Adds the http param options
@@ -86,7 +90,7 @@ export enum BuildJobStatusFilter {
     TIMEOUT = 'timeout',
 }
 
-export enum FinishedBuildJobFilterStorageKey {
+export enum FinishedBuildJobFilterKey {
     status = 'artemis.buildQueue.finishedBuildJobFilterStatus',
     buildAgentAddress = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
     buildSubmissionDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterFrom',
@@ -103,10 +107,9 @@ export enum FinishedBuildJobFilterStorageKey {
 })
 export class FinishedBuildsFilterModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);
-    private localStorage = inject(LocalStorageService);
 
     @ViewChild('addressTypeahead', { static: true }) addressTypeahead: NgbTypeahead;
-    finishedBuildJobFilter = new FinishedBuildJobFilter();
+    finishedBuildJobFilter: FinishedBuildJobFilter;
     buildStatusFilterValues?: string[];
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -120,7 +123,6 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
      */
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
-        this.loadFilterFromLocalStorage();
     }
 
     // Workaround for the NgbTypeahead issue: https://github.com/ng-bootstrap/ng-bootstrap/issues/2400
@@ -153,34 +155,15 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     };
 
     /**
-     * Method to load the filter values from the local storage if they exist.
-     */
-    loadFilterFromLocalStorage() {
-        this.finishedBuildJobFilter.numberOfAppliedFilters = 0;
-
-        // Iterate over all keys of the filter and load the values from the local storage if they exist.
-        const keys = Object.keys(FinishedBuildJobFilterStorageKey) as Array<keyof typeof FinishedBuildJobFilterStorageKey>;
-        for (const key of keys) {
-            const value = this.localStorage.retrieve(FinishedBuildJobFilterStorageKey[key]);
-            if (value) {
-                this.finishedBuildJobFilter[key] = key.includes('Date') ? dayjs(value) : value;
-                this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey[key]);
-            }
-        }
-    }
-
-    /**
      * Method to add or remove a status filter and store the selected status filters in the local store if required.
      */
     toggleBuildStatusFilter(value?: string) {
         if (value) {
             this.finishedBuildJobFilter.status = value;
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.status, value);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.status);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterKey.status);
         } else {
             this.finishedBuildJobFilter.status = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.status);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.status);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.status);
         }
     }
 
@@ -189,11 +172,9 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
      */
     filterBuildAgentAddressChanged() {
         if (this.finishedBuildJobFilter.buildAgentAddress) {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildAgentAddress, this.finishedBuildJobFilter.buildAgentAddress);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildAgentAddress);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterKey.buildAgentAddress);
         } else {
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildAgentAddress);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildAgentAddress);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildAgentAddress);
         }
     }
 
@@ -203,19 +184,15 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     filterDateChanged() {
         if (!this.finishedBuildJobFilter.buildSubmissionDateFilterFrom?.isValid()) {
             this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildSubmissionDateFilterFrom);
         } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom, this.finishedBuildJobFilter.buildSubmissionDateFilterFrom);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterKey.buildSubmissionDateFilterFrom);
         }
         if (!this.finishedBuildJobFilter.buildSubmissionDateFilterTo?.isValid()) {
             this.finishedBuildJobFilter.buildSubmissionDateFilterTo = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildSubmissionDateFilterTo);
         } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo, this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterKey.buildSubmissionDateFilterTo);
         }
         if (this.finishedBuildJobFilter.buildSubmissionDateFilterFrom && this.finishedBuildJobFilter.buildSubmissionDateFilterTo) {
             this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildSubmissionDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
@@ -229,18 +206,14 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
      */
     filterDurationChanged() {
         if (this.finishedBuildJobFilter.buildDurationFilterLowerBound) {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound, this.finishedBuildJobFilter.buildDurationFilterLowerBound);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterKey.buildDurationFilterLowerBound);
         } else {
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildDurationFilterLowerBound);
         }
         if (this.finishedBuildJobFilter.buildDurationFilterUpperBound) {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound, this.finishedBuildJobFilter.buildDurationFilterUpperBound);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
+            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterKey.buildDurationFilterUpperBound);
         } else {
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
+            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterKey.buildDurationFilterUpperBound);
         }
         if (this.finishedBuildJobFilter.buildDurationFilterLowerBound && this.finishedBuildJobFilter.buildDurationFilterUpperBound) {
             this.finishedBuildJobFilter.areDurationFiltersValid =

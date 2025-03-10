@@ -1,12 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
-import { FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
@@ -55,29 +52,15 @@ describe('FinishedBuildsFilterModalComponent', () => {
         },
     ];
 
-    const mockLocalStorageService = new MockLocalStorageService();
-    mockLocalStorageService.clear = (key?: string) => {
-        if (key) {
-            if (key in mockLocalStorageService.storage) {
-                delete mockLocalStorageService.storage[key];
-            }
-        } else {
-            mockLocalStorageService.storage = {};
-        }
-    };
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
-            providers: [
-                { provide: LocalStorageService, useValue: mockLocalStorageService },
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(NgbActiveModal),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbActiveModal)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FinishedBuildsFilterModalComponent);
         component = fixture.componentInstance;
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
         fixture.detectChanges();
     });
 
@@ -126,12 +109,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
         component.filterBuildAgentAddressChanged();
         component.toggleBuildStatusFilter('SUCCESSFUL');
 
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBe('agent1');
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBe(1);
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBe(2);
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toEqual(dayjs('2023-01-01'));
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toEqual(dayjs('2023-01-02'));
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBe('SUCCESSFUL');
+        expect(component.finishedBuildJobFilter.appliedFilters.size).toBe(6);
 
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
 
@@ -140,12 +118,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
         component.filterBuildAgentAddressChanged();
         component.toggleBuildStatusFilter();
 
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBeUndefined();
+        expect(component.finishedBuildJobFilter.appliedFilters.size).toBe(0);
     });
 
     it('should validate correctly', () => {

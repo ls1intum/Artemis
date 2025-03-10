@@ -92,29 +92,11 @@ describe('BuildAgentDetailsComponent', () => {
         },
     ];
 
-    const mockRecentBuildJobs1: BuildJob[] = [
-        {
-            id: '1',
-            name: 'Build Job 1',
-            buildAgent: { name: 'agent1', memberAddress: 'localhost:8080', displayName: 'Agent 1' },
-            participationId: 101,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 4,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo1,
-            buildConfig: buildConfig,
-        },
-    ];
-
     const mockBuildAgent: BuildAgentInformation = {
         id: 1,
         buildAgent: { name: 'agent1', memberAddress: 'localhost:8080', displayName: 'Agent 1' },
         maxNumberOfConcurrentBuildJobs: 2,
         numberOfCurrentBuildJobs: 2,
-        runningBuildJobs: mockRunningJobs1,
-        recentBuildJobs: mockRecentBuildJobs1,
         status: BuildAgentStatus.ACTIVE,
     };
 

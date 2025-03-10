@@ -84,12 +84,11 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
 
-    defaultFinishedBuildJobFilter = new FinishedBuildJobFilter();
     searchSubscription: Subscription;
     search = new Subject<void>();
     isLoading = false;
     searchTerm?: string = undefined;
-    finishedBuildJobFilter?: FinishedBuildJobFilter;
+    finishedBuildJobFilter: FinishedBuildJobFilter = new FinishedBuildJobFilter();
     faFilter = faFilter;
 
     displayedBuildJobId?: string;
@@ -253,7 +252,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                             sortedColumn: this.predicate,
                             searchTerm: this.searchTerm || '',
                         },
-                        this.finishedBuildJobFilter || this.defaultFinishedBuildJobFilter,
+                        this.finishedBuildJobFilter,
                     );
                 } else {
                     return this.buildQueueService.getFinishedBuildJobs(
@@ -264,7 +263,7 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                             sortedColumn: this.predicate,
                             searchTerm: this.searchTerm || '',
                         },
-                        this.finishedBuildJobFilter || this.defaultFinishedBuildJobFilter,
+                        this.finishedBuildJobFilter,
                     );
                 }
             }),
@@ -397,11 +396,14 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
 
     openFilterModal() {
         const modalRef = this.modalService.open(FinishedBuildsFilterModalComponent as Component);
+        modalRef.componentInstance.finishedBuildJobFilter = this.finishedBuildJobFilter;
         modalRef.componentInstance.buildAgentFilterable = true;
         modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs;
-        modalRef.result.then((result: FinishedBuildJobFilter) => {
-            this.finishedBuildJobFilter = result;
-            this.loadFinishedBuildJobs();
-        });
+        modalRef.result
+            .then((result: FinishedBuildJobFilter) => {
+                this.finishedBuildJobFilter = result;
+                this.loadFinishedBuildJobs();
+            })
+            .catch(() => {});
     }
 }
