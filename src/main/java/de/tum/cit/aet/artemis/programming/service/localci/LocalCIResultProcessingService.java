@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
@@ -249,14 +248,7 @@ public class LocalCIResultProcessingService {
             buildAgentInformation.lock(buildJob.buildAgent().memberAddress());
             BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgent().memberAddress());
             if (buildAgent != null) {
-                List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-                for (int i = 0; i < recentBuildJobs.size(); i++) {
-                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new BuildJobQueueItem(buildJob, ResultDTO.of(result)));
-                        break;
-                    }
-                }
-                buildAgentInformation.put(buildJob.buildAgent().memberAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
+                buildAgentInformation.put(buildJob.buildAgent().memberAddress(), new BuildAgentInformation(buildAgent));
             }
         }
         finally {

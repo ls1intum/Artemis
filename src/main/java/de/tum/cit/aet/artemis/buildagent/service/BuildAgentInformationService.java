@@ -99,20 +99,6 @@ public class BuildAgentInformationService {
         BuildAgentInformation.BuildAgentStatus status = isPaused ? BuildAgentInformation.BuildAgentStatus.PAUSED
                 : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
-        List<BuildJobQueueItem> recentBuildJobs;
-        if (agent != null) {
-            recentBuildJobs = agent.recentBuildJobs();
-        }
-        else {
-            recentBuildJobs = new ArrayList<>();
-        }
-        // TODO: Make this number configurable
-        if (recentBuildJob != null) {
-            if (recentBuildJobs.size() >= 20) {
-                recentBuildJobs.removeFirst();
-            }
-            recentBuildJobs.add(recentBuildJob);
-        }
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
@@ -120,8 +106,7 @@ public class BuildAgentInformationService {
 
         BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob);
 
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey,
-                agentDetails);
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails);
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob) {

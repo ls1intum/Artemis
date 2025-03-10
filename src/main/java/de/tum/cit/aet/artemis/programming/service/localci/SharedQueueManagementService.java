@@ -181,11 +181,6 @@ public class SharedQueueManagementService {
         return buildAgentInformation.size();
     }
 
-    public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
-        return getBuildAgentInformation().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
-                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null, null)).toList();
-    }
-
     public void pauseBuildAgent(String agent) {
         pauseBuildAgentTopic.publish(agent);
     }

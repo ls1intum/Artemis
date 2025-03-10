@@ -83,7 +83,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agents")
     public ResponseEntity<List<BuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
-        List<BuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
+        List<BuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformation();
         return ResponseEntity.ok(buildAgentSummary);
     }
 

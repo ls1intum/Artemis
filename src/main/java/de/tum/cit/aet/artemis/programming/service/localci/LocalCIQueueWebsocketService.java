@@ -71,7 +71,7 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void sendBuildAgentSummaryOverWebsocket() {
-        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs());
+        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(sharedQueueManagementService.getBuildAgentInformation());
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 
@@ -128,7 +128,7 @@ public class LocalCIQueueWebsocketService {
         for (BuildAgentInformation agent : buildAgentSummary) {
             var runningJobs = removeUnnecessaryInformation(agent.runningBuildJobs());
             filteredBuildAgentSummary.add(new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs,
-                    agent.status(), null, null, null));
+                    agent.status(), null, null));
         }
         return filteredBuildAgentSummary;
     }
