@@ -153,7 +153,7 @@ jobs:
     name: Build and Push Docker Image
     if: ${{ inputs.docker }}
     needs: validate-inputs
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@chore/refactor-build-workflow
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@13eabc7dc732414c6e76c2386839983777b07e55
     with:
       ref: ${{ inputs.docker_ref }}
       image-name: ls1intum/artemis
