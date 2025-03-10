@@ -145,9 +145,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
+                const { slides } = data.attachmentUnit;
+
+                if (slides?.length > 0) {
+                    this.pageOrder.set(
+                        slides.map((slide: Slide, index: number) => ({
+                            pageIndex: slide.slideNumber,
+                            slideId: slide.id,
+                            order: index + 1,
+                        })),
+                    );
+                }
 
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
-                    data.attachmentUnit.slides
+                    slides
                         .filter((page: Slide) => page.hidden)
                         .map((page: Slide) => [
                             page.id,
@@ -160,15 +171,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
 
-                if (data.attachmentUnit.slides && data.attachmentUnit.slides.length > 0) {
-                    const orderedPages: OrderedPage[] = data.attachmentUnit.slides.map((slide: Slide, index: number) => ({
-                        pageIndex: slide.slideNumber,
-                        slideId: slide.id,
-                        order: index + 1,
-                    }));
-                    this.pageOrder.set(orderedPages);
-                }
-
                 this.attachmentUnitSub = this.attachmentUnitService
                     .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
                     .pipe(finalize(() => this.isPdfLoading.set(false)))
@@ -177,9 +179,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                             this.currentPdfBlob.set(blob);
                             this.currentPdfUrl.set(URL.createObjectURL(blob));
                         },
-                        error: (error: HttpErrorResponse) => {
-                            onError(this.alertService, error);
-                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
                     });
             } else {
                 this.isPdfLoading.set(false);
@@ -224,26 +224,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Retrieves an array of hidden page objects based on elements with IDs starting with "hide-show-button-".
+     * Retrieves an array of hidden page objects directly from the hiddenPages signal.
      *
      * @returns An array of HiddenPage objects representing the hidden pages.
      */
     getHiddenPages(): HiddenPage[] {
-        return Array.from(document.querySelectorAll('.hide-show-btn.btn-success'))
-            .map((el) => {
-                const match = el.id.match(/hide-show-button-(.+)/);
-                const slideId = match ? match[1] : null;
-                if (slideId && this.hiddenPages()![slideId]) {
-                    const pageData = this.hiddenPages()![slideId];
-                    return {
-                        slideId,
-                        date: pageData.date,
-                        exerciseId: pageData.exerciseId ?? null,
-                    };
-                }
-                return null;
-            })
-            .filter((page): page is HiddenPage => page !== null);
+        return Object.entries(this.hiddenPages()).map(([slideId, pageData]) => ({
+            slideId,
+            date: pageData.date,
+            exerciseId: pageData.exerciseId ?? null,
+        }));
     }
 
     /**
