@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/public/")
+@RequestMapping("api/programming/public/")
 public class PublicProgrammingSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicProgrammingSubmissionResource.class);

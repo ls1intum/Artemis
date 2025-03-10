@@ -15,7 +15,7 @@ export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 export class GradingSystemService {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api/assessment/courses';
 
     /**
      * Store a new grading scale for course on the server
@@ -146,7 +146,7 @@ export class GradingSystemService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
 
-        return this.http.get<SearchResult<GradingScale>>('api/grading-scales', {
+        return this.http.get<SearchResult<GradingScale>>('api/assessment/grading-scales', {
             params,
             observe: 'response',
         });

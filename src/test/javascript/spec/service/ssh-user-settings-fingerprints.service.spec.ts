@@ -7,7 +7,7 @@ describe('SshUserSettingsFingerprintsService', () => {
     let sshFingerprintsService: SshUserSettingsFingerprintsService;
     let httpMock: HttpTestingController;
 
-    const getUserUrl = 'api/ssh-fingerprints';
+    const getUserUrl = 'api/programming/ssh-fingerprints';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
