@@ -7,7 +7,17 @@ import reports from 'istanbul-reports';
 import libReport from 'istanbul-lib-report';
 import fsAsync from 'fs/promises';
 import fs from 'fs';
-import { coverageFilters } from './playwright.config.ts';
+
+/**
+ * Represents a configuration object used for filtering file paths during coverage report generation.
+ *
+ * @property {string[]} includePaths - An array of file path patterns to include in the coverage analysis.
+ * @property {string[]} excludePaths - An array of file path patterns to exclude from the coverage analysis.
+ */
+const coverageFilters = {
+    includePaths: ['/src/main/webapp/'],
+    excludePaths: [],
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

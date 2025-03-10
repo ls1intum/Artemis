@@ -11,11 +11,6 @@ import 'app/shared/util/array.extension';
  */
 dotenv.config({ path: `./playwright.env` });
 
-export const coverageFilters = {
-    includePaths: ['/src/main/webapp/'],
-    excludePaths: [],
-};
-
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
