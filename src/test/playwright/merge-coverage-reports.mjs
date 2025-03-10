@@ -15,7 +15,7 @@ import fs from 'fs';
  * @property {string[]} excludePaths - An array of file path patterns to exclude from the coverage analysis.
  */
 const coverageFilters = {
-    includePaths: ['/src/main/webapp/'],
+    includePaths: ['src/main/webapp'],
     excludePaths: [],
 };
 
@@ -91,9 +91,15 @@ async function createArchive(outputPath, inputDirectory) {
  * @returns {Object} - The filtered coverage data
  */
 function filterCoverageData(coverageData, filters) {
-    return coverageData.filter(([filePath]) => {
-        const shouldInclude = filters.includePaths.some((includePath) => filePath.includes(includePath));
-        const shouldExclude = filters.excludePaths.some((excludePath) => filePath.includes(excludePath));
-        return shouldInclude && !shouldExclude;
+    Object.keys(coverageData).forEach(filePath => {
+        const shouldInclude = filters.includePaths.length === 0 ||
+            filters.includePaths.some(includePath => filePath.includes(includePath));
+        const shouldExclude = filters.excludePaths.some(excludePath => filePath.includes(excludePath));
+
+        if (!(shouldInclude && !shouldExclude)) {
+            delete coverageData[filePath];
+        }
     });
+
+    return coverageData;
 }
