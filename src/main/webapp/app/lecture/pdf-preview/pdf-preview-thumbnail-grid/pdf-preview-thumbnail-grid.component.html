@@ -35,7 +35,7 @@
             @if (isAttachmentUnit()) {
                 <button
                     [id]="'hide-show-button-' + page.slideId"
-                    style="'opacity' : activeButtonSlideId() === page.slideId '1' : '0'"
+                    style="'opacity' : activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
                     [class]="'hide-show-btn btn ' + (hiddenPages()[page.slideId] ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page.slideId, $event)"
                     [ngbPopover]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox"
@@ -52,7 +52,7 @@
                 <ng-template #hidePageBox>
                     <jhi-pdf-preview-date-box-component
                         [course]="course()"
-                        [slideIds]="[activeButtonSlideId()!]"
+                        [selectedPages]="[activeButtonPage()!]"
                         (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
                         (selectionCancelledOutput)="popover.close()"
                     />
@@ -63,33 +63,33 @@
                             <h5>
                                 <span
                                     jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage"
-                                    [translateValues]="{ param: getPageOrder(activeButtonSlideId()!) }"
+                                    [translateValues]="{ param: getPageOrder(activeButtonPage()?.slideId!) }"
                                 ></span>
                             </h5>
                             <p>
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                @if (hiddenPages()[activeButtonSlideId()!]?.date!.isSame(forever)) {
+                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.date!.isSame(forever)) {
                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                 } @else {
                                     <span>
-                                        {{ hiddenPages()[activeButtonSlideId()!]?.date!.format('MMM D, YYYY - HH:mm') }}
+                                        {{ hiddenPages()[activeButtonPage()?.slideId!]?.date!.format('MMM D, YYYY - HH:mm') }}
                                     </span>
                                 }
-                                @if (hiddenPages()[activeButtonSlideId()!]?.exerciseId) {
+                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.exerciseId) {
                                     <span
                                         class="text-primary"
                                         jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
-                                        [translateValues]="{ param: hiddenPages()[activeButtonSlideId()!].exerciseId }"
+                                        [translateValues]="{ param: hiddenPages()[activeButtonPage()?.slideId || ''].exerciseId }"
                                     ></span>
                                 }
                                 <br />
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
                             </p>
                             <div class="submit-container mt-3 d-flex justify-content-between">
-                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonSlideId()!); popover.close()">
+                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonPage()?.slideId!); popover.close()">
                                     <span jhiTranslate="entity.action.cancel"></span>
                                 </button>
-                                <button class="btn btn-primary" (click)="showPage(activeButtonSlideId()!); popover.close()">
+                                <button class="btn btn-primary" (click)="showPage(activeButtonPage()?.slideId!); popover.close()">
                                     <span jhiTranslate="entity.action.show"></span>
                                 </button>
                             </div>

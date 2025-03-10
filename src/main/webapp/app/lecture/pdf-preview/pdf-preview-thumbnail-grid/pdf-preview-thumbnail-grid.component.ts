@@ -14,24 +14,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
-
-interface OrderedPage {
-    pageIndex: number;
-    slideId: string;
-}
-
-interface HiddenPage {
-    slideId: string;
-    date: dayjs.Dayjs;
-    exerciseId: number | null;
-}
-
-interface HiddenPageMap {
-    [slideId: string]: {
-        date: dayjs.Dayjs;
-        exerciseId: number | null;
-    };
-}
+import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -51,7 +34,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     appendFile = input<boolean>();
     hiddenPages = input<HiddenPageMap>({});
     isAttachmentUnit = input<boolean>();
-    updatedSelectedPages = input<Set<string>>(new Set());
+    updatedSelectedPages = input<Set<OrderedPage>>(new Set());
     attachmentUnit = input<AttachmentUnit>();
 
     // Drag and drop properties
@@ -62,11 +45,11 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     isEnlargedView = signal<boolean>(false);
     totalPagesArray = signal<Set<number>>(new Set());
     loadedPages = signal<Set<number>>(new Set());
-    selectedPages = signal<Set<string>>(new Set());
+    selectedPages = signal<Set<OrderedPage>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
     initialPageNumber = signal<number>(0);
     initialSlideId = signal<string>('');
-    activeButtonSlideId = signal<string | null>(null);
+    activeButtonPage = signal<OrderedPage | null>(null);
     isPopoverOpen = signal<boolean>(false);
 
     // Store the ordered pages as a signal
@@ -74,7 +57,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     // Outputs
     totalPagesOutput = output<number>();
-    selectedPagesOutput = output<Set<string>>();
+    selectedPagesOutput = output<Set<OrderedPage>>();
     hiddenPagesOutput = output<HiddenPageMap>();
     pageOrderOutput = output<OrderedPage[]>();
 
@@ -129,21 +112,16 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
                 for (let i = 1; i <= pdf.numPages; i++) {
                     newPages.push({
-                        slideId: this.generateTemporaryId(), // Temporary ID until saved
+                        order: currentPageCount + i,
+                        slideId: this.generateTemporaryId(),
                         pageIndex: currentPageCount + i,
                     });
                 }
 
                 this.orderedPages.update((pages) => [...pages, ...newPages]);
             } else {
-                // Check if we have data from the existing slides
                 const extractedSlides = this.extractSlidesFromAttachmentUnit();
-                if (extractedSlides && extractedSlides.length > 0) {
-                    this.initializePageOrderFromSlides(extractedSlides);
-                } else {
-                    // Initialize with temporary IDs
-                    this.initializePageOrder(pdf.numPages);
-                }
+                this.initializePageOrderFromSlides(extractedSlides!);
             }
 
             // Render each page
@@ -189,18 +167,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Initializes the page ordering with temporary IDs
-     * @param numPages The total number of pages
-     */
-    initializePageOrder(numPages: number): void {
-        const initialOrder: OrderedPage[] = Array.from({ length: numPages }, (_, i) => ({
-            slideId: this.generateTemporaryId(),
-            pageIndex: i + 1,
-        }));
-        this.orderedPages.set(initialOrder);
-    }
-
-    /**
      * Initializes page order from existing slides
      * @param slides Existing slides from the attachment unit
      */
@@ -211,6 +177,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const initialOrder: OrderedPage[] = validSlides.map((slide) => ({
             slideId: slide.id!, // Use non-null assertion since we filtered them above
             pageIndex: slide.slideNumber!, // Use non-null assertion since we filtered them above
+            order: slide.slideNumber!,
         }));
 
         // Sort by page index to ensure correct order
@@ -262,12 +229,14 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param event The event object triggered by the click action.
      */
     toggleVisibility(slideId: string, event: Event): void {
-        this.activeButtonSlideId.set(slideId);
-        const button = (event.target as HTMLElement).closest('button');
-        if (button) {
-            button.style.opacity = '1';
+        const page = this.findPageBySlideId(slideId);
+        if (page) {
+            this.activeButtonPage.set(page);
+            const button = (event.target as HTMLElement).closest('button');
+            if (button) {
+                button.style.opacity = '1';
+            }
         }
-
         event.stopPropagation();
     }
 
@@ -278,10 +247,18 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     togglePageSelection(slideId: string, event: Event): void {
         const checkbox = event.target as HTMLInputElement;
+        const page = this.findPageBySlideId(slideId);
+
+        if (!page) return;
+
         if (checkbox.checked) {
-            this.selectedPages().add(slideId);
+            this.selectedPages().add(page);
         } else {
-            this.selectedPages().delete(slideId);
+            this.selectedPages().forEach((selectedPage) => {
+                if (selectedPage.slideId === slideId) {
+                    this.selectedPages().delete(selectedPage);
+                }
+            });
         }
         this.selectedPagesOutput.emit(this.selectedPages());
     }
@@ -352,7 +329,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             const match = checkbox.id.match(/checkbox-(.+)/);
             if (match) {
                 const slideId = match[1];
-                checkbox.checked = this.selectedPages().has(slideId);
+                const isSelected = Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
+                checkbox.checked = isSelected;
             }
         });
     }

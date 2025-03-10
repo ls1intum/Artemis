@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
-import { HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { HiddenPage, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -29,7 +29,7 @@ const FOREVER = dayjs('9999-12-31');
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
-    slideIds = input<string[]>([]); // Changed from pageIndices to slideIds
+    selectedPages = input<OrderedPage[]>([]); // Changed from slideIds to OrderedPage objects
 
     // Signals
     calendarSelected = signal<boolean>(false);
@@ -46,10 +46,16 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     selectionCancelledOutput = output<boolean>();
 
     // Computed properties
-    slideIdsDisplay = computed(() => {
-        const ids = [...this.slideIds()];
-        // For display purposes, we'll just show the count rather than the complex IDs
-        return ids.length > 3 ? `${ids.length} slides` : `slides ${ids.length}`;
+    pagesDisplay = computed(() => {
+        const pages = [...this.selectedPages()];
+        if (pages.length < 1) {
+            return `${pages[0]}`;
+        } else {
+            return `${pages
+                .map((p) => p.pageIndex)
+                .sort()
+                .join(', ')}`;
+        }
     });
 
     // Injected services
@@ -58,7 +64,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadExercises();
-        this.isMultiplePages.set(this.slideIds().length > 1);
+        this.isMultiplePages.set(this.selectedPages().length > 1);
     }
 
     /**
@@ -170,8 +176,8 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const hiddenPages: HiddenPage[] = this.slideIds().map((slideId) => ({
-            slideId,
+        const hiddenPages: HiddenPage[] = this.selectedPages().map((page) => ({
+            slideId: page.slideId,
             date: selectedDate,
             exerciseId: this.selectedExercise()?.id ?? null,
         }));
