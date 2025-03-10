@@ -27,7 +27,7 @@ describe('Feature Overlay Component Tests', () => {
         expect(tooltipDebugEl).not.toBeNull();
 
         const tooltipInstance = tooltipDebugEl.injector.get(NgbTooltip);
-        const expectedTooltip = 'artemisApp.featureToggles.title';
+        const expectedTooltip = 'featureOverview.overlay.title';
         expect(tooltipInstance.ngbTooltip).toEqual(expectedTooltip);
 
         const peElement = fixture.debugElement.query(By.css('div.pe-none'));
