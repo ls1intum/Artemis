@@ -77,8 +77,8 @@
                         </ng-content>
                         @if (editType() !== EditType.UPDATE) {
                             <!-- <ng-container *ngTemplateOutlet="sendButton; context: {text: 'hallo'}" /> -->
-                            <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
                             <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
+                            <ng-container [ngTemplateOutlet]="irisButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
                         }
                     </div>
                 </ng-template>
@@ -289,6 +289,12 @@
     ></button>
 </ng-template>
 
-<ng-template #irisButton>
-    <jhi-redirect-to-iris-button [question]="_markdown" [course]="course()" [buttonLoading]="isButtonLoading()" [disabled]="isButtonLoading() || !isFormGroupValid()" />
+<ng-template #irisButton let-extraClass="extraClass">
+    <jhi-redirect-to-iris-button
+        [question]="_markdown"
+        [course]="course()"
+        [buttonLoading]="isButtonLoading()"
+        [disabled]="isButtonLoading() || !isFormGroupValid()"
+        [extraClass]="extraClass ?? ''"
+    />
 </ng-template>

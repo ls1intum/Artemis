@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IrisCourseSettings, IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -11,11 +10,12 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
     templateUrl: './redirect-to-iris-button.component.html',
-    imports: [FaIconComponent, IrisLogoComponent],
+    imports: [IrisLogoComponent, NgClass],
 })
 export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     buttonIcon = input<IconProp>();
@@ -25,6 +25,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     hideLabelMobile = input<boolean>(true);
     question = input<string>();
     course = input<Course>();
+    extraClass = input<any>();
 
     metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
