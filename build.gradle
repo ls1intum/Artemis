@@ -81,9 +81,11 @@ openApi {
     // Name of the output file (if ends with .yaml, output will be YAML)
     outputFileName.set("openapi.yaml")
     // How long to wait (in seconds) for the server to start
-    waitTimeInSeconds.set(30)
+    waitTimeInSeconds.set(180)
     customBootRun {
-        args.set(["--spring.profiles.active=test,artemis,core,atlas,scheduling,athena, apollon, iris,aeolus,theia,lti,dev", "--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=", "--artemis.iris.secret-token=token"])
+        classpath.from(sourceSets.test.runtimeClasspath)
+        args.set(["--spring.profiles.active=test,artemis,core,atlas,scheduling,athena, apollon, iris,aeolus,theia,lti,dev", "--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
+                  "--artemis.iris.secret-token=token", "--spring.jpa.database=h2" ])
 
     }
 }
