@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
@@ -128,7 +127,6 @@ public class ExamLiveEventsService {
      * @param exercise The exam exercise the problem statement was updated for
      * @param message  The message to send
      */
-    @Async
     public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
         Exam exam = exercise.getExam();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
