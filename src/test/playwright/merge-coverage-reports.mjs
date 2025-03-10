@@ -7,7 +7,7 @@ import reports from 'istanbul-reports';
 import libReport from 'istanbul-lib-report';
 import fsAsync from 'fs/promises';
 import fs from 'fs';
-import { coverageFilters } from './playwright.config';
+import { coverageFilters } from './playwright.config.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
