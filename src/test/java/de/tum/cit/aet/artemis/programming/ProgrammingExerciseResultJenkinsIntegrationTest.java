@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory.DEFAULT_BRANCH;
 import static org.mockito.Mockito.doReturn;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +29,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     private static final String TEST_PREFIX = "progexresultjenk";
 
     @BeforeEach
-    void setup() {
+    void setup() throws GitAPIException, IOException {
         programmingExerciseResultTestService.setup(TEST_PREFIX);
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
@@ -78,7 +80,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
+    void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, programmingLanguage, true, List.of("test1"), List.of(),
                 new ArrayList<>(), new ArrayList<>(), null);
@@ -88,7 +90,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldStoreFeedbackForResultWithStaticCodeAnalysisReportAndCustomTestMessages(ProgrammingLanguage programmingLanguage) {
+    void shouldStoreFeedbackForResultWithStaticCodeAnalysisReportAndCustomTestMessages(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
         var notification = ProgrammingExerciseFactory.generateTestResultsDTOWithCustomFeedback(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage,
                 true);
@@ -126,7 +128,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateResultOnParticipationDefaultBranch() {
-        var commit = new CommitDTO("abc123", "slug", "branch");
+        var commit = new CommitDTO("commit1", "slug", "branch");
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, TEST_PREFIX + "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
                 List.of(commit), null);
         programmingExerciseResultTestService.shouldCreateResultOnParticipationDefaultBranch(notification);
@@ -144,7 +146,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateResultOnDefaultBranch() {
-        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var commit = new CommitDTO("commit1", "slug", DEFAULT_BRANCH);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(),
                 List.of(), List.of(commit), null);
         programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(defaultBranch, notification);
@@ -154,7 +156,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateResultOnCustomDefaultBranch() {
         final var customDefaultBranch = "dummy";
-        var commit = new CommitDTO("abc123", "slug", customDefaultBranch);
+        var commit = new CommitDTO("commit1", "slug", customDefaultBranch);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(),
                 List.of(), List.of(commit), null);
         programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
@@ -164,7 +166,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCorrectlyNotifyStudentsAboutNewResults() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
-        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var commit = new CommitDTO("commit1", "slug", DEFAULT_BRANCH);
         String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
@@ -177,7 +179,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     void shouldCorrectlyNotifyStudentsAboutNewResultsInOngoingExamExercise() throws Exception {
         programmingExerciseResultTestService.setupProgrammingExerciseForExam(false);
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
-        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var commit = new CommitDTO("commit1", "slug", DEFAULT_BRANCH);
         String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
@@ -190,7 +192,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     void shouldNotNotifyStudentsAboutNewResultsInEndedExamExercise() throws Exception {
         programmingExerciseResultTestService.setupProgrammingExerciseForExam(true);
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
-        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var commit = new CommitDTO("commit1", "slug", DEFAULT_BRANCH);
         String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
@@ -202,7 +204,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
-        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var commit = new CommitDTO("commit1", "slug", DEFAULT_BRANCH);
         String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
         String folderName = getFolderName(exercise, repoName);
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),

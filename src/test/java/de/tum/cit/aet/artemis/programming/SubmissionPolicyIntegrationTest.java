@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.assessment.domain.Feedback.SUBMISSION_POLIC
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestService.convertBuildResultToJsonObject;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -381,8 +382,10 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false, List.of("test1"),
-                List.of("test2", "test3"), null, null, null);
+                List.of("test2", "test3"), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
+
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
 
@@ -410,13 +413,15 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
                 TEST_PREFIX + "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student1";
         var resultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
-                List.of("test1", "test2", "test3"), Collections.emptyList(), null, null, null);
+                List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit0", "slug", defaultBranch)), null);
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
         var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         assertThat(result).isNotNull();
         assertThat(result.getScore()).isEqualTo(25);
 
         // resultNotification with changed commit hash
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
         var updatedResultNotification = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1", "test2", "test3"), Collections.emptyList(), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
         resultRequestBody = convertBuildResultToJsonObject(updatedResultNotification);
@@ -443,6 +448,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         var resultNotification2 = ProgrammingExerciseFactory.generateTestResultDTO(null, repositoryName, null, programmingExercise.getProgrammingLanguage(), false,
                 List.of("test1"), List.of("test2", "test3"), null, List.of(new CommitDTO("commit1", "slug", defaultBranch)), null);
         var resultRequestBody = convertBuildResultToJsonObject(resultNotification1);
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
         var result1 = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);
         resultRequestBody = convertBuildResultToJsonObject(resultNotification2);
         var result2 = gradingService.processNewProgrammingExerciseResult(participation, resultRequestBody);

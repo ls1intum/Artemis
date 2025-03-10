@@ -195,7 +195,7 @@ public class LocalVCLocalCITestService {
             throw new IllegalArgumentException("At least one dataToReturn entry must be provided.");
         }
 
-        if (dataToReturn.length > 2) {
+        if (dataToReturn.length > 3) {
             throw new IllegalArgumentException("At most two dataToReturn entries are supported.");
         }
 

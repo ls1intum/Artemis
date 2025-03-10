@@ -290,7 +290,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private boolean exceedsSubmissionPolicy(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionPolicy submissionPolicy) {
         if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
                 && submissionPolicy instanceof LockRepositoryPolicy) {
-            return programmingExerciseParticipation.getSubmissions().size() > submissionPolicy.getSubmissionLimit();
+            return programmingExerciseParticipation.getSubmissions().size() >= submissionPolicy.getSubmissionLimit();
         }
         return false;
     }

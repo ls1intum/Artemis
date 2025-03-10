@@ -203,6 +203,7 @@ public class SubmissionPolicyService {
 
         // Case 1: The original and new submission policies are both lock repository policies. Nothing to do
         if (originalPolicy instanceof LockRepositoryPolicy && newPolicy instanceof LockRepositoryPolicy) {
+            originalPolicy.setSubmissionLimit(newPolicy.getSubmissionLimit());
         }
 
         // Case 2: The original and new submission policies are both submission penalty policies. Then we can simply
