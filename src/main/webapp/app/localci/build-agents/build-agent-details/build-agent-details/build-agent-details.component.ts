@@ -93,7 +93,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     search = new Subject<void>();
     isLoading = false;
     searchTerm?: string = undefined;
-    finishedBuildJobFilter?: FinishedBuildJobFilter;
+    finishedBuildJobFilter: FinishedBuildJobFilter;
     faFilter = faFilter;
 
     totalItems = 0;
@@ -106,9 +106,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.queryParams.subscribe((params) => {
             this.agentName = params['agentName'];
             this.channel = `/topic/admin/build-agent/${this.agentName}`;
-            this.loadInitialDetails();
+            this.load();
             this.initWebsocketSubscription();
-            this.loadFinishedBuildJobs();
             this.searchSubscription = this.search
                 .pipe(
                     debounceTime(UI_RELOAD_TIME),
@@ -134,7 +133,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.websocketService.unsubscribe(this.channel);
         this.websocketSubscription?.unsubscribe();
-        this.restSubscription?.unsubscribe();
     }
 
     /**
@@ -150,9 +148,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /**
      * This method is used to load the build agent details when the component is initialized. (Status and some stats, missing finishing build jobs)
      */
-    loadInitialDetails() {
+    load() {
         this.restSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
             this.updateBuildAgent(buildAgent);
+            this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent.buildAgent?.memberAddress);
+            this.loadFinishedBuildJobs();
         });
     }
 
@@ -166,7 +166,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             totalBuilds: this.buildAgent.buildAgentDetails?.totalBuilds || 0,
             missingBuilds: 0,
         };
-        this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent.buildAgent?.memberAddress);
     }
 
     cancelBuildJob(buildJobId: string) {
