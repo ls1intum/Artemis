@@ -6,7 +6,7 @@ import { throwError } from 'rxjs';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
-import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
