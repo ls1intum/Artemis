@@ -14,6 +14,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
     let fixture: ComponentFixture<MessageInlineInputComponent>;

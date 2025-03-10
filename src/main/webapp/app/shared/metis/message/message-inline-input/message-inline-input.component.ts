@@ -19,14 +19,16 @@ import { Course } from 'app/entities/course.model';
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
-    protected localStorageService = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     course = input<Course>();
 
     warningDismissed = false;
+
     ngOnInit(): void {
         super.ngOnInit();
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
+
     /**
      * resets the answer post content
      */
