@@ -35,8 +35,8 @@ export interface OrderedPage {
     slideId: string;
     order: number;
     pageProxy?: PDFJS.PDFPageProxy;
-    hidden?: dayjs.Dayjs | null; // Date when the page becomes hidden, null if not hidden
-    exerciseId?: number | null; // Associated exercise ID, if any
+    hidden?: dayjs.Dayjs | null;
+    exerciseId?: number | null;
 }
 
 @Component({
@@ -378,15 +378,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isPdfLoading.set(true);
             const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
 
-            this.pageOrder.update((pages) =>
-                pages
-                    .filter((page) => !slideIds.includes(page.slideId))
-                    .map((page, index) => ({
-                        ...page,
-                        pageIndex: index + 1,
-                        order: index + 1,
-                    })),
-            );
+            const filteredPages = this.pageOrder()
+                .filter((page) => !slideIds.includes(page.slideId))
+                .map((page, index) => ({
+                    ...page,
+                    pageIndex: index + 1,
+                    order: index + 1,
+                }));
+
+            this.pageOrder.set(filteredPages);
 
             this.isFileChanged.set(true);
             this.selectedPages.set(new Set());

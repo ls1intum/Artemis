@@ -71,14 +71,18 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     /**
      * Renders PDF pages using the page proxies from the ordered pages
-     * Optimized to only render new pages when appendFile is true by comparing with initialPageOrder
      */
     async renderPages(): Promise<void> {
         const pages = this.orderedPages();
         try {
+            this.pdfContainer()
+                .nativeElement.querySelectorAll('.pdf-canvas-container canvas')
+                .forEach((canvas) => canvas.remove());
+
+            this.loadedPages.set(new Set());
+
             for (let i = 0; i < pages.length; i++) {
                 const page = pages[i];
-
                 const pageProxy = page.pageProxy;
                 if (pageProxy) {
                     const viewport = pageProxy.getViewport({ scale: 1 });
@@ -202,7 +206,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const unhidePageData = [
             {
                 slideId,
-                date: null as unknown as dayjs.Dayjs, // Signal to parent to remove hidden status
+                date: null as unknown as dayjs.Dayjs,
                 exerciseId: null,
             },
         ];
