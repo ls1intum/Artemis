@@ -43,7 +43,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     loadedPages = signal<Set<number>>(new Set());
     selectedPages = signal<Set<OrderedPage>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
-    newHiddenPages = signal<HiddenPageMap>(this.hiddenPages() || {});
     initialPageNumber = signal<number>(0);
     activeButtonPage = signal<OrderedPage | null>(null);
     isPopoverOpen = signal<boolean>(false);
@@ -64,11 +63,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     protected readonly faGripLines = faGripLines;
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['hiddenPages']) {
-            this.newHiddenPages.set(this.hiddenPages()!);
-        }
-        if (changes['currentPdfUrl']) {
-            this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
+        if (changes['orderedPages']) {
+            this.renderPagesFromProxies();
         }
         if (changes['updatedSelectedPages']) {
             this.selectedPages.set(new Set(this.updatedSelectedPages()!));
@@ -77,53 +73,44 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Loads or appends a PDF from a provided URL.
-     * @param fileUrl The URL of the file to load or append.
-     * @param append Whether the document should be appended to the existing one.
-     * @returns A promise that resolves when the PDF is loaded.
+     * Renders PDF pages using the page proxies from the ordered pages
      */
-    async loadPdf(fileUrl: string, append: boolean): Promise<void> {
+    /**
+     * Renders PDF pages using the page proxies from the ordered pages
+     */
+    async renderPagesFromProxies(): Promise<void> {
         this.pdfContainer()
             .nativeElement.querySelectorAll('.pdf-canvas-container canvas')
             .forEach((canvas) => canvas.remove());
-        this.totalPagesArray.set(new Set());
+
+        const pages = this.orderedPages();
+
+        this.loadedPages.set(new Set());
+
         try {
-            const loadingTask = PDFJS.getDocument(fileUrl);
-            const pdf = await loadingTask.promise;
-            this.totalPagesArray.set(new Set(Array.from({ length: pdf.numPages }, (_, i) => i + 1)));
+            for (const page of pages) {
+                const pageProxy = page.pageProxy;
 
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1 });
-                const canvas = this.createCanvas(viewport);
-                const context = canvas.getContext('2d')!;
-                await page.render({ canvasContext: context, viewport }).promise;
+                if (pageProxy) {
+                    const viewport = pageProxy.getViewport({ scale: 1 });
+                    const canvas = this.createCanvas(viewport);
+                    const context = canvas.getContext('2d')!;
 
-                let targetSlideId: string | undefined;
+                    await pageProxy.render({ canvasContext: context, viewport }).promise;
 
-                if (append) {
-                    const newPageIndex = this.orderedPages().length - pdf.numPages + i - 1;
-                    targetSlideId = this.orderedPages()[newPageIndex]?.slideId;
-                } else {
-                    const matchingPage = this.orderedPages().find((page) => page.pageIndex === i);
-                    targetSlideId = matchingPage?.slideId;
-                }
-
-                if (targetSlideId) {
-                    const container = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${targetSlideId}`);
+                    const container = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${page.slideId}`);
                     if (container) {
                         container.appendChild(canvas);
-                        this.loadedPages().add(i);
+                        this.loadedPages.update((loadedPages) => {
+                            const newLoadedPages = new Set(loadedPages);
+                            newLoadedPages.add(page.pageIndex);
+                            return newLoadedPages;
+                        });
                     }
                 }
             }
 
-            if (append) {
-                this.scrollToBottom();
-            }
-
             this.totalPagesOutput.emit(this.totalPagesArray().size);
-            this.pageOrderOutput.emit(this.orderedPages());
         } catch (error) {
             onError(this.alertService, error);
         }

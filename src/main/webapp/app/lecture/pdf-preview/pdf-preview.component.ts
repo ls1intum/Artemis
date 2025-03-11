@@ -19,7 +19,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { PDFDocument } from 'pdf-lib';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule, NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
@@ -27,7 +27,6 @@ import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { ButtonType } from 'app/shared/components/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
-import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 
@@ -37,6 +36,7 @@ export interface OrderedPage {
     pageIndex: number;
     slideId: string;
     order: number;
+    pageProxy?: PDFJS.PDFPageProxy;
 }
 
 export interface HiddenPage {
@@ -210,26 +210,28 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const currentPageCount = this.pageOrder().length;
                 const newPages: OrderedPage[] = [];
 
-                for (let i = 0; i < pdf.numPages; i++) {
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const pageProxy = await pdf.getPage(i);
                     newPages.push({
-                        slideId: `temp_${Date.now()}_${i}`,
-                        pageIndex: currentPageCount + i + 1,
-                        order: currentPageCount + i + 1,
+                        slideId: `temp_${Date.now()}_${i - 1}`,
+                        pageIndex: currentPageCount + i,
+                        order: currentPageCount + i,
+                        pageProxy: pageProxy,
                     });
                 }
 
                 this.pageOrder.update((pages) => [...pages, ...newPages]);
             } else {
-                const newOrder: OrderedPage[] = [];
-                for (let i = 0; i < pdf.numPages; i++) {
-                    newOrder.push({
-                        slideId: `temp_${Date.now()}_${i}`,
-                        pageIndex: i + 1,
-                        order: i + 1,
-                    });
+                const currentOrder = [...this.pageOrder()];
+
+                for (let i = 0; i < currentOrder.length && i < pdf.numPages; i++) {
+                    currentOrder[i].pageProxy = await pdf.getPage(i + 1);
                 }
-                this.pageOrder.set(newOrder);
+
+                this.pageOrder.set(currentOrder);
             }
+
+            this.appendFile.set(false);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
@@ -240,6 +242,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.attachmentSub?.unsubscribe();
         this.attachmentUnitSub?.unsubscribe();
+
+        if (this.currentPdfUrl()) {
+            URL.revokeObjectURL(this.currentPdfUrl()!);
+        }
     }
 
     constructor() {
