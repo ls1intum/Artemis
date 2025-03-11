@@ -133,6 +133,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.websocketService.unsubscribe(this.channel);
         this.websocketSubscription?.unsubscribe();
+        this.restSubscription?.unsubscribe();
     }
 
     /**

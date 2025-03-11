@@ -68,6 +68,12 @@ public class BuildAgentInformationService {
         updateLocalBuildAgentInformationWithRecentJob(null, isPaused);
     }
 
+    /**
+     * Updates the local build agent information with the most recent build job.
+     *
+     * @param recentBuildJob the most recent build job
+     * @param isPaused       whether the build agent is paused
+     */
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused) {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         try {
