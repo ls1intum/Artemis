@@ -34,6 +34,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     result: Result;
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
+    readonly AssessmentType = AssessmentType;
     getIcon = getIcon;
 
     // Icons
@@ -119,6 +120,4 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 return 0;
         }
     }
-
-    protected readonly AssessmentType = AssessmentType;
 }
