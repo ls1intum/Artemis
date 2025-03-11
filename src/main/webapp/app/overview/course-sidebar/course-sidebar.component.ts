@@ -1,4 +1,4 @@
-import { Component, HostListener, OnChanges, SimpleChanges, ViewChild, input, output, signal } from '@angular/core';
+import { Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, input, output, signal } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { IconDefinition, faChevronRight, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -53,7 +53,7 @@ export interface SidebarItem {
         SlicePipe,
     ],
 })
-export class CourseSidebarComponent implements OnChanges {
+export class CourseSidebarComponent implements OnInit, OnChanges {
     course = input<Course | undefined>();
     courses = input<Course[] | undefined>();
     sidebarItems = input<SidebarItem[]>([]);
@@ -82,7 +82,7 @@ export class CourseSidebarComponent implements OnChanges {
     faChevronRight = faChevronRight;
     faEllipsis = faEllipsis;
 
-    constructor() {
+    ngOnInit() {
         this.updateVisibleNavbarItems(window.innerHeight);
     }
 
