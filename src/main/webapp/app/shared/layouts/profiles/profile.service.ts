@@ -88,6 +88,10 @@ export class ProfileService {
                         profileInfo.buildTimeoutMax = data.buildTimeoutMax;
                         profileInfo.buildTimeoutDefault = data.buildTimeoutDefault;
 
+                        profileInfo.defaultContainerCpuCount = data.defaultContainerCpuCount;
+                        profileInfo.defaultContainerMemoryLimitInMB = data.defaultContainerMemoryLimitInMB;
+                        profileInfo.defaultContainerMemorySwapLimitInMB = data.defaultContainerMemorySwapLimitInMB;
+
                         return profileInfo;
                     }),
                 )
@@ -98,7 +102,7 @@ export class ProfileService {
                 });
         }
 
-        return this.profileInfo.pipe(filter((x) => x != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
+        return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
     private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {

@@ -33,11 +33,11 @@ export class SubmissionExportService {
     getExerciseUrl(exerciseType: ExerciseType, exerciseId: number) {
         switch (exerciseType) {
             case ExerciseType.TEXT:
-                return 'text-exercises/' + exerciseId;
+                return 'text/text-exercises/' + exerciseId;
             case ExerciseType.MODELING:
-                return 'modeling-exercises/' + exerciseId;
+                return 'modeling/modeling-exercises/' + exerciseId;
             case ExerciseType.FILE_UPLOAD:
-                return 'file-upload-exercises/' + exerciseId;
+                return 'fileupload/file-upload-exercises/' + exerciseId;
             default:
                 throw Error('Export not implemented for exercise type ' + exerciseType);
         }

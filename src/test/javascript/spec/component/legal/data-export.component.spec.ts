@@ -1,9 +1,8 @@
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -16,6 +15,8 @@ import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('DataExportComponent', () => {
     let fixture: ComponentFixture<DataExportComponent>;
@@ -26,7 +27,6 @@ describe('DataExportComponent', () => {
     let route: ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 DataExportComponent,
                 MockComponent(ButtonComponent),
@@ -41,6 +41,8 @@ describe('DataExportComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute(),
                 },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()

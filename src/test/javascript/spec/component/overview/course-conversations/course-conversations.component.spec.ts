@@ -1,6 +1,6 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -12,7 +12,7 @@ import { ConversationMessagesComponent } from 'app/overview/course-conversations
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
-import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -29,7 +29,6 @@ import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
@@ -84,6 +83,9 @@ examples.forEach((activeConversation) => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
         MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+        MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
+        const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
+        MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -659,6 +661,119 @@ examples.forEach((activeConversation) => {
                 component.onConversationSelected(invalidStatus);
                 expect(component.selectedSavedPostStatus).toBeNull();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
+            });
+
+            it('should toggle the value of showOnlyPinned', () => {
+                expect(component.showOnlyPinned).toBe(false);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(true);
+
+                component.togglePinnedView();
+                expect(component.showOnlyPinned).toBe(false);
+            });
+
+            it('should update pinnedCount when onPinnedCountChanged is called', () => {
+                const newPinnedCount = 5;
+
+                component.onPinnedCountChanged(newPinnedCount);
+                expect(component.pinnedCount).toBe(newPinnedCount);
+            });
+
+            it('should set showOnlyPinned to false if pinnedCount becomes 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(0);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
+
+            it('should not change showOnlyPinned if pinnedCount changes but is not 0', () => {
+                component.showOnlyPinned = true;
+                component.onPinnedCountChanged(5);
+                expect(component.showOnlyPinned).toBeTrue();
+
+                component.showOnlyPinned = false;
+                component.onPinnedCountChanged(10);
+                expect(component.showOnlyPinned).toBeFalse();
+            });
+        });
+
+        describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {
+            let component: CourseConversationsComponent;
+
+            beforeEach(() => {
+                fixture = TestBed.createComponent(CourseConversationsComponent);
+                component = fixture.componentInstance;
+            });
+
+            it('should do nothing if post.id is undefined', () => {
+                const post = {} as Posting;
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(component.focusPostId).toBeUndefined();
+                expect(component.openThreadOnFocus).toBeFalsy();
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should set openThreadOnFocus = true if postingType is ANSWER', () => {
+                const post = {
+                    id: 1,
+                    postingType: PostingType.ANSWER,
+                    post: { id: 2 } as Post,
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+                expect(component.openThreadOnFocus).toBeTrue();
+            });
+
+            it('should set openThreadOnFocus = false if postingType is POST (question post)', () => {
+                const post = {
+                    id: 1,
+                    postingType: PostingType.POST,
+                    conversation: { id: 1 } as Conversation,
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+                expect(component.openThreadOnFocus).toBeFalse();
+            });
+
+            it('should call setActiveConversation if conversation.id is defined', () => {
+                const post = {
+                    id: 1,
+                    conversation: { id: 999 },
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(999);
+            });
+
+            it('should NOT call setActiveConversation if post.id is undefined', () => {
+                const post = {
+                    id: undefined,
+                    conversation: {},
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should combine logic: set focusPostId and only set conversation if ID is present', () => {
+                const post = {
+                    id: 10,
+                    referencePostId: 888,
+                    postingType: PostingType.ANSWER,
+                    conversation: {
+                        id: 444,
+                    },
+                } as Posting;
+
+                component.onTriggerNavigateToPost(post);
+
+                expect(component.focusPostId).toBe(10);
+                expect(component.openThreadOnFocus).toBeFalse();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
             });
         });
     });

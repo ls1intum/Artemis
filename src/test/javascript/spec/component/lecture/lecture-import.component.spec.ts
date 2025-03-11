@@ -1,14 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('LectureImportComponent', () => {
     let fixture: ComponentFixture<LectureImportComponent>;
@@ -24,15 +27,9 @@ describe('LectureImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
-            declarations: [LectureImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
-            providers: [
-                // Overwrite MockRouter declaration in ArtemisTestModule which just returns 'testValue'
-                {
-                    provide: Router,
-                    useClass: Router,
-                },
-            ],
+            imports: [FormsModule, MockComponent(NgbPagination)],
+            declarations: [LectureImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective), MockComponent(FaIconComponent)],
+            providers: [MockProvider(NgbActiveModal), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {

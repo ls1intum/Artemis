@@ -55,7 +55,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { PostingEditType, ReferenceType } from 'app/shared/metis/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -72,6 +72,8 @@ import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { facArtemisIntelligence } from 'app/icons/icons';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -129,6 +131,7 @@ const BORDER_HEIGHT_OFFSET = 2;
         NgbDropdownToggle,
         NgbDropdownMenu,
         ColorSelectorComponent,
+        PostingButtonComponent,
         MatMenuTrigger,
         MatMenu,
         MatMenuItem,
@@ -239,6 +242,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
+    isButtonLoading = input<boolean>(false);
+    isFormGroupValid = input<boolean>(false);
+    isInCommunication = input<boolean>(false);
+    editType = input<PostingEditType>();
+
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
 
@@ -308,6 +316,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
+    protected readonly faPaperPlane = faPaperPlane;
     // Types and values exposed to the template
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ReferenceType = ReferenceType;
@@ -315,6 +324,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_EDIT = MarkdownEditorMonacoComponent.TAB_EDIT;
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
+
+    readonly EditType = PostingEditType;
 
     constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();

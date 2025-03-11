@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -11,7 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -19,7 +18,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -30,6 +29,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { FormsModule } from '@angular/forms';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
@@ -63,9 +67,21 @@ describe('Example Modeling Submission Component', () => {
         credits: 30,
         correctionStatus: 'CORRECT',
     };
-    const mockFeedbackWithoutReference: Feedback = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED };
-    const mockFeedbackInvalid: Feedback = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
-    const mockFeedbackCorrectionError: FeedbackCorrectionError = { reference: 'reference', type: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackWithoutReference: Feedback = {
+        text: 'FeedbackWithoutReference',
+        credits: 30,
+        type: FeedbackType.MANUAL_UNREFERENCED,
+    };
+    const mockFeedbackInvalid: Feedback = {
+        text: 'FeedbackInvalid',
+        referenceId: '4',
+        reference: 'reference',
+        correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+    };
+    const mockFeedbackCorrectionError: FeedbackCorrectionError = {
+        reference: 'reference',
+        type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+    };
 
     const routeQueryParam = { readOnly: 0, toComplete: 0 };
 
@@ -80,7 +96,7 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule],
+            imports: [FormsModule],
             declarations: [
                 ExampleModelingSubmissionComponent,
                 ModelingAssessmentComponent,
@@ -97,6 +113,10 @@ describe('Example Modeling Submission Component', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ThemeService, useClass: MockThemeService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -128,7 +148,10 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should handle a new submission', () => {
-        route.snapshot = { ...route.snapshot, paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: 'new' }) } as ActivatedRouteSnapshot;
+        route.snapshot = {
+            ...route.snapshot,
+            paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: 'new' }),
+        } as ActivatedRouteSnapshot;
 
         // WHEN
         fixture.detectChanges();

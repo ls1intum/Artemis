@@ -64,7 +64,8 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     exerciseChannels: { entityData: [] },
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
-    hiddenChannels: { entityData: [] },
+    feedbackDiscussion: { entityData: [] },
+    archivedChannels: { entityData: [] },
 };
 
 @Injectable({
@@ -173,7 +174,7 @@ export class CourseOverviewService {
         const groups: ChannelGroupCategory[] = [];
 
         if (conversation.isHidden) {
-            groups.push('hiddenChannels');
+            groups.push('archivedChannels');
             return groups;
         }
 
@@ -199,6 +200,7 @@ export class CourseOverviewService {
             [ChannelSubType.GENERAL]: 'generalChannels',
             [ChannelSubType.LECTURE]: 'lectureChannels',
             [ChannelSubType.EXAM]: 'examChannels',
+            [ChannelSubType.FEEDBACK_DISCUSSION]: 'feedbackDiscussion',
         };
         return channelSubType ? channelSubTypeMap[channelSubType] : 'generalChannels';
     }

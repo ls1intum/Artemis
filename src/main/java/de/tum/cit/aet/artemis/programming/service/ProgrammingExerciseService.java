@@ -46,7 +46,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -117,11 +116,24 @@ public class ProgrammingExerciseService {
      */
     private static final String PACKAGE_NAME_REGEX_FOR_GO = "^(?!(?:break|default|func|interface|select|case|defer|go|map|struct|chan|else|goto|package|switch|const|fallthrough|if|range|type|continue|for|import|return|var|_)$)[A-Za-z_][A-Za-z0-9_]*$";
 
+    /**
+     * Dart package name Regex derived from <a href="https://dart.dev/tools/pub/pubspec#name">the pubspec file reference</a>. The reserved words not usable as identifiers are
+     * derived from <a href="https://spec.dart.dev/DartLangSpecDraft.pdf">the Dart Programming Language Specification</a>.
+     * Package names are lowercase identifiers which are usable for variables. This excludes reserved words, await and yield. test and artemis_test are also disallowed.
+     */
+    private static final String PACKAGE_NAME_REGEX_FOR_DART = "^(?!(?:assert|await|break|case|catch|class|const|continue|default|do|else|enum|extends|false|final|finally|for|if|in|is|new|null|rethrow|return|super|switch|this|throw|true|try|var|void|while|with|yield|test|artemis_test)$)"
+            + "[a-z_][a-z0-9_]*$";
+
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = Pattern.compile(PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN);
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_SWIFT = Pattern.compile(PACKAGE_NAME_REGEX_FOR_SWIFT);
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_GO = Pattern.compile(PACKAGE_NAME_REGEX_FOR_GO);
+
+    private static final Pattern PACKAGE_NAME_PATTERN_FOR_DART = Pattern.compile(PACKAGE_NAME_REGEX_FOR_DART);
+
+    // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
+    private static final int MIN_DOCKER_MEMORY_MB = 6;
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
@@ -187,7 +199,7 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
@@ -205,7 +217,7 @@ public class ProgrammingExerciseService {
             Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressApi competencyProgressApi,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
@@ -346,7 +358,8 @@ public class ProgrammingExerciseService {
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         // Step 12d: Update student competency progress
-        competencyProgressApi.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+        ProgrammingExercise finalSavedProgrammingExercise = savedProgrammingExercise;
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalSavedProgrammingExercise));
 
         // Step 13: Set Iris settings
         if (irisSettingsService.isPresent()) {
@@ -433,6 +446,7 @@ public class ProgrammingExerciseService {
             case JAVA, KOTLIN -> PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.matcher(programmingExercise.getPackageName());
             case SWIFT -> PACKAGE_NAME_PATTERN_FOR_SWIFT.matcher(programmingExercise.getPackageName());
             case GO -> PACKAGE_NAME_PATTERN_FOR_GO.matcher(programmingExercise.getPackageName());
+            case DART -> PACKAGE_NAME_PATTERN_FOR_DART.matcher(programmingExercise.getPackageName());
             default -> throw new IllegalArgumentException("Programming language not supported");
         };
         if (!packageNameMatcher.matches()) {
@@ -630,7 +644,7 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise)));
 
         irisSettingsService
                 .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
@@ -1102,10 +1116,16 @@ public class ProgrammingExerciseService {
             }
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.createDockerRunConfig(dockerFlagsDTO.network(), dockerFlagsDTO.env());
+        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY_MB) {
+            throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY_MB + "MB", "Exercise", "memoryLimitInvalid");
+        }
 
-        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
-            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        if (dockerFlagsDTO.cpuCount() <= 0) {
+            throw new BadRequestAlertException("The cpu count is invalid. The minimum cpu count is 1", "Exercise", "cpuCountInvalid");
+        }
+
+        if (dockerFlagsDTO.memorySwap() < 0) {
+            throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
         }
     }
 }

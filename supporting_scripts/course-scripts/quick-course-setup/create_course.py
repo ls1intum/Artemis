@@ -18,7 +18,7 @@ config.read('config.ini')
 SERVER_URL: str = config.get('Settings', 'server_url')
 IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() == 'true'  # Convert to boolean
 COURSE_NAME: str = config.get('CourseSettings', 'course_name')
-SPECIAL_CHARACTERS_REGEX: str = config.get('Settings', 'special_character_regex')
+SPECIAL_CHARACTERS_REGEX: str = config.get('CourseSettings', 'special_character_regex')
 
 def parse_course_name_to_short_name() -> str:
     """Parse course name to create a short name, removing special characters."""
@@ -32,7 +32,7 @@ def parse_course_name_to_short_name() -> str:
 
 def create_course(session: Session) -> requests.Response:
     """Create a course using the given session."""
-    url = f"{SERVER_URL}/admin/courses"
+    url = f"{SERVER_URL}/core/admin/courses"
     course_short_name = parse_course_name_to_short_name()
 
     default_course = {
@@ -90,7 +90,6 @@ def create_course(session: Session) -> requests.Response:
         logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
     elif response.status_code == 400:
         logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE if you intend to add programming exercises to this course.")
-        run_cleanup()
         sys.exit(0)
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? "

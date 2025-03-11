@@ -14,9 +14,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
@@ -40,9 +42,13 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 LEFT JOIN Course c ON b.courseId = c.id
             WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
-                AND (CAST(:startDate AS string) IS NULL OR b.buildStartDate >= :startDate)
-                AND (CAST(:endDate AS string) IS NULL OR b.buildStartDate <= :endDate)
-                AND (:searchTerm IS NULL OR (b.repositoryName LIKE %:searchTerm% OR c.title LIKE %:searchTerm%))
+                AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
+                AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
+                AND (
+                  :searchTerm IS NULL
+                  OR b.repositoryName LIKE CONCAT('%', :searchTerm, '%')
+                  OR c.title LIKE CONCAT('%', :searchTerm, '%')
+                )
                 AND (:courseId IS NULL OR b.courseId = :courseId)
                 AND (:durationLower IS NULL OR (b.buildCompletionDate - b.buildStartDate) >= :durationLower)
                 AND (:durationUpper IS NULL OR (b.buildCompletionDate - b.buildStartDate) <= :durationUpper)
@@ -78,7 +84,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 COUNT(b.buildStatus)
             )
             FROM BuildJob b
-            WHERE b.buildStartDate >= :fromDateTime
+            WHERE b.buildSubmissionDate >= :fromDateTime
                 AND (:courseId IS NULL OR b.courseId = :courseId)
             GROUP BY b.buildStatus
             """)
@@ -118,4 +124,41 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             GROUP BY b.exerciseId
             """)
     BuildJobStatisticsDTO findBuildJobStatisticsByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Transactional
+    @Modifying
+    @Query("""
+            UPDATE BuildJob b
+            SET b.buildStatus = :newStatus
+            WHERE b.buildJobId = :buildJobId
+            """)
+    void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
+
+    /**
+     * Update the build job status and set the build start date if it is not set yet. The buildStartDate is required to calculate the statistics and the correctly display in the
+     * build overview.
+     * This is used to update missing jobs that do not have a build start date yet.
+     *
+     * @param buildJobId     the build job id
+     * @param newStatus      the new build status
+     * @param buildStartDate the build start date
+     */
+    @Transactional
+    @Modifying
+    @Query("""
+            UPDATE BuildJob b
+            SET b.buildStatus = :newStatus,
+                b.buildStartDate = CASE WHEN b.buildStartDate IS NULL THEN :buildStartDate ELSE b.buildStartDate END
+            WHERE b.buildJobId = :buildJobId
+            """)
+    void updateBuildJobStatusWithBuildStartDate(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus,
+            @Param("buildStartDate") ZonedDateTime buildStartDate);
+
+    /**
+     * Find all build jobs with the given build status.
+     *
+     * @param statuses the list of build statuses
+     * @return the list of build jobs
+     */
+    List<BuildJob> findAllByBuildStatusIn(List<BuildStatus> statuses);
 }

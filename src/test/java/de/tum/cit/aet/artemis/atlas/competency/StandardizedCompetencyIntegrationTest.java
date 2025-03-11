@@ -58,9 +58,8 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
     class PreAuthorize {
 
         private void testAllPreAuthorizeInstructor() throws Exception {
-            request.get("/api/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
-            request.get("/api/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
-            request.get("/api/standardized-competencies/knowledge-areas/1", HttpStatus.FORBIDDEN, KnowledgeArea.class);
+            request.get("/api/atlas/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
+            request.get("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
         }
 
         @Test
@@ -93,7 +92,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             void shouldCreateCompetency() throws Exception {
                 var expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), source.getId());
 
-                var actualCompetency = request.postWithResponseBody("/api/admin/standardized-competencies", expectedCompetency, StandardizedCompetencyRequestDTO.class,
+                var actualCompetency = request.postWithResponseBody("/api/atlas/admin/standardized-competencies", expectedCompetency, StandardizedCompetencyRequestDTO.class,
                         HttpStatus.CREATED);
 
                 assertThat(actualCompetency).usingRecursiveComparison().ignoringFields("id", "version").isEqualTo(expectedCompetency);
@@ -103,17 +102,17 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturn404() throws Exception {
                 var expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, ID_NOT_EXISTS, source.getId());
-                request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
+                request.post("/api/atlas/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
 
                 expectedCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), ID_NOT_EXISTS);
-                request.post("/api/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
+                request.post("/api/atlas/admin/standardized-competencies", expectedCompetency, HttpStatus.NOT_FOUND);
             }
 
             @ParameterizedTest
             @ArgumentsSource(StandardizedCompetencyUtilService.CheckStandardizedCompetencyValidationProvider.class)
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturnBadRequest(StandardizedCompetencyRequestDTO competencyDTO) throws Exception {
-                request.post("/api/admin/standardized-competencies", competencyDTO, HttpStatus.BAD_REQUEST);
+                request.post("/api/atlas/admin/standardized-competencies", competencyDTO, HttpStatus.BAD_REQUEST);
 
             }
         }
@@ -130,7 +129,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 standardizedCompetency.setDescription("New Description");
                 standardizedCompetency.setKnowledgeArea(newKnowledgeArea);
 
-                var actualCompetency = request.putWithResponseBody("/api/admin/standardized-competencies/" + standardizedCompetency.getId(),
+                var actualCompetency = request.putWithResponseBody("/api/atlas/admin/standardized-competencies/" + standardizedCompetency.getId(),
                         StandardizedCompetencyUtilService.toDTO(standardizedCompetency), StandardizedCompetencyResultDTO.class, HttpStatus.OK);
 
                 assertThat(actualCompetency).isEqualTo(StandardizedCompetencyResultDTO.of(standardizedCompetency));
@@ -143,16 +142,16 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
 
                 // competency with this id does not exist
                 var competencyNotExisting = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), source.getId());
-                request.put("/api/admin/standardized-competencies/" + ID_NOT_EXISTS, competencyNotExisting, HttpStatus.NOT_FOUND);
+                request.put("/api/atlas/admin/standardized-competencies/" + ID_NOT_EXISTS, competencyNotExisting, HttpStatus.NOT_FOUND);
 
                 // knowledge area that does not exist in the database is not allowed
                 var invalidCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, ID_NOT_EXISTS, source.getId());
-                request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
+                request.put("/api/atlas/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
 
                 // source that does not exist in the database is not allowed
                 invalidCompetency = new StandardizedCompetencyRequestDTO("Competency", "description", CompetencyTaxonomy.ANALYZE, knowledgeArea.getId(), ID_NOT_EXISTS);
 
-                request.put("/api/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
+                request.put("/api/atlas/admin/standardized-competencies/" + validId, invalidCompetency, HttpStatus.NOT_FOUND);
             }
 
             @ParameterizedTest
@@ -161,7 +160,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             void shouldReturnBadRequestForInvalidCompetency(StandardizedCompetencyRequestDTO competencyDTO) throws Exception {
                 // get a valid id so the request does not fail because of this
                 long validId = standardizedCompetency.getId();
-                request.put("/api/admin/standardized-competencies/" + validId, competencyDTO, HttpStatus.BAD_REQUEST);
+                request.put("/api/atlas/admin/standardized-competencies/" + validId, competencyDTO, HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -173,7 +172,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             void shouldDeleteCompetency() throws Exception {
                 long deletedId = standardizedCompetency.getId();
 
-                request.delete("/api/admin/standardized-competencies/" + deletedId, HttpStatus.OK);
+                request.delete("/api/atlas/admin/standardized-competencies/" + deletedId, HttpStatus.OK);
 
                 boolean exists = standardizedCompetencyRepository.existsById(deletedId);
                 assertThat(exists).isFalse();
@@ -187,7 +186,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 competency.setLinkedStandardizedCompetency(standardizedCompetency);
                 competency = competencyRepository.save(competency);
 
-                request.delete("/api/admin/standardized-competencies/" + deletedId, HttpStatus.OK);
+                request.delete("/api/atlas/admin/standardized-competencies/" + deletedId, HttpStatus.OK);
 
                 boolean standardizedExists = standardizedCompetencyRepository.existsById(deletedId);
                 assertThat(standardizedExists).isFalse();
@@ -198,7 +197,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturn404() throws Exception {
-                request.delete("/api/admin/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND);
+                request.delete("/api/atlas/admin/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND);
             }
         }
 
@@ -214,7 +213,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 expectedKnowledgeArea.setChildren(null);
                 expectedKnowledgeArea.setCompetencies(null);
 
-                var actualKnowledgeArea = request.postWithResponseBody("/api/admin/standardized-competencies/knowledge-areas",
+                var actualKnowledgeArea = request.postWithResponseBody("/api/atlas/admin/standardized-competencies/knowledge-areas",
                         StandardizedCompetencyUtilService.toDTO(expectedKnowledgeArea), KnowledgeAreaResultDTO.class, HttpStatus.CREATED);
 
                 assertThat(actualKnowledgeArea).usingRecursiveComparison().ignoringFields("id").isEqualTo(KnowledgeAreaResultDTO.of(expectedKnowledgeArea));
@@ -226,14 +225,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 // parent that does not exist in the database is not allowed
                 var expectedKnowledgeArea = new KnowledgeAreaRequestDTO("Knowledge Area 2", "KA2", "description", ID_NOT_EXISTS);
 
-                request.post("/api/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.NOT_FOUND);
+                request.post("/api/atlas/admin/standardized-competencies/knowledge-areas", expectedKnowledgeArea, HttpStatus.NOT_FOUND);
             }
 
             @ParameterizedTest
             @ArgumentsSource(StandardizedCompetencyUtilService.CheckKnowledgeAreaValidationProvider.class)
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturnBadRequest(KnowledgeAreaRequestDTO knowledgeAreaDTO) throws Exception {
-                request.post("/api/admin/standardized-competencies/knowledge-areas", knowledgeAreaDTO, HttpStatus.BAD_REQUEST);
+                request.post("/api/atlas/admin/standardized-competencies/knowledge-areas", knowledgeAreaDTO, HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -250,7 +249,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 knowledgeArea.setChildren(null);
                 knowledgeArea.setCompetencies(null);
 
-                var actualKnowledgeArea = request.putWithResponseBody("/api/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(),
+                var actualKnowledgeArea = request.putWithResponseBody("/api/atlas/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(),
                         StandardizedCompetencyUtilService.toDTO(knowledgeArea), KnowledgeAreaResultDTO.class, HttpStatus.OK);
                 assertThat(actualKnowledgeArea).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeArea));
             }
@@ -266,7 +265,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 knowledgeArea.setChildren(null);
                 knowledgeArea.setCompetencies(null);
 
-                var actualKnowledgeArea = request.putWithResponseBody("/api/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(),
+                var actualKnowledgeArea = request.putWithResponseBody("/api/atlas/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(),
                         StandardizedCompetencyUtilService.toDTO(knowledgeArea), KnowledgeAreaResultDTO.class, HttpStatus.OK);
                 assertThat(actualKnowledgeArea).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeArea));
             }
@@ -277,12 +276,12 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 // knowledge area with this id does not exist
                 var knowledgeAreaNotExisting = new KnowledgeAreaRequestDTO("KA", "KA", "", null);
 
-                request.put("/api/admin/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, knowledgeAreaNotExisting, HttpStatus.NOT_FOUND);
+                request.put("/api/atlas/admin/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, knowledgeAreaNotExisting, HttpStatus.NOT_FOUND);
 
                 // parent that does not exist in the database is not allowed
                 var invalidKnowledgeArea = new KnowledgeAreaRequestDTO("KA", "KA", "", ID_NOT_EXISTS);
 
-                request.put("/api/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(), invalidKnowledgeArea, HttpStatus.NOT_FOUND);
+                request.put("/api/atlas/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(), invalidKnowledgeArea, HttpStatus.NOT_FOUND);
             }
 
             @ParameterizedTest
@@ -291,7 +290,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             void shouldReturnBadRequest(KnowledgeAreaRequestDTO knowledgeAreaDTO) throws Exception {
                 long validId = knowledgeArea.getId();
 
-                request.put("/api/admin/standardized-competencies/knowledge-areas/" + validId, knowledgeAreaDTO, HttpStatus.BAD_REQUEST);
+                request.put("/api/atlas/admin/standardized-competencies/knowledge-areas/" + validId, knowledgeAreaDTO, HttpStatus.BAD_REQUEST);
             }
 
             @Test
@@ -303,7 +302,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
 
                 knowledgeArea1.setParent(knowledgeArea3);
 
-                request.put("/api/admin/standardized-competencies/knowledge-areas/" + knowledgeArea1.getId(), StandardizedCompetencyUtilService.toDTO(knowledgeArea1),
+                request.put("/api/atlas/admin/standardized-competencies/knowledge-areas/" + knowledgeArea1.getId(), StandardizedCompetencyUtilService.toDTO(knowledgeArea1),
                         HttpStatus.BAD_REQUEST);
             }
         }
@@ -314,7 +313,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             @Test
             @WithMockUser(username = "admin", roles = "ADMIN")
             void shouldReturn404() throws Exception {
-                request.delete("/api/admin/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND);
+                request.delete("/api/atlas/admin/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND);
             }
 
             @Test
@@ -322,7 +321,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             void shouldDeleteKnowledgeArea() throws Exception {
                 long deletedId = knowledgeArea.getId();
 
-                request.delete("/api/admin/standardized-competencies/knowledge-areas/" + deletedId, HttpStatus.OK);
+                request.delete("/api/atlas/admin/standardized-competencies/knowledge-areas/" + deletedId, HttpStatus.OK);
 
                 boolean exists = knowledgeAreaRepository.existsById(deletedId);
                 assertThat(exists).isFalse();
@@ -335,7 +334,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var child2 = standardizedCompetencyUtilService.saveKnowledgeArea("child1", "c1", "", child1);
                 var competency = standardizedCompetencyUtilService.saveStandardizedCompetency("title", "", null, "1.0.0", knowledgeArea, null);
 
-                request.delete("/api/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(), HttpStatus.OK);
+                request.delete("/api/atlas/admin/standardized-competencies/knowledge-areas/" + knowledgeArea.getId(), HttpStatus.OK);
 
                 var existingKnowledgeAreas = knowledgeAreaRepository.findAllById(List.of(knowledgeArea.getId(), child1.getId(), child2.getId()));
                 assertThat(existingKnowledgeAreas).isEmpty();
@@ -362,7 +361,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
 
                 // do not put knowledgeArea2, it is not top-level
                 var importData = new StandardizedCompetencyCatalogDTO(List.of(knowledgeArea1), List.of(SourceDTO.of(source1), SourceDTO.of(source2)));
-                request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.OK);
+                request.put("/api/atlas/admin/standardized-competencies/import", importData, HttpStatus.OK);
 
                 var competencies = standardizedCompetencyRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
                 competencies = competencies.subList(competencies.size() - 2, competencies.size());
@@ -396,7 +395,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var knowledgeArea = new StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO("title", "title", "", null, List.of(competency));
                 var importData = new StandardizedCompetencyCatalogDTO(List.of(knowledgeArea), null);
 
-                request.put("/api/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
+                request.put("/api/atlas/admin/standardized-competencies/import", importData, HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -428,7 +427,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var expectedKnowledgeAreas = Stream.of(knowledgeArea, knowledgeArea1).map(StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO::of).toList();
                 var expectedSources = Stream.of(source, source1, source2).map(SourceDTO::of).toList();
 
-                var actualCatalog = request.get("/api/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
+                var actualCatalog = request.get("/api/atlas/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
 
                 assertThat(actualCatalog.knowledgeAreas()).containsAll(expectedKnowledgeAreas);
                 assertThat(actualCatalog.sources()).containsAll(expectedSources);
@@ -448,14 +447,14 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var expectedCompetency = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "1.0.0",
                         knowledgeArea, source);
 
-                var actualCompetency = request.get("/api/standardized-competencies/" + expectedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
+                var actualCompetency = request.get("/api/atlas/standardized-competencies/" + expectedCompetency.getId(), HttpStatus.OK, StandardizedCompetency.class);
                 assertThat(actualCompetency).isEqualTo(expectedCompetency);
             }
 
             @Test
             @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
             void shouldReturn404() throws Exception {
-                request.get("/api/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, StandardizedCompetency.class);
+                request.get("/api/atlas/standardized-competencies/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, StandardizedCompetency.class);
             }
         }
 
@@ -474,40 +473,13 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 knowledgeAreaB.setChildren(null);
                 knowledgeAreaA.setCompetencies(null);
 
-                var knowledgeAreaTree = request.getList("/api/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaResultDTO.class);
+                var knowledgeAreaTree = request.getList("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.OK, KnowledgeAreaResultDTO.class);
 
                 var actualKnowledgeAreaA = knowledgeAreaTree.getFirst();
                 var actualKnowledgeAreaB = actualKnowledgeAreaA.children().getFirst();
                 assertThat(actualKnowledgeAreaA).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeAreaA));
                 assertThat(actualKnowledgeAreaB).isEqualTo(KnowledgeAreaResultDTO.of(knowledgeAreaB));
                 assertThat(actualKnowledgeAreaB.competencies().getFirst()).isEqualTo(StandardizedCompetencyResultDTO.of(competency1));
-            }
-        }
-
-        @Nested
-        class GetKnowledgeArea {
-
-            @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-            void shouldReturnKnowledgeArea() throws Exception {
-                var expectedKnowledgeArea = standardizedCompetencyUtilService.saveKnowledgeArea("Knowledge Area 2", "KA2", "description", knowledgeArea);
-
-                var child1 = standardizedCompetencyUtilService.saveKnowledgeArea("Child 1", "C1", "description", expectedKnowledgeArea);
-                var child2 = standardizedCompetencyUtilService.saveKnowledgeArea("Child 2", "C2", "description", expectedKnowledgeArea);
-                var competency = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "", expectedKnowledgeArea,
-                        null);
-                expectedKnowledgeArea.setChildren(Set.of(child1, child2));
-                expectedKnowledgeArea.setCompetencies(Set.of(competency));
-
-                var actualKnowledgeArea = request.get("/api/standardized-competencies/knowledge-areas/" + expectedKnowledgeArea.getId(), HttpStatus.OK, KnowledgeArea.class);
-
-                assertThat(actualKnowledgeArea).isEqualTo(expectedKnowledgeArea);
-            }
-
-            @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-            void shouldReturn404() throws Exception {
-                request.get("/api/standardized-competencies/knowledge-areas/" + ID_NOT_EXISTS, HttpStatus.NOT_FOUND, KnowledgeArea.class);
             }
         }
 
@@ -524,7 +496,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var sources = sourceRepository.saveAll(List.of(source1, source2));
                 var expectedSources = sources.stream().map(SourceDTO::of).toList();
 
-                var actualSources = request.getList("/api/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
+                var actualSources = request.getList("/api/atlas/standardized-competencies/sources", HttpStatus.OK, SourceDTO.class);
 
                 assertThat(actualSources).containsAll(expectedSources);
             }

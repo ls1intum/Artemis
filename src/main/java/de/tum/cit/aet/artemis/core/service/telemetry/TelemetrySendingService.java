@@ -93,7 +93,7 @@ public class TelemetrySendingService {
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
 
             log.info("Sending telemetry to {}", destination);
-            var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
+            var response = restTemplate.postForEntity(destination + "/api/core/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data. {}", response.getBody());
         }
         catch (JsonProcessingException e) {

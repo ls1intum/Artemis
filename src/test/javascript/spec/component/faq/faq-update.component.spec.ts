@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
@@ -8,7 +8,6 @@ import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
 import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqService } from 'app/faq/faq.service';
 import { Faq } from 'app/entities/faq.model';
@@ -19,6 +18,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
@@ -41,7 +42,7 @@ describe('FaqUpdateComponent', () => {
         courseId = 1;
         const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(BrowserAnimationsModule)],
             declarations: [FaqUpdateComponent, MockComponent(MarkdownEditorMonacoComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -81,6 +82,9 @@ describe('FaqUpdateComponent', () => {
                 MockProvider(ProfileService, {
                     getProfileInfo: () => of(mockProfileInfo),
                 }),
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(AlertService),
+                provideHttpClient(),
             ],
         }).compileComponents();
 

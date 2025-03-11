@@ -17,8 +17,8 @@ export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 export class PlagiarismCasesService {
     private http = inject(HttpClient);
 
-    private resourceUrl = 'api/courses';
-    private resourceUrlExercises = 'api/exercises';
+    private resourceUrl = 'api/plagiarism/courses';
+    private resourceUrlExercises = 'api/plagiarism/exercises';
 
     /* Instructor */
 

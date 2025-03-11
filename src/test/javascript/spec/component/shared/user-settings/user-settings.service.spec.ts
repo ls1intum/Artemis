@@ -1,12 +1,11 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { provideHttpClient } from '@angular/common/http';
@@ -32,7 +31,7 @@ describe('User Settings Service', () => {
     let resultingUserSettings: UserSettingsStructure<Setting>;
 
     // notification settings specific
-    const notificationSettingsResourceUrl = 'api/notification-settings';
+    const notificationSettingsResourceUrl = 'api/communication/notification-settings';
 
     /**
      * Updates the NotificationSettings of the provided NotificationSettings by using provided Settings
@@ -124,7 +123,6 @@ describe('User Settings Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

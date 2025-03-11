@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../test.module';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
@@ -29,7 +28,6 @@ describe('CodeEditorStudentContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

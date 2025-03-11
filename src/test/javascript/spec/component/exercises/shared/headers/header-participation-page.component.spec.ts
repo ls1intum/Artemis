@@ -4,7 +4,6 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -24,7 +23,6 @@ describe('HeaderParticipationPage', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [
                 HeaderParticipationPageComponent,
                 MockComponent(DifficultyBadgeComponent),
@@ -111,5 +109,19 @@ describe('HeaderParticipationPage', () => {
         component.participation = { results: [{ score: 42, rated: true } as Result] } as StudentParticipation;
         component.ngOnChanges();
         expect(component.achievedPoints).toBe(42);
+    });
+
+    it('should select the result with later completion date even if its id is lower', () => {
+        component.exercise.maxPoints = 100;
+        const earlierDate = dayjs().subtract(2, 'hours');
+        const laterDate = dayjs().subtract(1, 'hours');
+
+        const resultWithLowerId = { id: 1, score: 80, rated: true, completionDate: laterDate } as Result;
+        const resultWithHigherId = { id: 2, score: 50, rated: true, completionDate: earlierDate } as Result;
+
+        component.participation = { results: [resultWithHigherId, resultWithLowerId] } as StudentParticipation;
+
+        component.ngOnChanges();
+        expect(component.achievedPoints).toBe(80);
     });
 });

@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ArtemisTestModule } from '../../../test.module';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
@@ -7,6 +6,10 @@ import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-c
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -21,7 +24,11 @@ describe('MonacoEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent],
+            imports: [MonacoEditorComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ThemeService, useClass: MockThemeService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -395,9 +402,9 @@ describe('MonacoEditorComponent', () => {
     it('should place the cursor correctly after deleting an emoji', fakeAsync(() => {
         fixture.detectChanges();
 
-        const text = 'Hello 👋';
-        comp.setText(text);
-        comp.setPosition({ lineNumber: 1, column: text.length + 1 });
+        const fullText = 'Hello 👋 World!';
+        comp.setText(fullText);
+        comp.setPosition({ lineNumber: 1, column: 9 });
 
         const commandId = comp.getCustomBackspaceCommandId();
         comp['_editor'].trigger('keyboard', commandId!, null);

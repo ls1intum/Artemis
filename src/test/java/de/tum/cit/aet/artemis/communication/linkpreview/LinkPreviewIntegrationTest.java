@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -59,7 +60,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
             // Construct the URL with an encoded query parameter
             String encodedUrl = URLEncoder.encode(url, StandardCharsets.UTF_8);
-            String requestUrl = "/api/link-preview?url=" + encodedUrl;
+            String requestUrl = "/api/communication/link-preview?url=" + encodedUrl;
 
             // Perform a GET request with the URL as a query parameter
             LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
@@ -93,7 +94,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithInvalidUrls() throws Exception {
         // Construct the URL with an encoded query parameter
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("https://localhost", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://localhost", StandardCharsets.UTF_8);
 
         // Perform a GET request with the URL as a query parameter and make sure it throws
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
@@ -103,7 +104,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithIpAddress() throws Exception {
         // Test a blocked private IPv4 address
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("http://192.168.1.1", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://192.168.1.1", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
@@ -111,7 +112,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithLoopbackIp() throws Exception {
         // Test loopback address
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("http://127.0.0.1", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://127.0.0.1", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
@@ -119,7 +120,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithIpv6Address() throws Exception {
         // Test a blocked IPv6 address
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("http://[::1]", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://[::1]", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
@@ -127,7 +128,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithFullIpv6Address() throws Exception {
         // Test a blocked IPv6 address
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("http://[2606:4700:4700::1111]", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("http://[2606:4700:4700::1111]", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
@@ -135,7 +136,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithInvalidScheme() throws Exception {
         // Test a non-http/https scheme
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("ftp://example.com", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("ftp://example.com", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
@@ -143,7 +144,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithJavaScriptUrl() throws Exception {
         // Test a JavaScript-based URL
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("javascript:void(0);", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("javascript:void(0);", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
@@ -151,13 +152,14 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLinkPreviewDataExtractionWithInvalidTld() throws Exception {
         // Test an invalid top-level domain (TLD)
-        String requestUrl = "/api/link-preview?url=" + URLEncoder.encode("https://example.superlongtldover20chars", StandardCharsets.UTF_8);
+        String requestUrl = "/api/communication/link-preview?url=" + URLEncoder.encode("https://example.superlongtldover20chars", StandardCharsets.UTF_8);
         request.get(requestUrl, HttpStatus.BAD_REQUEST, LinkPreviewDTO.class);
     }
 
     private static Stream<Arguments> provideUrls() {
-        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6615.txt")),
-                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", new File(MOCK_FILE_PATH_PREFIX + "github_pull_request_6618.txt")),
-                Arguments.of("https://github.com/", new File(MOCK_FILE_PATH_PREFIX + "github_home.txt")), Arguments.of(GOOGLE_URL, new File(MOCK_FILE_PATH_PREFIX + "google.txt")));
+        var mockPath = Path.of(MOCK_FILE_PATH_PREFIX);
+        return Stream.of(Arguments.of("https://github.com/ls1intum/Artemis/pull/6615", mockPath.resolve("github_pull_request_6615.txt").toFile()),
+                Arguments.of("https://github.com/ls1intum/Artemis/pull/6618", mockPath.resolve("github_pull_request_6618.txt").toFile()),
+                Arguments.of("https://github.com/", mockPath.resolve("github_home.txt").toFile()), Arguments.of(GOOGLE_URL, mockPath.resolve("google.txt").toFile()));
     }
 }

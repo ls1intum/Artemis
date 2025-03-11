@@ -10,7 +10,6 @@ import {
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTestModule } from '../../../../test.module';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -18,7 +17,6 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -29,16 +27,13 @@ describe('ExamLiveEventComponent', () => {
     it('should display the correct event type and author', () => {
         component.event = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            createdBy: 'John Doe',
         } as ExamLiveEvent;
 
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
-        const authorElement = fixture.debugElement.query(By.css('.author > span:last-child')).nativeElement;
 
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.examWideAnnouncement');
-        expect(authorElement.textContent).toBe('John Doe');
     });
 
     it('should display the attendance check event', () => {
@@ -90,17 +85,14 @@ describe('ExamLiveEventComponent', () => {
             problemStatement: 'New problem statement',
             exerciseId: 1,
             exerciseName: 'Programming Exercise',
-            createdBy: 'John Doe',
         } as ProblemStatementUpdateEvent;
 
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
-        const authorElement = fixture.debugElement.query(By.css('.author > span:last-child')).nativeElement;
         const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
 
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.problemStatementUpdate');
-        expect(authorElement.textContent).toBe('John Doe');
         expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
         expect(contentElement.innerHTML).toContain('artemisApp.exam.events.messages.problemStatementUpdate.description');
     });
@@ -108,7 +100,6 @@ describe('ExamLiveEventComponent', () => {
     it('should emit event when acknowledge button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            createdBy: 'John Doe',
         } as any as ExamLiveEvent;
         component.event = mockEvent;
         component.showAcknowledge = true;
@@ -125,7 +116,6 @@ describe('ExamLiveEventComponent', () => {
     it('should emit event when navigate to exercise button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
-            createdBy: 'John Doe',
         } as any as ExamLiveEvent;
         component.event = mockEvent;
         component.showAcknowledge = true;

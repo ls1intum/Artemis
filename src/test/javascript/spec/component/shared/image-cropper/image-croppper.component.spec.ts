@@ -28,7 +28,6 @@ describe('ImageCropperComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
             providers: [MockProvider(CropService), MockProvider(CropperPositionService), MockProvider(LoadImageService)],
             schemas: [],
         })

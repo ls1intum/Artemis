@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -67,7 +69,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class ExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
@@ -136,6 +138,7 @@ public class ExerciseResource {
      */
     @GetMapping("exercises/{exerciseId}")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
 
         log.debug("REST request to get Exercise : {}", exerciseId);
@@ -162,19 +165,22 @@ public class ExerciseResource {
                 // Students should never access exam exercises like this
                 throw new AccessForbiddenException();
             }
+            Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+            exercise.setGradingCriteria(gradingCriteria);
         }
         // Normal exercise
         else {
             if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
                 throw new AccessForbiddenException();
             }
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+                exercise.setGradingCriteria(gradingCriteria);
+            }
+            else {
                 exercise.filterSensitiveInformation();
             }
         }
-
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
         return ResponseEntity.ok(exercise);
     }
 

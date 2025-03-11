@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -13,7 +12,6 @@ describe('ExpandableSectionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             declarations: [ExpandableSectionComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })

@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -10,7 +11,6 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTestModule } from '../../test.module';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
@@ -23,8 +23,7 @@ describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, EditPrerequisiteComponent, MockComponent(PrerequisiteFormComponent), OwlNativeDateTimeModule],
-            declarations: [],
+            imports: [EditPrerequisiteComponent, MockModule(OwlNativeDateTimeModule), MockComponent(PrerequisiteFormComponent), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(PrerequisiteService),

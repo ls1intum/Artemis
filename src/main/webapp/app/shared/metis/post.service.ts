@@ -16,7 +16,7 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 export class PostService extends PostingService<Post> {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/courses/';
+    public resourceUrl = 'api/communication/courses/';
 
     constructor() {
         super();
@@ -77,6 +77,9 @@ export class PostService extends PostingService<Post> {
             params = params.set('page', postContextFilter.page!);
             params = params.set('size', postContextFilter.pageSize!);
         }
+        if (postContextFilter.pinnedOnly) {
+            params = params.set('pinnedOnly', postContextFilter.pinnedOnly);
+        }
         return this.http
             .get<Post[]>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(postContextFilter, undefined)}`, {
                 params,
@@ -119,6 +122,17 @@ export class PostService extends PostingService<Post> {
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, { observe: 'response' });
+    }
+
+    /**
+     * gets source posts(original (forwarded) posts in posts) of posts
+     * @param {number} courseId
+     * @param {number[]} postIds
+     * @return {Observable<Post[]>}
+     */
+    getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
+        const params = new HttpParams().set('postIds', postIds.join(','));
+        return this.http.get<Post[]>(`api/communication/courses/${courseId}/messages-source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
     }
 
     /**

@@ -1,4 +1,3 @@
-import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -8,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,6 +18,7 @@ import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-qu
 import { DropLocationCounter } from 'app/entities/quiz/drop-location-counter.model';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const route = { params: of({ courseId: 2, exerciseId: 42, questionId: 1 }) };
 const dropLocation1 = { posX: 5, invalid: false, tempID: 1 } as DropLocation;
@@ -39,7 +39,6 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -47,6 +46,8 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ChangeDetectorRef),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .overrideTemplate(DragAndDropQuestionStatisticComponent, '')

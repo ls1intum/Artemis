@@ -21,7 +21,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { AlertService } from 'app/core/util/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ArtemisTestModule } from '../../../test.module';
+import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -42,7 +42,6 @@ describe('Test Run Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -50,6 +49,7 @@ describe('Test Run Management Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 MockDirective(TranslateDirective),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: AccountService, useClass: MockAccountService },
             ],
         })
             .compileComponents()
