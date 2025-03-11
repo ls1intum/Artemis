@@ -45,6 +45,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     isPopoverOpen = signal<boolean>(false);
     dragSlideId = signal<string | null>(null);
     isDragging = signal<boolean>(false);
+    reordering = signal<boolean>(false);
 
     // Outputs
     selectedPagesOutput = output<Set<OrderedPage>>();
@@ -60,7 +61,10 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['orderedPages']) {
-            this.renderPages();
+            if (!this.reordering()) {
+                this.renderPages();
+            }
+            this.reordering.set(false);
         }
         if (changes['updatedSelectedPages']) {
             this.selectedPages.set(new Set(this.updatedSelectedPages()!));
@@ -347,6 +351,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param targetSlideId ID of the target slide
      */
     reorderPages(sourceSlideId: string, targetSlideId: string): void {
+        this.reordering.set(true);
         const pages = [...this.orderedPages()];
 
         const sourceIndex = pages.findIndex((page) => page.slideId === sourceSlideId);
