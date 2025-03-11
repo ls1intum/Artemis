@@ -67,7 +67,11 @@
                     </a>
                 </div>
             }
-            @if (submission && exercise.type === ExerciseType.PROGRAMMING && exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            @if (
+                submission &&
+                exercise.type === ExerciseType.PROGRAMMING &&
+                (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL)
+            ) {
                 <div>
                     <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise, submission)" class="btn btn-primary btn-sm mb-1">
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
