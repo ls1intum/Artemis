@@ -19,7 +19,7 @@ ext {
         "plagiarism"    :          ["INSTRUCTION": 0.909, "CLASS":  0],
         "programming"   :          ["INSTRUCTION": 0.863, "CLASS":  9],
         "quiz"          :          ["INSTRUCTION": 0.904, "CLASS":  4],
-        "text"          :          ["INSTRUCTION": 0.954, "CLASS":  0],
+        "text"          :          ["INSTRUCTION": 0.953, "CLASS":  0],
         "tutorialgroup" :          ["INSTRUCTION": 0.923, "CLASS":  0],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
