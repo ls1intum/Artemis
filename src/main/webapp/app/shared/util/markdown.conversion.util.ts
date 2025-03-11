@@ -1,18 +1,11 @@
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import DOMPurify, { Config } from 'dompurify';
-import type { PluginSimple } from 'markdown-it';
-import markdownIt from 'markdown-it';
-import markdownItClass from 'markdown-it-class';
-import markdownItKatex from '@vscode/markdown-it-katex';
-import markdownItHighlightjs from 'markdown-it-highlightjs';
+import type { PluginSimple, Token } from 'markdown-it';
+import MarkdownItKatex from '@vscode/markdown-it-katex';
+import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';
+import MarkdownIt from 'markdown-it';
 import MarkdownItGitHubAlerts from 'markdown-it-github-alerts';
-/**
- * Add these classes to the converted html.
- */
-const classMap: { [key: string]: string } = {
-    table: 'table',
-};
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
@@ -57,24 +50,32 @@ export function htmlForMarkdown(
         return '';
     }
 
-    const md = markdownIt({
+    const markdownIt = MarkdownIt({
         html: true,
         linkify: true,
         breaks: false, // Avoid line breaks after tasks
     });
     for (const extension of extensions) {
-        md.use(extension);
+        markdownIt.use(extension);
     }
 
     // Add default extensions (Code Highlight, Latex, Alerts)
-    md.use(markdownItHighlightjs)
+    markdownIt
+        // Code Highlight
+        .use(MarkdownItHighlightjs)
         .use(formulaCompatibilityPlugin.getExtension())
-        .use(markdownItKatex, {
+        // Latex formulas
+        .use(MarkdownItKatex, {
             enableMathInlineInHtml: true,
         })
+        // Github like alerts inside Markdown
         .use(MarkdownItGitHubAlerts)
-        .use(markdownItClass, classMap);
-    let markdownRender = md.render(markdownText);
+        // Add custom html classes to be allowed it markdown
+        .use(MarkdownitTagClass, {
+            table: 'table',
+        });
+
+    let markdownRender = markdownIt.render(markdownText);
     if (markdownRender.endsWith('\n')) {
         // Keep legacy behavior from showdown where the output does not end with \n.
         // This is needed because e.g. for quiz questions, we render the markdown in multiple small parts and then concatenate them.
@@ -95,4 +96,54 @@ export function htmlForMarkdown(
 
 export function markdownForHtml(htmlText: string): string {
     return turndownService.turndown(htmlText);
+}
+
+type TagClassMapping = { [key: string]: string | string[] };
+
+/**
+ * Takes the markdown-it tokens and assigns classes to each token
+ *
+ * @param tokens Tokens injected by the markdown-it plugin
+ * @param mapping Tag to class mapping
+ */
+function setTokenClasses(tokens: Token[], mapping: TagClassMapping = {}): void {
+    tokens.forEach((token) => {
+        /**
+         * `token.nesting` is a number referring to the nature of the tag.
+         *
+         * - `1` means the tag is opening
+         * - `0` means the tag is self-closing
+         * - `-1` means the tag is closing
+         *
+         * @see https://github.com/markdown-it/markdown-it/blob/2e31d3430187d2eee1ba120c954783eebb93b4e8/lib/token.js#L44-L53
+         **/
+        const isOpeningTag = token.nesting !== -1;
+
+        if (isOpeningTag && mapping[token.tag]) {
+            const existingClassAttr = token.attrGet('class') || '';
+            const existingClasses = existingClassAttr.split(' ').filter(Boolean);
+            const givenClasses = mapping[token.tag];
+
+            const newClasses = [...existingClasses, ...(Array.isArray(givenClasses) ? givenClasses : [givenClasses])];
+
+            token.attrSet('class', newClasses.join(' ').trim());
+        }
+
+        // If the tag has any nested children, assign classes to those also
+        if (token.children) {
+            setTokenClasses(token.children, mapping);
+        }
+    });
+}
+
+/**
+ * Markdown-it plugin to assign CSS classes to specific tags.
+ *
+ * @param markdown Instance of markdown-it
+ * @param mapping Mapping of tags to CSS classes
+ */
+export function MarkdownitTagClass(markdown: MarkdownIt, mapping: TagClassMapping = {}): void {
+    markdown.core.ruler.push('markdownit-tag-class', (state) => {
+        setTokenClasses(state.tokens, mapping);
+    });
 }
