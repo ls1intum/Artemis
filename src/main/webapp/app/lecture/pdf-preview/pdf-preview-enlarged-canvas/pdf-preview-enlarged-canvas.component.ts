@@ -31,7 +31,6 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
 
     ngOnInit() {
         this.currentPage.set(this.initialPage()!);
-
         this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
         this.displayEnlargedCanvas(this.originalCanvas()!);
     }

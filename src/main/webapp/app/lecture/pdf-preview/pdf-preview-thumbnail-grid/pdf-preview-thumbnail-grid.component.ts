@@ -13,7 +13,6 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -34,7 +33,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     hiddenPages = input<HiddenPageMap>({});
     isAttachmentUnit = input<boolean>();
     updatedSelectedPages = input<Set<OrderedPage>>(new Set());
-    attachmentUnit = input<AttachmentUnit>();
     orderedPages = input<OrderedPage[]>([]);
 
     // Signals
@@ -105,7 +103,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             }
 
             if (this.appendFile()) {
-                setTimeout(() => this.scrollToBottom(), 100);
+                this.scrollToBottom();
             }
         } catch (error) {
             onError(this.alertService, error);
@@ -153,6 +151,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                 button.style.opacity = '1';
             }
         }
+
         event.stopPropagation();
     }
 
@@ -355,13 +354,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
         if (sourceIndex === -1 || targetIndex === -1) return;
 
-        const [movedPage] = pages.splice(sourceIndex, 1);
-
-        pages.splice(targetIndex, 0, movedPage);
-
-        pages.forEach((page, index) => {
-            page.pageIndex = index + 1;
-        });
+        pages.splice(targetIndex, 0, pages.splice(sourceIndex, 1)[0]);
+        pages.forEach((page, index) => (page.pageIndex = index + 1));
 
         this.pageOrderOutput.emit(pages);
     }
