@@ -106,6 +106,18 @@
                     </div>
                 </div>
                 <div class="row">
+                    <div class="form-group">
+                        <label class="required" for="name">{{ 'artemisApp.videoUnit.createVideoUnit.attachmentUnit' | artemisTranslate }}*</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="lectureUnit"
+                            formControlName="source"
+                            [placeholder]="'artemisApp.videoUnit.createVideoUnit.attachmentUnitPlaceHolder' | artemisTranslate"
+                        />
+                    </div>
+                </div>
+                <div class="row">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
                             <span jhiTranslate="entity.action.submit"></span>
