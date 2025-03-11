@@ -14,6 +14,8 @@ import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { AlertService, AlertType } from '../../../../../../main/webapp/app/core/util/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -108,6 +110,7 @@ describe('BuildAgentSummaryComponent', () => {
     ];
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
+    let modalService: NgbModal;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -116,6 +119,7 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -125,6 +129,7 @@ describe('BuildAgentSummaryComponent', () => {
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
+        modalService = TestBed.inject(NgbModal);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
     }));
 
@@ -244,5 +249,18 @@ describe('BuildAgentSummaryComponent', () => {
             type: AlertType.DANGER,
             message: 'artemisApp.buildAgents.alerts.distributedDataClearFailed',
         });
+    });
+
+    it('should correctly open modals', () => {
+        const modalRef = {
+            result: Promise.resolve('close'),
+        } as NgbModalRef;
+        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.displayPauseBuildAgentModal();
+        expect(openSpy).toHaveBeenCalledTimes(1);
+
+        component.displayClearDistributedDataModal();
+        expect(openSpy).toHaveBeenCalledTimes(2);
     });
 });

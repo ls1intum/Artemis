@@ -15,6 +15,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -249,6 +252,7 @@ describe('BuildQueueComponent', () => {
 
     let alertService: AlertService;
     let alertServiceErrorStub: jest.SpyInstance;
+    let modalService: NgbModal;
 
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
@@ -262,12 +266,14 @@ describe('BuildQueueComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildQueueComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
+        modalService = TestBed.inject(NgbModal);
         alertServiceErrorStub = jest.spyOn(alertService, 'error');
     }));
 
@@ -525,6 +531,27 @@ describe('BuildQueueComponent', () => {
         }
     });
 
+    it('should correctly set filterModal values', () => {
+        const modalRef = {
+            componentInstance: {
+                finishedBuildJobFilter: undefined,
+                buildAgentAddress: undefined,
+                finishedBuildJobs: undefined,
+            },
+            result: Promise.resolve('close'),
+        } as NgbModalRef;
+        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        component.finishedBuildJobs = mockFinishedJobs;
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
+
+        component.openFilterModal();
+
+        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
+        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs);
+        expect(modalRef.componentInstance.buildAgentFilterable).toEqual(true);
+    });
+
     it('should download build logs', () => {
         const buildJobId = '1';
 
@@ -542,7 +569,7 @@ describe('BuildQueueComponent', () => {
 
         component.downloadBuildLogs();
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
+        expect(downloadSpy).toHaveBeenCalledTimes(1);
         expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
         expect(alertServiceErrorStub).toHaveBeenCalled();
 

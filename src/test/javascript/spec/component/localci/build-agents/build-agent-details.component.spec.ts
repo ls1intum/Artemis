@@ -18,6 +18,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -166,6 +169,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
+    let modalService: NgbModal;
     const mockBuildQueueService = {
         getFinishedBuildJobs: jest.fn(),
         cancelBuildJob: jest.fn(),
@@ -181,6 +185,7 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
@@ -190,6 +195,7 @@ describe('BuildAgentDetailsComponent', () => {
         fixture = TestBed.createComponent(BuildAgentDetailsComponent);
         component = fixture.componentInstance;
         activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
+        modalService = TestBed.inject(NgbModal);
         activatedRoute.setParameters({ agentName: mockBuildAgent.buildAgent?.name });
         alertService = TestBed.inject(AlertService);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
@@ -339,5 +345,34 @@ describe('BuildAgentDetailsComponent', () => {
                 expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
             }
         }
+    });
+
+    it('should correctly set filterModal values', () => {
+        const modalRef = {
+            componentInstance: {
+                finishedBuildJobFilter: undefined,
+                buildAgentAddress: undefined,
+                finishedBuildJobs: undefined,
+            },
+            result: Promise.resolve('close'),
+        } as NgbModalRef;
+        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        component.finishedBuildJobs = mockFinishedJobs;
+        component.buildAgent = mockBuildAgent;
+        component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent?.memberAddress!);
+
+        component.openFilterModal();
+
+        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
+        expect(modalRef.componentInstance.buildAgentAddress).toEqual(mockBuildAgent.buildAgent?.memberAddress);
+        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs);
+    });
+
+    it('should correctly open build log', () => {
+        const windowSpy = jest.spyOn(window, 'open').mockImplementation();
+        component.viewBuildLogs('1');
+        expect(windowSpy).toHaveBeenCalledTimes(1);
+        expect(windowSpy).toHaveBeenCalledWith('/api/programming/build-log/1', '_blank');
     });
 });
