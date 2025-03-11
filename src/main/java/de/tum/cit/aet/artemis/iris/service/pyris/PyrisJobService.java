@@ -183,7 +183,6 @@ public class PyrisJobService {
         var token = authHeader.substring(7);
         var job = getJob(token);
         if (job == null) {
-            System.out.println("Job not found");
             throw new AccessForbiddenException("No valid token provided");
         }
         if (!jobClass.isInstance(job)) {
