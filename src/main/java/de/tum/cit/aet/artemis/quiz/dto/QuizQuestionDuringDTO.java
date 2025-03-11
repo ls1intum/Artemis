@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizQuestionDuringDTO(Long id, String title, String text, String hint, Integer points, ScoringType scoringType, Boolean randomizeOrder, Boolean invalid,
+public record QuizQuestionDuringDTO(Long id, String title, String text, String hint, Double points, ScoringType scoringType, Boolean randomizeOrder, Boolean invalid,
         Long quizGroupId) {
 
     public static QuizQuestionDuringDTO of(QuizQuestion quizQuestion) {
