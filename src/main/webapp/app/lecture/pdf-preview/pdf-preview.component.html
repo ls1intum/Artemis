@@ -50,22 +50,22 @@
                                 </h5>
                                 <div class="mt-3 mb-3">
                                     @for (page of Array.from(selectedPages()); track page.slideId) {
-                                        @if (page.hidden) {
+                                        @if (hiddenPages()[page.slideId]) {
                                             <div class="page-info mb-2">
                                                 <strong>Page {{ page.pageIndex }}:</strong>
                                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                                @if (page.hidden.isSame(forever)) {
+                                                @if (hiddenPages()[page.slideId]!.date!.isSame(forever)) {
                                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                                 } @else {
                                                     <span>
-                                                        {{ page.hidden.format('MMM D, YYYY - HH:mm') }}
+                                                        {{ hiddenPages()[page.slideId]!.date!.format('MMM D, YYYY - HH:mm') }}
                                                     </span>
                                                 }
-                                                @if (page.exerciseId) {
+                                                @if (hiddenPages()[page.slideId]!.exerciseId) {
                                                     <span
                                                         class="text-primary"
                                                         jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
-                                                        [translateValues]="{ param: page.exerciseId }"
+                                                        [translateValues]="{ param: hiddenPages()[page.slideId]!.exerciseId }"
                                                     ></span>
                                                 }
                                             </div>
@@ -126,13 +126,15 @@
         } @else if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
                 [course]="course()"
+                [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
+                [hiddenPages]="hiddenPages()"
                 [isAttachmentUnit]="!!attachmentUnit()"
                 [attachmentUnit]="attachmentUnit()"
                 [updatedSelectedPages]="selectedPages()"
                 [orderedPages]="pageOrder()"
                 (selectedPagesOutput)="selectedPages.set($event)"
-                (hiddenPagesOutput)="hidePages($event)"
+                (hiddenPagesOutput)="hiddenPages.set($event)"
                 (pageOrderOutput)="pageOrder.set($event)"
             />
         } @else {
