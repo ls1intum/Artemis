@@ -20,18 +20,26 @@ import { catchError, map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import {
+    faChalkboardUser,
     faChartBar,
+    faChartColumn,
     faChevronLeft,
     faChevronRight,
     faCircleNotch,
     faClipboard,
+    faComments,
+    faDoorOpen,
+    faEllipsis,
     faEye,
     faFlag,
+    faGraduationCap,
     faListAlt,
+    faNetworkWired,
+    faPersonChalkboard,
     faQuestion,
     faSync,
     faTable,
@@ -53,6 +61,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { LtiService } from 'app/shared/service/lti.service';
@@ -65,10 +74,11 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
-import { CourseActionItem, CourseSidebarComponent } from './course-sidebar/course-sidebar.component';
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from './course-sidebar/course-sidebar.component';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -97,12 +107,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private route = inject(ActivatedRoute);
     private teamService = inject(TeamService);
     private websocketService = inject(WebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
     private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private metisConversationService = inject(MetisConversationService);
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
     private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private ltiService = inject(LtiService);
 
@@ -129,7 +141,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isTestServer = false;
     pageTitle: string;
     hasSidebar = false;
+    sidebarItems: SidebarItem[];
+    courseActionItems: CourseActionItem[];
     isNotManagementView: boolean;
+    canUnenroll: boolean;
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
@@ -176,7 +191,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     facSidebar = facSidebar;
+    faEllipsis = faEllipsis;
     faQuestion = faQuestion;
+    faChartColumn = faChartColumn;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -233,6 +250,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
+        this.sidebarItems = this.getSidebarItems();
+        this.courseActionItems = this.getCourseActionItems();
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
@@ -267,6 +286,199 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
+    getCourseActionItems(): CourseActionItem[] {
+        const courseActionItems = [];
+        this.canUnenroll = this.canStudentUnenroll() && !this.course?.isAtLeastTutor;
+        if (this.canUnenroll) {
+            const unenrollItem: CourseActionItem = this.getUnenrollItem();
+            courseActionItems.push(unenrollItem);
+        }
+        return courseActionItems;
+    }
+
+    getSidebarItems(): SidebarItem[] {
+        const sidebarItems = this.getDefaultItems();
+        if (this.course?.lectures) {
+            const lecturesItem: SidebarItem = this.getLecturesItems();
+            sidebarItems.splice(-1, 0, lecturesItem);
+        }
+        if (this.course?.exams && this.hasVisibleExams()) {
+            const examsItem: SidebarItem = this.getExamsItems();
+            sidebarItems.unshift(examsItem);
+        }
+        if (isCommunicationEnabled(this.course)) {
+            const communicationsItem: SidebarItem = this.getCommunicationsItems();
+            sidebarItems.push(communicationsItem);
+        }
+
+        if (this.hasTutorialGroups()) {
+            const tutorialGroupsItem: SidebarItem = this.getTutorialGroupsItems();
+            sidebarItems.push(tutorialGroupsItem);
+        }
+
+        if (this.atlasEnabled && this.hasCompetencies()) {
+            const competenciesItem: SidebarItem = this.getCompetenciesItems();
+            sidebarItems.push(competenciesItem);
+            if (this.course?.learningPathsEnabled) {
+                const learningPathItem: SidebarItem = this.getLearningPathItems();
+                sidebarItems.push(learningPathItem);
+            }
+        }
+
+        if (this.course?.faqEnabled) {
+            const faqItem: SidebarItem = this.getFaqItem();
+            sidebarItems.push(faqItem);
+        }
+
+        return sidebarItems;
+    }
+
+    getUnenrollItem() {
+        const unenrollItem: CourseActionItem = {
+            title: 'Unenroll',
+            icon: faDoorOpen,
+            translation: 'artemisApp.courseOverview.exerciseList.details.unenrollmentButton',
+            action: () => this.openUnenrollStudentModal(),
+        };
+        return unenrollItem;
+    }
+
+    getLecturesItems() {
+        const lecturesItem: SidebarItem = {
+            routerLink: 'lectures',
+            icon: faChalkboardUser,
+            title: 'Lectures',
+            translation: 'artemisApp.courseOverview.menu.lectures',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return lecturesItem;
+    }
+
+    getExamsItems() {
+        const examsItem: SidebarItem = {
+            routerLink: 'exams',
+            icon: faGraduationCap,
+            title: 'Exams',
+            testId: 'exam-tab',
+            translation: 'artemisApp.courseOverview.menu.exams',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return examsItem;
+    }
+
+    getCommunicationsItems() {
+        const communicationsItem: SidebarItem = {
+            routerLink: 'communication',
+            icon: faComments,
+            title: 'Communication',
+            translation: 'artemisApp.courseOverview.menu.communication',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return communicationsItem;
+    }
+
+    getTutorialGroupsItems() {
+        const tutorialGroupsItem: SidebarItem = {
+            routerLink: 'tutorial-groups',
+            icon: faPersonChalkboard,
+            title: 'Tutorials',
+            translation: 'artemisApp.courseOverview.menu.tutorialGroups',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.TutorialGroups,
+            hidden: false,
+        };
+        return tutorialGroupsItem;
+    }
+
+    getCompetenciesItems() {
+        const competenciesItem: SidebarItem = {
+            routerLink: 'competencies',
+            icon: faFlag,
+            title: 'Competencies',
+            translation: 'artemisApp.courseOverview.menu.competencies',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return competenciesItem;
+    }
+
+    getLearningPathItems() {
+        const learningPathItem: SidebarItem = {
+            routerLink: 'learning-path',
+            icon: faNetworkWired,
+            title: 'Learning Path',
+            translation: 'artemisApp.courseOverview.menu.learningPath',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.LearningPaths,
+            hidden: false,
+        };
+        return learningPathItem;
+    }
+
+    getDashboardItems() {
+        const dashboardItem: SidebarItem = {
+            routerLink: 'dashboard',
+            icon: faChartBar,
+            title: 'Dashboard',
+            translation: 'artemisApp.courseOverview.menu.dashboard',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
+            hidden: false,
+        };
+        return dashboardItem;
+    }
+
+    getFaqItem() {
+        const faqItem: SidebarItem = {
+            routerLink: 'faq',
+            icon: faQuestion,
+            title: 'FAQs',
+            translation: 'artemisApp.courseOverview.menu.faq',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return faqItem;
+    }
+
+    getDefaultItems() {
+        const items = [];
+        if (this.course?.studentCourseAnalyticsDashboardEnabled) {
+            const dashboardItem: SidebarItem = this.getDashboardItems();
+            items.push(dashboardItem);
+        }
+        const exercisesItem: SidebarItem = {
+            routerLink: 'exercises',
+            icon: faListAlt,
+            title: 'Exercises',
+            translation: 'artemisApp.courseOverview.menu.exercises',
+            hidden: false,
+        };
+
+        const statisticsItem: SidebarItem = {
+            routerLink: 'statistics',
+            icon: faChartColumn,
+            title: 'Statistics',
+            translation: 'artemisApp.courseOverview.menu.statistics',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            guidedTour: true,
+            hidden: false,
+        };
+
+        return items.concat([exercisesItem, statisticsItem]);
+    }
+
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
@@ -295,10 +507,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    canStudentUnenroll(): boolean {
+        return !!this.course?.unenrollmentEnabled && dayjs().isBefore(this.course?.unenrollmentEndDate);
+    }
+
     courseActionItemClick(item?: CourseActionItem) {
         if (item?.action) {
             item.action(item);
         }
+    }
+
+    openUnenrollStudentModal() {
+        const modalRef = this.modalService.open(CourseUnenrollmentModalComponent, { size: 'xl' });
+        modalRef.componentInstance.course = this.course;
     }
 
     ngAfterViewInit() {
@@ -527,6 +748,34 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             });
         }
+    }
+
+    /**
+     * check if there is at least one exam which should be shown
+     */
+    hasVisibleExams(): boolean {
+        if (this.course?.exams) {
+            for (const exam of this.course.exams) {
+                if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if the course has any competencies or prerequisites
+     */
+    hasCompetencies(): boolean {
+        return !!(this.course?.numberOfCompetencies || this.course?.numberOfPrerequisites);
+    }
+
+    /**
+     * Check if the course has a tutorial groups
+     */
+    hasTutorialGroups(): boolean {
+        return !!this.course?.numberOfTutorialGroups;
     }
 
     /**
