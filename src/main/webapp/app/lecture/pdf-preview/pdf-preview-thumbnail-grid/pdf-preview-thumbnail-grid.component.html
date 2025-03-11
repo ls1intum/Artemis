@@ -17,7 +17,7 @@
                 <fa-icon [icon]="faGripLines" />
             </div>
 
-            @if (hiddenPages()[page.slideId]) {
+            @if (isPageHidden(page.slideId)) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
@@ -36,9 +36,9 @@
                 <button
                     [id]="'hide-show-button-' + page.slideId"
                     style="'opacity' : activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
-                    [class]="'hide-show-btn btn ' + (hiddenPages()[page.slideId] ? 'btn-success' : 'btn-secondary')"
+                    [class]="'hide-show-btn btn ' + (isPageHidden(page.slideId) ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page.slideId, $event)"
-                    [ngbPopover]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox"
+                    [ngbPopover]="isPageHidden(page.slideId) ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
                     [autoClose]="'outside'"
                     placement="right auto"
@@ -46,7 +46,7 @@
                     (shown)="isPopoverOpen.set(true)"
                     (hidden)="this.hideActionButton(page.slideId); isPopoverOpen.set(false)"
                 >
-                    <fa-icon [icon]="hiddenPages()[page.slideId] ? faEye : faEyeSlash" />
+                    <fa-icon [icon]="isPageHidden(page.slideId) ? faEye : faEyeSlash" />
                 </button>
 
                 <ng-template #hidePageBox>
@@ -68,18 +68,18 @@
                             </h5>
                             <p>
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.date!.isSame(forever)) {
+                                @if (activeButtonPage()?.hidden?.isSame(forever)) {
                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                 } @else {
                                     <span>
-                                        {{ hiddenPages()[activeButtonPage()?.slideId!]?.date!.format('MMM D, YYYY - HH:mm') }}
+                                        {{ getHiddenDate(activeButtonPage()?.slideId!) }}
                                     </span>
                                 }
-                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.exerciseId) {
+                                @if (activeButtonPage()?.exerciseId) {
                                     <span
                                         class="text-primary"
                                         jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
-                                        [translateValues]="{ param: hiddenPages()![activeButtonPage()!.slideId!].exerciseId! }"
+                                        [translateValues]="{ param: activeButtonPage()!.exerciseId! }"
                                     ></span>
                                 }
                                 <br />

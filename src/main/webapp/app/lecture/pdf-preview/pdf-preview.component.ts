@@ -37,19 +37,8 @@ export interface OrderedPage {
     slideId: string;
     order: number;
     pageProxy?: PDFJS.PDFPageProxy;
-}
-
-export interface HiddenPage {
-    slideId: string;
-    date: dayjs.Dayjs;
-    exerciseId: number | null;
-}
-
-export interface HiddenPageMap {
-    [slideId: string]: {
-        date: dayjs.Dayjs;
-        exerciseId: number | null;
-    };
+    hidden?: dayjs.Dayjs | null; // Date when the page becomes hidden, null if not hidden
+    exerciseId?: number | null; // Associated exercise ID, if any
 }
 
 @Component({
@@ -94,10 +83,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     appendFile = signal<boolean>(false);
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<OrderedPage>>(new Set());
-    initialHiddenPages = signal<HiddenPageMap>({});
-    hiddenPages = signal<HiddenPageMap>({});
-    isSaving = signal<boolean>(false);
     pageOrder = signal<OrderedPage[]>([]);
+    initialPageOrder = signal<OrderedPage[]>([]);
+    isSaving = signal<boolean>(false);
 
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     pageOrderChanged = computed(() => {
@@ -152,28 +140,18 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const { slides } = data.attachmentUnit;
 
                 if (slides?.length > 0) {
-                    this.pageOrder.set(
-                        slides.map((slide: Slide, index: number) => ({
-                            pageIndex: slide.slideNumber,
-                            slideId: slide.id,
-                            order: index + 1,
-                        })),
-                    );
+                    const orderedPages = slides.map((slide: Slide, index: number) => ({
+                        pageIndex: slide.slideNumber,
+                        slideId: slide.id,
+                        order: index + 1,
+                        hidden: slide.hidden ? dayjs(slide.hidden) : null,
+                        exerciseId: slide.exercise?.id ?? null,
+                    }));
+
+                    this.pageOrder.set(orderedPages);
+                    this.initialPageOrder.set(JSON.parse(JSON.stringify(orderedPages)));
                 }
 
-                const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
-                    slides
-                        .filter((page: Slide) => page.hidden)
-                        .map((page: Slide) => [
-                            page.id,
-                            {
-                                date: dayjs(page.hidden),
-                                exerciseId: page.exercise?.id ?? null,
-                            },
-                        ]),
-                );
-                this.initialHiddenPages.set(hiddenPagesMap);
-                this.hiddenPages.set({ ...hiddenPagesMap });
                 this.attachmentUnitSub = this.attachmentUnitService
                     .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
                     .pipe(finalize(() => this.isPdfLoading.set(false)))
@@ -191,6 +169,21 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             } else {
                 this.isPdfLoading.set(false);
             }
+        });
+    }
+
+    ngOnDestroy() {
+        this.attachmentSub?.unsubscribe();
+        this.attachmentUnitSub?.unsubscribe();
+
+        if (this.currentPdfUrl()) {
+            URL.revokeObjectURL(this.currentPdfUrl()!);
+        }
+    }
+
+    constructor() {
+        effect(() => {
+            this.hiddenPagesChanged();
         });
     }
 
@@ -217,6 +210,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                         pageIndex: currentPageCount + i,
                         order: currentPageCount + i,
                         pageProxy: pageProxy,
+                        hidden: null,
+                        exerciseId: null,
                     });
                 }
 
@@ -239,21 +234,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy() {
-        this.attachmentSub?.unsubscribe();
-        this.attachmentUnitSub?.unsubscribe();
-
-        if (this.currentPdfUrl()) {
-            URL.revokeObjectURL(this.currentPdfUrl()!);
-        }
-    }
-
-    constructor() {
-        effect(() => {
-            this.hiddenPagesChanged();
-        });
-    }
-
     /**
      * Triggers the file input to select files.
      */
@@ -265,7 +245,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Checks if any of the currently selected pages are in the hidden pages collection.
      */
     hasHiddenSelectedPages(): boolean {
-        return Array.from(this.selectedPages()).some((page) => this.hiddenPages()[page.slideId]);
+        return Array.from(this.selectedPages()).some((selectedPage) => {
+            const page = this.pageOrder().find((p) => p.slideId === selectedPage.slideId);
+            return page && page.hidden;
+        });
     }
 
     /**
@@ -273,23 +256,42 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      *
      * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
      */
-    hiddenPagesChanged() {
-        const initial = this.initialHiddenPages()!;
-        const current = this.hiddenPages()!;
-        return JSON.stringify(initial) !== JSON.stringify(current);
+    hiddenPagesChanged(): boolean {
+        const initial = this.initialPageOrder();
+        const current = this.pageOrder();
+
+        if (initial.length !== current.length) return true;
+
+        for (let i = 0; i < initial.length; i++) {
+            const initialPage = initial[i];
+            const currentPage = current.find((p) => p.slideId === initialPage.slideId);
+
+            if (!currentPage) return true;
+
+            const initialHidden = initialPage.hidden ? (typeof initialPage.hidden.format === 'function' ? initialPage.hidden.format() : JSON.stringify(initialPage.hidden)) : null;
+
+            const currentHidden = currentPage.hidden ? (typeof currentPage.hidden.format === 'function' ? currentPage.hidden.format() : JSON.stringify(currentPage.hidden)) : null;
+
+            if (initialHidden !== currentHidden) return true;
+            if (initialPage.exerciseId !== currentPage.exerciseId) return true;
+        }
+
+        return false;
     }
 
     /**
-     * Retrieves an array of hidden page objects directly from the hiddenPages signal.
+     * Retrieves an array of hidden page objects from the pageOrder.
      *
-     * @returns An array of HiddenPage objects representing the hidden pages.
+     * @returns An array of hidden page objects representing the hidden pages.
      */
-    getHiddenPages(): HiddenPage[] {
-        return Object.entries(this.hiddenPages()).map(([slideId, pageData]) => ({
-            slideId,
-            date: pageData.date,
-            exerciseId: pageData.exerciseId ?? null,
-        }));
+    getHiddenPages(): Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }> {
+        return this.pageOrder()
+            .filter((page) => page.hidden)
+            .map((page) => ({
+                slideId: page.slideId,
+                date: page.hidden!,
+                exerciseId: page.exerciseId ?? null,
+            }));
     }
 
     /**
@@ -333,15 +335,24 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 formData.append('file', pdfFile);
                 formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
                 formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
-                formData.append('pageOrder', JSON.stringify(this.pageOrder()));
+                formData.append(
+                    'pageOrder',
+                    JSON.stringify(
+                        this.pageOrder().map((page) => ({
+                            pageIndex: page.pageIndex,
+                            slideId: page.slideId,
+                            order: page.order,
+                        })),
+                    ),
+                );
 
-                const finalHiddenPages = this.getHiddenPages();
+                const hiddenPages = this.getHiddenPages();
 
-                if (finalHiddenPages.length > 0) {
+                if (hiddenPages.length > 0) {
                     const studentVersionFile = await this.createPdf(pdfName, true);
 
                     formData.append('studentVersion', studentVersionFile);
-                    formData.append('hiddenPages', JSON.stringify(finalHiddenPages));
+                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
                 }
 
                 this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
@@ -391,20 +402,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes selected slides by removing them from the page order and hidden pages.
+     * Deletes selected slides by removing them from the page order.
      */
     deleteSelectedSlides() {
         try {
             this.isPdfLoading.set(true);
             const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
 
-            this.pageOrder.update((pages) => pages.filter((page) => !slideIds.includes(page.slideId)).map((page, index) => ({ ...page, pageIndex: index + 1, order: index + 1 })));
-
-            this.hiddenPages.update((current) => {
-                const updated = { ...current };
-                slideIds.forEach((id) => delete updated[id]);
-                return updated;
-            });
+            this.pageOrder.update((pages) =>
+                pages
+                    .filter((page) => !slideIds.includes(page.slideId))
+                    .map((page, index) => ({
+                        ...page,
+                        pageIndex: index + 1,
+                        order: index + 1,
+                    })),
+            );
 
             this.isFileChanged.set(true);
             this.selectedPages.set(new Set());
@@ -419,20 +432,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Creates a PDF file from page proxies in the pageOrder array
      * @param fileName Name to use for the generated PDF file
-     * @returns A Promise that resolves to a File object containing the generated PDF
-     */
-    /**
-     * Creates a PDF file from page proxies in the pageOrder array
-     * @param fileName Name to use for the generated PDF file
      * @param studentVersion Whether to create a student version (excluding hidden pages)
      * @returns A Promise that resolves to a File object containing the generated PDF
      */
     async createPdf(fileName: string, studentVersion: boolean = false): Promise<File> {
         const pdfDoc = await PDFDocument.create();
-        const hiddenPagesMap = this.hiddenPages();
 
         for (const page of this.pageOrder()) {
-            if (studentVersion && hiddenPagesMap[page.slideId]) continue;
+            if (studentVersion && page.hidden) continue;
 
             const viewport = page.pageProxy!.getViewport({ scale: 1.0 });
             const { width, height } = viewport;
@@ -484,7 +491,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const mergedPdfBytes = await existingPdfDoc.save();
             this.currentPdfBlob.set(new Blob([mergedPdfBytes], { type: 'application/pdf' }));
 
-            this.selectedPages()!.clear();
+            this.selectedPages.set(new Set());
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
@@ -499,28 +506,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Toggles visibility of selected pages by updating the hiddenPages map
+     * Toggles visibility of selected pages by updating the hidden property
      */
     toggleVisibility(action: VisibilityAction, selectedPages: Set<OrderedPage>): void {
-        this.hiddenPages.update((currentMap) => {
-            const updatedMap = { ...currentMap };
+        this.pageOrder.update((currentOrder) => {
+            const updatedOrder = [...currentOrder];
 
-            selectedPages.forEach((page) => {
-                if (action === 'hide') {
-                    if (!updatedMap[page.slideId]) {
-                        updatedMap[page.slideId] = {
-                            date: dayjs(),
-                            exerciseId: null,
-                        };
-                    }
-                } else {
-                    if (page.slideId in updatedMap) {
-                        delete updatedMap[page.slideId];
+            updatedOrder.forEach((page) => {
+                if (Array.from(selectedPages).some((selectedPage) => selectedPage.slideId === page.slideId)) {
+                    if (action === 'hide') {
+                        page.hidden = dayjs();
+                        page.exerciseId = null;
+                    } else {
+                        page.hidden = null;
+                        page.exerciseId = null;
                     }
                 }
             });
 
-            return updatedMap;
+            return updatedOrder;
         });
 
         this.selectedPages.set(new Set());
@@ -539,22 +543,28 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Handles the reception of one or more hidden pages from the date box component
-     * @param hiddenPageData A single HiddenPage or an array of HiddenPages
+     * @param hiddenPageData A single hidden page or an array of hidden pages
      */
-    onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
+    onHiddenPagesReceived(
+        hiddenPageData: { slideId: string; date: dayjs.Dayjs; exerciseId: number | null } | Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }>,
+    ): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
 
-        this.hiddenPages.update((currentMap) => {
-            const updatedMap = { ...currentMap };
+        this.pageOrder.update((currentOrder) => {
+            const updatedOrder = [...currentOrder];
 
-            pages.forEach((page) => {
-                updatedMap[page.slideId] = {
-                    date: page.date,
-                    exerciseId: page.exerciseId,
-                };
-            });
+            for (const hiddenPage of pages) {
+                const pageIndex = updatedOrder.findIndex((p) => p.slideId === hiddenPage.slideId);
+                if (pageIndex >= 0) {
+                    updatedOrder[pageIndex] = {
+                        ...updatedOrder[pageIndex],
+                        hidden: hiddenPage.date,
+                        exerciseId: hiddenPage.exerciseId,
+                    };
+                }
+            }
 
-            return updatedMap;
+            return updatedOrder;
         });
 
         this.selectedPages.set(new Set());

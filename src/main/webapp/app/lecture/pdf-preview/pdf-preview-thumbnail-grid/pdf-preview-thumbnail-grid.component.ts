@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -31,7 +31,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     course = input<Course>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
-    hiddenPages = input<HiddenPageMap>({});
     isAttachmentUnit = input<boolean>();
     updatedSelectedPages = input<Set<OrderedPage>>(new Set());
     attachmentUnit = input<AttachmentUnit>();
@@ -50,7 +49,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     // Outputs
     selectedPagesOutput = output<Set<OrderedPage>>();
-    hiddenPagesOutput = output<HiddenPageMap>();
+    hiddenPagesOutput = output<Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }>>();
     pageOrderOutput = output<OrderedPage[]>();
 
     // Injected services
@@ -70,9 +69,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         }
     }
 
-    /**
-     * Renders PDF pages using the page proxies from the ordered pages
-     */
     /**
      * Renders PDF pages using the page proxies from the ordered pages
      */
@@ -140,7 +136,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Toggles the visibility state of a page by adding or removing it from the hidden pages set.
+     * Toggles the visibility state of a page by showing the date selection
      * @param slideId The ID of the slide whose visibility is being toggled.
      * @param event The event object triggered by the click action.
      */
@@ -183,18 +179,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * Updates hidden pages information based on data from the date box component
      * @param hiddenPageData Data for one or more hidden pages
      */
-    onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
-        const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
-        const updatedHiddenPages = { ...this.hiddenPages() };
-
-        pages.forEach((page) => {
-            updatedHiddenPages[page.slideId] = {
-                date: dayjs(page.date),
-                exerciseId: page.exerciseId ?? null,
-            };
-        });
-
-        this.hiddenPagesOutput.emit(updatedHiddenPages);
+    onHiddenPagesReceived(hiddenPageData: Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }>): void {
+        this.hiddenPagesOutput.emit(hiddenPageData);
     }
 
     /**
@@ -210,14 +196,19 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Removes a page from the hidden pages and hides the associated action button.
-     *
+     * Sets a page to be visible (removes hidden status)
      * @param slideId - The ID of the slide to be made visible.
      */
     showPage(slideId: string): void {
-        const updatedHiddenPages = { ...this.hiddenPages() };
-        delete updatedHiddenPages[slideId];
-        this.hiddenPagesOutput.emit(updatedHiddenPages);
+        const unhidePageData = [
+            {
+                slideId,
+                date: null as unknown as dayjs.Dayjs, // Signal to parent to remove hidden status
+                exerciseId: null,
+            },
+        ];
+
+        this.hiddenPagesOutput.emit(unhidePageData);
         this.hideActionButton(slideId);
     }
 
@@ -374,6 +365,32 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     getPageOrder(slideId: string): number {
         const index = this.orderedPages().findIndex((page) => page.slideId === slideId);
         return index !== -1 ? index + 1 : -1;
+    }
+
+    /**
+     * Checks if a page is hidden
+     * @param slideId The ID of the slide
+     * @returns True if the page is hidden
+     */
+    isPageHidden(slideId: string): boolean {
+        const page = this.findPageBySlideId(slideId);
+        return page?.hidden != null;
+    }
+
+    /**
+     * Gets the hidden date for a page
+     * @param slideId The ID of the slide
+     * @returns The formatted hidden date or undefined
+     */
+    getHiddenDate(slideId: string): string | undefined {
+        const page = this.findPageBySlideId(slideId);
+        if (page?.hidden) {
+            if (page.hidden.isSame(this.forever)) {
+                return 'Forever';
+            }
+            return page.hidden.format('MMM D, YYYY - HH:mm');
+        }
+        return undefined;
     }
 
     /**

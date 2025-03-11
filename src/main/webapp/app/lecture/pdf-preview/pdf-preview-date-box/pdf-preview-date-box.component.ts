@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
-import { HiddenPage, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -41,7 +41,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     selectedExercise = signal<Exercise | null>(null);
 
     // Outputs
-    hiddenPagesOutput = output<HiddenPage[]>();
+    hiddenPagesOutput = output<Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }>>();
     selectionCancelledOutput = output<boolean>();
 
     // Computed properties
@@ -176,7 +176,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const hiddenPages: HiddenPage[] = this.selectedPages().map((page) => ({
+        const hiddenPages = this.selectedPages().map((page) => ({
             slideId: page.slideId,
             date: selectedDate,
             exerciseId: this.selectedExercise()?.id ?? null,
