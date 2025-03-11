@@ -83,8 +83,11 @@ openApi {
     // How long to wait (in seconds) for the server to start
     waitTimeInSeconds.set(180)
     customBootRun {
-        classpath.from(sourceSets.test.runtimeClasspath)
-        args.set(["--spring.profiles.active=test,artemis,core,atlas,scheduling,athena, apollon, iris,aeolus,theia,lti,dev", "--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
+        classpath = files(sourceSets.main.runtimeClasspath) + fileTree("src/test/resources/config") {
+            include "**/*.yml", "**/*.yaml", "**/*.properties"
+        }
+        systemProperties.put("spring.config.additional-location", "classpath:/config/")
+        args.set(["--spring.profiles.active=test,artemis,core,atlas,scheduling,athena, apollon, iris,aeolus,theia,lti,dev,openapi", "--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
                   "--artemis.iris.secret-token=token", "--spring.jpa.database=h2" ])
 
     }
@@ -394,6 +397,9 @@ dependencies {
 
 
     implementation "com.google.errorprone:error_prone_annotations:2.36.0"
+    // needed for OpenAPI generation
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }

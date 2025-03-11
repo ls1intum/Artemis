@@ -190,6 +190,11 @@ spring:
         jpa:
             repositories:
                 bootstrap-mode: deferred
+    web:
+      resources:
+        static-locations: classpath:/META-INF/resources/, file:build/resources/main/static/
+    mvc:
+      static-path-pattern: /static/**
     jpa:
         open-in-view: false
         show-sql: false
@@ -276,11 +281,15 @@ hazelcast:
             enabled: false
 
 springdoc:
-    api-docs:
-        path: /api-docs
-    swagger-ui:
-        path: /api.html
-        operationsSorter: method
+  api-docs:
+    path: /api-docs
+    # Having these endpoints publicly available is a security risk, so we disable them by default
+    enabled: false
+  packages-to-scan: de.tum.cit.aet.artemis.core.web.admin
+  swagger-ui:
+    path: api.html
+    operationsSorter: method
+    enabled: false
 
 server:
     servlet:

@@ -72,7 +72,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     public void customize(WebServerFactory server) {
         setMimeMappings(server);
         // When running in an IDE or with ./gradlew bootRun, set location of the static web assets.
-        setLocationForStaticAssets(server);
+        // setLocationForStaticAssets(server);
     }
 
     private void setCachingHttpHeaders(ServletContext server) {

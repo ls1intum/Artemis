@@ -62,6 +62,12 @@ server:
     port: 8080
     url: https://artemislocal.ase.in.tum.de
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
 # ===================================================================
 # JHipster specific properties
 #
