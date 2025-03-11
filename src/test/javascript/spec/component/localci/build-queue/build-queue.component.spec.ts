@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
+import { FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -254,7 +255,7 @@ describe('BuildQueueComponent', () => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
 
         TestBed.configureTestingModule({
-            imports: [BuildQueueComponent],
+            imports: [BuildQueueComponent, FinishedBuildsFilterModalComponent],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },

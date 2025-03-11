@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of, throwError } from 'rxjs';
-import { BuildJob } from 'app/entities/programming/build-job.model';
+import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
@@ -15,7 +15,9 @@ import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SortingOrder } from 'app/shared/table/pageable-table';
+import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -32,6 +34,7 @@ describe('BuildAgentDetailsComponent', () => {
         getBuildAgentDetails: jest.fn().mockReturnValue(of([])),
         pauseBuildAgent: jest.fn().mockReturnValue(of({})),
         resumeBuildAgent: jest.fn().mockReturnValue(of({})),
+        getFinishedBuildJobs: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -100,8 +103,74 @@ describe('BuildAgentDetailsComponent', () => {
         status: BuildAgentStatus.ACTIVE,
     };
 
+    const request = {
+        page: 1,
+        pageSize: 50,
+        sortedColumn: 'buildSubmissionDate',
+        sortingOrder: SortingOrder.DESCENDING,
+        searchTerm: '',
+    };
+
+    const filterOptionsEmpty = {
+        buildAgentAddress: 'localhost:8080',
+        buildDurationFilterLowerBound: undefined,
+        buildDurationFilterUpperBound: undefined,
+        buildStartDateFilterFrom: undefined,
+        buildStartDateFilterTo: undefined,
+        status: undefined,
+        appliedFilters: new Map<string, boolean>(),
+        areDatesValid: true,
+        areDurationFiltersValid: true,
+        numberOfAppliedFilters: 0,
+    };
+
+    const mockFinishedJobs: FinishedBuildJob[] = [
+        {
+            id: '5',
+            name: 'Build Job 5',
+            buildAgentAddress: 'agent5',
+            participationId: 105,
+            courseId: 10,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 1,
+            repositoryName: 'repo5',
+            repositoryType: 'USER',
+            triggeredByPushTo: TriggeredByPushTo.USER,
+            buildSubmissionDate: dayjs('2023-01-05'),
+            buildStartDate: dayjs('2023-01-05'),
+            buildCompletionDate: dayjs('2023-01-05'),
+            buildDuration: undefined,
+            commitHash: 'abc127',
+        },
+        {
+            id: '6',
+            name: 'Build Job 6',
+            buildAgentAddress: 'agent6',
+            participationId: 106,
+            courseId: 10,
+            exerciseId: 100,
+            retryCount: 0,
+            priority: 0,
+            repositoryName: 'repo6',
+            repositoryType: 'USER',
+            triggeredByPushTo: TriggeredByPushTo.USER,
+            buildStartDate: dayjs('2023-01-06'),
+            buildCompletionDate: dayjs('2023-01-06'),
+            buildDuration: undefined,
+            commitHash: 'abc128',
+        },
+    ];
+
+    const mockFinishedJobsResponse: HttpResponse<FinishedBuildJob[]> = new HttpResponse({ body: mockFinishedJobs });
+
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
+    const mockBuildQueueService = {
+        getFinishedBuildJobs: jest.fn(),
+        cancelBuildJob: jest.fn(),
+        cancelAllRunningBuildJobsForAgent: jest.fn(),
+    };
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -111,6 +180,7 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ key: 'ABC123' }) },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                { provide: BuildQueueService, useValue: mockBuildQueueService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
@@ -123,6 +193,10 @@ describe('BuildAgentDetailsComponent', () => {
         activatedRoute.setParameters({ agentName: mockBuildAgent.buildAgent?.name });
         alertService = TestBed.inject(AlertService);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
+
+        mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
+        mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
     }));
 
     beforeEach(() => {
@@ -157,21 +231,6 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnDestroy();
 
         expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
-    });
-
-    it('should set recent build jobs duration', () => {
-        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgent));
-
-        component.ngOnInit();
-
-        for (const recentBuildJob of component.buildAgent.recentBuildJobs || []) {
-            const { jobTimingInfo } = recentBuildJob;
-            const { buildCompletionDate, buildStartDate, buildDuration } = jobTimingInfo || {};
-            if (buildDuration && jobTimingInfo) {
-                expect(buildDuration).toEqual(buildCompletionDate!.diff(buildStartDate!, 'milliseconds') / 1000);
-            }
-        }
     });
 
     it('should cancel a build job', () => {
@@ -253,5 +312,32 @@ describe('BuildAgentDetailsComponent', () => {
             type: AlertType.DANGER,
             message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
         });
+    });
+
+    it('should trigger refresh on search term change', async () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+
+        component.ngOnInit();
+        component.searchTerm = 'search';
+        component.triggerLoadFinishedJobs();
+
+        const requestWithSearchTerm = { ...request };
+        requestWithSearchTerm.searchTerm = 'search';
+        // Wait for the debounce time to pass
+        await new Promise((resolve) => setTimeout(resolve, 110));
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenNthCalledWith(2, requestWithSearchTerm, filterOptionsEmpty);
+    });
+
+    it('should set build job duration', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        component.ngOnInit();
+
+        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
+        for (const finishedBuildJob of component.finishedBuildJobs) {
+            const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
+            if (buildDuration && buildCompletionDate && buildStartDate) {
+                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
+            }
+        }
     });
 });
