@@ -33,9 +33,7 @@ class MockActivatedRoute {
 const mockActivatedRoute = new MockActivatedRoute({
     parent: new MockActivatedRoute({
         parent: new MockActivatedRoute({
-            parent: new MockActivatedRoute({
-                params: of({ courseId: '1' }),
-            }),
+            params: of({ courseId: '1' }),
         }),
     }),
 });

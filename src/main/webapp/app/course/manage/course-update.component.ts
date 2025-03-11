@@ -42,6 +42,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -68,6 +69,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         KeyValuePipe,
         ArtemisTranslatePipe,
         RemoveKeysPipe,
+        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],
