@@ -6,6 +6,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
 
 export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
@@ -13,12 +15,18 @@ export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 export class ScienceSettingsService {
     private userSettingsService = inject(UserSettingsService);
     private localStorageService = inject(LocalStorageService);
+    private profileService = inject(ProfileService);
 
     private currentScienceSettingsSubject = new ReplaySubject<ScienceSetting[]>(1);
 
     constructor() {
-        this.initialize();
-        this.listenForScienceSettingsChanges();
+        // we need to handle the subscription here as this service is initialized independently of any component
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo.activeProfiles.includes(PROFILE_ATLAS)) {
+                this.initialize();
+                this.listenForScienceSettingsChanges();
+            }
+        });
     }
 
     initialize() {
@@ -45,16 +53,22 @@ export class ScienceSettingsService {
     }
 
     public refreshScienceSettings(): void {
-        this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS).subscribe({
-            next: (res: HttpResponse<Setting[]>) => {
-                const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
-                    res.body!,
-                    UserSettingsCategory.SCIENCE_SETTINGS,
-                ) as ScienceSetting[];
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (!profileInfo.activeProfiles.includes(PROFILE_ATLAS)) {
+                return;
+            }
 
-                this.storeScienceSettings(currentScienceSettings);
-                this.currentScienceSettingsSubject.next(currentScienceSettings);
-            },
+            this.userSettingsService.loadSettings(UserSettingsCategory.SCIENCE_SETTINGS).subscribe({
+                next: (res: HttpResponse<Setting[]>) => {
+                    const currentScienceSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                        res.body!,
+                        UserSettingsCategory.SCIENCE_SETTINGS,
+                    ) as ScienceSetting[];
+
+                    this.storeScienceSettings(currentScienceSettings);
+                    this.currentScienceSettingsSubject.next(currentScienceSettings);
+                },
+            });
         });
     }
 
