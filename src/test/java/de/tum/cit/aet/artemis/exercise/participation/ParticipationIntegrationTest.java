@@ -410,7 +410,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
-        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, userLogin, repo, practiceMode);
         repo.resetLocalRepo();
     }
 

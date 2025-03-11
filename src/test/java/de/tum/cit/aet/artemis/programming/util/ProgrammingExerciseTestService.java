@@ -355,8 +355,8 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo.configureRepos("studentTeamRepo", "studentTeamOriginRepo");
 
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
-        // setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
-        // setupRepositoryMocksParticipant(exercise, userPrefix + TEAM_SHORT_NAME, studentTeamRepo);
+        setupRepositoryMocksParticipant(exercise, userPrefix + STUDENT_LOGIN, studentRepo);
+        setupRepositoryMocksParticipant(exercise, userPrefix + TEAM_SHORT_NAME, studentTeamRepo);
     }
 
     public void tearDown() throws Exception {
@@ -377,12 +377,12 @@ public class ProgrammingExerciseTestService {
 
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
-        // final var projectKey = exercise.getProjectKey();
-        // final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        // final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        // final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
-        // final var auxRepoName = exercise.generateRepositoryName("auxrepo");
-        // setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
+        final var projectKey = exercise.getProjectKey();
+        final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
+        final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
+        final var auxRepoName = exercise.generateRepositoryName("auxrepo");
+        setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
     }
 
     /**
@@ -1976,7 +1976,7 @@ public class ProgrammingExerciseTestService {
             for (var examUser : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
-                setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
+                // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
         }
