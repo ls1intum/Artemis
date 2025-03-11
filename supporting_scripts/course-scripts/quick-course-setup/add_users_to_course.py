@@ -24,7 +24,7 @@ def add_students_to_groups_of_course(session: Session, course_id: str, server_ur
         add_students_to_course(session, course_id, user_details["groups"][0], user_details["login"], server_url)
 
 def add_students_to_course(session: Session, course_id: str, user_group: str, user_name: str, server_url: str) -> None:
-    url = f"{server_url}/courses/{course_id}/{user_group}/{user_name}"
+    url = f"{server_url}/core/courses/{course_id}/{user_group}/{user_name}"
     response = session.post(url)
     if response.status_code == 200:
         logging.info(f"Added user {user_name} to group {user_group}")
