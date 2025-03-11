@@ -113,27 +113,6 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Tries to retrieve a programming exercise participation for the given programming exercise, username
-     *
-     * @param exercise        the programming exercise for which to find a participation.
-     * @param username        of the user to which the participation belongs.
-     * @param withSubmissions true if the participation should be loaded with its submissions.
-     * @return the participation for the given programming exercise and user.
-     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
-     */
-    @NotNull
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginOrThrow(ProgrammingExercise exercise, String username,
-            boolean withSubmissions) {
-
-        if (withSubmissions) {
-            return studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
-        }
-        else {
-            return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
-        }
-    }
-
-    /**
      * Tries to retrieve a student participation for the given team exercise and user
      *
      * @param exercise the exercise for which to find a participation.
@@ -143,36 +122,6 @@ public class ProgrammingExerciseParticipationService {
      */
     public Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseAndUser(ProgrammingExercise exercise, User user) {
         return studentParticipationRepository.findTeamParticipationByExerciseIdAndStudentId(exercise.getId(), user.getId());
-    }
-
-    /**
-     * Tries to retrieve a student participation for the given exercise and username and test run flag.
-     *
-     * @param exercise        the exercise for which to find a participation.
-     * @param username        of the user to which the participation belongs.
-     * @param isTestRun       true if the participation is a test run participation.
-     * @param withSubmissions true if the participation should be loaded with its submissions.
-     * @return the participation for the given exercise and user.
-     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
-     */
-    @NotNull
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(ProgrammingExercise exercise, String username,
-            boolean isTestRun, boolean withSubmissions) {
-
-        Optional<ProgrammingExerciseStudentParticipation> participationOptional;
-
-        if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-        }
-        else {
-            participationOptional = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exercise.getId(), username, isTestRun);
-        }
-
-        if (participationOptional.isEmpty()) {
-            throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
-        }
-
-        return participationOptional.get();
     }
 
     /**
