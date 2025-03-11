@@ -95,7 +95,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         // example route looks like: /courses/1/competencies/10
-        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         const competencyIdParams$ = this.activatedRoute.params;
         const dashboardFeatureToggleActive$ = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard);
 

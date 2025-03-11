@@ -79,7 +79,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
 
     ngOnInit(): void {
-        this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {
+        this.paramSubscription = this.route?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
 
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
