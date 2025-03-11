@@ -67,10 +67,12 @@
                     </a>
                 </div>
             }
+            {{ exercise.assessmentType }}
             @if (
                 submission &&
                 exercise.type === ExerciseType.PROGRAMMING &&
-                (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL)
+                (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                    (exercise.assessmentType === AssessmentType.AUTOMATIC && exercise.allowComplaintsForAutomaticAssessments === true))
             ) {
                 <div>
                     <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise, submission)" class="btn btn-primary btn-sm mb-1">
