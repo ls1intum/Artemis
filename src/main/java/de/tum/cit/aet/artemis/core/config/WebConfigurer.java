@@ -72,7 +72,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     public void customize(WebServerFactory server) {
         setMimeMappings(server);
         // When running in an IDE or with ./gradlew bootRun, set location of the static web assets.
-        // setLocationForStaticAssets(server);
+        setLocationForStaticAssets(server);
     }
 
     private void setCachingHttpHeaders(ServletContext server) {
@@ -96,12 +96,11 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
             String prefixPath = resolvePathPrefix();
+            // when running using gradlew the prefix path starts with / which is illegal on Windows
             if (System.getProperty("os.name").toLowerCase().contains("win") && prefixPath.startsWith("/")) {
                 prefixPath = prefixPath.substring(1);
             }
-            log.error("prefixPath: {}", prefixPath);
             Path root = Path.of(prefixPath + "build/resources/main/static/");
-            log.error("root: {}", root);
             if (Files.exists(root) && Files.isDirectory(root)) {
                 servletWebServer.setDocumentRoot(root.toFile());
             }

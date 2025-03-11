@@ -67,6 +67,7 @@ springdoc:
     enabled: true
   swagger-ui:
     enabled: true
+  pre-loading-enabled: true
 
 # ===================================================================
 # JHipster specific properties
