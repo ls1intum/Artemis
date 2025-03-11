@@ -253,7 +253,7 @@ public class ProgrammingExerciseExportImportResource {
             newExercise.setFeedbackSuggestionModule(null);
         }
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
                     () -> newExercise.setPreliminaryFeedbackModule(null));
         }
         catch (BadRequestAlertException e) {
