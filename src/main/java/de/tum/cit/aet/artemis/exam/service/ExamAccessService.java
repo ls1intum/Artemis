@@ -148,7 +148,7 @@ public class ExamAccessService {
     private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser) {
         StudentExam studentExam;
 
-        if (this.examDateService.isExamOver(exam)) {
+        if (exam.getEndDate().isBefore(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
         }
 
