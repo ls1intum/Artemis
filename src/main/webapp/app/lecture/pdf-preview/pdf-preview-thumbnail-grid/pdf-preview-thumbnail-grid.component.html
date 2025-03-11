@@ -103,7 +103,7 @@
         <jhi-pdf-preview-enlarged-canvas-component
             class="enlarged-canvas"
             [pdfContainer]="pdfContainer"
-            [totalPages]="totalPagesArray().size"
+            [totalPages]="orderedPages().length"
             [originalCanvas]="originalCanvas()"
             [initialPage]="initialPageNumber()"
             (isEnlargedViewOutput)="isEnlargedView.set($event)"

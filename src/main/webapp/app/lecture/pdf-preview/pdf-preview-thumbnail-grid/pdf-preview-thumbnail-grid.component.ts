@@ -39,7 +39,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     // Signals
     isEnlargedView = signal<boolean>(false);
-    totalPagesArray = signal<Set<number>>(new Set());
     loadedPages = signal<Set<number>>(new Set());
     selectedPages = signal<Set<OrderedPage>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
@@ -50,7 +49,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     isDragging = signal<boolean>(false);
 
     // Outputs
-    totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<OrderedPage>>();
     hiddenPagesOutput = output<HiddenPageMap>();
     pageOrderOutput = output<OrderedPage[]>();
@@ -109,8 +107,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                     }
                 }
             }
-
-            this.totalPagesOutput.emit(this.totalPagesArray().size);
         } catch (error) {
             onError(this.alertService, error);
         }
