@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -40,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
@@ -51,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -64,6 +68,9 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
 
     private final String testRepoBaseUrl = "/api/programming/auxiliary-repository/";
 
@@ -79,7 +86,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     private final LocalRepository localAuxiliaryRepo = new LocalRepository(defaultBranch);
 
-    private GitUtilService.MockFileRepositoryUri auxRepoUri;
+    private VcsRepositoryUri auxRepoUri;
 
     @BeforeEach
     void setup() throws Exception {
@@ -103,12 +110,13 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         // add the auxiliary repository
         auxiliaryRepositoryRepository.deleteAll();
-        auxRepoUri = new GitUtilService.MockFileRepositoryUri(localAuxiliaryRepo.localRepoFile);
-        programmingExercise.setTestRepositoryUri(auxRepoUri.toString());
+        auxRepoUri = new VcsRepositoryUri(
+                localVCBaseUrl + "/git/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-auxiliary.git");
+        // programmingExercise.setTestRepositoryUri(auxRepoUri.toString());
         var newAuxiliaryRepo = new AuxiliaryRepository();
         newAuxiliaryRepo.setName("AuxiliaryRepo");
         newAuxiliaryRepo.setRepositoryUri(auxRepoUri.toString());
-        newAuxiliaryRepo.setCheckoutDirectory(localAuxiliaryRepo.localRepoFile.toPath().toString());
+        newAuxiliaryRepo.setCheckoutDirectory("assignment/src");
         newAuxiliaryRepo.setExercise(programmingExercise);
         programmingExercise.setAuxiliaryRepositories(List.of(newAuxiliaryRepo));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -433,7 +441,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "remoteFile";
 
-        // Create a commit for the local and the remote repository
+        // Create a commit for the local
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/commit", null, HttpStatus.OK, null);
         try (var remoteRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.originRepoFile.toPath(), null)) {
 

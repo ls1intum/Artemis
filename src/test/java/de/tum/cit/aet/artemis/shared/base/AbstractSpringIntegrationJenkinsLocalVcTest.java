@@ -61,10 +61,13 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI,
         PROFILE_AEOLUS, PROFILE_APOLLON })
-@TestPropertySource(properties = { "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors", "info.guided-tour.course-group-students=artemis-artemistutorial-students",
-        "info.guided-tour.course-group-editors=artemis-artemistutorial-editors", "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors",
-        "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_jenkins", "artemis.version-control.ssh-port=1234" })
+@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152",
+        "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors",
+        "info.guided-tour.course-group-students=artemis-artemistutorial-students", "info.guided-tour.course-group-editors=artemis-artemistutorial-editors",
+        "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false",
+        "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_jenkins", "artemis.version-control.ssh-port=1235",
+        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
