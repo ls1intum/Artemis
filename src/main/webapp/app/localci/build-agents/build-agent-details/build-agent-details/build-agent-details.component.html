@@ -26,24 +26,29 @@
             </div>
             <div class="mb-4">
                 <div>
-                    <span class="bold">Status:</span>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.status"></span>
+                    <span class="bold">:</span>
                     <fa-icon [icon]="buildAgent.status === 'PAUSED' ? faPauseCircle : faCircleCheck" />
                     <span>{{ buildAgent.status }}</span>
                 </div>
                 <div>
-                    <span class="bold">Start Date:</span>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.startDate"></span>
+                    <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.startDate | artemisDate }}</span>
                 </div>
                 <div>
-                    <span class="bold">Latest Build Date:</span>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.lastBuildDate"></span>
+                    <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.lastBuildDate | artemisDate }}</span>
                 </div>
                 <div>
-                    <span class="bold">Average Build Duration (Seconds):</span>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.averageBuildDuration"></span>
+                    <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.averageBuildDuration }}</span>
                 </div>
                 <div>
-                    <span class="bold">Git Revision:</span>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>
+                    <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
                 </div>
             </div>
