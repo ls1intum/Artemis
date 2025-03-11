@@ -104,6 +104,6 @@ describe('ExercisePreliminaryFeedbackOptionsComponent', () => {
         event.target.checked = false;
         component.togglePreliminaryFeedback(event);
 
-        expect(component.exercise.preliminaryFeedbackModule).toBeUndefined();
+        expect(component.exercise().preliminaryFeedbackModule).toBeUndefined();
     });
 });
