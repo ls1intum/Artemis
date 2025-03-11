@@ -30,8 +30,6 @@ import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 
-type VisibilityAction = 'hide' | 'show';
-
 export interface OrderedPage {
     pageIndex: number;
     slideId: string;
@@ -430,6 +428,41 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Adds a selected PDF file at the end of the current PDF document.
+     * @param event - The event containing the file input.
+     */
+    async mergePDF(event: Event): Promise<void> {
+        const file = (event.target as HTMLInputElement).files?.[0];
+
+        this.isPdfLoading.set(true);
+        try {
+            const newPdfBytes = await file!.arrayBuffer();
+            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
+            const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
+            const newPdfDoc = await PDFDocument.load(newPdfBytes);
+
+            const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
+            copiedPages.forEach((page) => existingPdfDoc.addPage(page));
+
+            this.isFileChanged.set(true);
+            const mergedPdfBytes = await existingPdfDoc.save();
+            this.currentPdfBlob.set(new Blob([mergedPdfBytes], { type: 'application/pdf' }));
+
+            this.selectedPages.set(new Set());
+
+            const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
+            this.currentPdfUrl.set(objectUrl);
+            this.appendFile.set(false);
+            this.loadPdf(objectUrl, true);
+        } catch (error) {
+            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
+        } finally {
+            this.isPdfLoading.set(false);
+            this.fileInput()!.nativeElement.value = '';
+        }
+    }
+
+    /**
      * Creates a PDF file from page proxies in the pageOrder array
      * @param fileName Name to use for the generated PDF file
      * @param studentVersion Whether to create a student version (excluding hidden pages)
@@ -471,56 +504,18 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Adds a selected PDF file at the end of the current PDF document.
-     * @param event - The event containing the file input.
+     * Shows previously hidden pages by setting their hidden property to null
+     * and clearing any associated exercise IDs
+     * @param selectedPages The set of pages to be made visible
      */
-    async mergePDF(event: Event): Promise<void> {
-        const file = (event.target as HTMLInputElement).files?.[0];
-
-        this.isPdfLoading.set(true);
-        try {
-            const newPdfBytes = await file!.arrayBuffer();
-            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
-            const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
-            const newPdfDoc = await PDFDocument.load(newPdfBytes);
-
-            const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
-            copiedPages.forEach((page) => existingPdfDoc.addPage(page));
-
-            this.isFileChanged.set(true);
-            const mergedPdfBytes = await existingPdfDoc.save();
-            this.currentPdfBlob.set(new Blob([mergedPdfBytes], { type: 'application/pdf' }));
-
-            this.selectedPages.set(new Set());
-
-            const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
-            this.currentPdfUrl.set(objectUrl);
-            this.appendFile.set(false);
-            this.loadPdf(objectUrl, true);
-        } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
-        } finally {
-            this.isPdfLoading.set(false);
-            this.fileInput()!.nativeElement.value = '';
-        }
-    }
-
-    /**
-     * Toggles visibility of selected pages by updating the hidden property
-     */
-    toggleVisibility(action: VisibilityAction, selectedPages: Set<OrderedPage>): void {
+    showPages(selectedPages: Set<OrderedPage>): void {
         this.pageOrder.update((currentOrder) => {
             const updatedOrder = [...currentOrder];
 
             updatedOrder.forEach((page) => {
                 if (Array.from(selectedPages).some((selectedPage) => selectedPage.slideId === page.slideId)) {
-                    if (action === 'hide') {
-                        page.hidden = dayjs();
-                        page.exerciseId = null;
-                    } else {
-                        page.hidden = null;
-                        page.exerciseId = null;
-                    }
+                    page.hidden = null;
+                    page.exerciseId = null;
                 }
             });
 
@@ -528,17 +523,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         this.selectedPages.set(new Set());
-    }
-
-    /**
-     * Navigates to the appropriate course management page based on context.
-     */
-    navigateToCourseManagement(): void {
-        if (this.attachment()) {
-            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-        } else {
-            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
-        }
     }
 
     /**
@@ -571,10 +555,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handles updated page order from the thumbnail grid component
-     * @param newOrder The updated page order
+     * Navigates to the appropriate course management page based on context.
      */
-    onPageOrderChanged(newOrder: OrderedPage[]): void {
-        this.pageOrder.set(newOrder);
+    navigateToCourseManagement(): void {
+        if (this.attachment()) {
+            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+        } else {
+            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+        }
     }
 }

@@ -76,7 +76,7 @@
                                     <button class="btn btn-secondary" (click)="showPopover().close()">
                                         <span jhiTranslate="entity.action.cancel"></span>
                                     </button>
-                                    <button class="btn btn-primary" (click)="toggleVisibility('show', selectedPages()); showPopover().close()">
+                                    <button class="btn btn-primary" (click)="showPages(selectedPages()); showPopover().close()">
                                         <span jhiTranslate="entity.action.show"></span>
                                     </button>
                                 </div>
@@ -126,7 +126,6 @@
         } @else if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
                 [course]="course()"
-                [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
                 [isAttachmentUnit]="!!attachmentUnit()"
                 [attachmentUnit]="attachmentUnit()"
@@ -134,7 +133,7 @@
                 [orderedPages]="pageOrder()"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (hiddenPagesOutput)="onHiddenPagesReceived($event)"
-                (pageOrderOutput)="onPageOrderChanged($event)"
+                (pageOrderOutput)="pageOrder.set($event)"
             />
         } @else {
             <div class="empty-pdf-container">
