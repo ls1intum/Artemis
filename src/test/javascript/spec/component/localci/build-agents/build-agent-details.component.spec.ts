@@ -172,6 +172,7 @@ describe('BuildAgentDetailsComponent', () => {
     let modalService: NgbModal;
     const mockBuildQueueService = {
         getFinishedBuildJobs: jest.fn(),
+        getRunningBuildJobs: jest.fn(),
         cancelBuildJob: jest.fn(),
         cancelAllRunningBuildJobsForAgent: jest.fn(),
     };
@@ -200,9 +201,19 @@ describe('BuildAgentDetailsComponent', () => {
         alertService = TestBed.inject(AlertService);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
 
+        mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs1));
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
         mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+        mockWebsocketService.receive = jest.fn((topic: string) => {
+            if (topic === '/topic/admin/running-jobs') {
+                return of(mockRunningJobs1);
+            } else if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name) {
+                return of(mockBuildAgent);
+            } else {
+                return of([]);
+            }
+        });
     }));
 
     beforeEach(() => {
@@ -211,32 +222,32 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should load build agents on initialization', () => {
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgent));
 
         component.ngOnInit();
 
         expect(mockBuildAgentsService.getBuildAgentDetails).toHaveBeenCalled();
         expect(component.buildAgent).toEqual(mockBuildAgent);
+        expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalledWith(mockBuildAgent.buildAgent?.name);
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
     });
 
     it('should initialize websocket subscription on initialization', () => {
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgent));
-
         component.ngOnInit();
 
         expect(component.buildAgent).toEqual(mockBuildAgent);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
         expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
+        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/running-jobs');
+        expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/running-jobs');
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgent));
-
         component.ngOnInit();
 
         component.ngOnDestroy();
 
         expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
+        expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/running-jobs');
     });
 
     it('should cancel a build job', () => {

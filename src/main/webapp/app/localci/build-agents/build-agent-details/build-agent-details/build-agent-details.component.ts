@@ -70,12 +70,14 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     buildJobStatistics: BuildJobStatistics = new BuildJobStatistics();
     runningBuildJobs: BuildJob[] = [];
     agentName: string;
-    websocketSubscription: Subscription;
+    agentDetailsWebsocketSubscription: Subscription;
+    runningJobsWebsocketSubscription: Subscription;
     runningJobsSubscription: Subscription;
     agentDetailsSubscription: Subscription;
     buildDurationInterval: ReturnType<typeof setInterval>;
     paramSub: Subscription;
     channel: string;
+    readonly runningBuildJobsChannel = '/topic/admin/running-jobs';
 
     finishedBuildJobs: FinishedBuildJob[] = [];
 
@@ -137,7 +139,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.websocketService.unsubscribe(this.channel);
-        this.websocketSubscription?.unsubscribe();
+        this.websocketService.unsubscribe(this.runningBuildJobsChannel);
+        this.agentDetailsWebsocketSubscription?.unsubscribe();
+        this.runningJobsWebsocketSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
         this.runningJobsSubscription?.unsubscribe();
         clearInterval(this.buildDurationInterval);
@@ -149,11 +153,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      */
     initWebsocketSubscription() {
         this.websocketService.subscribe(this.channel);
-        this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgent) => {
+        this.agentDetailsWebsocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgent) => {
             this.updateBuildAgent(buildAgent);
         });
-        this.websocketService.subscribe(`/topic/admin/running-jobs`);
-        this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
+        this.websocketService.subscribe(this.runningBuildJobsChannel);
+        this.runningJobsWebsocketSubscription = this.websocketService.receive(this.runningBuildJobsChannel).subscribe((runningBuildJobs) => {
             const filteredBuildJobs = runningBuildJobs.filter((buildJob: BuildJob) => buildJob.buildAgent?.name === this.agentName);
             if (filteredBuildJobs.length > 0) {
                 this.runningBuildJobs = this.updateBuildJobDuration(filteredBuildJobs);
@@ -167,7 +171,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * This method is used to load the build agent details when the component is initialized. (Status and some stats, missing finishing build jobs)
      */
     load() {
-        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
+        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName).subscribe((runningBuildJobs) => {
             this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
         });
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
