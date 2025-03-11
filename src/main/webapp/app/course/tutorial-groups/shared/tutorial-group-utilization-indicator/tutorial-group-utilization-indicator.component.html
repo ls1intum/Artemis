@@ -11,7 +11,7 @@
     <!-- We can at least show the average attendance even if capacity is not defined-->
     <span>{{
         tutorialGroup().averageAttendance
-            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup()?.averageAttendance })
+            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup()?.averageAttendance ?? '' })
             : ''
     }}</span>
 }
