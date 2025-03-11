@@ -9,11 +9,14 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL, ProgrammingLanguage.EMPTY];
+const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
 interface DockerFlags {
     network?: string;
     env?: { [key: string]: string };
+    cpuCount?: number;
+    memory?: number;
+    memorySwap?: number;
 }
 
 @Component({
@@ -34,6 +37,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     envVars: [string, string][] = [];
     isNetworkDisabled = false;
+    cpuCount: number | undefined;
+    memory: number | undefined;
+    memorySwap: number | undefined;
     dockerFlags: DockerFlags = {};
 
     isAeolus = input.required<boolean>();
@@ -73,6 +79,16 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 if (!this.timeout) {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
                 }
+
+                if (!this.cpuCount) {
+                    this.cpuCount = profileInfo.defaultContainerCpuCount;
+                }
+                if (!this.memory) {
+                    this.memory = profileInfo.defaultContainerMemoryLimitInMB;
+                }
+                if (!this.memorySwap) {
+                    this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
+                }
             }
         });
 
@@ -84,6 +100,15 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     initDockerFlags() {
         this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
         this.isNetworkDisabled = this.dockerFlags.network === 'none';
+        if (this.dockerFlags.cpuCount) {
+            this.cpuCount = this.dockerFlags.cpuCount;
+        }
+        if (this.dockerFlags.memory) {
+            this.memory = this.dockerFlags.memory;
+        }
+        if (this.dockerFlags.memorySwap) {
+            this.memorySwap = this.dockerFlags.memorySwap;
+        }
         this.envVars = [];
         if (this.dockerFlags.env) {
             for (const key in this.dockerFlags.env) {
@@ -94,6 +119,21 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     onDisableNetworkAccessChange(event: any) {
         this.isNetworkDisabled = event.target.checked;
+        this.parseDockerFlagsToString();
+    }
+
+    onCpuCountChange(event: any) {
+        this.cpuCount = event.target.value;
+        this.parseDockerFlagsToString();
+    }
+
+    onMemoryChange(event: any) {
+        this.memory = event.target.value;
+        this.parseDockerFlagsToString();
+    }
+
+    onMemorySwapChange(event: any) {
+        this.memorySwap = event.target.value;
         this.parseDockerFlagsToString();
     }
 
@@ -129,7 +169,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 newEnv![key] = value;
             }
         });
-        this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv };
+        this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
 
