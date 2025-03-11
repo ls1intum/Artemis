@@ -24,6 +24,7 @@ import { CourseExercisePerformanceComponent } from './course-exercise-performanc
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -37,6 +38,7 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
         CourseExerciseLatenessComponent,
         CompetencyAccordionComponent,
         FeatureToggleHideDirective,
+        FeatureOverlayComponent,
     ],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
