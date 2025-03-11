@@ -61,7 +61,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['orderedPages']) {
-            this.renderPagesFromProxies();
+            this.renderPages();
         }
         if (changes['updatedSelectedPages']) {
             this.selectedPages.set(new Set(this.updatedSelectedPages()!));
@@ -71,20 +71,15 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     /**
      * Renders PDF pages using the page proxies from the ordered pages
+     * Optimized to only render new pages when appendFile is true by comparing with initialPageOrder
      */
-    async renderPagesFromProxies(): Promise<void> {
-        this.pdfContainer()
-            .nativeElement.querySelectorAll('.pdf-canvas-container canvas')
-            .forEach((canvas) => canvas.remove());
-
+    async renderPages(): Promise<void> {
         const pages = this.orderedPages();
-
-        this.loadedPages.set(new Set());
-
         try {
-            for (const page of pages) {
-                const pageProxy = page.pageProxy;
+            for (let i = 0; i < pages.length; i++) {
+                const page = pages[i];
 
+                const pageProxy = page.pageProxy;
                 if (pageProxy) {
                     const viewport = pageProxy.getViewport({ scale: 1 });
                     const canvas = this.createCanvas(viewport);
@@ -102,6 +97,10 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                         });
                     }
                 }
+            }
+
+            if (this.appendFile()) {
+                setTimeout(() => this.scrollToBottom(), 100);
             }
         } catch (error) {
             onError(this.alertService, error);

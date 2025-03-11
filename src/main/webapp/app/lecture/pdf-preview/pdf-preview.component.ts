@@ -258,8 +258,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
                 this.pageOrder.set(currentOrder);
             }
-
-            this.appendFile.set(false);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
@@ -408,25 +406,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const file = (event.target as HTMLInputElement).files?.[0];
 
         this.isPdfLoading.set(true);
+        this.appendFile.set(true);
         try {
             const newPdfBytes = await file!.arrayBuffer();
-            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
-            const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
-            const newPdfDoc = await PDFDocument.load(newPdfBytes);
-
-            const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
-            copiedPages.forEach((page) => existingPdfDoc.addPage(page));
-
-            this.isFileChanged.set(true);
-            const mergedPdfBytes = await existingPdfDoc.save();
-            this.currentPdfBlob.set(new Blob([mergedPdfBytes], { type: 'application/pdf' }));
+            this.currentPdfBlob.set(new Blob([newPdfBytes], { type: 'application/pdf' }));
+            const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
 
             this.selectedPages.set(new Set());
+            this.isFileChanged.set(true);
 
-            const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
-            this.appendFile.set(false);
-            this.loadPdf(objectUrl, true);
+            await this.loadPdf(objectUrl, true);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {
