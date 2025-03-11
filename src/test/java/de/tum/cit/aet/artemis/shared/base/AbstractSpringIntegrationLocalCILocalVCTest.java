@@ -108,9 +108,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
         "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}",
-        "artemis.version-control.build-agent-use-ssh=true", "info.contact=test@localhost", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_localci", "artemis.version-control.ssh-port=1235" })
+        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
