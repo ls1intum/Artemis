@@ -158,9 +158,7 @@ jobs:
       ref: ${{ inputs.docker_ref }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
-      tags: |
-        chore-refactor-workflows-test-multi-tag-step
-        ${{ inputs.docker_build_tag }}
+      tags: ${{ inputs.docker_build_tag }}
 
       # TODO: Push to Docker Hub (develop + tag)
 
