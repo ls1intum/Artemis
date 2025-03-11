@@ -105,7 +105,6 @@ configurations.configureEach {
     exclude group: "javax.xml.bind", module: "jaxb-api"
 
     exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-    exclude group: "junit", module: "junit"
     exclude group: "com.vaadin.external.google", module: "android-json"
     exclude group: "org.xmlunit", module: "xmlunit-core"
 
