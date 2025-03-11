@@ -13,7 +13,7 @@
             </div>
             <div class="d-flex-end text-end">
                 @if (attachmentUnit()) {
-                    @if (getHiddenPages().length > 0) {
+                    @if (hasHiddenPages()) {
                         <button
                             class="btn btn-success text-truncate"
                             aria-label="Show selected pages"

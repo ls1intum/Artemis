@@ -85,10 +85,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     initialPageOrder = signal<OrderedPage[]>([]);
     isSaving = signal<boolean>(false);
 
+    // Computed properties
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     pageOrderChanged = computed(() => {
         if (this.pageOrder().length === 0) return false;
         return this.pageOrder().some((page, index) => page.pageIndex !== index + 1);
+    });
+    hasHiddenPages = computed(() => this.pageOrder().some((page) => page.hidden !== null));
+    hasHiddenSelectedPages = computed(() => {
+        const pageMap = new Map(this.pageOrder().map((p) => [p.slideId, p]));
+        return Array.from(this.selectedPages()).some((page) => pageMap.get(page.slideId)?.hidden);
     });
 
     // Injected services
@@ -240,16 +246,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if any of the currently selected pages are in the hidden pages collection.
-     */
-    hasHiddenSelectedPages(): boolean {
-        return Array.from(this.selectedPages()).some((selectedPage) => {
-            const page = this.pageOrder().find((p) => p.slideId === selectedPage.slideId);
-            return page && page.hidden;
-        });
-    }
-
-    /**
      * Compares the initial and current hidden pages to determine if there have been any changes.
      *
      * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
@@ -260,36 +256,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         if (initial.length !== current.length) return true;
 
-        for (let i = 0; i < initial.length; i++) {
-            const initialPage = initial[i];
+        return initial.some((initialPage) => {
             const currentPage = current.find((p) => p.slideId === initialPage.slideId);
-
             if (!currentPage) return true;
 
-            const initialHidden = initialPage.hidden ? (typeof initialPage.hidden.format === 'function' ? initialPage.hidden.format() : JSON.stringify(initialPage.hidden)) : null;
+            const initialHiddenDate = initialPage.hidden?.format?.() || null;
+            const currentHiddenDate = currentPage.hidden?.format?.() || null;
 
-            const currentHidden = currentPage.hidden ? (typeof currentPage.hidden.format === 'function' ? currentPage.hidden.format() : JSON.stringify(currentPage.hidden)) : null;
-
-            if (initialHidden !== currentHidden) return true;
-            if (initialPage.exerciseId !== currentPage.exerciseId) return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Retrieves an array of hidden page objects from the pageOrder.
-     *
-     * @returns An array of hidden page objects representing the hidden pages.
-     */
-    getHiddenPages(): Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }> {
-        return this.pageOrder()
-            .filter((page) => page.hidden)
-            .map((page) => ({
-                slideId: page.slideId,
-                date: page.hidden!,
-                exerciseId: page.exerciseId ?? null,
-            }));
+            return initialHiddenDate !== currentHiddenDate || initialPage.exerciseId !== currentPage.exerciseId;
+        });
     }
 
     /**
@@ -333,24 +308,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 formData.append('file', pdfFile);
                 formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
                 formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
-                formData.append(
-                    'pageOrder',
-                    JSON.stringify(
-                        this.pageOrder().map((page) => ({
-                            pageIndex: page.pageIndex,
-                            slideId: page.slideId,
-                            order: page.order,
-                        })),
-                    ),
-                );
 
-                const hiddenPages = this.getHiddenPages();
+                const pageOrderForAPI = this.pageOrder().map((page) => ({
+                    pageIndex: page.pageIndex,
+                    slideId: page.slideId,
+                    order: page.order,
+                    hidden: page.hidden ? page.hidden.format() : null,
+                    exerciseId: page.exerciseId,
+                }));
 
-                if (hiddenPages.length > 0) {
+                formData.append('pageOrder', JSON.stringify(pageOrderForAPI));
+
+                const hasHiddenPages = this.pageOrder().some((page) => page.hidden);
+
+                if (hasHiddenPages) {
                     const studentVersionFile = await this.createPdf(pdfName, true);
-
                     formData.append('studentVersion', studentVersionFile);
-                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
                 }
 
                 this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
