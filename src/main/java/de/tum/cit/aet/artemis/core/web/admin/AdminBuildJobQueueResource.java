@@ -64,14 +64,18 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * Returns the running build jobs.
+     * Returns the running build jobs, optionally filtered by agent name.
      *
+     * @param agentName the name of the agent (optional)
      * @return the running build jobs
      */
     @GetMapping("running-jobs")
-    public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobs() {
-        log.debug("REST request to get the running build jobs");
+    public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobs(@RequestParam(required = false) String agentName) {
+        log.debug("REST request to get the running build jobs for agent {}", agentName);
         List<BuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
+        if (agentName != null && !agentName.isEmpty()) {
+            runningBuildJobs.removeIf(buildJobQueueItem -> !buildJobQueueItem.buildAgent().name().equals(agentName));
+        }
         return ResponseEntity.ok(runningBuildJobs);
     }
 

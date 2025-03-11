@@ -71,7 +71,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     runningBuildJobs: BuildJob[] = [];
     agentName: string;
     websocketSubscription: Subscription;
-    restSubscription: Subscription;
+    runningJobsSubscription: Subscription;
+    agentDetailsSubscription: Subscription;
+    buildDurationInterval: ReturnType<typeof setInterval>;
     paramSub: Subscription;
     channel: string;
 
@@ -106,6 +108,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.queryParams.subscribe((params) => {
             this.agentName = params['agentName'];
             this.channel = `/topic/admin/build-agent/${this.agentName}`;
+            this.buildDurationInterval = setInterval(() => {
+                this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
+            }, 1000); // 1 second
             this.load();
             this.initWebsocketSubscription();
             this.searchSubscription = this.search
@@ -133,7 +138,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.websocketService.unsubscribe(this.channel);
         this.websocketSubscription?.unsubscribe();
-        this.restSubscription?.unsubscribe();
+        this.agentDetailsSubscription?.unsubscribe();
+        this.runningJobsSubscription?.unsubscribe();
+        clearInterval(this.buildDurationInterval);
+        this.paramSub?.unsubscribe();
     }
 
     /**
@@ -144,13 +152,25 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgent) => {
             this.updateBuildAgent(buildAgent);
         });
+        this.websocketService.subscribe(`/topic/admin/running-jobs`);
+        this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
+            const filteredBuildJobs = runningBuildJobs.filter((buildJob: BuildJob) => buildJob.buildAgent?.name === this.agentName);
+            if (filteredBuildJobs.length > 0) {
+                this.runningBuildJobs = this.updateBuildJobDuration(filteredBuildJobs);
+            } else {
+                this.runningBuildJobs = [];
+            }
+        });
     }
 
     /**
      * This method is used to load the build agent details when the component is initialized. (Status and some stats, missing finishing build jobs)
      */
     load() {
-        this.restSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
+        this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
+            this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+        });
+        this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
             this.updateBuildAgent(buildAgent);
             this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent.buildAgent?.memberAddress);
             this.loadFinishedBuildJobs();
@@ -323,5 +343,23 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.page = pageNumber;
             this.loadFinishedBuildJobs();
         }
+    }
+
+    /**
+     * Update the build jobs duration
+     * @param buildJobs The list of build jobs
+     * @returns The updated list of build jobs with the duration
+     */
+    updateBuildJobDuration(buildJobs: BuildJob[]): BuildJob[] {
+        // iterate over all build jobs and calculate the duration
+        return buildJobs.map((buildJob) => {
+            if (buildJob.jobTimingInfo && buildJob.jobTimingInfo.buildStartDate) {
+                const start = dayjs(buildJob.jobTimingInfo.buildStartDate);
+                const now = dayjs();
+                buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
+            }
+            // This is necessary to update the view when the build job duration is updated
+            return { ...buildJob };
+        });
     }
 }

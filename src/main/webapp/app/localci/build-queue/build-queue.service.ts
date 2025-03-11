@@ -40,10 +40,12 @@ export class BuildQueueService {
     }
 
     /**
-     * Get all running build jobs
+     * Get all running build jobs, optionally filtered by agent name
+     * @param agentName the name of the agent (optional)
      */
-    getRunningBuildJobs(): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running-jobs`);
+    getRunningBuildJobs(agentName?: string): Observable<BuildJob[]> {
+        const params: { agentName?: string } = agentName ? { agentName } : {};
+        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running-jobs`, { params });
     }
 
     /**
