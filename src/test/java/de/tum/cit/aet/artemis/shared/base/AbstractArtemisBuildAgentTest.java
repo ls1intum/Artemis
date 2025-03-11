@@ -183,7 +183,7 @@ public abstract class AbstractArtemisBuildAgentTest {
                 "https://artemis.tum.de/git/project/project-assignmentDummySlug.git", "https://artemis.tum.de/git/project/project-testDummySlug.git",
                 "https://artemis.tum.de/git/project/project-solutionDummySlug.git", new String[] {}, new String[] {});
 
-        DockerRunConfig dockerRunConfig = new DockerRunConfig(true, List.of("dummy-env", "dummy-env-value"));
+        DockerRunConfig dockerRunConfig = new DockerRunConfig(true, List.of("dummy-env", "dummy-env-value"), 0, 0, 0);
         BuildConfig buildConfig = new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main",
                 ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", dockerRunConfig);
