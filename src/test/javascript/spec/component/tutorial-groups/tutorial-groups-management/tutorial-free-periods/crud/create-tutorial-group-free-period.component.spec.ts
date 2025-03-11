@@ -43,8 +43,8 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
         activeModal = TestBed.inject(NgbActiveModal);
         fixture = TestBed.createComponent(CreateTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
-        fixture.componentRef.setInput('tutorialGroupConfigurationId', configurationId);
-        fixture.componentRef.setInput('course', course);
+        component.tutorialGroupConfigurationId = configurationId;
+        component.course = course;
         component.initialize();
         tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
         fixture.detectChanges();

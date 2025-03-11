@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -29,14 +29,16 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
     isLoading: boolean;
 
-    tutorialGroup = input.required<TutorialGroup>();
+    @Input()
+    tutorialGroup: TutorialGroup;
 
-    course = input.required<Course>();
+    @Input()
+    course: Course;
 
     isInitialized = false;
 
     initialize() {
-        if (!this.course() || !this.tutorialGroup()) {
+        if (!this.course || !this.tutorialGroup) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -54,7 +56,7 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
         this.isLoading = true;
 
         this.tutorialGroupSessionService
-            .create(this.course().id!, this.tutorialGroup().id!, this.tutorialGroupSessionToCreate)
+            .create(this.course.id!, this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

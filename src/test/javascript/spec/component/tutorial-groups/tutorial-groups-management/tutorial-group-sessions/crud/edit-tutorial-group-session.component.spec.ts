@@ -52,9 +52,9 @@ describe('EditTutorialGroupSessionComponent', () => {
         sessionService = TestBed.inject(TutorialGroupSessionService);
         exampleSession = generateExampleTutorialGroupSession({});
         exampleTutorialGroup = generateExampleTutorialGroup({});
-        fixture.componentRef.setInput('course', course);
-        fixture.componentRef.setInput('tutorialGroupSession', exampleSession);
-        fixture.componentRef.setInput('tutorialGroup', exampleTutorialGroup);
+        component.course = course;
+        component.tutorialGroupSession = exampleSession;
+        component.tutorialGroup = exampleTutorialGroup;
         component.initialize();
         fixture.detectChanges();
     });

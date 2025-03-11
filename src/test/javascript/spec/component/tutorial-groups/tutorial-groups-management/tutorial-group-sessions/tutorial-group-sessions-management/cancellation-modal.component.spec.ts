@@ -30,9 +30,9 @@ describe('CancellationModalComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CancellationModalComponent);
                 component = fixture.componentInstance;
-                fixture.componentRef.setInput('course', course);
-                fixture.componentRef.setInput('tutorialGroupId', tutorialGroupId);
-                fixture.componentRef.setInput('tutorialGroupSession', tutorialGroupSession);
+                component.course = course;
+                component.tutorialGroupId = tutorialGroupId;
+                component.tutorialGroupSession = tutorialGroupSession;
 
                 tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
                 modal = TestBed.inject(NgbActiveModal);
@@ -72,7 +72,7 @@ describe('CancellationModalComponent', () => {
 
         component!.reasonControl!.setValue('National Holiday');
         runOnPushChangeDetection(fixture);
-        component.tutorialGroupSession().status = TutorialGroupSessionStatus.CANCELLED;
+        component.tutorialGroupSession.status = TutorialGroupSessionStatus.CANCELLED;
         // click button with id cancel-activate-button
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');
         button.click();

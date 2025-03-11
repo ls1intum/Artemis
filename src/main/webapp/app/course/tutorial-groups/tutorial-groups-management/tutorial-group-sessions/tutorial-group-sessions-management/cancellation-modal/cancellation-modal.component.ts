@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -29,11 +29,14 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
     form: FormGroup;
 
-    course = input.required<Course>();
+    @Input()
+    course: Course;
 
-    tutorialGroupId = input.required<number>();
+    @Input()
+    tutorialGroupId: number;
 
-    tutorialGroupSession = input.required<TutorialGroupSession>();
+    @Input()
+    tutorialGroupSession: TutorialGroupSession;
 
     ngOnInit(): void {
         this.initializeForm();
@@ -57,11 +60,11 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
         if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
             return '';
         } else {
-            return tutorialGroupSession.start.tz(this.course().timeZone).format('LLLL') + ' - ' + tutorialGroupSession.end.tz(this.course().timeZone).format('LT');
+            return tutorialGroupSession.start.tz(this.course.timeZone).format('LLLL') + ' - ' + tutorialGroupSession.end.tz(this.course.timeZone).format('LT');
         }
     }
     cancelOrActivate(): void {
-        if (this.tutorialGroupSession().status === TutorialGroupSessionStatus.ACTIVE) {
+        if (this.tutorialGroupSession.status === TutorialGroupSessionStatus.ACTIVE) {
             this.cancelSession();
         } else {
             this.activateSession();
@@ -70,7 +73,7 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     cancelSession(): void {
         this.tutorialGroupSessionService
-            .cancel(this.course().id!, this.tutorialGroupId(), this.tutorialGroupSession().id!, this.reasonControl?.value)
+            .cancel(this.course.id!, this.tutorialGroupId, this.tutorialGroupSession.id!, this.reasonControl?.value)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
@@ -85,7 +88,7 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     activateSession(): void {
         this.tutorialGroupSessionService
-            .activate(this.course().id!, this.tutorialGroupId(), this.tutorialGroupSession().id!)
+            .activate(this.course.id!, this.tutorialGroupId, this.tutorialGroupSession.id!)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
