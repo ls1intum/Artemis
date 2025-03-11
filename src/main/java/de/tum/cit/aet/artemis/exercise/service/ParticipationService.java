@@ -174,7 +174,6 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            // common for all exercises
             optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
             if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
                 // In case there is already a practice participation, set it to inactive
