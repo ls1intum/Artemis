@@ -294,62 +294,71 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the existing attachment file or creates a student version of the attachment with hidden files.
+     * Uses the page proxies from pageOrder to generate the PDF.
      */
     async updateAttachmentWithFile(): Promise<void> {
         this.isSaving.set(true);
-        const pdfFileName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
-        const pdfFile = new File([this.currentPdfBlob()!], `${pdfFileName}.pdf`, { type: 'application/pdf' });
 
-        if (pdfFile.size > MAX_FILE_SIZE) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
-            return;
-        }
+        try {
+            const pdfName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
+            const pdfFile = await this.createPdf(pdfName);
 
-        if (this.attachment()) {
-            this.attachmentToBeEdited.set(this.attachment());
-            this.attachmentToBeEdited()!.version!++;
-            this.attachmentToBeEdited()!.uploadDate = dayjs();
-
-            this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
-                next: () => {
-                    this.isSaving.set(false);
-                    this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.navigateToCourseManagement();
-                },
-                error: (error) => {
-                    this.isSaving.set(false);
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                },
-            });
-        } else if (this.attachmentUnit()) {
-            this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
-            this.attachmentToBeEdited()!.uploadDate = dayjs();
-
-            const formData = new FormData();
-            formData.append('file', pdfFile);
-            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
-            formData.append('pageOrder', JSON.stringify(this.pageOrder()));
-
-            const finalHiddenPages = this.getHiddenPages();
-
-            if (finalHiddenPages.length > 0) {
-                const pdfFileWithHiddenPages = await this.createStudentVersionOfAttachment(finalHiddenPages);
-                formData.append('studentVersion', pdfFileWithHiddenPages!);
-                formData.append('hiddenPages', JSON.stringify(finalHiddenPages));
+            if (pdfFile.size > MAX_FILE_SIZE) {
+                this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
+                this.isSaving.set(false);
+                return;
             }
 
-            this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
-                next: () => {
-                    this.isSaving.set(false);
-                    this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.navigateToCourseManagement();
-                },
-                error: (error) => {
-                    this.isSaving.set(false);
-                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                },
-            });
+            if (this.attachment()) {
+                this.attachmentToBeEdited.set(this.attachment());
+                this.attachmentToBeEdited()!.version!++;
+                this.attachmentToBeEdited()!.uploadDate = dayjs();
+
+                this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
+                    next: () => {
+                        this.isSaving.set(false);
+                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                        this.navigateToCourseManagement();
+                    },
+                    error: (error) => {
+                        this.isSaving.set(false);
+                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                    },
+                });
+            } else if (this.attachmentUnit()) {
+                this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
+                this.attachmentToBeEdited()!.uploadDate = dayjs();
+
+                const formData = new FormData();
+                formData.append('file', pdfFile);
+                formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
+                formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+                formData.append('pageOrder', JSON.stringify(this.pageOrder()));
+
+                const finalHiddenPages = this.getHiddenPages();
+
+                if (finalHiddenPages.length > 0) {
+                    const studentVersionFile = await this.createPdf(pdfName, true);
+
+                    formData.append('studentVersion', studentVersionFile);
+                    formData.append('hiddenPages', JSON.stringify(finalHiddenPages));
+                }
+
+                this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+                    next: () => {
+                        this.isSaving.set(false);
+                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                        this.navigateToCourseManagement();
+                    },
+                    error: (error) => {
+                        this.isSaving.set(false);
+                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                    },
+                });
+            }
+        } catch (error) {
+            this.isSaving.set(false);
+            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
         }
     }
 
@@ -408,34 +417,50 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Creates a student version of the current PDF attachment by removing specified pages.
-     *
-     * @param hiddenPages - An array of hidden pages data
-     * @returns A promise that resolves to a new `File` object representing the modified PDF, or undefined if an error occurs.
+     * Creates a PDF file from page proxies in the pageOrder array
+     * @param fileName Name to use for the generated PDF file
+     * @returns A Promise that resolves to a File object containing the generated PDF
      */
-    async createStudentVersionOfAttachment(hiddenPages: HiddenPage[]) {
-        try {
-            const fileName = this.attachmentUnit()!.attachment!.name;
-            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
-            const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
+    /**
+     * Creates a PDF file from page proxies in the pageOrder array
+     * @param fileName Name to use for the generated PDF file
+     * @param studentVersion Whether to create a student version (excluding hidden pages)
+     * @returns A Promise that resolves to a File object containing the generated PDF
+     */
+    async createPdf(fileName: string, studentVersion: boolean = false): Promise<File> {
+        const pdfDoc = await PDFDocument.create();
+        const hiddenPagesMap = this.hiddenPages();
 
-            const pagesToDelete = hiddenPages
-                .map(({ slideId }) => {
-                    const page = this.pageOrder().find((p) => p.slideId === slideId);
-                    return page ? page.pageIndex - 1 : -1; // PDF page indices are 0-based
-                })
-                .filter((index) => index >= 0)
-                .sort((a, b) => b - a);
+        for (const page of this.pageOrder()) {
+            if (studentVersion && hiddenPagesMap[page.slideId]) continue;
 
-            pagesToDelete.forEach((pageIndex) => {
-                hiddenPdfDoc.removePage(pageIndex);
+            const viewport = page.pageProxy!.getViewport({ scale: 1.0 });
+            const { width, height } = viewport;
+
+            const newPage = pdfDoc.addPage([width, height]);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext('2d')!;
+
+            await page.pageProxy!.render({
+                canvasContext: context,
+                viewport: viewport,
+            }).promise;
+
+            const pngImage = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
+
+            newPage.drawImage(pngImage, {
+                x: 0,
+                y: 0,
+                width: width,
+                height: height,
             });
-
-            const pdfBytes = await hiddenPdfDoc.save();
-            return new File([pdfBytes], `${fileName}.pdf`, { type: 'application/pdf' });
-        } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         }
+
+        const pdfBytes = await pdfDoc.save();
+        return new File([pdfBytes], `${fileName}.pdf`, { type: 'application/pdf' });
     }
 
     /**
