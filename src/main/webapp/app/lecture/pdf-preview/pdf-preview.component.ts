@@ -28,6 +28,8 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
 import { ButtonType } from 'app/shared/components/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import * as PDFJS from 'pdfjs-dist';
+import 'pdfjs-dist/build/pdf.worker';
 
 type VisibilityAction = 'hide' | 'show';
 
@@ -137,7 +139,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     .subscribe({
                         next: (blob: Blob) => {
                             this.currentPdfBlob.set(blob);
-                            this.currentPdfUrl.set(URL.createObjectURL(blob));
+                            const url = URL.createObjectURL(blob);
+                            this.currentPdfUrl.set(url);
+                            this.loadPdf(url, false);
                         },
                         error: (error: HttpErrorResponse) => {
                             onError(this.alertService, error);
@@ -176,7 +180,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     .subscribe({
                         next: (blob: Blob) => {
                             this.currentPdfBlob.set(blob);
-                            this.currentPdfUrl.set(URL.createObjectURL(blob));
+                            const url = URL.createObjectURL(blob);
+                            this.currentPdfUrl.set(url);
+                            this.loadPdf(url, false);
                         },
                         error: (error: HttpErrorResponse) => {
                             onError(this.alertService, error);
@@ -186,6 +192,49 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.isPdfLoading.set(false);
             }
         });
+    }
+
+    /**
+     * Loads a PDF from a provided URL and creates/updates page order.
+     * @param fileUrl The URL of the file to load.
+     * @param append Whether to append the new pages to existing ones.
+     */
+    async loadPdf(fileUrl: string, append: boolean = false): Promise<void> {
+        this.isPdfLoading.set(true);
+        try {
+            const loadingTask = PDFJS.getDocument(fileUrl);
+            const pdf = await loadingTask.promise;
+            this.totalPages.set(pdf.numPages);
+
+            if (append) {
+                const currentPageCount = this.pageOrder().length;
+                const newPages: OrderedPage[] = [];
+
+                for (let i = 0; i < pdf.numPages; i++) {
+                    newPages.push({
+                        slideId: `temp_${Date.now()}_${i}`,
+                        pageIndex: currentPageCount + i + 1,
+                        order: currentPageCount + i + 1,
+                    });
+                }
+
+                this.pageOrder.update((pages) => [...pages, ...newPages]);
+            } else {
+                const newOrder: OrderedPage[] = [];
+                for (let i = 0; i < pdf.numPages; i++) {
+                    newOrder.push({
+                        slideId: `temp_${Date.now()}_${i}`,
+                        pageIndex: i + 1,
+                        order: i + 1,
+                    });
+                }
+                this.pageOrder.set(newOrder);
+            }
+        } catch (error) {
+            onError(this.alertService, error);
+        } finally {
+            this.isPdfLoading.set(false);
+        }
     }
 
     ngOnDestroy() {
@@ -437,25 +486,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
             const newPdfDoc = await PDFDocument.load(newPdfBytes);
 
-            const currentPageCount = existingPdfDoc.getPageCount();
-            const newPagesCount = newPdfDoc.getPageCount();
-
             const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
             copiedPages.forEach((page) => existingPdfDoc.addPage(page));
-
-            const currentOrder = this.pageOrder();
-            const newEntries: OrderedPage[] = [];
-
-            for (let i = 0; i < newPagesCount; i++) {
-                const newPageIndex = currentPageCount + i + 1;
-                newEntries.push({
-                    slideId: `temp_${Date.now()}_${i}`,
-                    pageIndex: newPageIndex,
-                    order: currentOrder.length + i + 1,
-                });
-            }
-
-            this.pageOrder.set([...currentOrder, ...newEntries]);
 
             this.isFileChanged.set(true);
             const mergedPdfBytes = await existingPdfDoc.save();
@@ -466,6 +498,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
             this.appendFile.set(true);
+            this.loadPdf(objectUrl, true);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {

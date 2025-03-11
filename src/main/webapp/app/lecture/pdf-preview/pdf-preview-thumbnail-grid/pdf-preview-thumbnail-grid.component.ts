@@ -14,7 +14,6 @@ import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/pdf-preview/
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { Slide } from 'app/entities/lecture-unit/slide.model';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -36,6 +35,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     isAttachmentUnit = input<boolean>();
     updatedSelectedPages = input<Set<OrderedPage>>(new Set());
     attachmentUnit = input<AttachmentUnit>();
+    orderedPages = input<OrderedPage[]>([]);
 
     // Signals
     isEnlargedView = signal<boolean>(false);
@@ -47,7 +47,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     initialPageNumber = signal<number>(0);
     activeButtonPage = signal<OrderedPage | null>(null);
     isPopoverOpen = signal<boolean>(false);
-    orderedPages = signal<OrderedPage[]>([]);
     dragSlideId = signal<string | null>(null);
     isDragging = signal<boolean>(false);
 
@@ -78,14 +77,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Generates a temporary ID for new pages
-     * This will be replaced with a real UUID from the backend after saving
-     */
-    private generateTemporaryId(): string {
-        return 'temp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
-    }
-
-    /**
      * Loads or appends a PDF from a provided URL.
      * @param fileUrl The URL of the file to load or append.
      * @param append Whether the document should be appended to the existing one.
@@ -100,24 +91,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
             this.totalPagesArray.set(new Set(Array.from({ length: pdf.numPages }, (_, i) => i + 1)));
-
-            if (append) {
-                const currentPageCount = this.orderedPages().length;
-                const newPages: OrderedPage[] = [];
-
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    newPages.push({
-                        order: currentPageCount + i,
-                        slideId: this.generateTemporaryId(),
-                        pageIndex: currentPageCount + i,
-                    });
-                }
-
-                this.orderedPages.update((pages) => [...pages, ...newPages]);
-            } else {
-                const extractedSlides = this.extractSlidesFromAttachmentUnit();
-                this.initializePageOrderFromSlides(extractedSlides!);
-            }
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
@@ -154,34 +127,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         } catch (error) {
             onError(this.alertService, error);
         }
-    }
-
-    /**
-     * Initializes page order from existing slides
-     * @param slides Existing slides from the attachment unit
-     */
-    initializePageOrderFromSlides(slides: Slide[]): void {
-        const validSlides = slides.filter((slide) => slide.id && slide.slideNumber !== undefined);
-
-        const initialOrder: OrderedPage[] = validSlides.map((slide) => ({
-            slideId: slide.id!,
-            pageIndex: slide.slideNumber!,
-            order: slide.slideNumber!,
-        }));
-
-        initialOrder.sort((a, b) => a.pageIndex - b.pageIndex);
-        this.orderedPages.set(initialOrder);
-    }
-
-    /**
-     * Extracts slide information from attachment unit if available
-     */
-    extractSlidesFromAttachmentUnit(): Slide[] | null {
-        const unit = this.attachmentUnit();
-        if (unit && unit.slides && unit.slides.length > 0) {
-            return unit.slides;
-        }
-        return null;
     }
 
     /**
@@ -435,7 +380,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             page.pageIndex = index + 1;
         });
 
-        this.orderedPages.set(pages);
         this.pageOrderOutput.emit(pages);
     }
 
