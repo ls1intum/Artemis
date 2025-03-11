@@ -22,7 +22,7 @@ export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
 
     tutorialGroupFreeDays = input<TutorialGroupFreePeriod[]>([]);
 
-    timeZone = input<string | undefined>(undefined);
+    timeZone = input<string>();
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
