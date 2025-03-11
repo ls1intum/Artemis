@@ -144,8 +144,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-            WHERE p.id = (
-                SELECT MAX(p2.id)
+            WHERE p.initializationDate = (
+                SELECT MAX(p2.initializationDate)
                 FROM StudentParticipation p2
                     LEFT JOIN p2.submissions s2
                 WHERE p2.exercise.id = :exerciseId
