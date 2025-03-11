@@ -170,6 +170,7 @@ public class PublicPyrisStatusUpdateResource {
     @PostMapping("pipelines/lecture-chat/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> respondInLectureChat(@PathVariable String runId, @RequestBody PyrisLectureChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        System.out.println("Run ID i goooot: " + runId);
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, LectureChatJob.class);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
