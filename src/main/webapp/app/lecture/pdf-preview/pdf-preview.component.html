@@ -87,7 +87,7 @@
                         <jhi-pdf-preview-date-box-component
                             [course]="course()"
                             [selectedPages]="Array.from(selectedPages())"
-                            (hiddenPagesOutput)="onHiddenPagesReceived($event); hidePopover.close()"
+                            (hiddenPagesOutput)="hidePages($event); hidePopover.close()"
                             (selectionCancelledOutput)="hidePopover.close()"
                         />
                     </ng-template>
@@ -132,7 +132,7 @@
                 [updatedSelectedPages]="selectedPages()"
                 [orderedPages]="pageOrder()"
                 (selectedPagesOutput)="selectedPages.set($event)"
-                (hiddenPagesOutput)="onHiddenPagesReceived($event)"
+                (hiddenPagesOutput)="hidePages($event)"
                 (pageOrderOutput)="pageOrder.set($event)"
             />
         } @else {

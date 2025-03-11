@@ -192,6 +192,35 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Triggers the file input to select files.
+     */
+    triggerFileInput(): void {
+        this.fileInput().nativeElement.click();
+    }
+
+    /**
+     * Compares the initial and current hidden pages to determine if there have been any changes.
+     *
+     * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
+     */
+    hiddenPagesChanged(): boolean {
+        const initial = this.initialPageOrder();
+        const current = this.pageOrder();
+
+        if (initial.length !== current.length) return true;
+
+        return initial.some((initialPage) => {
+            const currentPage = current.find((p) => p.slideId === initialPage.slideId);
+            if (!currentPage) return true;
+
+            const initialHiddenDate = initialPage.hidden?.format?.() || null;
+            const currentHiddenDate = currentPage.hidden?.format?.() || null;
+
+            return initialHiddenDate !== currentHiddenDate || initialPage.exerciseId !== currentPage.exerciseId;
+        });
+    }
+
+    /**
      * Loads a PDF from a provided URL and creates/updates page order.
      * @param fileUrl The URL of the file to load.
      * @param append Whether to append the new pages to existing ones.
@@ -236,35 +265,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } finally {
             this.isPdfLoading.set(false);
         }
-    }
-
-    /**
-     * Triggers the file input to select files.
-     */
-    triggerFileInput(): void {
-        this.fileInput().nativeElement.click();
-    }
-
-    /**
-     * Compares the initial and current hidden pages to determine if there have been any changes.
-     *
-     * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
-     */
-    hiddenPagesChanged(): boolean {
-        const initial = this.initialPageOrder();
-        const current = this.pageOrder();
-
-        if (initial.length !== current.length) return true;
-
-        return initial.some((initialPage) => {
-            const currentPage = current.find((p) => p.slideId === initialPage.slideId);
-            if (!currentPage) return true;
-
-            const initialHiddenDate = initialPage.hidden?.format?.() || null;
-            const currentHiddenDate = currentPage.hidden?.format?.() || null;
-
-            return initialHiddenDate !== currentHiddenDate || initialPage.exerciseId !== currentPage.exerciseId;
-        });
     }
 
     /**
@@ -502,9 +502,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Handles the reception of one or more hidden pages from the date box component
      * @param hiddenPageData A single hidden page or an array of hidden pages
      */
-    onHiddenPagesReceived(
-        hiddenPageData: { slideId: string; date: dayjs.Dayjs; exerciseId: number | null } | Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }>,
-    ): void {
+    hidePages(hiddenPageData: { slideId: string; date: dayjs.Dayjs; exerciseId: number | null } | Array<{ slideId: string; date: dayjs.Dayjs; exerciseId: number | null }>): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
 
         this.pageOrder.update((currentOrder) => {
