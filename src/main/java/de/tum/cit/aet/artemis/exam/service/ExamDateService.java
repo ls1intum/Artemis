@@ -113,7 +113,8 @@ public class ExamDateService {
         // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
         // For test exams, we aim to find the latest student exam.
         // For real exams, we aim to find the only existing student exam.
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByIdDesc(exam.getId(), studentParticipation.getParticipant().getId());
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(exam.getId(),
+                studentParticipation.getParticipant().getId());
 
         if (optionalStudentExam.isPresent()) {
             StudentExam studentExam = optionalStudentExam.get();

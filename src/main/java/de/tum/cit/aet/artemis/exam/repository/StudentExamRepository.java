@@ -193,7 +193,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
-    Optional<StudentExam> findFirstByExamIdAndUserIdOrderByIdDesc(long examId, long userId);
+    Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
     @Query("""
             SELECT se
@@ -213,7 +213,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @throws EntityNotFoundException if no student exams could be found
      */
     default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId) {
-        return getValueElseThrow(this.findFirstByExamIdAndUserIdOrderByIdDesc(examId, userId));
+        return getValueElseThrow(this.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(examId, userId));
     }
 
     /**

@@ -104,10 +104,10 @@ public class ExamSubmissionService {
     private Optional<StudentExam> findStudentExamForUser(User user, Exam exam) {
 
         Optional<StudentExam> optionalStudentExam;
-        // Since multiple student exams for a test exam might exist, find the latest (=the highest id) unsubmitted student exam
+        // Since multiple student exams for a test exam might exist, find the latest unsubmitted student exam based on the created date
         if (exam.isTestExam()) {
             optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
-                    .max(Comparator.comparing(StudentExam::getId));
+                    .max(Comparator.comparing(StudentExam::getCreatedDate));
         }
         else {
             // for real exams, there's only one student exam per exam
