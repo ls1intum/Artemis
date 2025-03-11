@@ -21,11 +21,9 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
     originalCanvas = input<HTMLCanvasElement>();
     totalPages = input<number>(0);
     initialPage = input<number>();
-    initialSlideId = input<string>();
 
     // Signals
     currentPage = signal<number>(1);
-    currentSlideId = signal<string>('');
     isEnlargedCanvasLoading = signal<boolean>(false);
 
     //Outputs
@@ -33,7 +31,6 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
 
     ngOnInit() {
         this.currentPage.set(this.initialPage()!);
-        this.currentSlideId.set(this.initialSlideId()!);
 
         this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
         this.displayEnlargedCanvas(this.originalCanvas()!);
@@ -64,15 +61,10 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
      * Dynamically updates the canvas size within an enlarged view based on the viewport.
      */
     adjustCanvasSize() {
-        // Find the canvas for the current slide ID
-        const currentContainerId = `pdf-page-${this.currentSlideId()}`;
-        const currentContainer = this.pdfContainer().querySelector(`#${currentContainerId}`);
-
-        if (currentContainer) {
-            const canvas = currentContainer.querySelector('canvas') as HTMLCanvasElement;
-            if (canvas) {
-                this.updateEnlargedCanvas(canvas);
-            }
+        const canvasElements = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas');
+        if (this.currentPage() - 1 < canvasElements.length) {
+            const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
+            this.updateEnlargedCanvas(canvas);
         }
     }
 

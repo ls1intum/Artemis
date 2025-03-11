@@ -10,11 +10,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
-import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -43,8 +43,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     loadedPages = signal<Set<number>>(new Set());
     selectedPages = signal<Set<OrderedPage>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
+    newHiddenPages = signal<HiddenPageMap>(this.hiddenPages() || {});
     initialPageNumber = signal<number>(0);
-    initialSlideId = signal<string>('');
     activeButtonPage = signal<OrderedPage | null>(null);
     isPopoverOpen = signal<boolean>(false);
     orderedPages = signal<OrderedPage[]>([]);
@@ -65,6 +65,9 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     protected readonly faGripLines = faGripLines;
 
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes['hiddenPages']) {
+            this.newHiddenPages.set(this.hiddenPages()!);
+        }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
         }
@@ -99,7 +102,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             this.totalPagesArray.set(new Set(Array.from({ length: pdf.numPages }, (_, i) => i + 1)));
 
             if (append) {
-                // Append new pages to existing ordered pages
                 const currentPageCount = this.orderedPages().length;
                 const newPages: OrderedPage[] = [];
 
@@ -117,7 +119,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                 this.initializePageOrderFromSlides(extractedSlides!);
             }
 
-            // Render each page
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: 1 });
@@ -125,15 +126,12 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                 const context = canvas.getContext('2d')!;
                 await page.render({ canvasContext: context, viewport }).promise;
 
-                // Find the container by pageIndex if appending, otherwise by position
                 let targetSlideId: string | undefined;
 
                 if (append) {
-                    // For appended pages, find the new slide added for this page
                     const newPageIndex = this.orderedPages().length - pdf.numPages + i - 1;
                     targetSlideId = this.orderedPages()[newPageIndex]?.slideId;
                 } else {
-                    // For initial load, find the slide with this pageIndex
                     const matchingPage = this.orderedPages().find((page) => page.pageIndex === i);
                     targetSlideId = matchingPage?.slideId;
                 }
@@ -151,7 +149,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                 this.scrollToBottom();
             }
 
-            // Emit the total pages count and ordered pages
             this.totalPagesOutput.emit(this.totalPagesArray().size);
             this.pageOrderOutput.emit(this.orderedPages());
         } catch (error) {
@@ -282,7 +279,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageIndex);
-        this.initialSlideId.set(slideId);
     }
 
     /**

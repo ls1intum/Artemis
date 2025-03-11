@@ -39,7 +39,6 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
     selectedExercise = signal<Exercise | null>(null);
-    isMultiplePages = signal<boolean>(false);
 
     // Outputs
     hiddenPagesOutput = output<HiddenPage[]>();
@@ -58,6 +57,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             .sort()
             .join(', ');
     });
+    isMultiplePages = computed(() => this.selectedPages().length > 1);
 
     // Injected services
     private readonly alertService = inject(AlertService);
@@ -65,7 +65,6 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadExercises();
-        this.isMultiplePages.set(this.selectedPages().length > 1);
     }
 
     /**

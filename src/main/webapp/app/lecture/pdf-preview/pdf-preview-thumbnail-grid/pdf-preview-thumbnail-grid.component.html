@@ -79,7 +79,7 @@
                                     <span
                                         class="text-primary"
                                         jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
-                                        [translateValues]="{ param: hiddenPages()[activeButtonPage()?.slideId || ''].exerciseId }"
+                                        [translateValues]="{ param: hiddenPages()![activeButtonPage()!.slideId!].exerciseId! }"
                                     ></span>
                                 }
                                 <br />
@@ -106,7 +106,6 @@
             [totalPages]="totalPagesArray().size"
             [originalCanvas]="originalCanvas()"
             [initialPage]="initialPageNumber()"
-            [initialSlideId]="initialSlideId()"
             (isEnlargedViewOutput)="isEnlargedView.set($event)"
         />
     }
