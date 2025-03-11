@@ -170,7 +170,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
-
                 this.attachmentUnitSub = this.attachmentUnitService
                     .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
                     .pipe(finalize(() => this.isPdfLoading.set(false)))
@@ -179,7 +178,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                             this.currentPdfBlob.set(blob);
                             this.currentPdfUrl.set(URL.createObjectURL(blob));
                         },
-                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                        error: (error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                        },
                     });
             } else {
                 this.isPdfLoading.set(false);
@@ -336,9 +337,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const selectedPages = Array.from(this.selectedPages());
             const slideIds = selectedPages.map((page) => page.slideId);
-            const pageIndices = selectedPages
-                .map((page) => page.pageIndex - 1) // PDF page indices are 0-based
-                .sort((a, b) => b - a); // Sort in descending order for deletion
+            const pageIndices = selectedPages.map((page) => page.pageIndex - 1).sort((a, b) => b - a);
 
             this.updateHiddenPages(slideIds);
 
@@ -349,7 +348,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isFileChanged.set(true);
             const pdfBytes = await pdfDoc.save();
             this.currentPdfBlob.set(new Blob([pdfBytes], { type: 'application/pdf' }));
-            this.selectedPages.set(new Set());
+            this.selectedPages()!.clear();
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
@@ -367,10 +366,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param deletedSlideIds Array of slide IDs that were deleted
      */
     updatePageOrderAfterDeletion(deletedSlideIds: string[]): void {
-        // Filter out deleted pages from the page order
         const updatedOrder = this.pageOrder().filter((page) => !deletedSlideIds.includes(page.slideId));
 
-        // Update page indices to maintain sequence
         updatedOrder.forEach((page, index) => {
             page.pageIndex = index + 1;
         });
@@ -407,7 +404,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
             const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
 
-            // Map slide IDs to page indices for deletion
             const pagesToDelete = hiddenPages
                 .map(({ slideId }) => {
                     const page = this.pageOrder().find((p) => p.slideId === slideId);
@@ -447,14 +443,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
             copiedPages.forEach((page) => existingPdfDoc.addPage(page));
 
-            // Create temp IDs for new pages
             const currentOrder = this.pageOrder();
             const newEntries: OrderedPage[] = [];
 
             for (let i = 0; i < newPagesCount; i++) {
                 const newPageIndex = currentPageCount + i + 1;
                 newEntries.push({
-                    slideId: `temp_${Date.now()}_${i}`, // Temporary ID until saved
+                    slideId: `temp_${Date.now()}_${i}`,
                     pageIndex: newPageIndex,
                     order: currentOrder.length + i + 1,
                 });
@@ -466,7 +461,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const mergedPdfBytes = await existingPdfDoc.save();
             this.currentPdfBlob.set(new Blob([mergedPdfBytes], { type: 'application/pdf' }));
 
-            this.selectedPages.set(new Set());
+            this.selectedPages()!.clear();
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
