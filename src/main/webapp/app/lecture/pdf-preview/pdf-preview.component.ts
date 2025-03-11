@@ -382,69 +382,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Deletes selected slides from the PDF viewer.
+     * Deletes selected slides by removing them from the page order and hidden pages.
      */
-    async deleteSelectedSlides() {
-        this.isPdfLoading.set(true);
+    deleteSelectedSlides() {
         try {
-            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
-            const pdfDoc = await PDFDocument.load(existingPdfBytes);
+            this.isPdfLoading.set(true);
+            const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
 
-            const selectedPages = Array.from(this.selectedPages());
-            const slideIds = selectedPages.map((page) => page.slideId);
-            const pageIndices = selectedPages.map((page) => page.pageIndex - 1).sort((a, b) => b - a);
+            this.pageOrder.update((pages) => pages.filter((page) => !slideIds.includes(page.slideId)).map((page, index) => ({ ...page, pageIndex: index + 1, order: index + 1 })));
 
-            this.updateHiddenPages(slideIds);
-
-            pageIndices.forEach((pageIndex) => pdfDoc.removePage(pageIndex));
-
-            this.updatePageOrderAfterDeletion(slideIds);
+            this.hiddenPages.update((current) => {
+                const updated = { ...current };
+                slideIds.forEach((id) => delete updated[id]);
+                return updated;
+            });
 
             this.isFileChanged.set(true);
-            const pdfBytes = await pdfDoc.save();
-            this.currentPdfBlob.set(new Blob([pdfBytes], { type: 'application/pdf' }));
-            this.selectedPages()!.clear();
-
-            const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
-            this.currentPdfUrl.set(objectUrl);
-            this.appendFile.set(false);
-            this.dialogErrorSource.next('');
+            this.selectedPages.set(new Set());
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
+            this.dialogErrorSource.next('');
         }
-    }
-
-    /**
-     * Updates the page order after deleting pages
-     * @param deletedSlideIds Array of slide IDs that were deleted
-     */
-    updatePageOrderAfterDeletion(deletedSlideIds: string[]): void {
-        const updatedOrder = this.pageOrder().filter((page) => !deletedSlideIds.includes(page.slideId));
-
-        updatedOrder.forEach((page, index) => {
-            page.pageIndex = index + 1;
-        });
-
-        this.pageOrder.set(updatedOrder);
-    }
-
-    /**
-     * Updates the mapping of hidden pages after deleting specified pages.
-     *
-     * @param slidesToDelete - An array of slide IDs to delete.
-     */
-    updateHiddenPages(slidesToDelete: string[]) {
-        const updated: HiddenPageMap = {};
-
-        Object.entries(this.hiddenPages()!).forEach(([slideId, data]) => {
-            if (!slidesToDelete.includes(slideId)) {
-                updated[slideId] = data;
-            }
-        });
-
-        this.hiddenPages.set(updated);
     }
 
     /**
