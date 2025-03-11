@@ -84,7 +84,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     async loadPdf(fileUrl: string, append: boolean): Promise<void> {
         this.pdfContainer()
-            .nativeElement.querySelectorAll('.pdf-canvas-container')
+            .nativeElement.querySelectorAll('.pdf-canvas-container canvas')
             .forEach((canvas) => canvas.remove());
         this.totalPagesArray.set(new Set());
         try {

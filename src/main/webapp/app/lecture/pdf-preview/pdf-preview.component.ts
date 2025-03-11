@@ -497,7 +497,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
-            this.appendFile.set(true);
+            this.appendFile.set(false);
             this.loadPdf(objectUrl, true);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
