@@ -176,16 +176,12 @@ public class PyrisJobService {
      * @throws AccessForbiddenException if the token is invalid or not provided
      */
     public <Job extends PyrisJob> Job getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest request, Class<Job> jobClass) {
-        System.out.println("Got incoming request from " + request.getRemoteAddr());
         var authHeader = request.getHeader("Authorization");
         if (!authHeader.startsWith("Bearer ")) {
-            System.out.println("Not starting with bearer token");
             throw new AccessForbiddenException("No valid token provided");
         }
         var token = authHeader.substring(7);
-        System.out.println("Token: " + token);
         var job = getJob(token);
-        System.out.println("Job: " + job);
         if (job == null) {
             System.out.println("Job not found");
             throw new AccessForbiddenException("No valid token provided");
