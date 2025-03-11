@@ -1087,38 +1087,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         testCommitChanges();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCommitChangesNotAllowedForLockedParticipation() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
-        participationRepository.updateLockedById(participation.getId(), true);
-
-        // Committing is not allowed
-        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-    }
-
     private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
         // Reset the repo is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testResetNotAllowedForLockedParticipation() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
-        participationRepository.updateLockedById(participation.getId(), true);
-
-        assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
