@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
@@ -46,12 +46,6 @@ export class BuildJobStatisticsComponent implements OnInit {
     displayMissingBuilds = true;
 
     buildJobStatistics = new BuildJobStatistics();
-
-    constructor() {
-        effect(() => {
-            this.getBuildJobStatistics(this.currentSpan);
-        });
-    }
 
     ngOnInit() {
         this.getBuildJobStatistics(this.currentSpan);
