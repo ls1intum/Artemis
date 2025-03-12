@@ -168,10 +168,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const checkbox = event.target as HTMLInputElement;
         const page = this.findPageBySlideId(slideId);
 
-        if (!page) return;
-
         if (checkbox.checked) {
-            this.selectedPages().add(page);
+            this.selectedPages().add(page!);
         } else {
             this.selectedPages().forEach((selectedPage) => {
                 if (selectedPage.slideId === slideId) {
@@ -241,7 +239,6 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     private updateCheckboxStates(): void {
         const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll('input[type="checkbox"]');
-        if (!checkboxes) return;
 
         checkboxes.forEach((checkbox: HTMLInputElement) => {
             const match = checkbox.id.match(/checkbox-(.+)/);
@@ -266,9 +263,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             this.isDragging.set(true);
 
             const element = document.getElementById(`pdf-page-${slideId}`);
-            if (element) {
-                element.classList.add('dragging');
-            }
+            element!.classList.add('dragging');
         }
     }
 
@@ -278,9 +273,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onDragOver(event: DragEvent): void {
         event.preventDefault();
-        if (event.dataTransfer) {
-            event.dataTransfer.dropEffect = 'move';
-        }
+        event!.dataTransfer!.dropEffect = 'move';
     }
 
     /**
@@ -290,9 +283,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onDrop(event: DragEvent, targetSlideId: string): void {
         event.preventDefault();
-        if (!event.dataTransfer) return;
 
-        const sourceSlideId = event.dataTransfer.getData('text/plain');
+        const sourceSlideId = event.dataTransfer!.getData('text/plain');
         if (sourceSlideId !== targetSlideId) {
             this.reorderPages(sourceSlideId, targetSlideId);
         }
@@ -327,9 +319,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     onDragLeave(event: DragEvent, slideId: string): void {
         event.preventDefault();
         const element = document.getElementById(`pdf-page-${slideId}`);
-        if (element) {
-            element.classList.remove('drag-over');
-        }
+        element!.classList.remove('drag-over');
     }
 
     /**

@@ -100,7 +100,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Computed properties
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     pageOrderChanged = computed(() => {
-        if (this.pageOrder().length === 0) return false;
         return this.pageOrder().some((page, index) => page.pageIndex !== index + 1);
     });
     hasHiddenPages = computed(() => Object.keys(this.hiddenPages()).length > 0);
