@@ -33,6 +33,7 @@
                 (onCancel)="onCloseLectureUnitForms()"
                 (formSubmitted)="createEditVideoUnit($event)"
                 [formData]="videoUnitFormData"
+                [availableAttachmentUnits]="availableAttachmentUnits"
             />
         }
         @if (isOnlineUnitFormOpen()) {

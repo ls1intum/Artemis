@@ -32,6 +32,10 @@ public class AttachmentUnit extends LectureUnit {
     @JsonIgnoreProperties("attachmentUnit")
     private List<Slide> slides = new ArrayList<>();
 
+    @OneToOne(mappedBy = "correspondingAttachmentUnit")
+    @JsonIgnoreProperties({ "correspondingAttachmentUnit", "lecture" })
+    private VideoUnit correspondingVideoUnit;
+
     @Override
     public boolean isVisibleToStudents() {
         if (attachment == null) {
@@ -64,6 +68,14 @@ public class AttachmentUnit extends LectureUnit {
 
     public void setSlides(List<Slide> slides) {
         this.slides = slides;
+    }
+
+    public VideoUnit getCorrespondingVideoUnit() {
+        return correspondingVideoUnit;
+    }
+
+    public void setCorrespondingVideoUnit(VideoUnit videoUnit) {
+        this.correspondingVideoUnit = videoUnit;
     }
 
     @Override

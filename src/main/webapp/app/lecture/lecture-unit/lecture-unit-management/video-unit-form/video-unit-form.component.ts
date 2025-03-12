@@ -10,6 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -17,6 +18,7 @@ export interface VideoUnitFormData {
     releaseDate?: dayjs.Dayjs;
     source?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    correspondingAttachmentUnitId?: number;
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -71,6 +73,7 @@ export class VideoUnitFormComponent {
     private readonly formBuilder = inject(FormBuilder);
 
     formData = input<VideoUnitFormData>();
+    availableAttachmentUnits = input<AttachmentUnit[]>();
     isEditMode = input<boolean>(false);
 
     formSubmitted = output<VideoUnitFormData>();
@@ -90,6 +93,7 @@ export class VideoUnitFormComponent {
         source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+        correspondingAttachmentUnitId: [undefined as number | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());

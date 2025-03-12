@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250312010510" author="sebastianloose">
+        <addColumn tableName="lecture_unit">
+            <column name="corresponding_attachment_unit_id" type="BIGINT">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="corresponding_attachment_unit_id"
+                                 baseTableName="lecture_unit"
+                                 constraintName="FK_VIDEO_UNIT_ON_ATTACHMENT_UNIT"
+                                 referencedColumnNames="id"
+                                 referencedTableName="lecture_unit"/>
+    </changeSet>
+</databaseChangeLog>

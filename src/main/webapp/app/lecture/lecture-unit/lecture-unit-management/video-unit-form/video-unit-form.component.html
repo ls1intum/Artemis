@@ -105,17 +105,13 @@
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="form-group">
-                        <label class="required" for="name">{{ 'artemisApp.videoUnit.createVideoUnit.attachmentUnit' | artemisTranslate }}*</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="lectureUnit"
-                            formControlName="source"
-                            [placeholder]="'artemisApp.videoUnit.createVideoUnit.attachmentUnitPlaceHolder' | artemisTranslate"
-                        />
-                    </div>
+                <div class="form-group">
+                    <label for="attachmentUnit">{{ 'artemisApp.videoUnit.createVideoUnit.attachmentUnit' | artemisTranslate }}</label>
+                    <select id="attachmentUnit" class="form-select" formControlName="correspondingAttachmentUnitId">
+                        @for (attachmentUnit of availableAttachmentUnits(); track attachmentUnit.id) {
+                            <option [ngValue]="attachmentUnit.id">{{ attachmentUnit.name }}</option>
+                        }
+                    </select>
                 </div>
                 <div class="row">
                     <div class="col-12">
