@@ -17,7 +17,7 @@ import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-managemen
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
@@ -104,8 +104,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 this.isExerciseUnitFormOpen.set(true);
                 break;
             case LectureUnitType.VIDEO:
+                this.fetchAvailableAttachmentUnitsForVideoUnit(this.lecture.id!);
                 this.isVideoUnitFormOpen.set(true);
-                // fetchAvailableAttachmentUnitsForVideoUnit();
                 break;
             case LectureUnitType.ONLINE:
                 this.isOnlineUnitFormOpen.set(true);
@@ -303,6 +303,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 };
                 break;
             case LectureUnitType.VIDEO:
+                this.fetchAvailableAttachmentUnitsForVideoUnit(this.lecture.id!, lectureUnit.id);
                 this.videoUnitFormData = {
                     name: this.currentlyProcessedVideoUnit.name,
                     description: this.currentlyProcessedVideoUnit.description,
@@ -335,18 +336,20 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
     }
 
-    // fetchAvailableAttachmentUnitsForVideoUnit(lectureId: number, videoUnitId?: number) {
-    //     this.lectureService.findWithDetails(lectureId).subscribe({
-    //         next: (lecture: HttpResponse<Lecture>) => {
-    //
-    //         },
-    //         error: (res: HttpErrorResponse) => {
-    //             if (res.error?.params === 'file' && res?.error?.title) {
-    //                 this.alertService.error(res.error.title);
-    //             } else {
-    //                 onError(this.alertService, res);
-    //             }
-    //         },
-    //     });
-    // }
+    fetchAvailableAttachmentUnitsForVideoUnit(lectureId: number, videoUnitId?: number) {
+        this.lectureService.findWithDetails(lectureId).subscribe({
+            next: (lecture: HttpResponse<Lecture>) => {
+                this.availableAttachmentUnits = [
+                    {},
+                    ...(lecture.body?.lectureUnits ?? []).filter((unit: LectureUnit) => {
+                        if (unit.type !== LectureUnitType.ATTACHMENT) return false;
+
+                        const attachmentUnit = unit as AttachmentUnit;
+                        return !attachmentUnit.correspondingVideoUnit || (!!videoUnitId && attachmentUnit.correspondingVideoUnit.id === videoUnitId);
+                    }),
+                ];
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
+    }
 }
