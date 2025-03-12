@@ -21,8 +21,8 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisCourseSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
-    const routeParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
-    const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
+    const routeParamsSubject = new BehaviorSubject<Params>({ courseId: '1' });
+    const route = { params: routeParamsSubject.asObservable() } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
     let getParentSettingsSpy: jest.SpyInstance;
@@ -45,7 +45,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
                 // Setup
                 routeParamsSubject.next({ courseId: 1 });
-                paramsSpy = jest.spyOn(route.parent!.params, 'subscribe');
+                paramsSpy = jest.spyOn(route!.params, 'subscribe');
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));

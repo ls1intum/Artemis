@@ -66,6 +66,7 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -92,6 +93,7 @@ import { RepositoryType } from 'app/exercises/programming/shared/code-editor/mod
         GuidedTourComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],
