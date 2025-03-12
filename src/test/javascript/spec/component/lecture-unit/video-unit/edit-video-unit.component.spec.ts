@@ -16,7 +16,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -87,6 +87,14 @@ describe('EditVideoUnitComponent', () => {
 
     it('should set form data correctly', () => {
         const videoUnitService = TestBed.inject(VideoUnitService);
+        const lectureService = TestBed.inject(LectureService);
+
+        const lectureResponse: HttpResponse<VideoUnit> = new HttpResponse({
+            body: new Lecture(),
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
 
         const videoUnitOfResponse = new VideoUnit();
         videoUnitOfResponse.id = 1;
@@ -116,6 +124,14 @@ describe('EditVideoUnitComponent', () => {
     it('should send PUT request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
         const videoUnitService = TestBed.inject(VideoUnitService);
+        const lectureService = TestBed.inject(LectureService);
+
+        const lectureResponse: HttpResponse<VideoUnit> = new HttpResponse({
+            body: new Lecture(),
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
 
         const videoUnitInDatabase: VideoUnit = new VideoUnit();
         videoUnitInDatabase.id = 1;
