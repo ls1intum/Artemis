@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -11,11 +11,14 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
+    imports: [RouterModule, ArtemisSharedModule, SharingComponent],
+    standalone: true,
 })
 export class SharingComponent implements OnInit {
     courses: Course[];

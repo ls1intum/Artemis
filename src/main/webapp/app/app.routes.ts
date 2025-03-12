@@ -208,7 +208,7 @@ const routes: Routes = [
             pageTitle: 'sharing.import.title',
         },
         // canActivate: [UserRouteAccessService],
-        loadChildren: () => import('./sharing/sharing.module').then((m) => m.SharingModule),
+        loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
     },
 ];
 

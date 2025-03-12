@@ -32,9 +32,9 @@ public class SharingConnectorService {
 
     public static class HealthStatus {
 
-        private Instant timeStamp = Instant.now();
+        private final Instant timeStamp = Instant.now();
 
-        private String statusMessage;
+        private final String statusMessage;
 
         public HealthStatus(String statusMessage) {
             this.statusMessage = statusMessage;

@@ -70,7 +70,6 @@ public class SharingConnectorHealthCheckRegistry {
                 String timeStamp = TIME_STAMP_FORMATTER.format(zonedTimestamp);
                 health.withDetail(String.format("%3d: %s", i + 1, timeStamp), hs.getStatusMessage());
             }
-            ;
 
             return health.build();
         }
