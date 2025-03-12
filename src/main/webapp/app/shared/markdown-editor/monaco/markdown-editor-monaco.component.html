@@ -45,7 +45,7 @@
                                 <a class="col-auto mx-1" href="https://markdown-it.github.io/">
                                     <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                                 </a>
-                                @if (editType() !== EditType.UPDATE) {
+                                @if (editType() !== EditType.UPDATE && isInCommunication()) {
                                     <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'ms-1 col-auto', testId: 'save' }" />
                                 }
                             </div>
@@ -74,8 +74,7 @@
                                 <div class="p-0 m-0 background-editor-high markdown-preview" [innerHTML]="defaultPreviewHtml"></div>
                             }
                         </ng-content>
-                        @if (editType() !== EditType.UPDATE) {
-                            <!-- <ng-container *ngTemplateOutlet="sendButton; context: {text: 'hallo'}" /> -->
+                        @if (editType() !== EditType.UPDATE && isInCommunication()) {
                             <ng-container [ngTemplateOutlet]="sendButton" [ngTemplateOutletContext]="{ extraClass: 'float-end' }" />
                         }
                     </div>
@@ -171,7 +170,7 @@
                                                 >
                                                     {{ unit.name }}
                                                 </button>
-                                                @for (slide of unit.slides; track slide.slideNumber; let index = $index) {
+                                                @for (slide of unit.slides; track slide.id; let index = $index) {
                                                     <button
                                                         class="ps-1 me-1"
                                                         mat-menu-item
