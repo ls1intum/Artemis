@@ -42,7 +42,6 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
