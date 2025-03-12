@@ -183,6 +183,9 @@
                     "descriptionTextOne": "If the instructor updates the problem statement of an exercise during the exam, you will be notified about it, and you will be able to see the updated problem statement. You can switch between the updated version and a view highlighting the changes."
                 }
             }
+        },
+        "overlay": {
+            "title": "This feature is not enabled. Ask your Artemis administrator or consult the documentation for more information."
         }
     }
 }

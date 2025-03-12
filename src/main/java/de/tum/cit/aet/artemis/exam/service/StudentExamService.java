@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -71,9 +72,9 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 /**
  * Service Implementation for managing StudentExam.
@@ -106,7 +107,7 @@ public class StudentExamService {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final Optional<TextSubmissionApi> textSubmissionApi;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
@@ -123,7 +124,7 @@ public class StudentExamService {
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
-            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
+            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
@@ -133,7 +134,7 @@ public class StudentExamService {
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
-        this.textSubmissionRepository = textSubmissionRepository;
+        this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -293,7 +294,7 @@ public class StudentExamService {
                         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
                         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
                         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                            textSubmissionRepository.save(textSubmissionFromClient);
+                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).saveTextSubmission(textSubmissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }
