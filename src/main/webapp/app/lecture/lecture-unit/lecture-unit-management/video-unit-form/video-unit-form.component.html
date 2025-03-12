@@ -105,6 +105,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="attachmentUnit">{{ 'artemisApp.videoUnit.createVideoUnit.attachmentUnit' | artemisTranslate }}</label>
+                    <select id="attachmentUnit" class="form-select" formControlName="correspondingAttachmentUnitId">
+                        @for (attachmentUnit of availableAttachmentUnits(); track attachmentUnit.id) {
+                            <option [ngValue]="attachmentUnit.id">{{ attachmentUnit.name }}</option>
+                        }
+                    </select>
+                </div>
                 <div class="row">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">

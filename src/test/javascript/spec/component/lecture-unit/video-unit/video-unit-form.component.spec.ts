@@ -125,6 +125,7 @@ describe('VideoUnitFormComponent', () => {
                 competencyLinks: null,
                 source: validYouTubeUrlInEmbeddableFormat,
                 urlHelper: null,
+                correspondingAttachmentUnitId: null,
             });
 
             submitFormSpy.mockRestore();

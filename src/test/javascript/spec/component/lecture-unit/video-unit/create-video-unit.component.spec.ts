@@ -17,8 +17,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { LectureService } from 'app/lecture/lecture.secrvice';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
 
 describe('CreateVideoUnitComponent', () => {
     let createVideoUnitComponentFixture: ComponentFixture<CreateVideoUnitComponent>;
@@ -30,6 +34,7 @@ describe('CreateVideoUnitComponent', () => {
             providers: [
                 MockProvider(VideoUnitService),
                 MockProvider(AlertService),
+                MockProvider(LectureService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -124,5 +129,67 @@ describe('CreateVideoUnitComponent', () => {
 
             navigateSpy.mockRestore();
         });
+    }));
+
+    it('should provide all attachment units', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const attachmentUnit1 = new AttachmentUnit();
+        attachmentUnit1.id = 1;
+
+        const attachmentUnit2 = new AttachmentUnit();
+        attachmentUnit2.id = 2;
+
+        const textUnit1 = new TextUnit();
+        textUnit1.id = 3;
+
+        const lecture = new Lecture();
+        lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, textUnit1];
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: lecture,
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
+        createVideoUnitComponentFixture.detectChanges();
+        tick();
+
+        expect(createVideoUnitComponent.availableAttachmentUnits.length).toBe(3);
+        expect(createVideoUnitComponent.availableAttachmentUnits).toEqual([{}, attachmentUnit1, attachmentUnit2]);
+    }));
+
+    it('should provide all attachment units expect attachment unit a attached to a different video unit', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const attachmentUnit1 = new AttachmentUnit();
+        attachmentUnit1.id = 1;
+
+        const videoUnit = new VideoUnit();
+        videoUnit.id = 5;
+
+        const attachmentUnit2 = new AttachmentUnit();
+        attachmentUnit2.id = 2;
+        attachmentUnit2.correspondingVideoUnit = videoUnit;
+
+        const textUnit1 = new TextUnit();
+        textUnit1.id = 4;
+
+        const lecture = new Lecture();
+        lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, textUnit1];
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: lecture,
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
+        createVideoUnitComponentFixture.detectChanges();
+        tick();
+
+        expect(createVideoUnitComponent.availableAttachmentUnits.length).toBe(2);
+        expect(createVideoUnitComponent.availableAttachmentUnits).toEqual([{}, attachmentUnit1]);
     }));
 });

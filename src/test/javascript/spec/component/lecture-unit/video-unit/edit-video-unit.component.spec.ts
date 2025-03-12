@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,6 +18,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { LectureService } from 'app/lecture/lecture.service';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Lecture } from 'app/entities/lecture.model';
 
 describe('EditVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditVideoUnitComponent>;
@@ -28,6 +32,7 @@ describe('EditVideoUnitComponent', () => {
             imports: [OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AlertService),
+                MockProvider(LectureService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -63,10 +68,12 @@ describe('EditVideoUnitComponent', () => {
                 provideHttpClient(),
             ],
             schemas: [],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(EditVideoUnitComponent);
-        editVideoUnitComponent = fixture.componentInstance;
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(EditVideoUnitComponent);
+                editVideoUnitComponent = fixture.componentInstance;
+            });
     });
 
     afterEach(() => {
@@ -151,4 +158,100 @@ describe('EditVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
         navigateSpy.mockRestore();
     });
+
+    it('should provide all attachment units', fakeAsync(() => {
+        const videoUnitService = TestBed.inject(VideoUnitService);
+        const lectureService = TestBed.inject(LectureService);
+
+        const videoUnitOfResponse = new VideoUnit();
+        videoUnitOfResponse.id = 1;
+        videoUnitOfResponse.name = 'test';
+        videoUnitOfResponse.releaseDate = dayjs().year(2010).month(3).date(5);
+        videoUnitOfResponse.description = 'lorem ipsum';
+        videoUnitOfResponse.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
+
+        const videoUnitResponse: HttpResponse<VideoUnit> = new HttpResponse({
+            body: videoUnitOfResponse,
+            status: 200,
+        });
+
+        jest.spyOn(videoUnitService, 'findById').mockReturnValue(of(videoUnitResponse));
+
+        const attachmentUnit1 = new AttachmentUnit();
+        attachmentUnit1.id = 4;
+
+        const attachmentUnit2 = new AttachmentUnit();
+        attachmentUnit2.id = 2;
+
+        const textUnit1 = new TextUnit();
+        textUnit1.id = 3;
+
+        const lecture = new Lecture();
+        lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, textUnit1];
+
+        const lectureResponse: HttpResponse<VideoUnit> = new HttpResponse({
+            body: lecture,
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureResponse));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(editVideoUnitComponent.availableAttachmentUnits.length).toBe(3);
+        expect(editVideoUnitComponent.availableAttachmentUnits).toEqual([{}, attachmentUnit1, attachmentUnit2]);
+    }));
+
+    it('should provide all attachment units expect attachment unit a attached to a different video unit', fakeAsync(() => {
+        const videoUnitService = TestBed.inject(VideoUnitService);
+        const lectureService = TestBed.inject(LectureService);
+
+        const videoUnitOfResponse = new VideoUnit();
+        videoUnitOfResponse.id = 1;
+        videoUnitOfResponse.name = 'test';
+        videoUnitOfResponse.releaseDate = dayjs().year(2010).month(3).date(5);
+        videoUnitOfResponse.description = 'lorem ipsum';
+        videoUnitOfResponse.source = 'https://www.youtube.com/embed/M7lc1UVf-VE';
+
+        const videoUnitResponse: HttpResponse<VideoUnit> = new HttpResponse({
+            body: videoUnitOfResponse,
+            status: 200,
+        });
+
+        jest.spyOn(videoUnitService, 'findById').mockReturnValue(of(videoUnitResponse));
+
+        const attachmentUnit1 = new AttachmentUnit();
+        attachmentUnit1.id = 7;
+
+        const videoUnit = new VideoUnit();
+        videoUnit.id = 5;
+
+        const attachmentUnit2 = new AttachmentUnit();
+        attachmentUnit2.id = 2;
+        attachmentUnit2.correspondingVideoUnit = videoUnit;
+
+        const attachmentUnit3 = new AttachmentUnit();
+        attachmentUnit3.id = 3;
+        attachmentUnit3.correspondingVideoUnit = videoUnitOfResponse;
+
+        const textUnit1 = new TextUnit();
+        textUnit1.id = 4;
+
+        const lecture = new Lecture();
+        lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, attachmentUnit3, textUnit1];
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: lecture,
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
+        fixture.detectChanges();
+        tick();
+
+        expect(editVideoUnitComponent.availableAttachmentUnits.length).toBe(3);
+        expect(editVideoUnitComponent.availableAttachmentUnits).toEqual([{}, attachmentUnit1, attachmentUnit3]);
+    }));
 });

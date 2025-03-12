@@ -17,13 +17,14 @@ import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-managemen
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from '../lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from '../lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
+import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-lecture-update-units',
@@ -46,6 +47,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected videoUnitService = inject(VideoUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentUnitService = inject(AttachmentUnitService);
+    protected lectureService = inject(LectureService);
 
     @Input() lecture: Lecture;
 
@@ -80,6 +82,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
     onlineUnitFormData: OnlineUnitFormData;
     attachmentUnitFormData: AttachmentUnitFormData;
 
+    availableAttachmentUnits: AttachmentUnit[];
+
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
             // Checks if the exercise unit form should be opened initially, i.e. coming back from the exercise creation
@@ -100,6 +104,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 this.isExerciseUnitFormOpen.set(true);
                 break;
             case LectureUnitType.VIDEO:
+                this.fetchAvailableAttachmentUnitsForVideoUnit(this.lecture.id!);
                 this.isVideoUnitFormOpen.set(true);
                 break;
             case LectureUnitType.ONLINE:
@@ -153,7 +158,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source, competencyLinks } = formData;
+        const { name, description, releaseDate, source, competencyLinks, correspondingAttachmentUnitId } = formData;
 
         this.currentlyProcessedVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedVideoUnit : new VideoUnit();
         this.currentlyProcessedVideoUnit.name = name || undefined;
@@ -161,6 +166,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.currentlyProcessedVideoUnit.description = description || undefined;
         this.currentlyProcessedVideoUnit.source = source || undefined;
         this.currentlyProcessedVideoUnit.competencyLinks = competencyLinks;
+        this.currentlyProcessedVideoUnit.correspondingAttachmentUnit = correspondingAttachmentUnitId
+            ? { id: correspondingAttachmentUnitId, type: LectureUnitType.ATTACHMENT }
+            : undefined;
 
         (this.isEditingLectureUnit
             ? this.videoUnitService.update(this.currentlyProcessedVideoUnit, this.lecture.id!)
@@ -296,11 +304,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 };
                 break;
             case LectureUnitType.VIDEO:
+                this.fetchAvailableAttachmentUnitsForVideoUnit(this.lecture.id!, lectureUnit.id);
                 this.videoUnitFormData = {
                     name: this.currentlyProcessedVideoUnit.name,
                     description: this.currentlyProcessedVideoUnit.description,
                     releaseDate: this.currentlyProcessedVideoUnit.releaseDate,
                     source: this.currentlyProcessedVideoUnit.source,
+                    correspondingAttachmentUnitId: this.currentlyProcessedVideoUnit.correspondingAttachmentUnit?.id,
                 };
                 break;
             case LectureUnitType.ONLINE:
@@ -325,5 +335,22 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 };
                 break;
         }
+    }
+
+    fetchAvailableAttachmentUnitsForVideoUnit(lectureId: number, videoUnitId?: number) {
+        this.lectureService.findWithDetails(lectureId).subscribe({
+            next: (lecture: HttpResponse<Lecture>) => {
+                this.availableAttachmentUnits = [
+                    {},
+                    ...(lecture.body?.lectureUnits ?? []).filter((unit: LectureUnit) => {
+                        if (unit.type !== LectureUnitType.ATTACHMENT) return false;
+
+                        const attachmentUnit = unit as AttachmentUnit;
+                        return !attachmentUnit.correspondingVideoUnit || (!!videoUnitId && attachmentUnit.correspondingVideoUnit.id === videoUnitId);
+                    }),
+                ];
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 }

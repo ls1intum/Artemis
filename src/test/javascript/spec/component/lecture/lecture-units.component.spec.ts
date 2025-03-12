@@ -1,5 +1,5 @@
 import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -30,6 +30,7 @@ import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { LectureService } from 'app/lecture/lecture.service';
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
@@ -50,6 +51,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(TextUnitService),
                 MockProvider(OnlineUnitService),
                 MockProvider(AttachmentUnitService),
+                MockProvider(LectureService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -77,6 +79,15 @@ describe('LectureUpdateUnitsComponent', () => {
     });
 
     it('should open video form when clicked', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: new Lecture(),
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
@@ -757,6 +768,15 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should be in edit mode when clicked', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: new Lecture(),
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
         wizardUnitComponentFixture.detectChanges();
         tick();
         wizardUnitComponent.startEditLectureUnit(new VideoUnit());
@@ -767,6 +787,15 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should open edit video form when clicked', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: new Lecture(),
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
         wizardUnitComponentFixture.detectChanges();
         tick();
 
@@ -775,6 +804,81 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isVideoUnitFormOpen).toBeTrue();
         });
+    }));
+
+    it('should provide all attachment units', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const attachmentUnit1 = new AttachmentUnit();
+        attachmentUnit1.id = 1;
+
+        const attachmentUnit2 = new AttachmentUnit();
+        attachmentUnit2.id = 2;
+
+        const textUnit1 = new TextUnit();
+        textUnit1.id = 3;
+
+        const lecture = new Lecture();
+        lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, textUnit1];
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: lecture,
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.startEditLectureUnit(new VideoUnit());
+
+        tick();
+
+        expect(wizardUnitComponent.availableAttachmentUnits.length).toBe(3);
+        expect(wizardUnitComponent.availableAttachmentUnits).toEqual([{}, attachmentUnit1, attachmentUnit2]);
+    }));
+
+    it('should provide all attachment units expect attachment unit a attached to a different video unit', fakeAsync(() => {
+        const lectureService = TestBed.inject(LectureService);
+
+        const videoUnit = new VideoUnit();
+        videoUnit.id = 5;
+
+        const attachmentUnit1 = new AttachmentUnit();
+        attachmentUnit1.id = 1;
+
+        const attachmentUnit2 = new AttachmentUnit();
+        attachmentUnit2.id = 2;
+        attachmentUnit2.correspondingVideoUnit = new VideoUnit();
+        attachmentUnit2.correspondingVideoUnit.id = 6;
+
+        const attachmentUnit3 = new AttachmentUnit();
+        attachmentUnit3.id = 3;
+        attachmentUnit3.correspondingVideoUnit = videoUnit;
+
+        const textUnit1 = new TextUnit();
+        textUnit1.id = 4;
+
+        const lecture = new Lecture();
+        lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, attachmentUnit3, textUnit1];
+
+        const response: HttpResponse<VideoUnit> = new HttpResponse({
+            body: lecture,
+            status: 201,
+        });
+
+        jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(response));
+
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        wizardUnitComponent.startEditLectureUnit(videoUnit);
+
+        tick();
+
+        expect(wizardUnitComponent.availableAttachmentUnits.length).toBe(3);
+        expect(wizardUnitComponent.availableAttachmentUnits).toEqual([{}, attachmentUnit1, attachmentUnit3]);
     }));
 
     it('should open edit online form when clicked', fakeAsync(() => {

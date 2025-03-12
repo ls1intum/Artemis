@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.lecture.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
@@ -31,6 +34,19 @@ public class VideoUnit extends LectureUnit {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @OneToOne
+    @JoinColumn(name = "corresponding_attachment_unit_id")
+    @JsonIgnoreProperties({ "correspondingVideoUnit", "lecture" })
+    private AttachmentUnit correspondingAttachmentUnit;
+
+    public AttachmentUnit getCorrespondingAttachmentUnit() {
+        return correspondingAttachmentUnit;
+    }
+
+    public void setCorrespondingAttachmentUnit(AttachmentUnit attachmentUnit) {
+        this.correspondingAttachmentUnit = attachmentUnit;
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
