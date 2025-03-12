@@ -174,11 +174,6 @@
             <where>description LIKE '%/api/files%'</where>
         </update>
 
-        <update tableName="text_block">
-            <column name="text" valueComputed="REPLACE(text, '/api/files', '/api/core/files')"/>
-            <where>text LIKE '%/api/files%'</where>
-        </update>
-
         <update tableName="tutorial_group">
             <column name="additional_information" valueComputed="REPLACE(additional_information, '/api/files', '/api/core/files')"/>
             <where>additional_information LIKE '%/api/files%'</where>
