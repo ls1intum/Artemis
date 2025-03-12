@@ -394,7 +394,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param event - The event containing the file input.
      */
     async mergePDF(event: Event): Promise<void> {
-        const file = (event.target as HTMLInputElement).files?.[0];
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+
+        if (file!.type !== 'application/pdf') {
+            this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
+            input.value = '';
+            return;
+        }
 
         this.isPdfLoading.set(true);
         try {
