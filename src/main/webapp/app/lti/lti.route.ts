@@ -44,12 +44,3 @@ export const ltiLaunchRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
-
-const LTI_LAUNCH_ROUTES = [...ltiLaunchRoutes];
-
-export const ltiLaunchState: Routes = [
-    {
-        path: '',
-        children: LTI_LAUNCH_ROUTES,
-    },
-];

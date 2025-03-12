@@ -49,10 +49,12 @@
         } @else {
             <div jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"></div>
         }
-        @if ((atlasEnabled && this.course?.learningPathsEnabled) || false) {
-            <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
-                <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
-            </div>
+        @if (this.course?.learningPathsEnabled || false) {
+            <jhi-feature-overlay [enabled]="atlasEnabled">
+                <div class="competency-accordion-container row justify-content-center w-100" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
+                    <button class="btn btn-primary mt-2" (click)="navigateToLearningPaths()" jhiTranslate="artemisApp.studentAnalyticsDashboard.button.showLearningPath"></button>
+                </div>
+            </jhi-feature-overlay>
         }
     }
 </div>
