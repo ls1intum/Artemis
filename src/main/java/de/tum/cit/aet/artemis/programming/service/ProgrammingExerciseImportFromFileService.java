@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -54,6 +53,8 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
     private final RepositoryService repositoryService;
 
     private final GitService gitService;
@@ -64,14 +65,15 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    private static final List<String> SHORT_NAME_REPLACEMENT_EXCLUSIONS = List.of("gradle-wrapper.jar");
-
-    public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
-            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService, ProfileService profileService,
-            BuildPlanRepository buildPlanRepository) {
+    public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService,
+                                                    ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
+                                                    ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
+                                                    RepositoryService repositoryService, GitService gitService,
+                                                    FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.repositoryService = repositoryService;
         this.gitService = gitService;
         this.fileService = fileService;
@@ -104,7 +106,6 @@ public class ProgrammingExerciseImportFromFileService {
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkRepositoriesExist(importExerciseDir);
-            var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise, true);
@@ -113,7 +114,7 @@ public class ProgrammingExerciseImportFromFileService {
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
-            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
+            importRepositoriesFromFile(newProgrammingExercise, originalProgrammingExercise, importExerciseDir, user);
             newProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a local CI setup.
             if (profileService.isGitlabCiOrJenkinsActive()) {
@@ -168,7 +169,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName, User user)
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, ProgrammingExercise oldExercise, Path basePath, User user)
             throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
@@ -179,8 +180,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);
-        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), List.of(solutionRepo, templateRepo, testRepo));
-        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), auxiliaryRepositories);
+        programmingExerciseRepositoryService.adjustProjectNames(oldExercise, newExercise);
 
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
@@ -196,12 +196,6 @@ public class ProgrammingExerciseImportFromFileService {
             gitService.commitAndPush(auxRepo, "Import auxiliary repo from file", true, user);
         }
 
-    }
-
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<Repository> repositories) throws IOException {
-        for (Repository repository : repositories) {
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
-        }
     }
 
     private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, List<Repository> auxiliaryRepositories,

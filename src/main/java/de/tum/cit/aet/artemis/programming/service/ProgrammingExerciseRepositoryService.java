@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -69,16 +70,20 @@ public class ProgrammingExerciseRepositoryService {
 
     private final GitService gitService;
 
+    private final UserRepository userRepository;
+
     private final InstanceMessageSendService instanceMessageSendService;
 
     private final ResourceLoaderService resourceLoaderService;
 
     private final Optional<VersionControlService> versionControlService;
 
-    public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, InstanceMessageSendService instanceMessageSendService,
-            ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService) {
+    public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, UserRepository userRepository,
+            InstanceMessageSendService instanceMessageSendService, ResourceLoaderService resourceLoaderService,
+            Optional<VersionControlService> versionControlService) {
         this.fileService = fileService;
         this.gitService = gitService;
+        this.userRepository = userRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.resourceLoaderService = resourceLoaderService;
         this.versionControlService = versionControlService;
@@ -881,4 +886,63 @@ public class ProgrammingExerciseRepositoryService {
             gitService.deleteLocalRepository(testRepositoryUriAsUrl);
         }
     }
+
+    private static Map<String, String> replacementMapping(String oldRepositoryName, String newRepositoryName) {
+        Map<String, String> replacements = new HashMap<>();
+
+        // Used in pom.xml
+        replacements.put("<artifactId>" + oldRepositoryName.replaceAll(" ", "-"), "<artifactId>" + newRepositoryName.replaceAll(" ", "-"));
+
+        // Used in settings.gradle
+        replacements.put("rootProject.name = '" + oldRepositoryName.replaceAll(" ", "-"), "rootProject.name = '" + newRepositoryName.replaceAll(" ", "-"));
+
+        // Used in readme.md (Gradle)
+        replacements.put("testImplementation(':" + oldRepositoryName.replaceAll(" ", "-"), "testImplementation(':" + newRepositoryName.replaceAll(" ", "-"));
+
+        // Used in .project
+        replacements.put("<name>" + oldRepositoryName, "<name>" + newRepositoryName);
+
+        return replacements;
+    }
+
+    /**
+     * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
+     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     *
+     * @param templateExercise the exercise from which the values that should be replaced are extracted
+     * @param newExercise      the exercise from which the values that should be inserted are extracted
+     * @throws GitAPIException If the checkout/push of one repository fails
+     * @throws IOException     If the values in the files could not be replaced
+     */
+    void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
+        final var projectKey = newExercise.getProjectKey();
+        Map<String, String> replacements = replacementMapping(templateExercise.getTitle(), newExercise.getTitle());
+
+        User user = userRepository.getUser();
+
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
+    }
+
+    /**
+     * Adjust project names in imported exercise for specific repository.
+     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
+     *
+     * @param replacements   the replacements that should be applied
+     * @param projectKey     the project key of the new exercise
+     * @param repositoryName the name of the repository that should be adjusted
+     * @param user           the user which performed the action (used as Git author)
+     * @throws GitAPIException If the checkout/push of one repository fails
+     * @throws IOException     If the values in the files could not be replaced
+     */
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
+        final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);
+        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
+    }
+
 }

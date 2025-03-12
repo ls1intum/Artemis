@@ -5,10 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -21,13 +19,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
@@ -49,15 +43,11 @@ public class ProgrammingExerciseImportService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
     private final ProgrammingExerciseService programmingExerciseService;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    private final GitService gitService;
-
-    private final FileService fileService;
-
-    private final UserRepository userRepository;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -70,18 +60,15 @@ public class ProgrammingExerciseImportService {
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, GitService gitService, FileService fileService, UserRepository userRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
             ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseService = programmingExerciseService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.gitService = gitService;
-        this.fileService = fileService;
-        this.userRepository = userRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.uriService = uriService;
         this.templateUpgradePolicyService = templateUpgradePolicyService;
@@ -134,7 +121,7 @@ public class ProgrammingExerciseImportService {
 
         try {
             // Adjust placeholders that were replaced during creation of template exercise
-            adjustProjectNames(templateExercise, newExercise);
+            programmingExerciseRepositoryService.adjustProjectNames(templateExercise, newExercise);
         }
         catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
@@ -218,58 +205,6 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.giveCIProjectPermissions(newExercise);
         continuousIntegration.enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegration.enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
-    }
-
-    /**
-     * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
-     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     *
-     * @param templateExercise the exercise from which the values that should be replaced are extracted
-     * @param newExercise      the exercise from which the values that should be inserted are extracted
-     * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException     If the values in the files could not be replaced
-     */
-    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
-        final var projectKey = newExercise.getProjectKey();
-
-        Map<String, String> replacements = new HashMap<>();
-
-        // Used in pom.xml
-        replacements.put("<artifactId>" + templateExercise.getTitle().replaceAll(" ", "-"), "<artifactId>" + newExercise.getTitle().replaceAll(" ", "-"));
-
-        // Used in settings.gradle
-        replacements.put("rootProject.name = '" + templateExercise.getTitle().replaceAll(" ", "-"), "rootProject.name = '" + newExercise.getTitle().replaceAll(" ", "-"));
-
-        // Used in readme.md (Gradle)
-        replacements.put("testImplementation(':" + templateExercise.getTitle().replaceAll(" ", "-"), "testImplementation(':" + newExercise.getTitle().replaceAll(" ", "-"));
-
-        // Used in .project
-        replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
-
-        final var user = userRepository.getUser();
-
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
-    }
-
-    /**
-     * Adjust project names in imported exercise for specific repository.
-     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     *
-     * @param replacements   the replacements that should be applied
-     * @param projectKey     the project key of the new exercise
-     * @param repositoryName the name of the repository that should be adjusted
-     * @param user           the user which performed the action (used as Git author)
-     * @throws GitAPIException If the checkout/push of one repository fails
-     */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
-        final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
-        gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);
-        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
     /**
