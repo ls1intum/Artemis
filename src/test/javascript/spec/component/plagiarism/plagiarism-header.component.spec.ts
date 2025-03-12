@@ -11,7 +11,6 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -69,13 +68,13 @@ describe('Plagiarism Header Component', () => {
         comp.comparison.status = PlagiarismStatus.DENIED;
         comp.isLoading = true;
 
-        fixture.detectChanges(); // Ensure bindings are applied before querying the DOM
+        fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
         const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as HTMLButtonElement;
 
-        expect(button).toBeTruthy(); // Ensure button exists
-        expect(button.disabled).toBeTrue(); // Verify that the button is disabled
+        expect(button).toBeTruthy();
+        expect(button.disabled).toBeTrue();
     });
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
