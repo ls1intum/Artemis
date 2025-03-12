@@ -77,6 +77,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     buildDurationInterval: ReturnType<typeof setInterval>;
     paramSub: Subscription;
     channel: string;
+    readonly agentUpdatesChannel = '/topic/admin/build-agent';
     readonly runningBuildJobsChannel = '/topic/admin/running-jobs';
 
     finishedBuildJobs: FinishedBuildJob[] = [];
@@ -109,7 +110,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.queryParams.subscribe((params) => {
             this.agentName = params['agentName'];
-            this.channel = `/topic/admin/build-agent/${this.agentName}`;
+            this.channel = this.agentUpdatesChannel + '/' + this.agentName;
             this.buildDurationInterval = setInterval(() => {
                 this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
             }, 1000); // 1 second

@@ -25,7 +25,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -195,7 +194,6 @@ public class LocalCIResultProcessingService {
                 if (programmingExerciseParticipation != null) {
                     if (result != null) {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
-                        addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                     }
                     else {
                         programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
@@ -229,27 +227,6 @@ public class LocalCIResultProcessingService {
                 }
             }
         }
-    }
-
-    /**
-     * Adds the given result to the recent build jobs of the build agent that processed the build job.
-     *
-     * @param buildJob the build job
-     * @param result   the result of the build job
-     */
-    private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
-        try {
-            distributedDataAccessService.getDistributedBuildAgentInformation().lock(buildJob.buildAgent().memberAddress());
-            BuildAgentInformation buildAgent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildJob.buildAgent().memberAddress());
-            if (buildAgent != null) {
-                distributedDataAccessService.getDistributedBuildAgentInformation().put(buildJob.buildAgent().memberAddress(),
-                        new BuildAgentInformation(buildAgent));
-            }
-        }
-        finally {
-            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(buildJob.buildAgent().memberAddress());
-        }
-
     }
 
     /**

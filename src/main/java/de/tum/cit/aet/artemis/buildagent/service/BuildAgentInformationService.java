@@ -4,11 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -25,6 +21,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_BUILDAGENT)
 @Service
@@ -40,9 +37,7 @@ public class BuildAgentInformationService {
 
     private final GitProperties gitProperties;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
-
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -51,17 +46,12 @@ public class BuildAgentInformationService {
     private String buildAgentDisplayName;
 
     public BuildAgentInformationService(HazelcastInstance hazelcastInstance, BuildAgentConfiguration buildAgentConfiguration, BuildAgentSshKeyService buildAgentSSHKeyService,
-            GitProperties gitProperties) {
+            DistributedDataAccessService distributedDataAccessService, GitProperties gitProperties) {
         this.hazelcastInstance = hazelcastInstance;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
         this.gitProperties = gitProperties;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
-        this.processingJobs = hazelcastInstance.getMap("processingJobs");
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     public void updateLocalBuildAgentInformation(boolean isPaused) {
@@ -77,11 +67,11 @@ public class BuildAgentInformationService {
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused) {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         try {
-            buildAgentInformation.lock(memberAddress);
+            distributedDataAccessService.getDistributedBuildAgentInformation().lock(memberAddress);
             // Add/update
             BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused);
             try {
-                buildAgentInformation.put(info.buildAgent().memberAddress(), info);
+                distributedDataAccessService.getDistributedBuildAgentInformation().put(info.buildAgent().memberAddress(), info);
             }
             catch (Exception e) {
                 log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
@@ -91,7 +81,7 @@ public class BuildAgentInformationService {
             log.error("Error while updating build agent information for agent with address {}", memberAddress, e);
         }
         finally {
-            buildAgentInformation.unlock(memberAddress);
+            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(memberAddress);
         }
     }
 
@@ -104,7 +94,7 @@ public class BuildAgentInformationService {
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentInformation.BuildAgentStatus status = isPaused ? BuildAgentInformation.BuildAgentStatus.PAUSED
                 : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
-        BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
+        BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
@@ -178,8 +168,6 @@ public class BuildAgentInformationService {
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        List<BuildJobQueueItem> processingJobsList = new ArrayList<>(processingJobs.values());
-        return processingJobsList.stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
+        return distributedDataAccessService.getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 }
