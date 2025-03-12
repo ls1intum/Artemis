@@ -48,15 +48,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    private final SharedQueueManagementService sharedQueueManagementService;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            SharedQueueManagementService sharedQueueManagementService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            DistributedDataAccessService distributedDataAccessService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
-        this.sharedQueueManagementService = sharedQueueManagementService;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
@@ -119,10 +119,10 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        if (!sharedQueueManagementService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
+        if (!distributedDataAccessService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
             return BuildStatus.QUEUED;
         }
-        else if (!sharedQueueManagementService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
+        else if (!distributedDataAccessService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -181,7 +181,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("buildAgents", sharedQueueManagementService.getBuildAgentInformation()));
+        return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformation()));
     }
 
     @Override
