@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSe
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -42,13 +43,17 @@ public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
 
+    private final DistributedDataAccessService distributedDataAccessService;
+
     private final BuildJobRepository buildJobRepository;
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
-    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository) {
+    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
+            DistributedDataAccessService distributedDataAccessService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -59,7 +64,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("queued-jobs")
     public ResponseEntity<List<BuildJobQueueItem>> getQueuedBuildJobs() {
         log.debug("REST request to get the queued build jobs");
-        List<BuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobs();
+        List<BuildJobQueueItem> buildJobQueue = distributedDataAccessService.getQueuedJobs();
         return ResponseEntity.ok(buildJobQueue);
     }
 
@@ -71,7 +76,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("running-jobs")
     public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobs() {
         log.debug("REST request to get the running build jobs");
-        List<BuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
+        List<BuildJobQueueItem> runningBuildJobs = distributedDataAccessService.getProcessingJobs();
         return ResponseEntity.ok(runningBuildJobs);
     }
 
@@ -83,7 +88,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agents")
     public ResponseEntity<List<BuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
-        List<BuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
+        List<BuildAgentInformation> buildAgentSummary = distributedDataAccessService.getBuildAgentInformationWithoutRecentBuildJobs();
         return ResponseEntity.ok(buildAgentSummary);
     }
 
@@ -96,7 +101,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
+        Optional<BuildAgentInformation> buildAgentDetails = distributedDataAccessService.getBuildAgentInformation().stream()
                 .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
         return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }

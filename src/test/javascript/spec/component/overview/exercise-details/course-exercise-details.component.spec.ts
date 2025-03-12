@@ -125,7 +125,7 @@ describe('CourseExerciseDetailsComponent', () => {
     } as ProgrammingExercise;
 
     const parentParams = { courseId: 1 };
-    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
     const route = {
         params: of({ exerciseId: exercise.id }),
         parent: parentRoute,

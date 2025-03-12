@@ -183,6 +183,9 @@
                     "descriptionTextOne": "Während einer Klausur kann es vorkommen, dass Änderungen an der Aufgabenstellung vorgenommen werden müssen. Du wirst über die Änderungen informiert und kannst die aktualisierte Aufgabenstellung einsehen. Es ist möglich zwischen der Ansicht der aktualisierten Aufgabenstellung und einer Ansicht, die die Änderungen hervorhebt, zu wechseln."
                 }
             }
+        },
+        "overlay": {
+            "title": "Diese Funktion ist nicht aktiviert. Fragen deinen Artemis-Administrator oder konsultiere die Dokumentation für weitere Informationen."
         }
     }
 }
