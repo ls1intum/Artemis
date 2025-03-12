@@ -57,7 +57,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     ngOnInit(): void {
         this.paramSubscription = combineLatest({
-            ancestorParams: this.activatedRoute.parent!.parent!.params,
+            ancestorParams: this.activatedRoute.parent!.params,
             params: this.activatedRoute.params,
         }).subscribe(({ ancestorParams, params }: { ancestorParams: Params; params: Params }) => {
             this.courseId = ancestorParams.courseId;
