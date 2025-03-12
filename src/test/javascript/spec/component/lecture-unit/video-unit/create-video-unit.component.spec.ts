@@ -19,7 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { LectureService } from 'app/lecture/lecture.secrvice';
+import { LectureService } from 'app/lecture/lecture.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
