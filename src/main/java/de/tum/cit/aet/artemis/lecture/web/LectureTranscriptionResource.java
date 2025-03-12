@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -141,6 +142,10 @@ public class LectureTranscriptionResource {
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
+        }
+        if (!(lectureUnit instanceof VideoUnit)) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitIsNotAVideoUnit")).body(null);
         }
         Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
         if (transcription.isEmpty()) {
