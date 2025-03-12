@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,17 +54,12 @@ import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 @ExtendWith(SpringExtension.class)
 @Execution(ExecutionMode.CONCURRENT)
 @ResourceLock("AbstractArtemisBuildAgentTest")
-// NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
+// NOTE: Do not use SPRING_PROFILE_TEST as it will cause the test to fail due to missing beans. This is because SPRING_PROFILE_TEST will cause some
+// test services, which dependencies are not provided since we are not running the full application context, to be created.
 @ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT })
 
-// Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
-@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
-        "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
-        "artemis.continuous-integration.asynchronous=true", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=false", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "artemis.version-control.build-agent-use-ssh=false",
-        "artemis.version-control.ssh-template-clone-url=ssh://git@locaFlhost:7921/", "artemis.continuous-integration.pause-grace-period-seconds=2" })
+@TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
+        "artemis.continuous-integration.pause-grace-period-seconds=2" })
 public abstract class AbstractArtemisBuildAgentTest {
 
     @Autowired
@@ -88,6 +84,8 @@ public abstract class AbstractArtemisBuildAgentTest {
     private static final Path GRADLE_TEST_RESULTS_PATH = TEST_RESULTS_PATH.resolve("java-gradle");
 
     protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("partly-successful");
+
+    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = GRADLE_TEST_RESULTS_PATH.resolve("all-succeed");
 
     @BeforeAll
     protected static void mockDockerClient() throws InterruptedException {
@@ -123,6 +121,7 @@ public abstract class AbstractArtemisBuildAgentTest {
             doReturn(repository).when(buildJobGitService).cloneRepository(any(), any());
         }
         catch (Exception ignored) {
+            // Exception is ignored as we are mocking the cloneRepository method
         }
 
         doNothing().when(buildJobGitService).checkoutRepositoryAtCommit(any(), any());
@@ -132,6 +131,7 @@ public abstract class AbstractArtemisBuildAgentTest {
             doNothing().when(buildJobGitService).deleteLocalRepository(any());
         }
         catch (Exception ignored) {
+            // Exception is ignored as we are mocking the deleteLocalRepository method
         }
     }
 
@@ -145,8 +145,22 @@ public abstract class AbstractArtemisBuildAgentTest {
                 ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 15, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", null);
 
-        long millisNow = System.currentTimeMillis();
-        return new BuildJobQueueItem("dummy-id-" + millisNow, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        String randomString = UUID.randomUUID().toString();
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+    }
+
+    protected static BuildJobQueueItem createBaseBuildJobQueueItemForTriggerWithImage(String image) {
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), null, null, null, 15);
+        RepositoryInfo repositoryInfo = new RepositoryInfo("dummy-repo-slug", RepositoryType.USER, RepositoryType.USER,
+                "https://artemis.tum.de/git/project/project-assignmentDummySlug.git", "https://artemis.tum.de/git/project/project-testDummySlug.git",
+                "https://artemis.tum.de/git/project/project-solutionDummySlug.git", new String[] {}, new String[] {});
+
+        BuildConfig buildConfig = new BuildConfig("dummy-build-script", image, "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
+                ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 15, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
+                "dummy-solution-checkout-path", null);
+
+        String randomString = UUID.randomUUID().toString();
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 
     protected static BuildJobQueueItem createBuildJobQueueItemWithNoCommitHash() {
@@ -159,8 +173,8 @@ public abstract class AbstractArtemisBuildAgentTest {
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 15, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", null);
 
-        long millisNow = System.currentTimeMillis();
-        return new BuildJobQueueItem("dummy-id-" + millisNow, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        String randomString = UUID.randomUUID().toString();
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 
     protected static BuildJobQueueItem createBuildJobQueueItemForTimeout() {
@@ -173,8 +187,8 @@ public abstract class AbstractArtemisBuildAgentTest {
                 ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", null);
 
-        long millisNow = System.currentTimeMillis();
-        return new BuildJobQueueItem("dummy-id-" + millisNow, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        String randomString = UUID.randomUUID().toString();
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 
     protected static BuildJobQueueItem createBuildJobQueueItemWithNetworkDisabled() {
@@ -188,7 +202,7 @@ public abstract class AbstractArtemisBuildAgentTest {
                 ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", dockerRunConfig);
 
-        long millisNow = System.currentTimeMillis();
-        return new BuildJobQueueItem("dummy-id-" + millisNow, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        String randomString = UUID.randomUUID().toString();
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null);
     }
 }

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -86,18 +87,7 @@ public class DockerClientTestService {
 
         String dummyContainerId = "1234567890";
 
-        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withEntrypoint().withCmd(String... cmd).exec()
-        CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
-        CreateContainerResponse createContainerResponse = new CreateContainerResponse();
-        createContainerResponse.setId(dummyContainerId);
-        when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withName(anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withHostConfig(any())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withEnv(anyList())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withUser(anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withEntrypoint()).thenReturn(createContainerCmd);
-        when(createContainerCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.exec()).thenReturn(createContainerResponse);
+        mockCreateContainerCmd(dockerClient, dummyContainerId, null);
 
         // Mock dockerClient.startContainerCmd(String containerId)
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
@@ -182,6 +172,33 @@ public class DockerClientTestService {
     }
 
     /**
+     * Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withEntrypoint().withCmd(String... cmd).exec()
+     *
+     * @param dockerClient     the DockerClient to mock.
+     * @param dummyContainerId the ID of the container to return when the container is created.
+     * @param image            the image to use for the container. Can be null, in which case will match any string.
+     */
+    public static void mockCreateContainerCmd(DockerClient dockerClient, String dummyContainerId, String image) {
+        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withEntrypoint().withCmd(String... cmd).exec()
+        CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
+        CreateContainerResponse createContainerResponse = new CreateContainerResponse();
+        createContainerResponse.setId(dummyContainerId);
+        if (image != null) {
+            when(dockerClient.createContainerCmd(eq(image))).thenReturn(createContainerCmd);
+        }
+        else {
+            when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
+        }
+        when(createContainerCmd.withName(anyString())).thenReturn(createContainerCmd);
+        when(createContainerCmd.withHostConfig(any())).thenReturn(createContainerCmd);
+        when(createContainerCmd.withEnv(anyList())).thenReturn(createContainerCmd);
+        when(createContainerCmd.withUser(anyString())).thenReturn(createContainerCmd);
+        when(createContainerCmd.withEntrypoint()).thenReturn(createContainerCmd);
+        when(createContainerCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(createContainerCmd);
+        when(createContainerCmd.exec()).thenReturn(createContainerResponse);
+    }
+
+    /**
      * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
      *
      * @param dockerClient          the DockerClient to mock.
@@ -190,6 +207,18 @@ public class DockerClientTestService {
      */
     public void mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) throws IOException {
         mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromTestResultsFolder(mockedTestResultsPath));
+    }
+
+    /**
+     * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+     *
+     * @param dockerClient          the DockerClient to mock.
+     * @param mockedTestResultsPath the path to the directory containing the test results in the resources folder.
+     * @param testResultsPath       the path to the directory containing the test results inside the container.
+     * @param containerId           the ID of the container to mock the test results for.
+     */
+    public void mockTestResultsForContainer(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath, String containerId) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, containerId, testResultsPath, createMapFromTestResultsFolder(mockedTestResultsPath));
     }
 
     /**
@@ -230,10 +259,32 @@ public class DockerClientTestService {
      */
     @SafeVarargs
     public final void mockInputStreamReturnedFromContainer(DockerClient dockerClient, String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, null, resourceRegexPattern, dataToReturn);
+    }
+
+    /**
+     * Mocks the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
+     *
+     * @param dockerClient         the DockerClient to mock.
+     * @param containerId          the ID of the container to mock the InputStream for.
+     * @param resourceRegexPattern the regex pattern that the resource path must match. The resource path is the path of the file or directory inside the container.
+     * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry of the map will be one TarArchiveEntry with the key denoting the
+     *                                 tarArchiveEntry.name() and the value being the content of the TarArchiveEntry. There can be up to two dataToReturn entries, in which case
+     *                                 the first call to "copyArchiveFromContainerCmd().exec()" will return the first entry, and the second call will return the second entry.
+     * @throws IOException if the InputStream cannot be created.
+     */
+    @SafeVarargs
+    public final void mockInputStreamReturnedFromContainer(DockerClient dockerClient, String containerId, String resourceRegexPattern, Map<String, String>... dataToReturn)
+            throws IOException {
         // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(resourceRegexPattern);
-        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
+        if (containerId == null) {
+            doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
+        }
+        else {
+            doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(eq(containerId), argThat(expectedPathMatcher));
+        }
 
         if (dataToReturn.length == 0) {
             throw new IllegalArgumentException("At least one dataToReturn entry must be provided.");
