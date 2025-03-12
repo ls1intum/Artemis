@@ -117,6 +117,7 @@ public class AttachmentUnitResource {
      * @param attachment       the attachment with updated content
      * @param file             the optional file to upload
      * @param hiddenPages      the pages to be hidden in the attachment unit
+     * @param pageOrder        the new order of the edited attachment unit
      * @param studentVersion   the student version of the file to upload
      * @param keepFilename     specifies if the original filename should be kept or not
      * @param notificationText the text to be used for the notification. No notification will be sent if the parameter is not set
@@ -126,7 +127,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) MultipartFile studentVersion,
-            @RequestPart(required = false) String hiddenPages, @RequestParam(defaultValue = "false") boolean keepFilename,
+            @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
@@ -134,7 +135,7 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, studentVersion, keepFilename,
-                hiddenPages);
+                hiddenPages, pageOrder);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);

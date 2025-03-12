@@ -360,7 +360,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         if (sourceIndex === -1 || targetIndex === -1) return;
 
         pages.splice(targetIndex, 0, pages.splice(sourceIndex, 1)[0]);
-        pages.forEach((page, index) => (page.pageIndex = index + 1));
+        pages.forEach((page, index) => (page.order = index + 1));
 
         this.pageOrderOutput.emit(pages);
     }

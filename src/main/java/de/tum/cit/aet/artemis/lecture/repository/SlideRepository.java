@@ -20,9 +20,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, String> {
 
-    Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
-
     Slide findByAttachmentUnitIdAndId(Long attachmentUnitId, String id);
+
+    List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
 
     /**
      * Find all slides that have a non-null hidden timestamp
