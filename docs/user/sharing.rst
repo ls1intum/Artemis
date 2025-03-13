@@ -1,5 +1,3 @@
-.. _sharing:
-
 .. |sharing_button1| image:: ../admin/setup/sharing/sharingButtonArtemis.png
 .. |sharing_metadata| image:: sharing/sharing_metadata.png
    :width: 50%
@@ -21,6 +19,8 @@
 
 
 
+
+.. _sharing:
 
 Sharing
 =======
