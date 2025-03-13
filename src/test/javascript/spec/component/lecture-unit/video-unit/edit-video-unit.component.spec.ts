@@ -89,7 +89,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitService = TestBed.inject(VideoUnitService);
         const lectureService = TestBed.inject(LectureService);
 
-        const lectureResponse: HttpResponse<VideoUnit> = new HttpResponse({
+        const lectureResponse: HttpResponse<Lecture> = new HttpResponse({
             body: new Lecture(),
             status: 201,
         });
@@ -126,7 +126,7 @@ describe('EditVideoUnitComponent', () => {
         const videoUnitService = TestBed.inject(VideoUnitService);
         const lectureService = TestBed.inject(LectureService);
 
-        const lectureResponse: HttpResponse<VideoUnit> = new HttpResponse({
+        const lectureResponse: HttpResponse<Lecture> = new HttpResponse({
             body: new Lecture(),
             status: 201,
         });
@@ -205,7 +205,7 @@ describe('EditVideoUnitComponent', () => {
         const lecture = new Lecture();
         lecture.lectureUnits = [attachmentUnit1, attachmentUnit2, textUnit1];
 
-        const lectureResponse: HttpResponse<VideoUnit> = new HttpResponse({
+        const lectureResponse: HttpResponse<Lecture> = new HttpResponse({
             body: lecture,
             status: 201,
         });
