@@ -2,29 +2,25 @@ name: E2E Tests
 
 on:
   workflow_run:
+    # Must match the name of build.yml workflow.
     workflows: [Build]
     types:
       - completed
 
 concurrency:
   group: |
-    # if the "Build" workflow was triggered by PR
-    ${{ github.event.workflow_run.event == 'pull_request' && format('e2e-pr-{0}', github.event.workflow_run.pull_requests[0].number)
+    ${{
+      github.event.workflow_run.event == 'pull_request' && format('e2e-pr-{0}', github.event.workflow_run.pull_requests[0].number)
       ||
-
-    # if the "Build" workflow was triggered by push to a branch
       (github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.ref, 'refs/heads/') &&
        format('e2e-{0}', replace(github.event.workflow_run.ref, 'refs/heads/', '')))
       ||
-    # if the "Build" workflow was triggered by push to a tag
       (github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.ref, 'refs/tags/') &&
        format('e2e-{0}', replace(github.event.workflow_run.ref, 'refs/tags/', '')))
       ||
-    # if the "Build" workflow was triggered by a release
       (github.event.workflow_run.event == 'release' &&
        format('e2e-release-{0}', github.event.workflow_run.tag_name))
       ||
-    # fallback if something else triggers "Build"
       'e2e-default'
     }}
   cancel-in-progress: true
@@ -32,57 +28,42 @@ concurrency:
 jobs:
   run-e2e:
     name: Run E2E Tests
-    runs-on: ubuntu-latest
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      (
+        github.event.workflow_run.event == 'pull_request' ||
+        github.event.workflow_run.event == 'push' && (
+          startsWith(github.event.workflow_run.ref, 'refs/heads/develop') ||
+          startsWith(github.event.workflow_run.ref, 'refs/heads/main') ||
+          startsWith(github.event.workflow_run.ref, 'refs/heads/release/') ||
+          startsWith(github.event.workflow_run.ref, 'refs/tags/')
+        ) ||
+        github.event.workflow_run.event == 'release'
+      )
+    runs-on: [self-hosted, e2e-test]
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
       - name: Download Artemis.war
-        uses: actions/github-script@v7
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
+          name: Artemis.war
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
 
-            // Get artifacts
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }}
-            });
+      - name: Make scripts executable
+        run: |
+          chmod +x .ci/E2E-tests/cleanup.sh
+          chmod +x .ci/E2E-tests/execute.sh
 
-            // Find the WAR artifact
-            const artifact = artifacts.data.artifacts.find(
-              artifact => artifact.name === "Artemis.war"
-            );
-
-            // Download the artifact
-            const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              artifact_id: artifact.id,
-              archive_format: 'zip'
-            });
-
-            fs.mkdirSync('./artifacts', { recursive: true });
-            fs.writeFileSync('./artifacts/artifact.zip', Buffer.from(download.data));
-
-            // Extract the zip
-            const AdmZip = require('adm-zip');
-            const zip = new AdmZip('./artifacts/artifact.zip');
-            zip.extractAllTo('./artifacts', true);
-
-            console.log("Artifact downloaded and extracted to ./artifacts directory");
-
-      - name: Make script executable
-        run: chmod +x .ci/E2E-tests/cleanup.sh
-
-      - name: Run cleanup script (before)
+      - name: Run cleanup script (before E2E)
         run: .ci/E2E-tests/cleanup.sh
 
-      - name: Run E2E Playwright tests
+      - name: Run E2E Playwright tests (MySQL, Local)
         if: ${{ github.event.workflow_run.pull_requests }}
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
 
-      - name: Run E2E Playwright tests
+      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
         if: ${{ !github.event.workflow_run.pull_requests }}
         run: .ci/E2E-tests/execute.sh multi-node playwright
 
@@ -94,6 +75,6 @@ jobs:
           path: |
             **/test-reports/*.xml
 
-      - name: Run cleanup script (after)
+      - name: Run cleanup script (after E2E)
         run: .ci/E2E-tests/cleanup.sh
 
