@@ -1,21 +1,71 @@
-name: Check if German and English translations are consistent
+name: E2E Tests
 
 on:
-  pull_request:
-    paths:
-      - 'src/main/webapp/i18n/**'
-  push:
-    paths:
-      - 'src/main/webapp/i18n/**'
+  workflow_run:
+    # Must match the name of build.yml workflow.
+    workflows: [Build]
+    types:
+      - completed
+
+concurrency:
+  group: |
+    ${{
+      github.event.workflow_run.ref && format('e2e-{0}', replace(github.event.workflow_run.ref, 'refs/', ''))[0:400]
+      || (github.event.workflow_run.event == 'release' && format('e2e-release-{0}', github.event.workflow_run.tag_name))[0:400]
+      || 'e2e-default'
+    }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: Check if translation keys are consistent
-    runs-on: ubuntu-latest
+  run-e2e:
+    name: Run E2E Tests
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      (
+        github.event.workflow_run.event == 'pull_request' ||
+        github.event.workflow_run.event == 'push' && (
+          startsWith(github.event.workflow_run.ref, 'refs/heads/develop') ||
+          startsWith(github.event.workflow_run.ref, 'refs/heads/main') ||
+          startsWith(github.event.workflow_run.ref, 'refs/heads/release/') ||
+          startsWith(github.event.workflow_run.ref, 'refs/tags/')
+        ) ||
+        github.event.workflow_run.event == 'release'
+      )
+    runs-on: [self-hosted, e2e-test]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      - name: Download Artemis.war
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.12"
-      - name: Check if translation keys match
-        run: python .ci/translation-file-checker/translation_file_checker.py --german-files src/main/webapp/i18n/de/ --english-files src/main/webapp/i18n/en/
+          name: Artemis.war
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Make scripts executable
+        run: |
+          chmod +x .ci/E2E-tests/cleanup.sh
+          chmod +x .ci/E2E-tests/execute.sh
+
+      - name: Run cleanup script (before E2E)
+        run: .ci/E2E-tests/cleanup.sh
+
+      - name: Run E2E Playwright tests (MySQL, Local)
+        if: ${{ github.event.workflow_run.pull_requests }}
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright
+
+      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+        if: ${{ !github.event.workflow_run.pull_requests }}
+        run: .ci/E2E-tests/execute.sh multi-node playwright
+
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JUnit Test Results
+          path: |
+            **/test-reports/*.xml
+
+      - name: Run cleanup script (after E2E)
+        run: .ci/E2E-tests/cleanup.sh
+
