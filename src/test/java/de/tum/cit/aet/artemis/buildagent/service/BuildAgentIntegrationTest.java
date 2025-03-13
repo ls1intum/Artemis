@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -279,10 +278,10 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        Thread.sleep(100);
-
-        assertThat(buildJobQueue.peek()).isNotNull();
-        assertThat(buildJobQueue.peek().id()).isEqualTo(queueItem.id());
+        await().pollDelay(100, TimeUnit.MILLISECONDS).until(() -> {
+            var queueItemPolled = buildJobQueue.peek();
+            return queueItemPolled != null && queueItemPolled.id().equals(queueItem.id());
+        });
 
         resumeBuildAgentTopic.publish(buildAgentShortName);
 
