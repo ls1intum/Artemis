@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -109,6 +110,12 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     @Test
     void testBuildAgentConcurrentBuilds() throws IOException {
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doAnswer(invocation -> {
+            Thread.sleep(500);
+            return null;
+        }).when(startContainerCmd).exec();
         // For this test, we need to return different test result streams for different containers. This is necessary since the first job would close the stream
         // which would cause the second job to fail. We need to return different streams for different containers to simulate concurrent builds.
         String image1 = "image1";
@@ -128,14 +135,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildJobQueue.add(queueItem);
         buildJobQueue.add(queueItem2);
 
-        await().until(() -> {
+        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             var processingJob2 = processingJobs.get(queueItem2.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null && processingJob2 != null
                     && processingJob2.jobTimingInfo().buildStartDate() != null;
         });
 
-        await().until(() -> {
+        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
             return buildAgent.numberOfCurrentBuildJobs() == 2 && buildAgent.maxNumberOfConcurrentBuildJobs() == 2 && buildAgent.runningBuildJobs().size() == 2
                     && (buildAgent.runningBuildJobs().getFirst().id().equals(queueItem.id()) || buildAgent.runningBuildJobs().getFirst().id().equals(queueItem2.id()))
@@ -215,7 +222,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
