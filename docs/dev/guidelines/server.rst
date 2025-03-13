@@ -477,21 +477,21 @@ Each of the roles has the all the access rights of the roles following it, e.g. 
 
 The table contains all annotations for the corresponding minimum role including the required path prefix for all their endpoints and the package they should reside in. Different annotations get used during migration.
 
-+------------------+----------------------------------------+-----------------+----------------+
-| **Minimum Role** | **Endpoint Annotation**                | **Path Prefix** | **Package**    |
-+------------------+----------------------------------------+-----------------+----------------+
-| ADMIN            | @EnforceAdmin                          | /api/admin/     | web.rest.admin |
-+------------------+----------------------------------------+-----------------+----------------+
-| INSTRUCTOR       | @EnforceAtLeastInstructorInResource    | /api/           | web.rest       |
-+------------------+----------------------------------------+-----------------+----------------+
-| EDITOR           | @EnforceAtLeastEditorInResource        | /api/           | web.rest       |
-+------------------+----------------------------------------+-----------------+----------------+
-| TA               | @EnforceAtLeastTutorInResource         | /api/           | web.rest       |
-+------------------+----------------------------------------+-----------------+----------------+
-| USER             | @EnforceAtLeastStudentInResource       | /api/           | web.rest       |
-+------------------+----------------------------------------+-----------------+----------------+
-| ANONYMOUS        | @EnforceNothing                        | /api/public/    | web.rest.open  |
-+------------------+----------------------------------------+-----------------+----------------+
++------------------+----------------------------------------+--------------------------+----------------------+
+| **Minimum Role** | **Endpoint Annotation**                | **Path Prefix**          | **Package**          |
++------------------+----------------------------------------+--------------------------+----------------------+
+| ADMIN            | @EnforceAdmin                          | /api/{module}/admin/     | {module}.web.admin   |
++------------------+----------------------------------------+--------------------------+----------------------+
+| INSTRUCTOR       | @EnforceAtLeastInstructorInResource    | /api/{module}/           | {module}.web         |
++------------------+----------------------------------------+--------------------------+----------------------+
+| EDITOR           | @EnforceAtLeastEditorInResource        | /api/{module}/           | {module}.web         |
++------------------+----------------------------------------+--------------------------+----------------------+
+| TA               | @EnforceAtLeastTutorInResource         | /api/{module}/           | {module}.web         |
++------------------+----------------------------------------+--------------------------+----------------------+
+| USER             | @EnforceAtLeastStudentInResource       | /api/{module}/           | {module}.web         |
++------------------+----------------------------------------+--------------------------+----------------------+
+| ANONYMOUS        | @EnforceNothing                        | /api/{module}/public/    | {module}.web.open    |
++------------------+----------------------------------------+--------------------------+----------------------+
 
 If, for some reason, you need to deviate from these rules, use ``@ManualConfig``. Use this annotation only if absolutely necessary as it will exclude the endpoint from the automatic authorization tests.
 
@@ -533,7 +533,7 @@ For example, an endpoint that provides a Scorpio-specific (VSCode Extension) int
 
 **How to Get Tool Tokens**
     #. Verify that the tool type is already defined in ``ToolTokenType.java``
-    #. Send a POST request to the endpoint ``{{base_url}}/api/public/authenticate?tool=TOOLTYPE``
+    #. Send a POST request to the endpoint ``{{base_url}}/api/core/public/authenticate?tool=TOOLTYPE``
 
 
 Implicit pre- and post-authorization annotations
