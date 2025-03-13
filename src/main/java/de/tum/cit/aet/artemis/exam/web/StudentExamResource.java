@@ -81,7 +81,7 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exam/")
 public class StudentExamResource {
 
     private static final Logger log = LoggerFactory.getLogger(StudentExamResource.class);

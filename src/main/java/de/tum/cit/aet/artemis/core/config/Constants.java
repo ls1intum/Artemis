@@ -60,7 +60,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -70,7 +70,7 @@ public final class Constants {
 
     public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
-    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/public/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -286,6 +286,12 @@ public final class Constants {
     public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "buildTimeoutMax";
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
+
+    public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
+
+    public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
+
+    public static final String DOCKER_FLAG_MEMORY_SWAP_MB = "defaultContainerMemorySwapLimitInMB";
 
     public static final String USE_EXTERNAL = "useExternal";
 

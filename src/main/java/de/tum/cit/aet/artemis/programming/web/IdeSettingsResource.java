@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepo
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class IdeSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(IdeSettingsResource.class);

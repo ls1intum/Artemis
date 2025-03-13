@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserPolicy;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.ClippyCategorizer;
 
 /**
@@ -94,10 +95,12 @@ public class StaticCodeAnalysisConfigurer {
         map.put(ProgrammingLanguage.C, createDefaultCategoriesForC());
         map.put(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE));
         map.put(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava());
+        map.put(ProgrammingLanguage.JAVASCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
         map.put(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF));
         map.put(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP));
         map.put(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY));
         map.put(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift());
+        map.put(ProgrammingLanguage.TYPESCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
 
         languageToDefaultCategories = Collections.unmodifiableMap(map);
     }

@@ -151,7 +151,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubmitViaOnlineEditor() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/programming/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 1, false);
     }
 
@@ -630,6 +630,24 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPerfDockerFlags() {
+        var buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setDockerFlags("{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048}");
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
+        verify(AbstractProgrammingIntegrationLocalCILocalVCTestBase.dockerClientMock.createContainerCmd(anyString())).withHostConfig(argThat(hostConfig -> {
+            assertThat(hostConfig.getCpuQuota()).isEqualTo(4L * 100000);
+            assertThat(hostConfig.getMemory()).isEqualTo(3072L * 1024 * 1024);
+            assertThat(hostConfig.getMemorySwap()).isEqualTo(2048L * 1024 * 1024);
+            return true;
+        }));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
         String buildAgentName = "artemis-build-agent-test";
         hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
@@ -690,8 +708,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 jobTimingInfo, buildConfig, null);
 
         processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
-        var submissionDto = request.get("/api/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
-                SubmissionDTO.class);
+        var submissionDto = request.get("/api/programming/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission",
+                HttpStatus.OK, SubmissionDTO.class);
         processingJobs.delete(buildJobQueueItem.id());
 
         assertThat(submissionDto).isNotNull();

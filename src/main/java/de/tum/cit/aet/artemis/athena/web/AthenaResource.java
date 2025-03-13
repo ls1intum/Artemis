@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.athena.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -45,15 +48,16 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 
 /**
  * REST controller for Athena feedback suggestions.
  */
 @Profile(PROFILE_ATHENA)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/athena/")
 public class AthenaResource {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);
@@ -63,9 +67,9 @@ public class AthenaResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final Optional<TextSubmissionApi> textSubmissionApi;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -86,14 +90,14 @@ public class AthenaResource {
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(CourseRepository courseRepository, TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
+    public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
             AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
             AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
-        this.textExerciseRepository = textExerciseRepository;
-        this.textSubmissionRepository = textSubmissionRepository;
+        this.textRepositoryApi = textRepositoryApi;
+        this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -153,27 +157,30 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/text-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a text exercise
+     * GET text-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a text exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @GetMapping("athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @GetMapping("text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        return getFeedbackSuggestions(exerciseId, submissionId, textExerciseRepository::findByIdElseThrow, textSubmissionRepository::findByIdElseThrow,
+        var api = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE));
+        var submissionApi = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+
+        return getFeedbackSuggestions(exerciseId, submissionId, api::findByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
     }
 
     /**
-     * GET athena/programming-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a programming exercise
+     * GET programming-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a programming exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @GetMapping("athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @GetMapping("programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
@@ -181,13 +188,13 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a modeling exercise
+     * GET modeling-exercises/:exerciseId/submissions/:submissionId/feedback-suggestions : Get feedback suggestions from Athena for a modeling exercise
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get feedback suggestions for
      * @return 200 Ok if successful with the corresponding result as body
      */
-    @GetMapping("athena/modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
+    @GetMapping("modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingFeedbackDTO>> getModelingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, modelingExerciseRepository::findByIdElseThrow, modelingSubmissionRepository::findByIdElseThrow,
@@ -195,36 +202,36 @@ public class AthenaResource {
     }
 
     /**
-     * GET athena/courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
+     * GET courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
      *
      * @param courseId the id of the course the text exercise belongs to
      * @return 200 Ok if successful with the modules as body
      */
-    @GetMapping("athena/courses/{courseId}/text-exercises/available-modules")
+    @GetMapping("courses/{courseId}/text-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
         return this.getAvailableModules(courseId, ExerciseType.TEXT);
     }
 
     /**
-     * GET athena/courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
+     * GET courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
      *
      * @param courseId the id of the course the programming exercise belongs to
      * @return 200 Ok if successful with the modules as body
      */
-    @GetMapping("athena/courses/{courseId}/programming-exercises/available-modules")
+    @GetMapping("courses/{courseId}/programming-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
         return this.getAvailableModules(courseId, ExerciseType.PROGRAMMING);
     }
 
     /**
-     * GET athena/courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
+     * GET courses/{courseId}/modeling-exercises/available-modules : Get all available Athena modules for a modeling exercise in the course
      *
      * @param courseId the id of the course the modeling exercise belongs to
      * @return 200 Ok if successful with the modules as body
      */
-    @GetMapping("athena/courses/{courseId}/modeling-exercises/available-modules")
+    @GetMapping("courses/{courseId}/modeling-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForModelingExercises(@PathVariable long courseId) {
         return this.getAvailableModules(courseId, ExerciseType.MODELING);
@@ -243,14 +250,14 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/athena/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/submissions/:submissionId/repository : Get the repository as a zip file download
      *
      * @param exerciseId   the id of the exercise the submission belongs to
      * @param submissionId the id of the submission to get the repository for
      * @param auth         the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("public/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
+    @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
@@ -260,13 +267,13 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/athena/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/repository/template : Get the template repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/template")
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/template")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
@@ -276,13 +283,13 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/athena/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/solution")
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/solution")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
@@ -292,13 +299,13 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/athena/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
+     * GET public/programming-exercises/:exerciseId/repository/tests : Get the test repository as a zip file download
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
      * @return 200 Ok with the zip file as body if successful
      */
-    @GetMapping("public/athena/programming-exercises/{exerciseId}/repository/tests")
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/tests")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
     public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
