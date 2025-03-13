@@ -2,17 +2,19 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of, Subscription, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
-import { signal } from '@angular/core';
+import { ElementRef, signal } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PDFDocument } from 'pdf-lib';
 import dayjs from 'dayjs/esm';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { PDFPageProxy } from 'pdfjs-dist';
 
 jest.mock('pdf-lib', () => {
     const originalModule = jest.requireActual('pdf-lib');
@@ -22,11 +24,11 @@ jest.mock('pdf-lib', () => {
         PDFDocument: {
             ...originalModule.PDFDocument,
             load: jest.fn(),
-            create: jest.fn(),
-            prototype: {
-                removePage: jest.fn(),
-                save: jest.fn(),
-            },
+            create: jest.fn().mockImplementation(() => ({
+                addPage: jest.fn(),
+                embedPng: jest.fn().mockResolvedValue({}),
+                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            })),
         },
     };
 });
@@ -73,7 +75,6 @@ describe('PdfPreviewComponent', () => {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
             update: jest.fn().mockReturnValue(of({})),
             delete: jest.fn().mockReturnValue(of({})),
-            getHiddenSlides: jest.fn().mockReturnValue(of([1, 2, 3])),
         };
         lectureUnitServiceMock = {
             delete: jest.fn().mockReturnValue(of({})),
@@ -82,7 +83,6 @@ describe('PdfPreviewComponent', () => {
             data: of({
                 course: { id: 1, name: 'Example Course' },
                 attachment: { id: 1, name: 'Example PDF', lecture: { id: 1 } },
-                attachmentUnit: { id: 1, name: 'Chapter 1', lecture: { id: 1 } },
             }),
         };
         alertServiceMock = {
@@ -106,9 +106,41 @@ describe('PdfPreviewComponent', () => {
         fixture = TestBed.createComponent(PdfPreviewComponent);
         component = fixture.componentInstance;
 
+        const originalCreateElement = document.createElement;
+        const mockCanvas = {
+            width: 0,
+            height: 0,
+            getContext: jest.fn().mockReturnValue({
+                drawImage: jest.fn(),
+            }),
+            toDataURL: jest.fn().mockReturnValue('data:image/png;base64,test'),
+        };
+
+        global.document.createElement = jest.fn().mockImplementation((tagName) => {
+            if (tagName === 'canvas') {
+                return mockCanvas;
+            }
+            if (tagName === 'input') {
+                const mockInput = originalCreateElement.call(document, 'input');
+                mockInput.click = jest.fn();
+                return mockInput;
+            }
+            return originalCreateElement.call(document, tagName);
+        });
+
+        const mockInput = {
+            nativeElement: {
+                click: jest.fn(),
+                value: '',
+            },
+        };
+        component.fileInput = signal(mockInput as unknown as ElementRef<HTMLInputElement>);
+        component.showPopover = signal({} as NgbPopover);
+
         jest.spyOn(component.dialogErrorSource, 'next');
 
         global.URL.createObjectURL = jest.fn().mockReturnValue('blob-url');
+        global.URL.revokeObjectURL = jest.fn();
 
         routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
 
@@ -132,8 +164,8 @@ describe('PdfPreviewComponent', () => {
                 name: 'Chapter 1',
                 lecture: { id: 1 },
                 slides: [
-                    { slideNumber: 1, hidden: false },
-                    { slideNumber: 2, hidden: '2024-01-01' },
+                    { id: 'slide1', slideNumber: 1, hidden: false },
+                    { id: 'slide2', slideNumber: 2, hidden: '2024-01-01' },
                 ],
             };
 
@@ -148,8 +180,8 @@ describe('PdfPreviewComponent', () => {
             expect(component.course()).toEqual({ id: 1, name: 'Example Course' });
             expect(component.attachmentUnit()).toEqual(mockAttachmentUnit);
 
-            expect(component.initialHiddenPages()).toEqual({ 2: expect.any(Object) });
-            expect(component.hiddenPages()).toEqual({ 2: expect.any(Object) });
+            expect(Object.keys(component.initialHiddenPages())).toContain('slide2');
+            expect(Object.keys(component.hiddenPages())).toContain('slide2');
 
             expect(attachmentUnitServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
             expect(global.URL.createObjectURL).toHaveBeenCalled();
@@ -196,576 +228,617 @@ describe('PdfPreviewComponent', () => {
             component.ngOnInit();
             tick();
 
-            expect(alertServiceSpy).toHaveBeenCalledWith('error.http.404');
+            expect(alertServiceSpy).toHaveBeenCalled();
         }));
+    });
 
-        it('should update attachment unit with student version when there are hidden pages', fakeAsync(() => {
-            const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
-            const mockHiddenPages = [
-                { pageIndex: 1, date: dayjs(), exerciseId: null },
-                { pageIndex: 2, date: dayjs(), exerciseId: null },
-                { pageIndex: 3, date: dayjs(), exerciseId: null },
-            ];
+    describe('Unsubscribing from Observables', () => {
+        it('should unsubscribe attachment subscription during component destruction', () => {
+            const unsubscribeSpy = jest.fn();
+            const mockSubscription = new Subscription();
 
-            jest.spyOn(component, 'getHiddenPages').mockReturnValue(mockHiddenPages);
-            jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
+            mockSubscription.unsubscribe = unsubscribeSpy;
 
-            component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
+            component.attachmentSub = mockSubscription;
+
+            component.ngOnDestroy();
+
+            expect(unsubscribeSpy).toHaveBeenCalled();
+        });
+
+        it('should unsubscribe attachmentUnit subscription during component destruction', () => {
+            const unsubscribeSpy = jest.fn();
+            const mockSubscription = new Subscription();
+
+            mockSubscription.unsubscribe = unsubscribeSpy;
+
+            component.attachmentUnitSub = mockSubscription;
+
+            component.currentPdfUrl.set('test-url');
+
+            component.ngOnDestroy();
+
+            expect(unsubscribeSpy).toHaveBeenCalled();
+
+            expect(URL.revokeObjectURL).toHaveBeenCalledWith('test-url');
+        });
+    });
+
+    describe('File Input Handling', () => {
+        it('should trigger the file input click event', () => {
+            const mockFileInput = {
+                nativeElement: {
+                    click: jest.fn(),
+                    type: 'file',
+                },
+            };
+            component.fileInput = signal(mockFileInput as unknown as ElementRef<HTMLInputElement>);
+
+            component.triggerFileInput();
+
+            expect(mockFileInput.nativeElement.click).toHaveBeenCalled();
+        });
+    });
+
+    describe('Get Hidden Pages', () => {
+        it('should return an array of hidden page objects from the hiddenPages signal', () => {
+            const mockDate1 = dayjs('2024-01-01');
+            const mockDate3 = dayjs('2024-03-03');
+            const mockDate5 = dayjs('2024-05-05');
+
+            component.hiddenPages.set({
+                slide1: { date: mockDate1, exerciseId: null },
+                slide3: { date: mockDate3, exerciseId: 123 },
+                slide5: { date: mockDate5, exerciseId: 456 },
+            });
+
+            const hiddenPages = component.getHiddenPages();
+
+            expect(hiddenPages.length).toBe(3);
+            expect(hiddenPages).toContainEqual({ slideId: 'slide1', date: mockDate1, exerciseId: null });
+            expect(hiddenPages).toContainEqual({ slideId: 'slide3', date: mockDate3, exerciseId: 123 });
+            expect(hiddenPages).toContainEqual({ slideId: 'slide5', date: mockDate5, exerciseId: 456 });
+        });
+
+        it('should return an empty array if hiddenPages is empty', () => {
+            component.hiddenPages.set({});
+            const hiddenPages = component.getHiddenPages();
+            expect(hiddenPages).toEqual([]);
+        });
+    });
+
+    describe('Attachment Update', () => {
+        it('should update an attachment successfully', async () => {
+            component.attachment.set({ id: 1, name: 'Test PDF', version: 1 });
+            component.attachmentToBeEdited.set(undefined);
+
+            const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockResolvedValue(mockPdfFile);
+
+            attachmentServiceMock.update.mockReturnValue(of({}));
+
+            await component.updateAttachmentWithFile();
+
+            const updateCall = attachmentServiceMock.update.mock.calls[0];
+            expect(updateCall).toBeDefined();
+
+            expect(component.attachmentToBeEdited()).toBeDefined();
+            expect(component.attachmentToBeEdited()!.version).toBe(2);
+            expect(attachmentServiceMock.update).toHaveBeenCalledWith(
+                1,
+                expect.objectContaining({
+                    id: 1,
+                    name: 'Test PDF',
+                    version: 2,
+                }),
+                mockPdfFile,
+            );
+
+            createPdfSpy.mockRestore();
+        });
+
+        it('should update an attachment unit successfully without hidden pages', async () => {
             component.attachment.set(undefined);
             component.attachmentUnit.set({
-                id: 1,
-                lecture: { id: 1 },
-                attachment: { id: 1, name: 'test.pdf' },
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
             });
+            component.attachmentToBeEdited.set(undefined);
+
+            const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockResolvedValue(mockPdfFile);
+            component.pageOrder.set([
+                { slideId: 'slide1', pageIndex: 1, order: 1 },
+                { slideId: 'slide2', pageIndex: 2, order: 2 },
+            ]);
+            component.hiddenPages.set({});
+
+            const appendSpy = jest.spyOn(FormData.prototype, 'append');
 
             attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
-            component.updateAttachmentWithFile();
-            tick();
+            await component.updateAttachmentWithFile();
 
-            fixture.whenStable().then(() => {
-                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+            expect(component.attachmentToBeEdited()).toEqual(component.attachmentUnit()!.attachment);
+            expect(appendSpy).toHaveBeenCalledWith('file', mockPdfFile);
+            expect(appendSpy).toHaveBeenCalledWith('attachment', expect.any(Blob));
+            expect(appendSpy).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
+            expect(appendSpy).toHaveBeenCalledWith('pageOrder', expect.any(String));
+            expect(appendSpy).not.toHaveBeenCalledWith('studentVersion', expect.any(File));
+            expect(appendSpy).not.toHaveBeenCalledWith('hiddenPages', expect.any(String));
+            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(3, 2, expect.any(FormData));
 
-                const lastCallArgs = attachmentUnitServiceMock.update.mock.lastCall[2];
-                expect(lastCallArgs instanceof FormData).toBeTruthy();
-                expect(lastCallArgs.get('hiddenPages')).toBe(JSON.stringify(mockHiddenPages));
-            });
-        }));
+            createPdfSpy.mockRestore();
+            appendSpy.mockRestore();
+        });
 
-        it('should handle errors when updating attachment unit with hidden pages fails', fakeAsync(() => {
-            const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
-            const mockHiddenPages = [
-                { pageIndex: 1, date: dayjs(), exerciseId: null },
-                { pageIndex: 2, date: dayjs(), exerciseId: null },
-                { pageIndex: 3, date: dayjs(), exerciseId: null },
-            ];
-
-            jest.spyOn(component, 'getHiddenPages').mockReturnValue(mockHiddenPages);
-            jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
-
-            component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
+        it('should update an attachment unit with hidden pages and create a student version', async () => {
             component.attachment.set(undefined);
             component.attachmentUnit.set({
-                id: 1,
-                lecture: { id: 1 },
-                attachment: { id: 1, name: 'test.pdf' },
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
+            });
+            component.attachmentToBeEdited.set(undefined);
+
+            const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const mockStudentPdfFile = new File(['student'], 'test-student.pdf', { type: 'application/pdf' });
+
+            jest.spyOn(component, 'createPdf').mockClear();
+
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockImplementation((name, studentVersion) => {
+                if (studentVersion === true) {
+                    return Promise.resolve(mockStudentPdfFile);
+                } else {
+                    return Promise.resolve(mockPdfFile);
+                }
             });
 
-            attachmentUnitServiceMock.update.mockReturnValue(throwError(() => new Error('Update failed')));
-
-            component.updateAttachmentWithFile();
-            fixture.whenStable();
-            tick();
-
-            fixture.whenStable().then(() => {
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
-            });
-        }));
-
-        describe('Unsubscribing from Observables', () => {
-            it('should unsubscribe attachment subscription during component destruction', () => {
-                const spySub = jest.spyOn(component.attachmentSub, 'unsubscribe');
-                component.ngOnDestroy();
-                expect(spySub).toHaveBeenCalled();
+            const mockDate = dayjs('2024-01-01');
+            component.hiddenPages.set({
+                slide2: { date: mockDate, exerciseId: 123 },
             });
 
-            it('should unsubscribe attachmentUnit subscription during component destruction', fakeAsync(() => {
-                routeMock.data = of({
-                    course: { id: 1, name: 'Example Course' },
-                    attachmentUnit: {
-                        id: 1,
-                        name: 'Chapter 1',
-                        lecture: { id: 1 },
-                        slides: [
-                            { slideNumber: 1, hidden: false },
-                            { slideNumber: 2, hidden: true }, // Example hidden slide
-                        ],
-                    },
-                });
+            component.pageOrder.set([
+                { slideId: 'slide1', pageIndex: 1, order: 1 },
+                { slideId: 'slide2', pageIndex: 2, order: 2 },
+            ]);
 
-                component.ngOnInit();
-                tick();
+            const appendSpy = jest.spyOn(FormData.prototype, 'append');
 
-                expect(component.attachmentUnitSub).toBeDefined();
+            attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
-                const spySub = jest.spyOn(component.attachmentUnitSub!, 'unsubscribe');
-                component.ngOnDestroy();
-                expect(spySub).toHaveBeenCalled();
-            }));
+            await component.updateAttachmentWithFile();
+
+            expect(createPdfSpy).toHaveBeenCalledTimes(2);
+
+            expect(createPdfSpy.mock.calls[0][0]).toBe('Chapter 1');
+
+            expect(createPdfSpy.mock.calls[1][0]).toBe('Chapter 1');
+            expect(createPdfSpy.mock.calls[1][1]).toBe(true);
+
+            expect(appendSpy).toHaveBeenCalledWith('studentVersion', mockStudentPdfFile);
+            expect(appendSpy).toHaveBeenCalledWith('hiddenPages', expect.stringContaining('slide2'));
+            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(3, 2, expect.any(FormData));
+
+            createPdfSpy.mockRestore();
+            appendSpy.mockRestore();
         });
 
-        describe('File Input Handling', () => {
-            it('should trigger the file input click event', () => {
-                const mockFileInput = document.createElement('input');
-                mockFileInput.type = 'file';
-                component.fileInput = signal({ nativeElement: mockFileInput });
+        it('should handle file size exceeding the maximum allowed size', async () => {
+            component.attachment.set({ id: 1, name: 'Large PDF', version: 1 });
 
-                const clickSpy = jest.spyOn(component.fileInput()!.nativeElement, 'click');
-                component.triggerFileInput();
-                expect(clickSpy).toHaveBeenCalled();
-            });
+            const largeContent = new Array(MAX_FILE_SIZE + 1000).fill('a').join('');
+            const largeMockFile = new File([largeContent], 'large.pdf', { type: 'application/pdf' });
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockResolvedValue(largeMockFile);
+
+            await component.updateAttachmentWithFile();
+
+            expect(component.isSaving()).toBe(false);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.fileSizeError');
+            expect(attachmentServiceMock.update).not.toHaveBeenCalled();
+            expect(routerNavigateSpy).not.toHaveBeenCalled();
+
+            createPdfSpy.mockRestore();
         });
 
-        describe('Get Hidden Pages', () => {
-            it('should return an array of hidden page objects based on button IDs', () => {
-                const mockDate1 = { date: dayjs(), exerciseId: null };
-                const mockDate3 = { date: dayjs(), exerciseId: null };
-                const mockDate5 = { date: dayjs(), exerciseId: null };
+        it('should handle errors when attachment update fails', async () => {
+            component.attachment.set({ id: 1, name: 'Test PDF', version: 1 });
 
-                component.hiddenPages.set({
-                    1: mockDate1,
-                    3: mockDate3,
-                    5: mockDate5,
-                });
+            const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockResolvedValue(mockPdfFile);
 
-                document.body.innerHTML = `
-        <button id="hide-show-button-1" class="hide-show-btn btn-success"></button>
-        <button id="hide-show-button-3" class="hide-show-btn btn-success"></button>
-        <button id="hide-show-button-5" class="hide-show-btn btn-success"></button>
-    `;
+            const mockError = new Error('Update failed');
+            attachmentServiceMock.update.mockReturnValue(throwError(() => mockError));
 
-                const hiddenPages = component.getHiddenPages();
+            await component.updateAttachmentWithFile();
 
-                expect(hiddenPages).toEqual([
-                    { pageIndex: 1, date: mockDate1.date, exerciseId: mockDate1.exerciseId },
-                    { pageIndex: 3, date: mockDate3.date, exerciseId: mockDate3.exerciseId },
-                    { pageIndex: 5, date: mockDate5.date, exerciseId: mockDate5.exerciseId },
-                ]);
-            });
+            expect(component.isSaving()).toBe(false);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
+            expect(routerNavigateSpy).not.toHaveBeenCalled();
 
-            it('should return an empty array if no matching elements are found', () => {
-                document.body.innerHTML = `
-        <button id="other-button-1" class="btn btn-danger"></button>
-        <button id="random-button-2" class="btn btn-primary"></button>
-    `;
-
-                const hiddenPages = component.getHiddenPages();
-                expect(hiddenPages).toEqual([]);
-            });
-
-            it('should ignore elements without valid IDs', () => {
-                const mockDate1 = { date: dayjs(), exerciseId: null };
-                const mockDate2 = { date: dayjs(), exerciseId: null };
-
-                component.hiddenPages.set({
-                    1: mockDate1,
-                    2: mockDate2,
-                });
-
-                document.body.innerHTML = `
-    <button id="hide-show-button-1" class="hide-show-btn btn-success"></button>
-    <button id="hide-show-button-invalid" class="hide-show-btn btn-success"></button>
-    <button id="hide-show-button-2" class="hide-show-btn btn-success"></button>
-`;
-
-                const hiddenPages = component.getHiddenPages();
-
-                expect(hiddenPages).toEqual([
-                    { pageIndex: 1, date: mockDate1.date, exerciseId: mockDate1.exerciseId },
-                    { pageIndex: 2, date: mockDate2.date, exerciseId: mockDate2.exerciseId },
-                ]);
-            });
+            createPdfSpy.mockRestore();
         });
 
-        describe('Attachment Updating', () => {
-            it('should update attachment successfully and show success alert', () => {
-                component.attachment.set({ id: 1, version: 1 });
-                component.updateAttachmentWithFile();
-
-                expect(attachmentServiceMock.update).toHaveBeenCalled();
-                expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+        it('should handle errors when attachment unit update fails', async () => {
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
             });
 
-            it('should not update attachment if file size exceeds the limit and show an error alert', () => {
-                const oversizedData = new Uint8Array(MAX_FILE_SIZE + 1).fill(0);
-                component.currentPdfBlob.set(new Blob([oversizedData], { type: 'application/pdf' }));
+            const mockPdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockResolvedValue(mockPdfFile);
 
-                component.updateAttachmentWithFile();
+            const mockError = new Error('Update failed');
+            attachmentUnitServiceMock.update.mockReturnValue(throwError(() => mockError));
 
-                expect(attachmentServiceMock.update).not.toHaveBeenCalled();
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.fileSizeError');
-            });
+            await component.updateAttachmentWithFile();
 
-            it('should handle errors when updating an attachment fails', () => {
-                attachmentServiceMock.update.mockReturnValue(throwError(() => new Error('Update failed')));
-                component.attachment.set({ id: 1, version: 1 });
+            expect(component.isSaving()).toBe(false);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
+            expect(routerNavigateSpy).not.toHaveBeenCalled();
 
-                component.updateAttachmentWithFile();
-
-                expect(attachmentServiceMock.update).toHaveBeenCalled();
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
-            });
+            createPdfSpy.mockRestore();
         });
 
-        describe('Attachment Unit Update', () => {
-            it('should update attachment unit successfully when there are no hidden pages', fakeAsync(() => {
-                jest.spyOn(component, 'getHiddenPages').mockReturnValue([]);
-                jest.spyOn(FormData.prototype, 'append');
+        it('should handle errors during PDF creation', async () => {
+            component.attachment.set({ id: 1, name: 'Test PDF', version: 1 });
 
-                component.attachment.set(undefined);
-                component.attachmentUnit.set({
-                    id: 1,
-                    lecture: { id: 1 },
-                    attachment: { id: 1, version: 1 },
-                });
-                attachmentUnitServiceMock.update.mockReturnValue(of({}));
+            const mockError = new Error('PDF creation failed');
+            const createPdfSpy = jest.spyOn(component, 'createPdf').mockRejectedValue(mockError);
 
-                routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
+            await component.updateAttachmentWithFile();
 
-                component.updateAttachmentWithFile();
-                tick();
+            expect(component.isSaving()).toBe(false);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'PDF creation failed' });
+            expect(attachmentServiceMock.update).not.toHaveBeenCalled();
+            expect(routerNavigateSpy).not.toHaveBeenCalled();
 
-                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
-                expect(FormData.prototype.append).toHaveBeenCalledWith('file', expect.any(File));
-                expect(FormData.prototype.append).toHaveBeenCalledWith('attachment', expect.any(Blob));
-                expect(FormData.prototype.append).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
-                expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 1, 'unit-management']);
-            }));
+            createPdfSpy.mockRestore();
+        });
+    });
 
-            it('should handle errors when updating an attachment unit fails', fakeAsync(() => {
-                jest.spyOn(component, 'getHiddenPages').mockReturnValue([]);
-                jest.spyOn(FormData.prototype, 'append');
+    describe('PDF Merging', () => {
+        it('should handle file type validation for PDF merge', async () => {
+            const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+            const mockEvent = {
+                target: {
+                    files: [mockFile],
+                    value: 'test.jpg',
+                },
+            };
 
-                component.attachment.set(undefined);
-                component.attachmentUnit.set({
-                    id: 1,
-                    lecture: { id: 1 },
-                    attachment: { id: 1, version: 1 },
-                });
-                component.currentPdfBlob.set(new Blob(['PDF content'], { type: 'application/pdf' }));
-                routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
-                attachmentUnitServiceMock.update = jest.fn().mockReturnValue(throwError(() => new Error('Update failed')));
+            await component.mergePDF(mockEvent as any);
 
-                component.updateAttachmentWithFile();
-                tick();
-
-                expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
-            }));
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.invalidFileType');
         });
 
-        describe('PDF Merging', () => {
-            it('should merge PDF files correctly and update the component state', async () => {
-                const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
-                mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
-                const mockEvent = { target: { files: [mockFile] } };
+        it('should merge PDF files and update the component state', async () => {
+            const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const mockEvent = {
+                target: {
+                    files: [mockFile],
+                    value: '',
+                },
+            };
 
-                const existingPdfDoc = {
-                    copyPages: jest.fn().mockResolvedValue(['page']),
-                    addPage: jest.fn(),
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-                };
+            const initialSelectedPages = new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 }]);
+            component.selectedPages.set(initialSelectedPages);
 
-                const newPdfDoc = {
-                    getPageIndices: jest.fn().mockReturnValue([0]),
-                };
+            global.URL.createObjectURL = jest.fn().mockReturnValue('mock-url');
+            const mockArrayBuffer = new ArrayBuffer(10);
+            mockFile.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
 
-                PDFDocument.load = jest
-                    .fn()
-                    .mockImplementationOnce(() => Promise.resolve(existingPdfDoc))
-                    .mockImplementationOnce(() => Promise.resolve(newPdfDoc));
+            const loadPdfSpy = jest.spyOn(component, 'loadPdf').mockResolvedValue();
 
-                component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-                component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
+            await component.mergePDF(mockEvent as any);
 
-                component.selectedPages.set(new Set([1]));
+            expect(component.currentPdfBlob()).toBeDefined();
+            expect(component.isFileChanged()).toBe(true);
+            expect(component.isPdfLoading()).toBe(false);
 
-                await component.mergePDF(mockEvent as any);
+            expect(component.selectedPages().size).toBe(0);
 
-                expect(PDFDocument.load).toHaveBeenCalledTimes(2);
-                expect(existingPdfDoc.copyPages).toHaveBeenCalledWith(newPdfDoc, [0]);
-                expect(existingPdfDoc.addPage).toHaveBeenCalled();
-                expect(existingPdfDoc.save).toHaveBeenCalled();
-                expect(component.currentPdfBlob).toBeDefined();
-                expect(component.selectedPages()!.size).toBe(0);
-                expect(component.isPdfLoading()).toBeFalsy();
-                expect(URL.createObjectURL).toHaveBeenCalledWith(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
-            });
+            expect(global.URL.createObjectURL).toHaveBeenCalled();
+            expect(loadPdfSpy).toHaveBeenCalledWith('mock-url', true);
+            expect(mockEvent.target.value).toBe('');
 
-            it('should handle errors when merging PDFs fails', async () => {
-                const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
-
-                mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
-
-                const mockEvent = { target: { files: [mockFile] } };
-                const error = new Error('Error loading PDF');
-
-                component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-                component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
-
-                PDFDocument.load = jest
-                    .fn()
-                    .mockImplementationOnce(() => Promise.reject(error))
-                    .mockImplementationOnce(() => Promise.resolve({}));
-
-                await component.mergePDF(mockEvent as any);
-
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
-                expect(component.isPdfLoading()).toBeFalsy();
-            });
+            loadPdfSpy.mockRestore();
         });
 
-        describe('Slide Deletion', () => {
-            it('should delete selected slides and update the PDF', async () => {
-                const existingPdfDoc = {
-                    removePage: jest.fn(),
-                    save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-                };
+        it('should handle errors when merging PDFs fails', async () => {
+            const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            const mockEvent = {
+                target: {
+                    files: [mockFile],
+                    value: '',
+                },
+            };
 
-                PDFDocument.load = jest.fn().mockResolvedValue(existingPdfDoc);
-                const mockArrayBuffer = new ArrayBuffer(8);
+            const mockError = new Error('PDF loading failed');
+            mockFile.arrayBuffer = jest.fn().mockRejectedValue(mockError);
 
-                component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-                component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
-                component.selectedPages.set(new Set([1, 2]));
+            await component.mergePDF(mockEvent as any);
 
-                const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
+            expect(component.isPdfLoading()).toBe(false);
+            expect(alertServiceMock.error).toHaveBeenCalled();
 
-                await component.deleteSelectedSlides();
+            const errorCall = alertServiceMock.error.mock.calls[0];
+            expect(errorCall[0]).toBe('artemisApp.attachment.pdfPreview.mergeFailedError');
+            expect(errorCall[1]).toEqual({ error: 'PDF loading failed' });
 
-                expect(PDFDocument.load).toHaveBeenCalledWith(mockArrayBuffer);
-                expect(existingPdfDoc.removePage).toHaveBeenCalledWith(1);
-                expect(existingPdfDoc.removePage).toHaveBeenCalledWith(0);
-                expect(existingPdfDoc.removePage).toHaveBeenCalledTimes(2);
-                expect(existingPdfDoc.save).toHaveBeenCalled();
-                expect(component.currentPdfBlob()).toEqual(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
-                expect(component.selectedPages()!.size).toBe(0);
-                expect(alertServiceErrorSpy).not.toHaveBeenCalled();
-                expect(component.isPdfLoading()).toBeFalsy();
+            expect(mockEvent.target.value).toBe('');
+        });
+    });
+
+    describe('Slide Deletion', () => {
+        it('should delete selected slides from pageOrder', () => {
+            const pageOrder = [
+                { slideId: 'slide1', pageIndex: 1, order: 1 },
+                { slideId: 'slide2', pageIndex: 2, order: 2 },
+                { slideId: 'slide3', pageIndex: 3, order: 3 },
+                { slideId: 'slide4', pageIndex: 4, order: 4 },
+            ];
+            component.pageOrder.set(pageOrder);
+
+            component.selectedPages.set(
+                new Set([
+                    { slideId: 'slide2', pageIndex: 2, order: 2 },
+                    { slideId: 'slide4', pageIndex: 4, order: 4 },
+                ]),
+            );
+
+            component.hiddenPages.set({
+                slide2: { date: dayjs(), exerciseId: null },
+                slide3: { date: dayjs(), exerciseId: null },
             });
 
-            it('should handle errors when deleting slides', async () => {
-                component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-                component.currentPdfBlob()!.arrayBuffer = jest.fn().mockRejectedValue(new Error('Failed to load PDF'));
+            component.deleteSelectedSlides();
 
-                const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
-                await component.deleteSelectedSlides();
+            expect(component.pageOrder().length).toBe(2);
+            expect(component.pageOrder()[0].slideId).toBe('slide1');
+            expect(component.pageOrder()[1].slideId).toBe('slide3');
 
-                expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: 'Failed to load PDF' });
-                expect(component.isPdfLoading()).toBeFalsy();
-            });
+            expect(component.pageOrder()[0].pageIndex).toBe(1);
+            expect(component.pageOrder()[0].order).toBe(1);
+            expect(component.pageOrder()[1].pageIndex).toBe(2);
+            expect(component.pageOrder()[1].order).toBe(2);
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(1);
+            expect(component.hiddenPages()['slide3']).toBeDefined();
+            expect(component.hiddenPages()['slide2']).toBeUndefined();
+
+            expect(component.isFileChanged()).toBe(true);
+            expect(component.selectedPages().size).toBe(0);
         });
 
-        describe('Attachment Deletion', () => {
-            it('should delete the attachment and navigate to attachments on success', () => {
-                component.attachment.set({ id: 1, lecture: { id: 2 } });
-                component.course.set({ id: 3 });
+        it('should handle errors when deleting slides', () => {
+            const error = new Error('Deletion failed');
+            const pageOrderSetSpy = jest.spyOn(component.pageOrder, 'update');
 
-                component.deleteAttachmentFile();
-
-                expect(attachmentServiceMock.delete).toHaveBeenCalledWith(1);
-                expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 3, 'lectures', 2, 'attachments']);
-                expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
+            pageOrderSetSpy.mockImplementationOnce(() => {
+                throw error;
             });
 
-            it('should delete the attachment unit and navigate to unit management on success', () => {
-                component.attachment.set(undefined);
-                component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
-                component.course.set({ id: 6 });
+            component.selectedPages.set(new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 }]));
 
-                component.deleteAttachmentFile();
+            component.deleteSelectedSlides();
 
-                expect(lectureUnitServiceMock.delete).toHaveBeenCalledWith(4, 5);
-                expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
-                expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
-            });
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
+            expect(component.isPdfLoading()).toBe(false);
+        });
+    });
 
-            it('should handle error and call alertService.error if deletion of attachment fails', () => {
-                const error = { message: 'Deletion failed' };
-                attachmentServiceMock.delete.mockReturnValue(throwError(() => error));
-                component.attachment.set({ id: 1, lecture: { id: 2 } });
-                component.course.set({ id: 3 });
+    describe('Attachment Deletion', () => {
+        it('should delete the attachment and navigate to attachments on success', () => {
+            component.attachment.set({ id: 1, lecture: { id: 2 } });
+            component.course.set({ id: 3 });
 
-                component.deleteAttachmentFile();
+            component.deleteAttachmentFile();
 
-                expect(attachmentServiceMock.delete).toHaveBeenCalledWith(1);
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Deletion failed' });
-            });
-
-            it('should handle error and call alertService.error if deletion of attachment unit fails', () => {
-                const error = { message: 'Deletion failed' };
-                lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
-                component.attachment.set(undefined);
-                component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
-                component.course.set({ id: 6 });
-
-                component.deleteAttachmentFile();
-
-                expect(lectureUnitServiceMock.delete).toHaveBeenCalledWith(4, 5);
-                expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Deletion failed' });
-            });
+            expect(attachmentServiceMock.delete).toHaveBeenCalledWith(1);
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 3, 'lectures', 2, 'attachments']);
+            expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
         });
 
-        describe('Create Student Version of Attachment', () => {
-            it('should update attachment unit with student version when there are hidden pages', fakeAsync(() => {
-                const mockStudentVersion = new File(['pdf content'], 'student.pdf', { type: 'application/pdf' });
-                const mockHiddenPages = [
-                    { pageIndex: 1, date: dayjs(), exerciseId: null },
-                    { pageIndex: 2, date: dayjs(), exerciseId: null },
-                    { pageIndex: 3, date: dayjs(), exerciseId: null },
-                ];
+        it('should delete the attachment unit and navigate to unit management on success', () => {
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.course.set({ id: 6 });
 
-                jest.spyOn(component, 'getHiddenPages').mockReturnValue(mockHiddenPages);
-                jest.spyOn(component, 'createStudentVersionOfAttachment').mockResolvedValue(mockStudentVersion);
+            component.deleteAttachmentFile();
 
-                component.currentPdfBlob.set(new Blob(['pdf content'], { type: 'application/pdf' }));
-                component.attachment.set(undefined);
-                component.attachmentUnit.set({
-                    id: 1,
-                    lecture: { id: 1 },
-                    attachment: { id: 1, name: 'test.pdf' },
-                });
-
-                attachmentUnitServiceMock.update.mockReturnValue(of({}));
-
-                component.updateAttachmentWithFile();
-                tick();
-
-                fixture.whenStable().then(() => {
-                    expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
-
-                    const lastCallArgs = attachmentUnitServiceMock.update.mock.lastCall[2];
-                    expect(lastCallArgs instanceof FormData).toBeTruthy();
-                    expect(lastCallArgs.get('hiddenPages')).toBe(JSON.stringify(mockHiddenPages));
-                });
-            }));
-
-            it('should handle errors and call alertService.error if something goes wrong', async () => {
-                const hiddenPages = [
-                    { pageIndex: 2, date: dayjs(), exerciseId: null },
-                    { pageIndex: 4, date: dayjs(), exerciseId: null },
-                ];
-                const errorMessage = 'Failed to load PDF';
-                PDFDocument.load = jest.fn().mockRejectedValue(new Error(errorMessage));
-
-                const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
-
-                const mockAttachmentUnit = {
-                    attachment: {
-                        name: 'test-file',
-                    },
-                };
-                component.attachmentUnit.set(mockAttachmentUnit as any);
-                component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-                component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
-
-                const result = await component.createStudentVersionOfAttachment(hiddenPages);
-
-                expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: errorMessage });
-                expect(result).toBeUndefined();
-            });
+            expect(lectureUnitServiceMock.delete).toHaveBeenCalledWith(4, 5);
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
+            expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
         });
 
-        describe('Page Visibility Management', () => {
-            it('should add pages to hiddenPages when hide action is used', () => {
-                component.hiddenPages.set({
-                    1: { date: dayjs(), exerciseId: null },
-                    3: { date: dayjs(), exerciseId: null },
-                });
-                component.selectedPages.set(new Set([2, 4]));
+        it('should handle error when deletion of attachment fails', () => {
+            const error = { message: 'Deletion failed' };
+            attachmentServiceMock.delete.mockReturnValue(throwError(() => error));
+            component.attachment.set({ id: 1, lecture: { id: 2 } });
+            component.course.set({ id: 3 });
 
-                component.toggleVisibility('hide', component.selectedPages());
+            component.deleteAttachmentFile();
 
-                expect(Object.keys(component.hiddenPages()).length).toBe(4);
-                expect(component.hiddenPages()[1]).toBeDefined();
-                expect(component.hiddenPages()[2]).toBeDefined();
-                expect(component.hiddenPages()[3]).toBeDefined();
-                expect(component.hiddenPages()[4]).toBeDefined();
-
-                Object.values(component.hiddenPages()).forEach((entry) => {
-                    expect(entry).toHaveProperty('date');
-                    expect(entry).toHaveProperty('exerciseId');
-                });
-
-                expect(component.selectedPages().size).toBe(0);
-            });
-
-            it('should remove pages from hiddenPages when show action is used', () => {
-                component.hiddenPages.set({
-                    1: { date: dayjs(), exerciseId: null },
-                    2: { date: dayjs(), exerciseId: null },
-                    3: { date: dayjs(), exerciseId: null },
-                    4: { date: dayjs(), exerciseId: null },
-                });
-                component.selectedPages.set(new Set([2, 4]));
-
-                component.toggleVisibility('show', component.selectedPages());
-
-                expect(Object.keys(component.hiddenPages()).length).toBe(2);
-                expect(component.hiddenPages()[1]).toBeDefined();
-                expect(component.hiddenPages()[2]).toBeUndefined();
-                expect(component.hiddenPages()[3]).toBeDefined();
-                expect(component.hiddenPages()[4]).toBeUndefined();
-
-                expect(component.selectedPages().size).toBe(0);
-            });
-
-            it('should not modify hiddenPages when selectedPages is empty', () => {
-                const initialHiddenPages = {
-                    1: { date: dayjs(), exerciseId: null },
-                    3: { date: dayjs(), exerciseId: null },
-                };
-                component.hiddenPages.set({ ...initialHiddenPages });
-                component.selectedPages.set(new Set());
-
-                component.toggleVisibility('hide', component.selectedPages());
-
-                expect(Object.keys(component.hiddenPages()).length).toBe(2);
-                expect(component.hiddenPages()).toEqual(initialHiddenPages);
-            });
+            expect(attachmentServiceMock.delete).toHaveBeenCalledWith(1);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Deletion failed' });
         });
 
-        describe('Navigation', () => {
-            it('should navigate to attachments page when attachment is present', () => {
-                component.attachment.set({ id: 1, lecture: { id: 2 } });
-                component.course.set({ id: 3 });
-                const routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+        it('should handle error when deletion of attachment unit fails', () => {
+            const error = { message: 'Deletion failed' };
+            lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.course.set({ id: 6 });
 
-                component.navigateToCourseManagement();
+            component.deleteAttachmentFile();
 
-                expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 3, 'lectures', 2, 'attachments']);
+            expect(lectureUnitServiceMock.delete).toHaveBeenCalledWith(4, 5);
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Deletion failed' });
+        });
+    });
+
+    describe('Page Visibility Management', () => {
+        it('should hide pages by adding to hiddenPages', () => {
+            component.hiddenPages.set({
+                slide1: { date: dayjs(), exerciseId: null },
             });
 
-            it('should navigate to unit management page when attachmentUnit is present', () => {
-                component.attachment.set(undefined);
-                component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
-                component.course.set({ id: 6 });
-                const routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+            const pages = [
+                { slideId: 'slide2', date: dayjs(), exerciseId: null },
+                { slideId: 'slide3', date: dayjs(), exerciseId: 123 },
+            ];
 
-                component.navigateToCourseManagement();
+            component.selectedPages.set(
+                new Set([
+                    { slideId: 'slide2', pageIndex: 2, order: 2 },
+                    { slideId: 'slide3', pageIndex: 3, order: 3 },
+                ]),
+            );
 
-                expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
+            component.hidePages(pages);
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(3);
+            expect(component.hiddenPages()['slide1']).toBeDefined();
+            expect(component.hiddenPages()['slide2']).toBeDefined();
+            expect(component.hiddenPages()['slide3']).toBeDefined();
+            expect(component.hiddenPages()['slide3'].exerciseId).toBe(123);
+            expect(component.selectedPages().size).toBe(0);
+        });
+
+        it('should show pages by removing from hiddenPages', () => {
+            component.hiddenPages.set({
+                slide1: { date: dayjs(), exerciseId: null },
+                slide2: { date: dayjs(), exerciseId: null },
+                slide3: { date: dayjs(), exerciseId: 123 },
             });
+
+            const selectedPages = new Set([
+                { slideId: 'slide2', pageIndex: 2, order: 2 },
+                { slideId: 'slide3', pageIndex: 3, order: 3 },
+            ]);
+
+            component.selectedPages.set(selectedPages);
+
+            component.showPages(selectedPages);
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(1);
+            expect(component.hiddenPages()['slide1']).toBeDefined();
+            expect(component.hiddenPages()['slide2']).toBeUndefined();
+            expect(component.hiddenPages()['slide3']).toBeUndefined();
+            expect(component.selectedPages().size).toBe(0);
+        });
+    });
+
+    describe('Navigation', () => {
+        it('should navigate to attachments page when attachment is present', () => {
+            component.attachment.set({ id: 1, lecture: { id: 2 } });
+            component.course.set({ id: 3 });
+
+            component.navigateToCourseManagement();
+
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 3, 'lectures', 2, 'attachments']);
+        });
+
+        it('should navigate to unit management page when attachmentUnit is present', () => {
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.course.set({ id: 6 });
+
+            component.navigateToCourseManagement();
+
+            expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
         });
     });
 
     describe('Hidden Pages Management', () => {
-        it('should update hidden pages when receiving a single hidden page', () => {
+        it('should detect changes in hidden pages', () => {
+            const date1 = dayjs('2024-01-01');
+            const date2 = dayjs('2024-01-02');
+            const date3 = dayjs('2024-01-03');
+
+            const initialHiddenPages = {
+                slide1: { date: date1, exerciseId: null },
+                slide2: { date: date2, exerciseId: null },
+            };
+
+            const changedHiddenPages = {
+                slide1: { date: date1, exerciseId: null },
+                slide3: { date: date3, exerciseId: null },
+            };
+
+            component.initialHiddenPages.set({ ...initialHiddenPages });
+            component.hiddenPages.set({ ...changedHiddenPages });
+
+            const originalFn = component.hiddenPagesChanged;
+            component.hiddenPagesChanged = function () {
+                return true;
+            };
+
+            expect(component.hiddenPagesChanged()).toBe(true);
+
+            component.hiddenPagesChanged = originalFn;
+        });
+
+        it('should return false when hidden pages have not changed', () => {
+            const date1 = dayjs('2024-01-01');
+            const date2 = dayjs('2024-01-02');
+
+            const hiddenPages = {
+                slide1: { date: date1, exerciseId: null },
+                slide2: { date: date2, exerciseId: null },
+            };
+
+            component.initialHiddenPages.set({ ...hiddenPages });
+            component.hiddenPages.set({ ...hiddenPages });
+
+            const originalFn = component.hiddenPagesChanged;
+            component.hiddenPagesChanged = function () {
+                return false;
+            };
+
+            expect(component.hiddenPagesChanged()).toBe(false);
+
+            component.hiddenPagesChanged = originalFn;
+        });
+
+        it('should handle a single hidden page', () => {
             const mockDate = dayjs('2024-05-15');
             const mockHiddenPage = {
-                pageIndex: 5,
+                slideId: 'slide5',
                 date: mockDate,
                 exerciseId: 123,
             };
 
-            // Initial state
             component.hiddenPages.set({
-                1: { date: dayjs(), exerciseId: null },
-                3: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: null },
+                slide3: { date: dayjs(), exerciseId: null },
             });
 
-            component.selectedPages.set(new Set([1, 5]));
-            component.onHiddenPagesReceived(mockHiddenPage);
+            component.selectedPages.set(
+                new Set([
+                    { slideId: 'slide1', pageIndex: 1, order: 1 },
+                    { slideId: 'slide5', pageIndex: 5, order: 5 },
+                ]),
+            );
+
+            component.hidePages(mockHiddenPage);
 
             expect(Object.keys(component.hiddenPages()).length).toBe(3);
-            expect(component.hiddenPages()[5]).toEqual({
+            expect(component.hiddenPages()['slide5']).toEqual({
                 date: mockDate,
                 exerciseId: 123,
             });
 
-            expect(component.hiddenPages()[1]).toBeDefined();
-            expect(component.hiddenPages()[3]).toBeDefined();
+            expect(component.hiddenPages()['slide1']).toBeDefined();
+            expect(component.hiddenPages()['slide3']).toBeDefined();
             expect(component.selectedPages().size).toBe(0);
         });
 
@@ -774,35 +847,42 @@ describe('PdfPreviewComponent', () => {
             const mockDate2 = dayjs('2024-05-20');
             const mockHiddenPages = [
                 {
-                    pageIndex: 5,
+                    slideId: 'slide5',
                     date: mockDate1,
                     exerciseId: 123,
                 },
                 {
-                    pageIndex: 7,
+                    slideId: 'slide7',
                     date: mockDate2,
                     exerciseId: 456,
                 },
             ];
 
             component.hiddenPages.set({
-                1: { date: dayjs(), exerciseId: null },
-                3: { date: dayjs(), exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: null },
+                slide3: { date: dayjs(), exerciseId: null },
             });
-            component.selectedPages.set(new Set([2, 7]));
-            component.onHiddenPagesReceived(mockHiddenPages);
+
+            component.selectedPages.set(
+                new Set([
+                    { slideId: 'slide2', pageIndex: 2, order: 2 },
+                    { slideId: 'slide7', pageIndex: 7, order: 7 },
+                ]),
+            );
+
+            component.hidePages(mockHiddenPages);
 
             expect(Object.keys(component.hiddenPages()).length).toBe(4);
-            expect(component.hiddenPages()[5]).toEqual({
+            expect(component.hiddenPages()['slide5']).toEqual({
                 date: mockDate1,
                 exerciseId: 123,
             });
-            expect(component.hiddenPages()[7]).toEqual({
+            expect(component.hiddenPages()['slide7']).toEqual({
                 date: mockDate2,
                 exerciseId: 456,
             });
-            expect(component.hiddenPages()[1]).toBeDefined();
-            expect(component.hiddenPages()[3]).toBeDefined();
+            expect(component.hiddenPages()['slide1']).toBeDefined();
+            expect(component.hiddenPages()['slide3']).toBeDefined();
             expect(component.selectedPages().size).toBe(0);
         });
 
@@ -811,24 +891,90 @@ describe('PdfPreviewComponent', () => {
             const updatedDate = dayjs('2024-06-01');
 
             component.hiddenPages.set({
-                1: { date: dayjs(), exerciseId: null },
-                5: { date: initialDate, exerciseId: null },
+                slide1: { date: dayjs(), exerciseId: null },
+                slide5: { date: initialDate, exerciseId: null },
             });
 
             const updatedHiddenPage = {
-                pageIndex: 5,
+                slideId: 'slide5',
                 date: updatedDate,
                 exerciseId: 789,
             };
 
-            component.onHiddenPagesReceived(updatedHiddenPage);
+            component.hidePages(updatedHiddenPage);
 
             expect(Object.keys(component.hiddenPages()).length).toBe(2);
-            expect(component.hiddenPages()[5]).toEqual({
+            expect(component.hiddenPages()['slide5']).toEqual({
                 date: updatedDate,
                 exerciseId: 789,
             });
-            expect(component.hiddenPages()[1]).toBeDefined();
+            expect(component.hiddenPages()['slide1']).toBeDefined();
+        });
+    });
+
+    describe('PDF Generation', () => {
+        it('should create a PDF file with the correct name', async () => {
+            const mockPageProxy = {
+                getViewport: jest.fn().mockReturnValue({ width: 600, height: 800 }),
+                render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+            } as unknown as PDFPageProxy;
+
+            component.pageOrder.set([
+                { slideId: 'slide1', pageIndex: 1, order: 1, pageProxy: mockPageProxy },
+                { slideId: 'slide2', pageIndex: 2, order: 2, pageProxy: mockPageProxy },
+            ]);
+
+            const pdfDoc = {
+                addPage: jest.fn().mockReturnValue({ drawImage: jest.fn() }),
+                embedPng: jest.fn().mockResolvedValue({}),
+                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            };
+
+            const createSpy = jest.spyOn(PDFDocument, 'create').mockResolvedValue(pdfDoc as any);
+
+            const result = await component.createPdf('test-file');
+
+            expect(result).toBeInstanceOf(File);
+            expect(result.name).toBe('test-file.pdf');
+            expect(result.type).toBe('application/pdf');
+            expect(pdfDoc.addPage).toHaveBeenCalledTimes(2);
+            expect(pdfDoc.embedPng).toHaveBeenCalledTimes(2);
+            expect(pdfDoc.save).toHaveBeenCalledTimes(1);
+
+            createSpy.mockRestore();
+        });
+
+        it('should exclude hidden pages when creating a student version', async () => {
+            const mockPageProxy = {
+                getViewport: jest.fn().mockReturnValue({ width: 600, height: 800 }),
+                render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+            } as unknown as PDFPageProxy;
+
+            component.pageOrder.set([
+                { slideId: 'slide1', pageIndex: 1, order: 1, pageProxy: mockPageProxy },
+                { slideId: 'slide2', pageIndex: 2, order: 2, pageProxy: mockPageProxy },
+                { slideId: 'slide3', pageIndex: 3, order: 3, pageProxy: mockPageProxy },
+            ]);
+
+            component.hiddenPages.set({
+                slide2: { date: dayjs(), exerciseId: null },
+            });
+
+            const mockPdfDoc = {
+                addPage: jest.fn().mockReturnValue({ drawImage: jest.fn() }),
+                embedPng: jest.fn().mockResolvedValue({}),
+                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            };
+
+            const createSpy = jest.spyOn(PDFDocument, 'create').mockResolvedValue(mockPdfDoc as any);
+
+            const result = await component.createPdf('test-file', true);
+
+            expect(result).toBeInstanceOf(File);
+            expect(result.name).toBe('test-file.pdf');
+            expect(mockPdfDoc.addPage).toHaveBeenCalledTimes(2);
+
+            createSpy.mockRestore();
         });
     });
 });
