@@ -6,7 +6,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { SimpleChanges } from '@angular/core';
+import { ElementRef, signal, Signal, SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { OrderedPage, HiddenPageMap, HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 
@@ -196,7 +196,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         const querySelectorSpy = jest.fn().mockReturnValue(mockCanvas);
         const mockNativeElement = { querySelector: querySelectorSpy };
 
-        component.pdfContainer = jest.fn().mockReturnValue({ nativeElement: mockNativeElement });
+        component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
 
         component.displayEnlargedCanvas(1, 'slide1');
 
@@ -624,7 +624,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             ] as unknown as NodeListOf<HTMLInputElement>;
 
             const mockNativeElement = { querySelectorAll: jest.fn().mockReturnValue(mockCheckboxes) };
-            component.pdfContainer = jest.fn().mockReturnValue({ nativeElement: mockNativeElement });
+            component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
 
             component.selectedPages.set(new Set([mockOrderedPages[0], mockOrderedPages[2]]));
 
@@ -647,7 +647,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 scrollTo: mockScrollToSpy,
             };
 
-            component.pdfContainer = jest.fn().mockReturnValue({ nativeElement: mockNativeElement });
+            component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
 
             component.scrollToBottom();
 

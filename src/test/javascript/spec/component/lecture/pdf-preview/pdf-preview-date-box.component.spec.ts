@@ -21,13 +21,13 @@ describe('PdfPreviewDateBoxComponent', () => {
         { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-01T10:00') },
         { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-02T10:00') },
         { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs('2024-02-03T10:00') },
-        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null },
+        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null }, // Should be filtered out
     ] as Exercise[];
 
     const mockSelectedPages = [
         { pageIndex: 1, id: '1', slideId: '1' },
         { pageIndex: 2, id: '2', slideId: '2' },
-    ] as OrderedPage[];
+    ] as unknown as OrderedPage[];
 
     beforeEach(async () => {
         courseExerciseServiceMock = {
@@ -241,6 +241,7 @@ describe('PdfPreviewDateBoxComponent', () => {
         });
 
         it('should show error and not emit when calendar date is in the past', () => {
+            // Use a past date that will fail validation
             const pastDate = '2020-01-01T10:00';
             component.calendarSelected.set(true);
             component.defaultDate.set(pastDate);
