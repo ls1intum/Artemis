@@ -3,9 +3,8 @@ name: E2E Tests
 on:
   workflow_run:
     # Must match the name of build.yml workflow.
-    workflows: [Build]
-    types:
-      - completed
+    workflows: ["Build"]
+    types: [completed]
 
 concurrency:
   group: |
