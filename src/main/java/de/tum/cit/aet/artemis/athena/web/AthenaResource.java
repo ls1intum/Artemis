@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.athena.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -45,8 +48,9 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 
 /**
  * REST controller for Athena feedback suggestions.
@@ -63,9 +67,9 @@ public class AthenaResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final Optional<TextSubmissionApi> textSubmissionApi;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -86,14 +90,14 @@ public class AthenaResource {
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(CourseRepository courseRepository, TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
+    public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
             AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
             AthenaModuleService athenaModuleService) {
         this.courseRepository = courseRepository;
-        this.textExerciseRepository = textExerciseRepository;
-        this.textSubmissionRepository = textSubmissionRepository;
+        this.textRepositoryApi = textRepositoryApi;
+        this.textSubmissionApi = textSubmissionApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -162,8 +166,10 @@ public class AthenaResource {
     @GetMapping("text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        // DONE
-        return getFeedbackSuggestions(exerciseId, submissionId, textExerciseRepository::findByIdElseThrow, textSubmissionRepository::findByIdElseThrow,
+        var api = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE));
+        var submissionApi = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+
+        return getFeedbackSuggestions(exerciseId, submissionId, api::findByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
     }
 
