@@ -47,7 +47,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     dashboardFeatureActive = false;
 
     ngOnInit(): void {
-        const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;
+        const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
                 this.courseId = Number(params.courseId);
