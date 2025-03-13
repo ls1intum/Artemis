@@ -21,8 +21,7 @@ describe('CourseRegistrationDetailComponent', () => {
     let courseService: CourseManagementService;
     let router: MockRouter;
 
-    const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
-    const route = { parent: parentRoute } as any as ActivatedRoute;
+    const route = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
 
     const course1 = {
         id: 123,

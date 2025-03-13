@@ -90,7 +90,6 @@ export class ExamParticipationActions {
         const announcementTimeAfterMinute = announcementTime.add(1, 'minute').format(timeFormat);
         await expect(timeChangeDialog.locator('.date').getByText(new RegExp(`(${announcementTimeFormatted}|${announcementTimeAfterMinute})`))).toBeVisible();
         await expect(timeChangeDialog.locator('.content').getByText(message)).toBeVisible();
-        await expect(timeChangeDialog.locator('.author').getByText(authorUsername)).toBeVisible();
     }
 
     async closeDialog() {

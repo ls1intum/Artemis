@@ -189,7 +189,6 @@
                     "examAttendanceCheck": "Attendance Check",
                     "problemStatementUpdate": "Problem Statement Update"
                 },
-                "from": "from",
                 "acknowledge": "Acknowledge",
                 "acknowledgeAll": "Acknowledge all",
                 "navigateToExercise": "Navigate to exercise",
