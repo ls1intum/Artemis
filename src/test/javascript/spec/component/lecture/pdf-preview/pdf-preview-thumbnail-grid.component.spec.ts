@@ -6,21 +6,9 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { ElementRef, InputSignal, Signal, SimpleChanges } from '@angular/core';
+import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
-
-interface HiddenPageMap {
-    [pageIndex: number]: {
-        date: dayjs.Dayjs;
-        exerciseId: number | null;
-    };
-}
-
-interface HiddenPage {
-    pageIndex: number;
-    date: dayjs.Dayjs;
-    exerciseId: number | null;
-}
+import { OrderedPage, HiddenPageMap, HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 jest.mock('pdfjs-dist', () => {
     return {
@@ -49,6 +37,12 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     let fixture: ComponentFixture<PdfPreviewThumbnailGridComponent>;
     let alertServiceMock: any;
 
+    const mockOrderedPages: OrderedPage[] = [
+        { slideId: 'slide1', pageIndex: 1, pageProxy: undefined, order: 1 },
+        { slideId: 'slide2', pageIndex: 2, pageProxy: undefined, order: 2 },
+        { slideId: 'slide3', pageIndex: 3, pageProxy: undefined, order: 3 },
+    ];
+
     beforeEach(async () => {
         alertServiceMock = {
             error: jest.fn(),
@@ -66,6 +60,12 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         fixture = TestBed.createComponent(PdfPreviewThumbnailGridComponent);
         component = fixture.componentInstance;
 
+        const mockPdfContainer = document.createElement('div');
+        Object.defineProperty(component, 'pdfContainer', {
+            value: jest.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
+            writable: true,
+        });
+
         fixture.detectChanges();
     });
 
@@ -73,50 +73,58 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should update newHiddenPages when hiddenPages changes', () => {
+    it('should update hiddenPages when they change', () => {
         const updatedHiddenPages: HiddenPageMap = {
-            4: { date: dayjs(), exerciseId: null },
-            5: { date: dayjs(), exerciseId: null },
-            6: { date: dayjs(), exerciseId: null },
+            slide4: { date: dayjs(), exerciseId: null },
+            slide5: { date: dayjs(), exerciseId: null },
+            slide6: { date: dayjs(), exerciseId: null },
         };
 
         fixture.componentRef.setInput('hiddenPages', updatedHiddenPages);
-
         fixture.detectChanges();
 
-        expect(component.newHiddenPages()).toEqual(updatedHiddenPages);
+        expect(component.hiddenPages()).toEqual(updatedHiddenPages);
     });
 
-    it('should load the PDF when currentPdfUrl changes', async () => {
-        const mockLoadPdf = jest.spyOn(component, 'loadPdf').mockResolvedValue();
-        const initialPdfUrl = 'initial.pdf';
-        const updatedPdfUrl = 'updated.pdf';
+    it('should render pages when orderedPages changes', async () => {
+        const spyRenderPages = jest.spyOn(component, 'renderPages').mockResolvedValue();
 
-        let currentPdfUrlValue = initialPdfUrl;
-        component.currentPdfUrl = jest.fn(() => currentPdfUrlValue) as unknown as InputSignal<string>;
-        component.appendFile = jest.fn(() => false) as unknown as InputSignal<boolean>;
+        fixture.componentRef.setInput('orderedPages', mockOrderedPages);
 
-        currentPdfUrlValue = updatedPdfUrl;
         const changes: SimpleChanges = {
-            currentPdfUrl: {
-                currentValue: updatedPdfUrl,
-                previousValue: initialPdfUrl,
+            orderedPages: {
+                currentValue: mockOrderedPages,
+                previousValue: [],
                 firstChange: false,
                 isFirstChange: () => false,
             },
         };
+
         await component.ngOnChanges(changes);
 
-        expect(mockLoadPdf).toHaveBeenCalledWith(updatedPdfUrl, false);
+        expect(spyRenderPages).toHaveBeenCalled();
     });
 
-    it('should load PDF and render pages', async () => {
-        const spyCreateCanvas = jest.spyOn(component as any, 'createCanvas');
+    it('should update selectedPages when updatedSelectedPages changes', () => {
+        const updatedSelectedPages = new Set<OrderedPage>([mockOrderedPages[0], mockOrderedPages[2]]);
 
-        await component.loadPdf('fake-url', false);
+        const spyUpdateCheckboxStates = jest.spyOn(component as any, 'updateCheckboxStates').mockImplementation(() => {});
 
-        expect(spyCreateCanvas).toHaveBeenCalled();
-        expect(component.totalPagesArray().size).toBe(1);
+        fixture.componentRef.setInput('updatedSelectedPages', updatedSelectedPages);
+
+        const changes: SimpleChanges = {
+            updatedSelectedPages: {
+                currentValue: updatedSelectedPages,
+                previousValue: new Set(),
+                firstChange: false,
+                isFirstChange: () => false,
+            },
+        };
+
+        component.ngOnChanges(changes);
+
+        expect(component.selectedPages()).toEqual(updatedSelectedPages);
+        expect(spyUpdateCheckboxStates).toHaveBeenCalled();
     });
 
     it('should toggle enlarged view state', () => {
@@ -141,94 +149,118 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             enumerable: true,
         });
 
-        const initialHiddenPages = { 1: dayjs() };
-        fixture.componentRef.setInput('hiddenPages', initialHiddenPages);
+        Object.defineProperty(mockButton, 'closest', {
+            value: jest.fn().mockReturnValue(mockButton),
+        });
 
-        component.toggleVisibility(1, mockEvent);
-        expect(component.activeButtonIndex()).toBe(1);
+        fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+        fixture.detectChanges();
+
+        const spyStopPropagation = jest.spyOn(mockEvent, 'stopPropagation');
+
+        component.toggleVisibility('slide1', mockEvent);
+        expect(component.activeButtonPage()).toEqual(mockOrderedPages[0]);
         expect(mockButton.style.opacity).toBe('1');
-
-        component.showPage(1);
-        expect(component.newHiddenPages()[1]).toBeUndefined();
+        expect(spyStopPropagation).toHaveBeenCalled();
     });
 
     it('should select and deselect pages', () => {
-        component.togglePageSelection(1, { target: { checked: true } } as unknown as Event);
-        expect(component.selectedPages().has(1)).toBeTruthy();
+        fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+        fixture.detectChanges();
 
-        component.togglePageSelection(1, { target: { checked: false } } as unknown as Event);
-        expect(component.selectedPages().has(1)).toBeFalsy();
+        const spyEmit = jest.spyOn(component.selectedPagesOutput, 'emit');
+        component.selectedPages.set(new Set());
+
+        const mockEventChecked = { target: { checked: true } } as unknown as Event;
+        component.togglePageSelection('slide1', mockEventChecked);
+
+        const selectedSlideIds = Array.from(component.selectedPages()).map((page) => page.slideId);
+
+        expect(selectedSlideIds).toContain('slide1');
+        expect(spyEmit).toHaveBeenCalled();
+
+        const mockEventUnchecked = { target: { checked: false } } as unknown as Event;
+        component.togglePageSelection('slide1', mockEventUnchecked);
+
+        const selectedSlideIdsAfterDeselect = Array.from(component.selectedPages()).map((page) => page.slideId);
+        expect(selectedSlideIdsAfterDeselect).not.toContain('slide1');
+        expect(spyEmit).toHaveBeenCalledTimes(2);
     });
 
     it('should handle enlarged view correctly for a specific page', () => {
         const mockCanvas = document.createElement('canvas');
         const container = document.createElement('div');
-        container.id = 'pdf-page-1';
+        container.id = 'pdf-page-slide1';
         container.appendChild(mockCanvas);
 
-        component.pdfContainer = jest.fn(() => ({
-            nativeElement: {
-                querySelector: jest.fn((selector: string) => {
-                    if (selector === '#pdf-page-1 canvas') {
-                        return mockCanvas;
-                    }
-                    return null;
-                }),
-            },
-        })) as unknown as Signal<ElementRef<HTMLDivElement>>;
+        const querySelectorSpy = jest.fn().mockReturnValue(mockCanvas);
+        const mockNativeElement = { querySelector: querySelectorSpy };
 
-        component.displayEnlargedCanvas(1);
+        component.pdfContainer = jest.fn().mockReturnValue({ nativeElement: mockNativeElement });
+
+        component.displayEnlargedCanvas(1, 'slide1');
 
         expect(component.originalCanvas()).toBe(mockCanvas);
         expect(component.isEnlargedView()).toBeTruthy();
+        expect(component.initialPageNumber()).toBe(1);
+        expect(querySelectorSpy).toHaveBeenCalledWith('#pdf-page-slide1 canvas');
     });
 
-    it('should update newHiddenPages and emit the change', () => {
-        const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+    it('should update hiddenPages with a single page and emit the change', () => {
+        const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+
+        fixture.componentRef.setInput('hiddenPages', {});
+        fixture.detectChanges();
 
         const hiddenPage: HiddenPage = {
-            pageIndex: 1,
+            slideId: 'slide1',
             date: dayjs('2024-01-01'),
             exerciseId: null,
         };
 
+        let emittedValue = null;
+        emitSpy.mockImplementation((value) => {
+            emittedValue = value;
+        });
+
         component.onHiddenPagesReceived(hiddenPage);
 
-        expect(component.newHiddenPages()[hiddenPage.pageIndex]).toBeDefined();
-        expect(component.newHiddenPages()[hiddenPage.pageIndex].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
-        expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        expect(emittedValue).toBeDefined();
+        expect(emittedValue![hiddenPage.slideId]).toBeDefined();
+        expect(emittedValue![hiddenPage.slideId].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
+        expect(emittedValue![hiddenPage.slideId].exerciseId).toBeNull();
+        expect(emitSpy).toHaveBeenCalled();
     });
 
-    it('should remove the page from newHiddenPages and hide the action button', () => {
-        const initialPages = { 1: dayjs() };
+    it('should remove the page from hiddenPages and hide the action button', () => {
+        const initialPages: HiddenPageMap = {
+            slide1: { date: dayjs(), exerciseId: null },
+        };
+
         fixture.componentRef.setInput('hiddenPages', initialPages);
         fixture.detectChanges();
 
         const hideButtonSpy = jest.spyOn(component, 'hideActionButton');
+        const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
 
-        component.showPage(1);
+        let emittedValue = null;
+        emitSpy.mockImplementation((value) => {
+            emittedValue = value;
+        });
 
-        expect(component.newHiddenPages()[1]).toBeUndefined();
-        expect(hideButtonSpy).toHaveBeenCalledWith(1);
-    });
+        component.showPage('slide1');
 
-    it('should handle showing a page that is not hidden', () => {
-        fixture.componentRef.setInput('hiddenPages', {});
-        fixture.detectChanges();
-
-        const hideButtonSpy = jest.spyOn(component, 'hideActionButton');
-
-        component.showPage(1);
-
-        expect(hideButtonSpy).toHaveBeenCalledWith(1);
+        expect(emittedValue!['slide1']).toBeUndefined();
+        expect(hideButtonSpy).toHaveBeenCalledWith('slide1');
+        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should set opacity to 0 for existing button', () => {
         const mockButton = document.createElement('button');
-        mockButton.id = 'hide-show-button-1';
+        mockButton.id = 'hide-show-button-slide1';
         document.body.appendChild(mockButton);
 
-        component.hideActionButton(1);
+        component.hideActionButton('slide1');
 
         expect(mockButton.style.opacity).toBe('0');
 
@@ -236,34 +268,43 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     });
 
     it('should handle non-existent button gracefully', () => {
-        component.hideActionButton(999);
+        component.hideActionButton('nonexistent');
 
-        expect(document.getElementById('hide-show-button-999')).toBeNull();
+        expect(document.getElementById('hide-show-button-nonexistent')).toBeNull();
     });
 
     describe('toggleVisibility method', () => {
-        it('should set activeButtonIndex and make button visible', () => {
-            const pageIndex = 3;
+        it('should set activeButtonPage and make button visible', () => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
+            const slideId = 'slide1';
             const mockButton = document.createElement('button');
             const mockEvent = {
                 stopPropagation: jest.fn(),
                 target: mockButton,
             } as unknown as Event;
 
-            component.toggleVisibility(pageIndex, mockEvent);
+            Object.defineProperty(mockButton, 'closest', {
+                value: jest.fn().mockReturnValue(mockButton),
+            });
 
-            expect(component.activeButtonIndex()).toBe(pageIndex);
+            component.toggleVisibility(slideId, mockEvent);
+
+            expect(component.activeButtonPage()).toEqual(mockOrderedPages[0]);
             expect(mockButton.style.opacity).toBe('1');
             expect(mockEvent.stopPropagation).toHaveBeenCalled();
         });
 
         it('should find closest button element if target is not a button', () => {
-            const pageIndex = 3;
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
+            const slideId = 'slide2';
             const mockButton = document.createElement('button');
             const mockSpan = document.createElement('span');
             mockButton.appendChild(mockSpan);
 
-            // Mock the closest method
             Object.defineProperty(mockSpan, 'closest', {
                 value: jest.fn().mockReturnValue(mockButton),
             });
@@ -273,18 +314,20 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 target: mockSpan,
             } as unknown as Event;
 
-            component.toggleVisibility(pageIndex, mockEvent);
+            component.toggleVisibility(slideId, mockEvent);
 
-            expect(component.activeButtonIndex()).toBe(pageIndex);
+            expect(component.activeButtonPage()).toEqual(mockOrderedPages[1]);
             expect(mockButton.style.opacity).toBe('1');
             expect(mockEvent.stopPropagation).toHaveBeenCalled();
         });
 
         it('should handle case when no button is found', () => {
-            const pageIndex = 3;
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
+            const slideId = 'slide3';
             const mockDiv = document.createElement('div');
 
-            // Mock the closest method to return null
             Object.defineProperty(mockDiv, 'closest', {
                 value: jest.fn().mockReturnValue(null),
             });
@@ -294,201 +337,303 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 target: mockDiv,
             } as unknown as Event;
 
-            component.toggleVisibility(pageIndex, mockEvent);
+            component.toggleVisibility(slideId, mockEvent);
 
-            expect(component.activeButtonIndex()).toBe(pageIndex);
+            expect(component.activeButtonPage()).toEqual(mockOrderedPages[2]);
             expect(mockEvent.stopPropagation).toHaveBeenCalled();
         });
     });
 
     describe('togglePageSelection method', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+        });
+
         it('should add page to selectedPages when checkbox is checked', () => {
-            const pageIndex = 4;
+            const slideId = 'slide2';
             const mockEvent = {
                 target: { checked: true },
             } as unknown as Event;
-            const initialSelectedPages = new Set<number>([1, 2]);
-            component.selectedPages.set(new Set(initialSelectedPages));
+
+            component.selectedPages.set(new Set());
             jest.spyOn(component.selectedPagesOutput, 'emit');
 
-            component.togglePageSelection(pageIndex, mockEvent);
+            component.togglePageSelection(slideId, mockEvent);
 
-            expect(component.selectedPages().has(pageIndex)).toBeTruthy();
-            expect(component.selectedPages().size).toBe(3);
+            const selectedSlideIds = Array.from(component.selectedPages()).map((page) => page.slideId);
+            expect(selectedSlideIds).toContain(slideId);
             expect(component.selectedPagesOutput.emit).toHaveBeenCalledWith(component.selectedPages());
         });
 
         it('should remove page from selectedPages when checkbox is unchecked', () => {
-            const pageIndex = 2;
+            const slideId = 'slide2';
             const mockEvent = {
                 target: { checked: false },
             } as unknown as Event;
-            const initialSelectedPages = new Set<number>([1, 2, 3]);
-            component.selectedPages.set(new Set(initialSelectedPages));
+
+            component.selectedPages.set(new Set([mockOrderedPages[1]]));
             jest.spyOn(component.selectedPagesOutput, 'emit');
 
-            component.togglePageSelection(pageIndex, mockEvent);
+            component.togglePageSelection(slideId, mockEvent);
 
-            expect(component.selectedPages().has(pageIndex)).toBeFalsy();
-            expect(component.selectedPages().size).toBe(2);
+            const selectedSlideIds = Array.from(component.selectedPages()).map((page) => page.slideId);
+            expect(selectedSlideIds).not.toContain(slideId);
             expect(component.selectedPagesOutput.emit).toHaveBeenCalledWith(component.selectedPages());
-        });
-
-        it('should emit selectedPages after making changes', () => {
-            const pageIndex = 5;
-            const mockEvent = {
-                target: { checked: true },
-            } as unknown as Event;
-            component.selectedPages.set(new Set<number>());
-            jest.spyOn(component.selectedPagesOutput, 'emit');
-
-            component.togglePageSelection(pageIndex, mockEvent);
-
-            expect(component.selectedPagesOutput.emit).toHaveBeenCalledWith(component.selectedPages());
-            expect(component.selectedPagesOutput.emit).toHaveBeenCalledWith(new Set([5]));
         });
     });
 
-    describe('displayEnlargedCanvas method', () => {
-        it('should set the original canvas for the specified page', () => {
-            const pageIndex = 3;
-            const mockCanvas = document.createElement('canvas');
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelector: jest.fn().mockReturnValue(mockCanvas),
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
+    describe('onHiddenPagesReceived method', () => {
+        it('should update hiddenPages with a single page and emit the change', () => {
+            fixture.componentRef.setInput('hiddenPages', {});
+            fixture.detectChanges();
 
-            component.displayEnlargedCanvas(pageIndex);
+            const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
 
-            expect(component.originalCanvas()).toBe(mockCanvas);
+            const hiddenPage: HiddenPage = {
+                slideId: 'slide1',
+                date: dayjs('2024-01-01'),
+                exerciseId: null,
+            };
+
+            component.onHiddenPagesReceived(hiddenPage);
+
+            expect(emitSpy).toHaveBeenCalled();
+
+            const emittedValue = emitSpy.mock.calls[0][0];
+
+            expect(emittedValue).toBeDefined();
+            expect(emittedValue[hiddenPage.slideId]).toBeDefined();
+            expect(emittedValue[hiddenPage.slideId].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
+            expect(emittedValue[hiddenPage.slideId].exerciseId).toBeNull();
         });
 
-        it('should set isEnlargedView to true', () => {
-            const pageIndex = 2;
-            const mockCanvas = document.createElement('canvas');
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelector: jest.fn().mockReturnValue(mockCanvas),
+        it('should update hiddenPages with multiple pages and emit the change', () => {
+            const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
+
+            const initialHiddenPages: HiddenPageMap = {
+                slide5: { date: dayjs('2023-12-15'), exerciseId: 123 },
+            };
+
+            fixture.componentRef.setInput('hiddenPages', initialHiddenPages);
+            fixture.detectChanges();
+
+            const hiddenPages: HiddenPage[] = [
+                {
+                    slideId: 'slide1',
+                    date: dayjs('2024-01-01'),
+                    exerciseId: null,
                 },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-            component.isEnlargedView.set(false);
+                {
+                    slideId: 'slide2',
+                    date: dayjs('2024-01-15'),
+                    exerciseId: 456,
+                },
+            ];
 
-            component.displayEnlargedCanvas(pageIndex);
+            component.onHiddenPagesReceived(hiddenPages);
 
-            expect(component.isEnlargedView()).toBeTruthy();
+            const emittedValue = emitSpy.mock.calls[0][0];
+
+            fixture.componentRef.setInput('hiddenPages', emittedValue);
+            fixture.detectChanges();
+
+            expect(Object.keys(component.hiddenPages()).length).toBe(3);
+            expect(component.hiddenPages()['slide1']).toBeDefined();
+            expect(component.hiddenPages()['slide1'].date.isSame(dayjs('2024-01-01'))).toBeTruthy();
         });
 
-        it('should set initialPageNumber to the provided pageIndex', () => {
-            const pageIndex = 7;
-            const mockCanvas = document.createElement('canvas');
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelector: jest.fn().mockReturnValue(mockCanvas),
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
+        it('should overwrite existing page data if same slideId is received', () => {
+            const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
 
-            component.displayEnlargedCanvas(pageIndex);
+            const initialHiddenPages: HiddenPageMap = {
+                slide1: { date: dayjs('2023-12-15'), exerciseId: 123 },
+            };
 
-            expect(component.initialPageNumber()).toBe(pageIndex);
+            fixture.componentRef.setInput('hiddenPages', initialHiddenPages);
+            fixture.detectChanges();
+
+            const updatedPage: HiddenPage = {
+                slideId: 'slide1',
+                date: dayjs('2024-02-01'),
+                exerciseId: 789,
+            };
+
+            component.onHiddenPagesReceived(updatedPage);
+
+            const emittedValue = emitSpy.mock.calls[0][0];
+
+            expect(Object.keys(emittedValue).length).toBe(1);
+            expect(emittedValue['slide1']).toBeDefined();
+            expect(emittedValue['slide1'].date.isSame(dayjs('2024-02-01'))).toBeTruthy();
+            expect(emittedValue['slide1'].exerciseId).toBe(789);
+
+            expect(emitSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('drag and drop functionality', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
+            const mockElement = document.createElement('div');
+            document.querySelectorAll = jest.fn().mockReturnValue([mockElement]);
         });
 
-        it('should query the correct selector for the page canvas', () => {
-            const pageIndex = 5;
-            const mockCanvas = document.createElement('canvas');
-            const querySelectorSpy = jest.fn().mockReturnValue(mockCanvas);
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelector: querySelectorSpy,
+        it('should initiate drag operation', () => {
+            const slideId = 'slide1';
+            const mockDataTransfer = {
+                setData: jest.fn(),
+                effectAllowed: null,
+            };
+            const mockEvent = {
+                dataTransfer: mockDataTransfer,
+                preventDefault: jest.fn(),
+            } as unknown as DragEvent;
+
+            const mockDiv = document.createElement('div');
+            document.getElementById = jest.fn().mockImplementation((id) => {
+                if (id === `pdf-page-${slideId}`) {
+                    return mockDiv;
+                }
+                return null;
+            });
+
+            component.onDragStart(mockEvent, slideId);
+
+            expect(mockDataTransfer.setData).toHaveBeenCalledWith('text/plain', slideId);
+            expect(mockDataTransfer.effectAllowed).toBe('move');
+            expect(component.dragSlideId()).toBe(slideId);
+            expect(component.isDragging()).toBeTruthy();
+        });
+
+        it('should allow dropping on drag over', () => {
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                dataTransfer: {
+                    dropEffect: null,
                 },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
+            } as unknown as DragEvent;
 
-            component.displayEnlargedCanvas(pageIndex);
+            component.onDragOver(mockEvent);
 
-            expect(querySelectorSpy).toHaveBeenCalledWith(`#pdf-page-${pageIndex} canvas`);
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockEvent.dataTransfer!.dropEffect).toBe('move');
+        });
+
+        it('should handle dropping to reorder pages', () => {
+            const sourceSlideId = 'slide1';
+            const targetSlideId = 'slide3';
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                dataTransfer: {
+                    getData: jest.fn().mockReturnValue(sourceSlideId),
+                },
+            } as unknown as DragEvent;
+
+            const spyReorderPages = jest.spyOn(component, 'reorderPages').mockImplementation();
+
+            component.onDrop(mockEvent, targetSlideId);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(spyReorderPages).toHaveBeenCalledWith(sourceSlideId, targetSlideId);
+            expect(component.isDragging()).toBeFalsy();
+            expect(component.dragSlideId()).toBeNull();
+        });
+
+        it('should not reorder if source and target are the same', () => {
+            const slideId = 'slide2';
+
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                dataTransfer: {
+                    getData: jest.fn().mockReturnValue(slideId),
+                },
+            } as unknown as DragEvent;
+
+            const spyReorderPages = jest.spyOn(component, 'reorderPages');
+
+            component.onDrop(mockEvent, slideId);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(spyReorderPages).not.toHaveBeenCalled();
+        });
+
+        it('should reorder pages correctly', () => {
+            const sourceSlideId = 'slide1';
+            const targetSlideId = 'slide3';
+
+            const emitSpy = jest.spyOn(component.pageOrderOutput, 'emit');
+
+            component.reorderPages(sourceSlideId, targetSlideId);
+
+            expect(emitSpy).toHaveBeenCalled();
+            const newOrder = emitSpy.mock.calls[0][0];
+            expect(newOrder.findIndex((p) => p.slideId === sourceSlideId)).toBe(2);
+            expect(component.reordering()).toBeTruthy();
+        });
+
+        it('should not reorder if page is not found', () => {
+            const emitSpy = jest.spyOn(component.pageOrderOutput, 'emit');
+
+            component.reorderPages('nonexistent', 'slide2');
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
+
+        it('should get the correct page order', () => {
+            expect(component.getPageOrder('slide2')).toBe(2);
+            expect(component.getPageOrder('nonexistent')).toBe(-1);
+        });
+
+        it('should find page by slideId', () => {
+            const page = component.findPageBySlideId('slide2');
+            expect(page).toEqual(mockOrderedPages[1]);
+
+            const nonexistentPage = component.findPageBySlideId('nonexistent');
+            expect(nonexistentPage).toBeUndefined();
+        });
+    });
+
+    describe('createCanvas method', () => {
+        it('should create a properly configured canvas element', () => {
+            const viewport = { width: 800, height: 600 } as any;
+
+            const canvas = component.createCanvas(viewport);
+
+            expect(canvas.tagName).toBe('CANVAS');
+            expect(canvas.width).toBe(800);
+            expect(canvas.height).toBe(600);
+            expect(canvas.style.display).toBe('block');
+            expect(canvas.style.width).toBe('100%');
+            expect(canvas.style.height).toBe('100%');
         });
     });
 
     describe('updateCheckboxStates method', () => {
-        it('should update checkbox states to match the current selection model', () => {
+        it('should update checkbox states to match the selected pages', () => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
             const mockCheckboxes = [
-                { id: 'checkbox-1', checked: false },
-                { id: 'checkbox-2', checked: false },
-                { id: 'checkbox-3', checked: false },
+                { id: 'checkbox-slide1', checked: false },
+                { id: 'checkbox-slide2', checked: false },
+                { id: 'checkbox-slide3', checked: false },
             ] as unknown as NodeListOf<HTMLInputElement>;
 
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelectorAll: jest.fn().mockReturnValue(mockCheckboxes),
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
+            const mockNativeElement = { querySelectorAll: jest.fn().mockReturnValue(mockCheckboxes) };
+            component.pdfContainer = jest.fn().mockReturnValue({ nativeElement: mockNativeElement });
 
-            component.selectedPages.set(new Set([1, 3]));
+            component.selectedPages.set(new Set([mockOrderedPages[0], mockOrderedPages[2]]));
 
             const updateCheckboxStatesMethod = component['updateCheckboxStates'].bind(component);
             updateCheckboxStatesMethod();
 
-            expect(mockCheckboxes[0].checked).toBeTruthy(); // checkbox-1 should be checked
-            expect(mockCheckboxes[1].checked).toBeFalsy(); // checkbox-2 should remain unchecked
-            expect(mockCheckboxes[2].checked).toBeTruthy(); // checkbox-3 should be checked
-        });
-
-        it('should do nothing if no checkboxes are found', () => {
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelectorAll: jest.fn().mockReturnValue(null),
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
-            const updateCheckboxStatesMethod = component['updateCheckboxStates'].bind(component);
-
-            expect(() => updateCheckboxStatesMethod()).not.toThrow();
-        });
-
-        it('should handle empty selection set correctly', () => {
-            const mockCheckboxes = [
-                { id: 'checkbox-1', checked: true },
-                { id: 'checkbox-2', checked: true },
-                { id: 'checkbox-3', checked: true },
-            ] as unknown as NodeListOf<HTMLInputElement>;
-
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelectorAll: jest.fn().mockReturnValue(mockCheckboxes),
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
-            component.selectedPages.set(new Set());
-
-            const updateCheckboxStatesMethod = component['updateCheckboxStates'].bind(component);
-            updateCheckboxStatesMethod();
-
-            expect(mockCheckboxes[0].checked).toBeFalsy();
+            expect(mockCheckboxes[0].checked).toBeTruthy();
             expect(mockCheckboxes[1].checked).toBeFalsy();
-            expect(mockCheckboxes[2].checked).toBeFalsy();
-        });
-
-        it('should correctly parse page numbers from checkbox IDs', () => {
-            const mockCheckboxes = [
-                { id: 'checkbox-10', checked: false },
-                { id: 'checkbox-20', checked: false },
-                { id: 'checkbox-30', checked: true },
-            ] as unknown as NodeListOf<HTMLInputElement>;
-
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    querySelectorAll: jest.fn().mockReturnValue(mockCheckboxes),
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
-            component.selectedPages.set(new Set([10, 20])); // Select pages 10 and 20
-
-            const updateCheckboxStatesMethod = component['updateCheckboxStates'].bind(component);
-            updateCheckboxStatesMethod();
-
-            expect(mockCheckboxes[0].checked).toBeTruthy(); // checkbox-10 should be checked
-            expect(mockCheckboxes[1].checked).toBeTruthy(); // checkbox-20 should be checked
-            expect(mockCheckboxes[2].checked).toBeFalsy(); // checkbox-30 should be unchecked
+            expect(mockCheckboxes[2].checked).toBeTruthy();
         });
     });
 
@@ -497,12 +642,12 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockScrollHeight = 1000;
             const mockScrollToSpy = jest.fn();
 
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    scrollHeight: mockScrollHeight,
-                    scrollTo: mockScrollToSpy,
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
+            const mockNativeElement = {
+                scrollHeight: mockScrollHeight,
+                scrollTo: mockScrollToSpy,
+            };
+
+            component.pdfContainer = jest.fn().mockReturnValue({ nativeElement: mockNativeElement });
 
             component.scrollToBottom();
 
@@ -512,170 +657,104 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 behavior: 'smooth',
             });
         });
-
-        it('should use the current scrollHeight of the container', () => {
-            const dynamicHeight = 2500;
-            const mockScrollToSpy = jest.fn();
-
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: {
-                    get scrollHeight() {
-                        return dynamicHeight;
-                    },
-                    scrollTo: mockScrollToSpy,
-                },
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
-            component.scrollToBottom();
-
-            expect(mockScrollToSpy).toHaveBeenCalledWith(expect.objectContaining({ top: dynamicHeight }));
-        });
-
-        it('should call scrollTo with the correct scroll options type', () => {
-            const mockNativeElement = {
-                scrollHeight: 1500,
-                scrollTo: jest.fn(),
-            };
-
-            component.pdfContainer = jest.fn(() => ({
-                nativeElement: mockNativeElement,
-            })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
-            component.scrollToBottom();
-
-            expect(mockNativeElement.scrollTo).toHaveBeenCalledWith({
-                top: 1500,
-                left: 0,
-                behavior: 'smooth',
-            });
-
-            const scrollOptions = mockNativeElement.scrollTo.mock.calls[0][0];
-            expect(scrollOptions).toHaveProperty('top');
-            expect(scrollOptions).toHaveProperty('left');
-            expect(scrollOptions).toHaveProperty('behavior');
-            expect(typeof scrollOptions.top).toBe('number');
-            expect(typeof scrollOptions.left).toBe('number');
-            expect(typeof scrollOptions.behavior).toBe('string');
-        });
-
-        it('should work with different container heights', () => {
-            const testHeights = [0, 100, 5000, 10000];
-
-            for (const height of testHeights) {
-                const mockScrollToSpy = jest.fn();
-
-                component.pdfContainer = jest.fn(() => ({
-                    nativeElement: {
-                        scrollHeight: height,
-                        scrollTo: mockScrollToSpy,
-                    },
-                })) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
-                component.scrollToBottom();
-
-                expect(mockScrollToSpy).toHaveBeenCalledWith({
-                    top: height,
-                    left: 0,
-                    behavior: 'smooth',
-                });
-            }
-        });
     });
 
-    describe('onHiddenPagesReceived method', () => {
-        it('should update newHiddenPages with a single page and emit the change', () => {
-            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+    describe('drag event handlers', () => {
+        it('should add drag-over class on drag enter', () => {
+            const slideId = 'slide1';
+            const mockEvent = {
+                preventDefault: jest.fn(),
+            } as unknown as DragEvent;
 
-            component.newHiddenPages.set({});
+            const mockElement = document.createElement('div');
+            document.getElementById = jest.fn().mockReturnValue(mockElement);
 
-            const hiddenPage: HiddenPage = {
-                pageIndex: 1,
-                date: dayjs('2024-01-01'),
-                exerciseId: null,
-            };
+            component.dragSlideId.set('slide2');
 
-            component.onHiddenPagesReceived(hiddenPage);
+            component.onDragEnter(mockEvent, slideId);
 
-            expect(component.newHiddenPages()[hiddenPage.pageIndex]).toBeDefined();
-            expect(component.newHiddenPages()[hiddenPage.pageIndex].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
-            expect(component.newHiddenPages()[hiddenPage.pageIndex].exerciseId).toBeNull();
-            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockElement.classList.contains('drag-over')).toBeTruthy();
         });
 
-        it('should update newHiddenPages with multiple pages and emit the change', () => {
-            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+        it('should not add drag-over class when dragging the same slide', () => {
+            const slideId = 'slide1';
+            const mockEvent = {
+                preventDefault: jest.fn(),
+            } as unknown as DragEvent;
 
-            const initialHiddenPages: HiddenPageMap = {
-                5: { date: dayjs('2023-12-15'), exerciseId: 123 },
-            };
-            component.newHiddenPages.set({ ...initialHiddenPages });
+            const mockElement = document.createElement('div');
+            document.getElementById = jest.fn().mockReturnValue(mockElement);
 
-            const hiddenPages: HiddenPage[] = [
-                {
-                    pageIndex: 1,
-                    date: dayjs('2024-01-01'),
-                    exerciseId: null,
-                },
-                {
-                    pageIndex: 2,
-                    date: dayjs('2024-01-15'),
-                    exerciseId: 456,
-                },
-            ];
+            component.dragSlideId.set(slideId);
 
-            component.onHiddenPagesReceived(hiddenPages);
+            component.onDragEnter(mockEvent, slideId);
 
-            expect(Object.keys(component.newHiddenPages()).length).toBe(3); // 1 initial + 2 new
-            expect(component.newHiddenPages()[1]).toBeDefined();
-            expect(component.newHiddenPages()[1].date.isSame(dayjs('2024-01-01'))).toBeTruthy();
-            expect(component.newHiddenPages()[1].exerciseId).toBeNull();
-            expect(component.newHiddenPages()[2]).toBeDefined();
-            expect(component.newHiddenPages()[2].date.isSame(dayjs('2024-01-15'))).toBeTruthy();
-            expect(component.newHiddenPages()[2].exerciseId).toBe(456);
-            expect(component.newHiddenPages()[5]).toBeDefined();
-            expect(component.newHiddenPages()[5].date.isSame(dayjs('2023-12-15'))).toBeTruthy();
-            expect(component.newHiddenPages()[5].exerciseId).toBe(123);
-            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockElement.classList.contains('drag-over')).toBeFalsy();
         });
 
-        it('should overwrite existing page data if same pageIndex is received', () => {
-            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+        it('should remove drag-over class on drag leave', () => {
+            const slideId = 'slide1';
+            const mockEvent = {
+                preventDefault: jest.fn(),
+            } as unknown as DragEvent;
 
-            const initialHiddenPages: HiddenPageMap = {
-                1: { date: dayjs('2023-12-15'), exerciseId: 123 },
-            };
-            component.newHiddenPages.set({ ...initialHiddenPages });
+            const mockElement = document.createElement('div');
+            mockElement.classList.add('drag-over');
+            document.getElementById = jest.fn().mockReturnValue(mockElement);
 
-            const updatedPage: HiddenPage = {
-                pageIndex: 1,
-                date: dayjs('2024-02-01'),
-                exerciseId: 789,
-            };
+            component.onDragLeave(mockEvent, slideId);
 
-            component.onHiddenPagesReceived(updatedPage);
-
-            expect(Object.keys(component.newHiddenPages()).length).toBe(1);
-            expect(component.newHiddenPages()[1]).toBeDefined();
-            expect(component.newHiddenPages()[1].date.isSame(dayjs('2024-02-01'))).toBeTruthy();
-            expect(component.newHiddenPages()[1].exerciseId).toBe(789);
-
-            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            expect(mockElement.classList.contains('drag-over')).toBeFalsy();
         });
 
-        it('should handle null exerciseId correctly', () => {
-            component.newHiddenPages.set({});
+        it('should handle drag end correctly', () => {
+            const mockElements = [document.createElement('div'), document.createElement('div')];
+            mockElements[0].classList.add('dragging');
+            mockElements[1].classList.add('drag-over');
 
-            const hiddenPages: HiddenPage[] = [
-                {
-                    pageIndex: 1,
-                    date: dayjs('2024-01-01'),
-                    exerciseId: null,
-                },
-            ];
+            document.querySelectorAll = jest.fn().mockReturnValue(mockElements);
 
-            component.onHiddenPagesReceived(hiddenPages);
+            component.isDragging.set(true);
+            component.dragSlideId.set('slide1');
 
-            expect(component.newHiddenPages()[1].exerciseId).toBeNull();
+            component.onDragEnd();
+
+            expect(component.isDragging()).toBeFalsy();
+            expect(component.dragSlideId()).toBeNull();
+
+            expect(mockElements[0].classList.contains('dragging')).toBeFalsy();
+            expect(mockElements[1].classList.contains('drag-over')).toBeFalsy();
+        });
+
+        it('should handle null element gracefully on drag enter', () => {
+            const slideId = 'nonexistent';
+            const mockEvent = {
+                preventDefault: jest.fn(),
+            } as unknown as DragEvent;
+
+            document.getElementById = jest.fn().mockReturnValue(null);
+
+            component.onDragEnter(mockEvent, slideId);
+
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
+        });
+
+        it('should handle null element gracefully on drag leave', () => {
+            const slideId = 'nonexistent';
+            const mockEvent = {
+                preventDefault: jest.fn(),
+            } as unknown as DragEvent;
+
+            document.getElementById = jest.fn().mockReturnValue(null);
+
+            expect(() => {
+                component.onDragLeave(mockEvent, slideId);
+            }).toThrow();
+
+            expect(mockEvent.preventDefault).toHaveBeenCalled();
         });
     });
 });
