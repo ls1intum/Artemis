@@ -372,7 +372,22 @@ public final class Constants {
     /**
      * The name of the profile for integration independent tests
      */
+    public static final String PROFILE_TEST_LOCAL_VC_LOCAL_CI = "test-local-vc-local-ci-integration";
+
+    /**
+     * The name of the profile for integration independent tests
+     */
     public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
+
+    /**
+     * The name of the profile for integration independent tests
+     */
+    public static final String PROFILE_TEST_LOCAL_VC_JENKINS = "test-local-vc-jenkins-integration";
+
+    /**
+     * The name of the profile for integration independent tests
+     */
+    public static final String PROFILE_TEST_LOCAL_VC_SAML = "test-local-vc-saml-integration";
 
     /**
      * The InfoContributor's detail key for the Theia Portal URL

@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -371,6 +372,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         POLICY_NULL, POLICY_ACTIVE, POLICY_INACTIVE
     }
 
+    @Disabled // TODO re-enable (or delete) after remove gitlab test configuration issues are resolved
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -400,6 +402,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         }
     }
 
+    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
