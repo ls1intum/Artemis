@@ -213,7 +213,7 @@ public class SlideSplitterService {
             // Clean up slides that are no longer in the page order
             Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> (String) page.get("slideId")).collect(Collectors.toSet());
 
-            List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(slide.getId())).collect(Collectors.toList());
+            List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(slide.getId())).toList();
 
             if (!slidesToRemove.isEmpty()) {
                 slideRepository.deleteAll(slidesToRemove);
