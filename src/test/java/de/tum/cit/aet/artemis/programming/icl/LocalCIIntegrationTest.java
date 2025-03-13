@@ -47,7 +47,6 @@ import org.mockito.Mockito;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
@@ -89,8 +88,6 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
-@TestPropertySource(properties = { "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_localci_LocalCIIntegrationTest", "artemis.version-control.ssh-port=1235" })
 class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciint";

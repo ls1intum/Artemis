@@ -25,6 +25,7 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceW
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -46,7 +47,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private final String hostname = "localhost";
 
-    private final int port = 1235;
+    @Value("${artemis.version-control.ssh-port}")
+    private int port;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

@@ -41,7 +41,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 // TODO: rewrite this test to use LocalVC
-@ResourceLock("AbstractSpringIntegrationLocalVcSamlTest")
+// @ResourceLock("AbstractSpringIntegrationLocalVcSamlTest")
+@ResourceLock("SpringIntegrationTests")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml",

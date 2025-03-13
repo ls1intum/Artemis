@@ -177,7 +177,7 @@ public class CacheConfiguration {
     @Bean(name = "hazelcastInstance")
     public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
         // ========================= TESTING ONLY =========================
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) && false && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_INDEPENDENT))) {
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST)) && !env.acceptsProfiles(Profiles.of(PROFILE_TEST_INDEPENDENT))) {
             // try to avoid that parallel test executions interfere with each other
             Config testConfig = new Config();
             testConfig.setInstanceName(instanceName);

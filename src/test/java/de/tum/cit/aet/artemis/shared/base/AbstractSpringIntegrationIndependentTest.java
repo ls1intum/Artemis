@@ -40,7 +40,8 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 /**
  * This SpringBootTest is used for tests that only require a minimal set of Active Spring Profiles.
  */
-@ResourceLock("AbstractSpringIntegrationIndependentTest")
+// @ResourceLock("AbstractSpringIntegrationIndependentTest")
+@ResourceLock("SpringIntegrationTests")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS,
         PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_LTI })
