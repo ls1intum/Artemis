@@ -222,7 +222,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+        // poll delay will slow down tests, but will remove flaky to make sure that the job was added to the map before sending the cancellation message
+        await().pollDelay(500, TimeUnit.MILLISECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             var processingJob = processingJobs.get(queueItem.id());
             return processingJob != null && processingJob.jobTimingInfo().buildStartDate() != null;
         });
