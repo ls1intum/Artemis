@@ -8,11 +8,12 @@ on:
       - completed
 
 concurrency:
-  group: ${{
-    github.event.workflow_run.ref && format('e2e-{0}', replace(github.event.workflow_run.ref, 'refs/', ''))[0:400]
-    || (github.event.workflow_run.event == 'release' && format('e2e-release-{0}', github.event.workflow_run.tag_name))[0:400]
-    || 'e2e-default'
-  }}
+  group: |
+    ${{
+      github.event.workflow_run.ref && format('e2e-{0}', replace(github.event.workflow_run.ref, 'refs/', ''))[0:400]
+      || (github.event.workflow_run.event == 'release' && format('e2e-release-{0}', github.event.workflow_run.tag_name))[0:400]
+      || 'e2e-default'
+    }}
   cancel-in-progress: true
 
 jobs:
