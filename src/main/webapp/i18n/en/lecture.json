@@ -113,6 +113,7 @@
                 "deleteAllPagesQuestion": "Are you sure you want to delete all pages? This will result in the deletion of the attachment.",
                 "confirmCancelEditing": "Confirm cancel operation",
                 "cancelEditingQuestion": "Are you sure you would like to leave without saving your changes?",
+                "invalidFileType": "You can only upload PDF files.",
                 "thumbnailGrid": {
                     "showPage": "Show Page {{ param }}",
                     "hiddenUntil": "This page is hidden until:",

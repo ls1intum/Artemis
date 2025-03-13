@@ -358,7 +358,8 @@
         "exams": "Exams",
         "communication": "Communication",
         "archive": "Course archive",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "plagiarismCases": "Plagiarism Cases"
     },
     "connectionStatus": {
         "connected": "Connected",

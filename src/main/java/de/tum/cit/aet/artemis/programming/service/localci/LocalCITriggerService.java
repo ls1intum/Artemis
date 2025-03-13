@@ -8,18 +8,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import jakarta.annotation.PostConstruct;
-
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -78,7 +71,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final AeolusTemplateService aeolusTemplateService;
 
@@ -102,10 +95,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
-    private IQueue<BuildJobQueueItem> queue;
-
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
-
     private final ExerciseDateService exerciseDateService;
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
@@ -117,7 +106,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
 
-    public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
+    public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -125,7 +114,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -140,12 +129,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.buildJobRepository = buildJobRepository;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
     }
 
     /**
@@ -232,11 +215,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
         // leading to a failed update operation due to a missing record.
         buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
-        queue.add(buildJobQueueItem);
+        distributedDataAccessService.getDistributedQueuedJobs().add(buildJobQueueItem);
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);
 
-        dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
+        distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
 
     // -------Helper methods for triggerBuild()-------

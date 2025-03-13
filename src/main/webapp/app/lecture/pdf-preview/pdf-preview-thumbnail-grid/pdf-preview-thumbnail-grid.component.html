@@ -68,7 +68,7 @@
                             </h5>
                             <p>
                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                @if (hiddenPages()[activeButtonPage()?.slideId!]?.date!.isSame(forever)) {
+                                @if (newHiddenPages()[activeButtonIndex()!]?.date!.isSame(FOREVER, 'day')) {
                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                 } @else {
                                     <span>

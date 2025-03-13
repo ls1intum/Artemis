@@ -21,7 +21,7 @@ user_credentials: List[Tuple[str, str]] = []
 
 def make_create_user_post_request(session: Session, user_details: dict) -> None:
     """Send a POST request to create a user."""
-    url = f"{CLIENT_URL}/admin/users"
+    url = f"{CLIENT_URL}/core/admin/users"
     headers = {"Content-Type": "application/json"}
     response = session.post(url, json=user_details, headers=headers)
 

@@ -54,7 +54,7 @@
                                             <div class="page-info mb-2">
                                                 <strong>Page {{ page.pageIndex }}:</strong>
                                                 <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                                @if (hiddenPages()[page.slideId]!.date!.isSame(forever)) {
+                                                @if (hiddenPages()[pageIndex]!.date!.isSame(FOREVER, 'day')) {
                                                     <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                                 } @else {
                                                     <span>

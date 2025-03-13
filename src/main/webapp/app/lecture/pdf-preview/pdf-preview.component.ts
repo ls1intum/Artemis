@@ -74,7 +74,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
 
-    forever = dayjs('9999-12-31');
+    FOREVER = dayjs('9999-12-31');
 
     protected readonly ButtonType = ButtonType;
     protected readonly Object = Object;
@@ -423,7 +423,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param event - The event containing the file input.
      */
     async mergePDF(event: Event): Promise<void> {
-        const file = (event.target as HTMLInputElement).files?.[0];
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+
+        if (file!.type !== 'application/pdf') {
+            this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
+            input.value = '';
+            return;
+        }
 
         this.isPdfLoading.set(true);
         this.appendFile.set(true);

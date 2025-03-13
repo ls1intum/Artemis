@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
-    forever = dayjs('9999-12-31');
+    FOREVER = dayjs('9999-12-31');
 
     // Inputs
     course = input<Course>();
@@ -131,7 +131,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param viewport The viewport settings used for rendering the page.
      * @returns A new HTMLCanvasElement configured for the PDF page.
      */
-    private createCanvas(viewport: PDFJS.PageViewport): HTMLCanvasElement {
+    createCanvas(viewport: PDFJS.PageViewport): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
         canvas.width = viewport.width;
         canvas.height = viewport.height;

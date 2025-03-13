@@ -112,7 +112,8 @@
                 "deletePagesQuestion": "Möchtest du die ausgewählten Seiten wirklich löschen?",
                 "deleteAllPagesQuestion": "Möchtest du wirklich alle Seiten löschen? Dies führt zur Löschung des Anhangs.",
                 "confirmCancelEditing": "Abbruchvorgang bestätigen",
-                "cancelEditingQuestion": "Möchtest du wirklich gehen, ohne deine Änderungen zu speichern?",
+                "cancelEditingQuestion": "Möchten Sie wirklich gehen, ohne Ihre Änderungen zu speichern?",
+                "invalidFileType": "Du kannst nur PDF-Dateien hochladen.",
                 "thumbnailGrid": {
                     "showPage": "Seite {{ param }} anzeigen",
                     "hiddenUntil": "Diese Seite ist ausgeblendet bis:",
