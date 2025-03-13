@@ -161,7 +161,7 @@ public class LtiDeepLinkingService {
     }
 
     /**
-     * Create a content item for an exercise.
+     * Set a content item for an exercise.
      */
     private LtiContentItem setExerciseContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
@@ -171,7 +171,7 @@ public class LtiDeepLinkingService {
     }
 
     /**
-     * Create a content item for a lecture.
+     * Set a content item for a lecture.
      */
     private LtiContentItem setLectureContentItem(String courseId, String lectureId) {
         Optional<Lecture> lectureOpt = lectureRepository.findById(Long.valueOf(lectureId));
