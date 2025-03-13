@@ -1,168 +1,58 @@
-name: Deploy to a test-server
+name: E2E Tests
 
 on:
   workflow_dispatch:
     inputs:
+      workflow_run_id:
+        description: 'workflow_run_id'
+        required: true
       branch_name:
-        description: "Which branch to deploy"
+        description: 'branch_name'
         required: true
-        type: string
-      commit_sha:
-        description: 'Commit SHA to deploy'
-        required: false
-      environment_name:
-        description: "Which environment to deploy (e.g. artemis-test7.artemis.cit.tum.de, etc.)."
-        required: true
-        type: string
-      triggered_by:
-        description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
-        required: false
-        type: string
 
-
-concurrency: ${{ github.event.inputs.environment_name }}
-
-env:
-  CI: true
-  # Keep filename in sync with the workflow responsible for automatic builds on PRs
-  PR_AUTO_BUILD_FILE_NAME: "build.yml"
-  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
+concurrency:
+  group: 'e2e-default'
+  cancel-in-progress: true
 
 jobs:
-  # Log the inputs for debugging
-  log-inputs:
-    name: Log Inputs
-    runs-on: ubuntu-latest
+  run-e2e:
+    name: Run E2E Tests
+    runs-on: [self-hosted, e2e-test]
     steps:
-      - name: Print Inputs
-        run: |
-          echo "Branch: ${{ github.event.inputs.branch_name }}"
-          echo "Environment: ${{ github.event.inputs.environment_name }}"
-          echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
-          echo "RAW_URL: ${{ env.RAW_URL }}"
-
-  determine-build-context:
-    name: Determine Build Context
-    runs-on: ubuntu-latest
-    needs: log-inputs
-    outputs:
-      pr_number: ${{ steps.get_pr.outputs.pr_number }}
-      pr_head_sha: ${{ steps.get_pr.outputs.pr_head_sha }}
-      tag: ${{ steps.get_pr.outputs.tag }}
-    steps:
-      - name: Check if a PR exists for the branch
-        id: get_pr
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          BRANCH_NAME=${{ github.event.inputs.branch_name }}
-          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop'."
-
-          PR_DETAILS=$(gh api repos/${{ github.repository }}/pulls \
-            --paginate \
-            --jq ".[] | select(.head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
-
-          PR_NUMBER=$(echo "$PR_DETAILS" | jq -r ".number")
-          PR_HEAD_SHA=$(echo "$PR_DETAILS" | jq -r ".sha")
-
-          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
-            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME targeting 'develop' with Head: $PR_HEAD_SHA."
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-            echo "pr_head_sha=$PR_HEAD_SHA" >> $GITHUB_OUTPUT
-            echo "tag=pr-$PR_NUMBER" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found for branch: $BRANCH_NAME targeting 'develop'."
-            echo "pr_number=" >> $GITHUB_OUTPUT
-            echo "pr_head_sha=" >> $GITHUB_OUTPUT
-
-            # Fetch the latest commit SHA of the branch
-            LATEST_SHA=$(gh api repos/${{ github.repository }}/git/refs/heads/$BRANCH_NAME --jq '.object.sha')
-
-            if [ -z "$LATEST_SHA" ]; then
-              echo "::error::Could not find the latest commit SHA for branch $BRANCH_NAME."
-              exit 1
-            fi
-
-            echo "Latest SHA for branch $BRANCH_NAME is $LATEST_SHA."
-            # Set tag as branch-SHA
-            echo "tag=branch-$LATEST_SHA" >> $GITHUB_OUTPUT
-          fi
-
-
-  # Build the Docker image (branch without PR)
-  conditional-build:
-    if: ${{ needs.determine-build-context.outputs.pr_number == '' }}
-    needs: determine-build-context
-    uses: ./.github/workflows/reusable-build.yml
-    with:
-      docker: true
-      docker_ref: ${{ github.event.inputs.branch_name }}
-      docker_build_tag: ${{ needs.determine-build-context.outputs.tag }}
-
-  # Check if the build has run successfully (PR)
-  check-existing-build:
-    name: Check Existing Build
-    if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
-    needs: determine-build-context
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get latest successful build for branch
-        id: check_build
-        uses: octokit/request-action@v2.x
+      - name: Git Checkout
+        uses: actions/checkout@v4
         with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.pr_head_sha }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Fail if no successful build found
-        if: ${{ steps.check_build.conclusion == 'success' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
+          ref: ${{ github.event.inputs.branch_name }}
+      - name: Download Artemis.war
+        uses: actions/download-artifact@v4
+        with:
+          name: Artemis.war
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.inputs.workflow_run_id }}
+
+      - name: Make scripts executable
         run: |
-          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}' with SHA '${{ needs.determine-build-context.outputs.pr_head_sha }}'."
-          exit 1
+          chmod +x .ci/E2E-tests/cleanup.sh
+          chmod +x .ci/E2E-tests/execute.sh
 
-  # Deploy to the test-server
-  deploy:
-    needs: [ determine-build-context, conditional-build, check-existing-build ]
-    # Run if either the conditional-build or check-existing-build job was successful
-    # Use always() since one of the jobs will always skip
-    if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build.result == 'success')
-    name: Deploy to Test-Server
-    runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.event.inputs.environment_name }}
-      url: ${{ vars.DEPLOYMENT_URL }}
+      - name: Run cleanup script (before E2E)
+        run: .ci/E2E-tests/cleanup.sh
 
-    env:
-      GATEWAY_USER: "jump"
-      GATEWAY_HOST: "gateway.artemis.in.tum.de:2010"
-      GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
+      - name: Run E2E Playwright tests (MySQL, Local)
+        if: ${{ github.event.workflow_run.pull_requests }}
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright
 
-    steps:
-      # Download artemis-server-cli from GH without cloning the Repo
-      - name: Fetch Artemis CLI
-        run: |
-          wget ${{ env.RAW_URL }}/artemis-server-cli
-          chmod +x artemis-server-cli
+      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+        if: ${{ !github.event.workflow_run.pull_requests }}
+        run: .ci/E2E-tests/execute.sh multi-node playwright
 
-      # Configure SSH Key
-      - name: Setup SSH Keys and known_hosts
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          GATEWAY_SSH_KEY: "${{ secrets.DEPLOYMENT_GATEWAY_SSH_KEY }}"
-          DEPLOYMENT_SSH_KEY: "${{ secrets.DEPLOYMENT_SSH_KEY }}"
-        run: |
-          mkdir -p ~/.ssh
-          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-          ssh-add - <<< $GATEWAY_SSH_KEY
-          ssh-add - <<< $DEPLOYMENT_SSH_KEY
-          cat - <<< $GATEWAY_HOST_PUBLIC_KEY >> ~/.ssh/known_hosts
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JUnit Test Results
+          path: |
+            **/test-reports/*.xml
 
-      - name: Deploy Artemis with Docker
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
-          DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}
-          TAG: ${{ needs.determine-build-context.outputs.tag }}
-          BRANCH_NAME: ${{ github.event.inputs.branch_name }}
-          DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
-        run: |
-          ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $BRANCH_NAME -d $DEPLOYMENT_FOLDER -y
+      - name: Run cleanup script (after E2E)
+        run: .ci/E2E-tests/cleanup.sh
