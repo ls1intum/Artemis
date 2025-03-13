@@ -2,8 +2,8 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
-import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
+import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { User } from 'app/core/user/user.model';
@@ -33,15 +33,15 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { MockComponent } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { AthenaService } from 'app/assessment/athena.service';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ModelingAssessmentEditorComponent', () => {

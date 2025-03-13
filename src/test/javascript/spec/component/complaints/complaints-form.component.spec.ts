@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
+import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';

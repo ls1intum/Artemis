@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
-import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
+import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/complaint.service';
+import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complaints/list-of-complaints.component';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

@@ -7,7 +7,7 @@ import {
     UserFilter,
     UserManagementComponent,
     UserStorageKey,
-} from 'app/admin/user-management/user-management.component';
+} from 'app/core/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';

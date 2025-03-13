@@ -39,7 +39,7 @@ import { TextExamSummaryComponent } from './exercises/text-exam-summary/text-exa
 import { ModelingExamSummaryComponent } from './exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from './exercises/quiz-exam-summary/quiz-exam-summary.component';
 import { FileUploadExamSummaryComponent } from './exercises/file-upload-exam-summary/file-upload-exam-summary.component';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ProgrammingExamSummaryComponent } from './exercises/programming-exam-summary/programming-exam-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

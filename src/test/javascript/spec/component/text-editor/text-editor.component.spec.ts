@@ -18,7 +18,7 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
-import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
+import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
@@ -36,7 +36,7 @@ import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submissio
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/entities/assessment-type.model';

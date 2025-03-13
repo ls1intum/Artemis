@@ -18,7 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

@@ -11,7 +11,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';

@@ -25,7 +25,7 @@ import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exe
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { AthenaService } from 'app/assessment/athena.service';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { Observable, Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';

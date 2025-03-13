@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
+import { DeleteUsersButtonComponent } from 'app/core/admin/user-management/delete-users-button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
 import { AlertService } from 'app/core/util/alert.service';

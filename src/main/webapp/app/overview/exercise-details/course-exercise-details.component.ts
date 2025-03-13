@@ -23,7 +23,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -52,7 +52,7 @@ import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-butto
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';

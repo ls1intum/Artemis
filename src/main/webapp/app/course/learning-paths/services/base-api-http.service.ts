@@ -1,4 +1,4 @@
-import { HttpMethod } from 'app/admin/metrics/metrics.model';
+import { HttpMethod } from 'app/core/admin/metrics/metrics.model';
 import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';

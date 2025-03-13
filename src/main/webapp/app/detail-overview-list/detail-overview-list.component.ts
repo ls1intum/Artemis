@@ -16,7 +16,7 @@ import { HelpIconComponent } from '../shared/components/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from '../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseLifecycleComponent } from '../exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { DecimalPipe, NgStyle, NgTemplateOutlet } from '@angular/common';
-import { StructuredGradingInstructionsAssessmentLayoutComponent } from '../assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { IrisEnabledComponent } from '../iris/settings/shared/iris-enabled.component';
 import { ModelingEditorComponent } from '../exercises/modeling/shared/modeling-editor.component';

@@ -25,7 +25,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';

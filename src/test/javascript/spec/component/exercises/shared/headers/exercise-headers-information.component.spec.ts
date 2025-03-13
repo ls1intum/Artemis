@@ -12,7 +12,7 @@ import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';

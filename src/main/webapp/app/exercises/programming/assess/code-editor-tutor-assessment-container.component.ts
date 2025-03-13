@@ -21,7 +21,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { Location, NgTemplateOutlet } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -34,21 +34,21 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercises/shared/result/result.utils';
 import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { AthenaService } from 'app/assessment/athena.service';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercises/shared/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from './repo-export/programming-assessment-repo-export-button.component';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',

@@ -39,12 +39,12 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';

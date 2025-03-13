@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
+import { AdminFeatureToggleComponent } from 'app/core/admin/features/admin-feature-toggle.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 

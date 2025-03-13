@@ -3,8 +3,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
-import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
+import { CleanupOperationModalComponent } from 'app/core/admin/cleanup-service/cleanup-operation-modal.component';
+import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/core/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 import { signal } from '@angular/core';

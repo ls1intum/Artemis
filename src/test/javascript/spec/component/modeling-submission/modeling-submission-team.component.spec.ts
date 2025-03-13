@@ -16,7 +16,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { routes } from 'app/exercises/modeling/participate/modeling-participation.route';
@@ -36,7 +36,7 @@ import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component'
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';

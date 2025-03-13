@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subject, of } from 'rxjs';
-import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
+import { UserManagementUpdateComponent } from 'app/core/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';

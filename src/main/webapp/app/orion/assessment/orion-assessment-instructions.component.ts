@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { AssessmentInstructionsComponent } from '../../assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-orion-assessment-instructions',

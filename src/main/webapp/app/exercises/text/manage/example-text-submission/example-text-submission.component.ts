@@ -32,7 +32,7 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from '../../assess/text-assessment-area/text-assessment-area.component';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 type ExampleSubmissionResponseType = EntityResponseType;

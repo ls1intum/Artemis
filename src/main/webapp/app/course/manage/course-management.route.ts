@@ -235,11 +235,11 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/complaints/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute),
+                        loadChildren: () => import('app/assessment/manage/list-of-complaints/list-of-complaints.route').then((m) => m.listOfComplaintsRoute),
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/assessment/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute),
+                        loadChildren: () => import('app/assessment/manage/assessment-locks/assessment-locks.route').then((m) => m.assessmentLocksRoute),
                     },
                     // we have to define the redirects here. When we define them in the child routes, the redirect doesn't work
                     {

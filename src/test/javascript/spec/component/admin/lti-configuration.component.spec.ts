@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
-import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { LtiConfigurationComponent } from 'app/core/admin/lti-configuration/lti-configuration.component';
+import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { of, throwError } from 'rxjs';

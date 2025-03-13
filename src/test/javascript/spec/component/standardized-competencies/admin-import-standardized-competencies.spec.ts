@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
+import { AdminImportStandardizedCompetenciesComponent } from 'app/core/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -8,7 +8,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
+import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';

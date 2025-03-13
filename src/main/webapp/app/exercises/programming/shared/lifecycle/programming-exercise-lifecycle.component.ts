@@ -8,7 +8,7 @@ import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-ic
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { AthenaService } from 'app/assessment/athena.service';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';

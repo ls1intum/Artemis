@@ -12,7 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/complaints/complaint.service';
+import { EntityResponseType } from 'app/assessment/shared/complaint.service';
 import dayjs from 'dayjs/esm';
 
 export interface IAccountService {

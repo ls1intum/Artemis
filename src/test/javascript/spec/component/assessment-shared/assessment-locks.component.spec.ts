@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
+import { AssessmentLocksComponent } from 'app/assessment/manage/assessment-locks/assessment-locks.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';

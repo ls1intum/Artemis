@@ -9,7 +9,7 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { notUndefined, onError } from 'app/shared/util/global.utils';
@@ -29,20 +29,20 @@ import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Course } from 'app/entities/course.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
+import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { AthenaService } from 'app/assessment/athena.service';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Subscription } from 'rxjs';
-import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from './text-assessment-area/text-assessment-area.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 
 @Component({
     selector: 'jhi-text-submission-assessment',

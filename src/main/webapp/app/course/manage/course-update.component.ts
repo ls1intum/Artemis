@@ -17,7 +17,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal, NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';

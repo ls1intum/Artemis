@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@ang
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
-import { AthenaService } from 'app/assessment/athena.service';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

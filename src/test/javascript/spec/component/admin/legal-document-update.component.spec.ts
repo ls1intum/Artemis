@@ -1,8 +1,8 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 
-import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
+import { LegalDocumentUpdateComponent } from 'app/core/admin/legal/legal-document-update.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
+import { UnsavedChangesWarningComponent } from 'app/core/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';

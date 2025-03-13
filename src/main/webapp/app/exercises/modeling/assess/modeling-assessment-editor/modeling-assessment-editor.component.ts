@@ -10,7 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -28,16 +28,16 @@ import { SubmissionService } from 'app/exercises/shared/submission/submission.se
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
-import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { AthenaService } from 'app/assessment/athena.service';
+import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
+import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
+import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

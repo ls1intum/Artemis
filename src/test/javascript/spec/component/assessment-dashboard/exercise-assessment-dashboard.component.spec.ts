@@ -4,7 +4,7 @@ import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angula
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
+import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
@@ -18,7 +18,7 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -48,8 +48,8 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';

@@ -8,7 +8,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Complaint } from 'app/entities/complaint.model';
-import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { convertDateFromServer } from 'app/utils/date.utils';

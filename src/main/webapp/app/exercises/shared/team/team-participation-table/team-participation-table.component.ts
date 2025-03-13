@@ -18,7 +18,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
-import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
+import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ComplaintService } from 'app/complaints/complaint.service';
-import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
-import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
+import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
+import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';

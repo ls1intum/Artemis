@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
-import { UserFilter } from 'app/admin/user-management/user-management.component';
+import { UserFilter } from 'app/core/admin/user-management/user-management.component';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {

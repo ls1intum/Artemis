@@ -3,7 +3,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';

@@ -52,7 +52,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { captureException } from '@sentry/angular';
