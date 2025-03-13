@@ -8,7 +8,6 @@ type NavigationDirection = 'next' | 'prev';
     templateUrl: './pdf-preview-enlarged-canvas.component.html',
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
     imports: [TranslateDirective],
-    standalone: true,
 })
 export class PdfPreviewEnlargedCanvasComponent implements OnInit {
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
