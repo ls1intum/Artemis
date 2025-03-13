@@ -8,6 +8,7 @@ import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { OrderedPage } from 'app/lecture/pdf-preview/pdf-preview.component';
 
 describe('PdfPreviewDateBoxComponent', () => {
     let component: PdfPreviewDateBoxComponent;
@@ -20,8 +21,13 @@ describe('PdfPreviewDateBoxComponent', () => {
         { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-01T10:00') },
         { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-02T10:00') },
         { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs('2024-02-03T10:00') },
-        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null }, // Should be filtered out
+        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null },
     ] as Exercise[];
+
+    const mockSelectedPages = [
+        { pageIndex: 1, id: '1', slideId: '1' },
+        { pageIndex: 2, id: '2', slideId: '2' },
+    ] as OrderedPage[];
 
     beforeEach(async () => {
         courseExerciseServiceMock = {
@@ -45,7 +51,7 @@ describe('PdfPreviewDateBoxComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('course', mockCourse);
-        fixture.componentRef.setInput('pageIndices', [1, 2]);
+        fixture.componentRef.setInput('selectedPages', mockSelectedPages);
 
         fixture.detectChanges();
     });
@@ -76,8 +82,7 @@ describe('PdfPreviewDateBoxComponent', () => {
             component.ngOnInit();
             expect(component.isMultiplePages()).toBeTruthy();
 
-            fixture.componentRef.setInput('pageIndices', [1]);
-            component.ngOnInit();
+            fixture.componentRef.setInput('selectedPages', [{ pageIndex: 1, id: '1', slideId: '1' }]);
             expect(component.isMultiplePages()).toBeFalsy();
         });
     });
@@ -161,17 +166,17 @@ describe('PdfPreviewDateBoxComponent', () => {
 
         it('should emit hidden pages with forever date when hide forever is selected', () => {
             component.hideForever.set(true);
-            fixture.componentRef.setInput('pageIndices', [1, 2]);
+            fixture.componentRef.setInput('selectedPages', mockSelectedPages);
             component.onSubmit();
 
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
-                    pageIndex: 1,
+                    slideId: '1',
                     date: dayjs('9999-12-31'),
                     exerciseId: null,
                 },
                 {
-                    pageIndex: 2,
+                    slideId: '2',
                     date: dayjs('9999-12-31'),
                     exerciseId: null,
                 },
@@ -185,14 +190,14 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.calendarSelected.set(true);
             component.defaultDate.set(testDate);
-            fixture.componentRef.setInput('pageIndices', [3]);
+            fixture.componentRef.setInput('selectedPages', [{ pageIndex: 3, id: '3', slideId: '3' }]);
 
             component.onSubmit();
 
             expect(alertServiceMock.error).not.toHaveBeenCalled();
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
-                    pageIndex: 3,
+                    slideId: '3',
                     date: dayjs(testDate),
                     exerciseId: null,
                 },
@@ -209,18 +214,21 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.exerciseSelected.set(true);
             component.selectedExercise.set(futureExercise);
-            fixture.componentRef.setInput('pageIndices', [5, 6]);
+            fixture.componentRef.setInput('selectedPages', [
+                { pageIndex: 5, id: '5', slideId: '5' },
+                { pageIndex: 6, id: '6', slideId: '6' },
+            ]);
 
             component.onSubmit();
 
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
-                    pageIndex: 5,
+                    slideId: '5',
                     date: futureDate,
                     exerciseId: 123,
                 },
                 {
-                    pageIndex: 6,
+                    slideId: '6',
                     date: futureDate,
                     exerciseId: 123,
                 },
@@ -233,7 +241,6 @@ describe('PdfPreviewDateBoxComponent', () => {
         });
 
         it('should show error and not emit when calendar date is in the past', () => {
-            // Use a past date that will fail validation
             const pastDate = '2020-01-01T10:00';
             component.calendarSelected.set(true);
             component.defaultDate.set(pastDate);
@@ -246,9 +253,18 @@ describe('PdfPreviewDateBoxComponent', () => {
     });
 
     describe('Computed Properties', () => {
-        it('should correctly sort and format page indices', () => {
-            fixture.componentRef.setInput('pageIndices', [3, 1, 2]);
-            expect(component.pageIndicesSorted()).toBe('1, 2, 3');
+        it('should correctly format page indices', () => {
+            fixture.componentRef.setInput('selectedPages', [
+                { pageIndex: 3, id: '3', slideId: '3' },
+                { pageIndex: 1, id: '1', slideId: '1' },
+                { pageIndex: 2, id: '2', slideId: '2' },
+            ]);
+            expect(component.pagesDisplay()).toBe('1, 2, 3');
+        });
+
+        it('should correctly show single page index', () => {
+            fixture.componentRef.setInput('selectedPages', [{ pageIndex: 3, id: '3', slideId: '3' }]);
+            expect(component.pagesDisplay()).toBe('3');
         });
     });
 });
