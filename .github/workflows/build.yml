@@ -129,6 +129,6 @@ jobs:
       release_path: ${{ needs.define-inputs.outputs.release_path }}
       release_name: ${{ needs.define-inputs.outputs.release_name }}
       release_type: ${{ needs.define-inputs.outputs.release_type }}
-      docker: ${{ needs.define-inputs.outputs.docker_build == 'true' }}
+      docker: false
       docker_ref: ${{ needs.define-inputs.outputs.docker_ref }}
       docker_build_tag: ${{ needs.define-inputs.outputs.docker_build_tag }}
