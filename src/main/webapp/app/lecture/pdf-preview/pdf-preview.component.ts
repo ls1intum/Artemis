@@ -68,7 +68,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
 
-    forever = dayjs('9999-12-31');
+    FOREVER = dayjs('9999-12-31');
 
     protected readonly ButtonType = ButtonType;
     protected readonly Object = Object;

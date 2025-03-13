@@ -23,7 +23,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
-    forever = dayjs('9999-12-31');
+    FOREVER = dayjs('9999-12-31');
 
     // Inputs
     course = input<Course>();
