@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -18,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges, AfterViewChecked {
     private athenaService = inject(AthenaService);
     private activatedRoute = inject(ActivatedRoute);
+    private cdr = inject(ChangeDetectorRef);
 
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
@@ -40,6 +41,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         this.athenaService.getAvailableModules(courseId, this.exercise).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
+            this.cdr.detectChanges();
         });
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;

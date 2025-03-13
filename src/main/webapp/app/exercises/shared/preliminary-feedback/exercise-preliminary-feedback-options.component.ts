@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -35,6 +35,7 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
     constructor(
         private athenaService: AthenaService,
         private activatedRoute: ActivatedRoute,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -42,6 +43,7 @@ export class ExercisePreliminaryFeedbackOptionsComponent implements OnInit, OnCh
         this.athenaService.getAvailableModules(courseId, this.exercise()).subscribe((modules) => {
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
+            this.cdr.detectChanges();
         });
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
         this.initialAthenaModule = this.exercise().preliminaryFeedbackModule;
