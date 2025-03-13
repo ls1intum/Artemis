@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.service.ScheduleService;
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/core/admin/")
 public class AdminScheduleResource {
 
     private final ScheduleService scheduleService;
