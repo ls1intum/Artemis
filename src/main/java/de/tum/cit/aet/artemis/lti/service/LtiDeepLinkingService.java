@@ -24,7 +24,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
+import de.tum.cit.aet.artemis.lti.dto.LineItem;
 import de.tum.cit.aet.artemis.lti.dto.Lti13DeepLinkingResponse;
+import de.tum.cit.aet.artemis.lti.dto.LtiContentItem;
 
 /**
  * Service for handling LTI deep linking functionality.
@@ -45,9 +47,6 @@ public class LtiDeepLinkingService {
     private final LectureRepository lectureRepository;
 
     private final Lti13TokenRetriever tokenRetriever;
-
-    public record LineItem(double scoreMaximum) {
-    }
 
     public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             Lti13TokenRetriever tokenRetriever) {

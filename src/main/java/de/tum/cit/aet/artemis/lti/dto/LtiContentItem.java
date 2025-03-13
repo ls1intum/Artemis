@@ -1,9 +1,9 @@
-package de.tum.cit.aet.artemis.lti.service;
+package de.tum.cit.aet.artemis.lti.dto;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public record LtiContentItem(String type, String title, String url, LtiDeepLinkingService.LineItem lineItem) {
+public record LtiContentItem(String type, String title, String url, LineItem lineItem) {
 
     /**
      * Converts this ContentItem into a Map<String, Object> suitable for LTI 1.3 Deep Linking Response.
