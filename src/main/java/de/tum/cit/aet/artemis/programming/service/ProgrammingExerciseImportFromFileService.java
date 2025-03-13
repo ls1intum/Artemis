@@ -24,9 +24,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -66,10 +63,10 @@ public class ProgrammingExerciseImportFromFileService {
     private final BuildPlanRepository buildPlanRepository;
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService,
-                                                    ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
-                                                    ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-                                                    RepositoryService repositoryService, GitService gitService,
-                                                    FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository) {
+            ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
+            RepositoryService repositoryService, GitService gitService, FileService fileService,
+            ProfileService profileService, BuildPlanRepository buildPlanRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
@@ -238,20 +235,6 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
-    private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
-        var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
-
-        try {
-            return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
-        }
-        catch (IOException e) {
-            throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
-        }
-    }
-
     private void checkRepositoriesExist(Path path) throws IOException {
         checkRepositoryForTypeExists(path, RepositoryType.TEMPLATE);
         checkRepositoryForTypeExists(path, RepositoryType.SOLUTION);
@@ -280,22 +263,6 @@ public class ProgrammingExerciseImportFromFileService {
                     "There are either no or more than one sub-directories containing " + repoName + " in their name. Please make sure that there is exactly one.");
         }
 
-        return result.getFirst();
-    }
-
-    private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
-        List<Path> result;
-        try (Stream<Path> stream = Files.walk(dirPath)) {
-            // if we do not convert the file name to a string, the second filter always returns false
-            // for the third filter, we need to convert it to a string as well as a path doesn't contain a file extension
-
-            result = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().startsWith("Exercise-Details"))
-                    .filter(file -> file.toString().endsWith(".json")).toList();
-        }
-
-        if (result.size() != 1) {
-            throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
-        }
         return result.getFirst();
     }
 }
