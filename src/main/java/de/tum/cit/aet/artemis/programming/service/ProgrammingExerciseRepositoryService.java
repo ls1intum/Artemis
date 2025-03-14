@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.isMavenProject;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,8 +26,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -33,7 +35,6 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import static de.tum.cit.aet.artemis.programming.domain.ProjectType.isMavenProject;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -78,8 +79,7 @@ public class ProgrammingExerciseRepositoryService {
     private final Optional<VersionControlService> versionControlService;
 
     public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, UserRepository userRepository,
-            InstanceMessageSendService instanceMessageSendService, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService) {
+            InstanceMessageSendService instanceMessageSendService, ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService) {
         this.fileService = fileService;
         this.gitService = gitService;
         this.userRepository = userRepository;
@@ -888,8 +888,9 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Creates a map of replacements that should be applied to the repository files when exercise name is changed.
-     * @param oldRepositoryName the name of the repository that should be replaced
-     * @param newRepositoryName the name of the repository that should be used for the replacement
+     *
+     * @param oldRepositoryName   the name of the repository that should be replaced
+     * @param newRepositoryName   the name of the repository that should be used for the replacement
      * @param programmingLanguage the programming language of the exercise
      * @return a map of replacements that should be applied
      */
@@ -910,7 +911,7 @@ public class ProgrammingExerciseRepositoryService {
                 replacements.put("<name>" + oldRepositoryNamePomXml + " Solution</name>", "<name>" + newRepositoryNamePomXml + " Solution</name>");
                 replacements.put("<name>" + oldRepositoryNamePomXml + " Tests</name>", "<name>" + newRepositoryNamePomXml + " Tests</name>");
                 replacements.put("<name>" + oldRepositoryName + " Tests</name>", "<name>" + newRepositoryName + " Tests</name>");
-                
+
                 // Gradle specific
                 replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "'", "rootProject.name = '" + newRepositoryNamePomXml + "'");
                 replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "-Solution'", "rootProject.name = '" + newRepositoryNamePomXml + "-Solution'");
@@ -938,7 +939,7 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException     If the values in the files could not be replaced
      */
     void adjustProjectNames(String oldExerciseTitle, ProgrammingExercise newExercise) throws GitAPIException, IOException {
-        //If exercise names are the same, then there is no need for adjustment
+        // If exercise names are the same, then there is no need for adjustment
         if (!oldExerciseTitle.equals(newExercise.getTitle())) {
             final var projectKey = newExercise.getProjectKey();
             Map<String, String> replacements = replacementMapping(oldExerciseTitle, newExercise.getTitle(), newExercise.getProgrammingLanguage());

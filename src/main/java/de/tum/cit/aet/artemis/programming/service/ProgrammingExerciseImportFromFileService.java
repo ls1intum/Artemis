@@ -13,8 +13,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
@@ -25,6 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,11 +65,9 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService,
-            ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            RepositoryService repositoryService, GitService gitService, FileService fileService,
-            ProfileService profileService, BuildPlanRepository buildPlanRepository) {
+    public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
+            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService,
+            GitService gitService, FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
@@ -115,7 +114,6 @@ public class ProgrammingExerciseImportFromFileService {
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, user);
 
-            
             try {
                 programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
             }
@@ -181,11 +179,10 @@ public class ProgrammingExerciseImportFromFileService {
      * Imports the repositories from the extracted zip file.
      *
      * @param newExercise the new programming exercise to which the repositories should be imported
-     * @param basePath the path to the extracted zip file
-     * @param user the user performing the import
+     * @param basePath    the path to the extracted zip file
+     * @param user        the user performing the import
      */
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user)
-            throws IOException, GitAPIException, URISyntaxException {
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user) throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false);
