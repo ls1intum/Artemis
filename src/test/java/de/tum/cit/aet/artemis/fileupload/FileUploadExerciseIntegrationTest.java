@@ -597,8 +597,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
         fileUploadExerciseToBeConflicted.setId(123456789L);
-        fileUploadExerciseRepository.save(fileUploadExerciseToBeConflicted);
-
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate", fileUploadExerciseToBeConflicted, FileUploadExercise.class,
                 HttpStatus.CONFLICT);
     }
