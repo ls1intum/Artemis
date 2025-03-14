@@ -13,7 +13,7 @@ export class FaqConsistencyComponent {
     suggestions = input<string[]>([]);
     inconsistencies = input<string[]>([]);
     improvement = input<string>('');
-    close = output<void>();
+    closeConsistencyWidget = output<void>();
 
     formattedConsistency = signal<{ inconsistentFaq: string; suggestion: string }[]>([]);
 
@@ -34,6 +34,6 @@ export class FaqConsistencyComponent {
     }
 
     dismissConsistencyCheck(): void {
-        this.close.emit();
+        this.closeConsistencyWidget.emit();
     }
 }
