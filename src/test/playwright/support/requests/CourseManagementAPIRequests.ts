@@ -105,7 +105,7 @@ export class CourseManagementAPIRequests {
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, { multipart });
         const json = await response.json();
-        json.courseIconpath = addPublicFilePrefix(json.courseIcon);
+        json.courseIconPath = addPublicFilePrefix(json.courseIcon);
         return json;
     }
 
