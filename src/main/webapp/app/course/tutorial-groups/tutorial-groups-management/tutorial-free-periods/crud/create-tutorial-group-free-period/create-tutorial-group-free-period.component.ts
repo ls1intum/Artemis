@@ -29,9 +29,11 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
     isLoading: boolean;
 
-    @Input() tutorialGroupConfigurationId: number;
+    @Input()
+    tutorialGroupConfigurationId: number;
 
-    @Input() course: Course;
+    @Input()
+    course: Course;
 
     isInitialized = false;
 
