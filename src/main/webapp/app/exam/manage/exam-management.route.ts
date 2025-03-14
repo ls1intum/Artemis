@@ -646,6 +646,9 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan',
         loadComponent: () => import('app/programming/manage/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
