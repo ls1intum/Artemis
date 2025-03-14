@@ -50,16 +50,16 @@ jobs:
         run: .ci/E2E-tests/cleanup.sh
 
       - name: Run E2E Playwright tests (MySQL, Local)
-        if: ${{ github.event.workflow_run.pull_requests }}
+#        if: ${{ github.event.workflow_run.pull_requests }}
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
-        if: ${{ !github.event.workflow_run.pull_requests }}
-        run: .ci/E2E-tests/execute.sh multi-node playwright
-        env:
-          FAST_TEST_TIMEOUT_SECONDS: 75
+#      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+#        if: ${{ !github.event.workflow_run.pull_requests }}
+#        run: .ci/E2E-tests/execute.sh multi-node playwright
+#        env:
+#          FAST_TEST_TIMEOUT_SECONDS: 75
 
       - name: Upload JUnit Test Results
         if: success() || failure()
