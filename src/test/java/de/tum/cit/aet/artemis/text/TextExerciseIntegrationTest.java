@@ -1239,7 +1239,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testReEvaluateAndUpdateTextExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExerciseToBeConflicted.setId(123456789L);
-        textExerciseRepository.save(textExerciseToBeConflicted);
 
         request.putWithResponseBody("/api/text-exercises/" + textExercise.getId() + "/re-evaluate", textExerciseToBeConflicted, TextExercise.class, HttpStatus.CONFLICT);
     }
