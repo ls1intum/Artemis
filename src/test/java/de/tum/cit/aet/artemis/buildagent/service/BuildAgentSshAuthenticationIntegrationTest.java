@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +34,7 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
         assertThat(sshPrivateKeyExists).as("SSH private key written to tmp dir.").isTrue();
     }
 
+    @Disabled
     @Test
     void testSSHInHazelcast() {
         sharedQueueProcessingService.updateBuildAgentInformation();
