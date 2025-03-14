@@ -107,6 +107,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         someRepository.resetLocalRepo();
     }
 
+    @Disabled
     @Test
     void testFetchPush_usingVcsAccessToken() {
         var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);

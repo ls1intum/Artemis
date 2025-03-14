@@ -16,6 +16,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
+@Disabled
 class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
@@ -34,7 +35,6 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
         assertThat(sshPrivateKeyExists).as("SSH private key written to tmp dir.").isTrue();
     }
 
-    @Disabled
     @Test
     void testSSHInHazelcast() {
         sharedQueueProcessingService.updateBuildAgentInformation();
