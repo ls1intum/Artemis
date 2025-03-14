@@ -163,6 +163,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             } else {
+                this.croppedImage = course.courseIconPath;
                 this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
                         if (res.body) {
