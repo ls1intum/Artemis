@@ -549,6 +549,11 @@ public class ResultService {
         if (shouldSave) {
             // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
             deleteLongFeedback(result.getFeedbacks(), result);
+
+            // Set all long feedback IDs to null to make hibernate aware that the long feedback doesn't exist.
+            result.getFeedbacks().forEach(feedback -> {
+                feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null));
+            });
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
