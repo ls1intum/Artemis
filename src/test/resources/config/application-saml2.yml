@@ -33,7 +33,7 @@ spring:
     security:
         saml2:
             relyingparty:
-                registration:
+                registration: {}
                     # REGISTRATION_ID_HERE: # The EntityId will be generated as "https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>"
                     #     signing.credentials: &my-metadata 
                     #         - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem # path-to-key (optional) Set this path to the Key for encryption/signing (must be a PKCS#8 file!) ; if not needed, omit
