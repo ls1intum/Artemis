@@ -64,98 +64,64 @@ concurrency:
 # Keep this filename in sync with the filename environment variable (PR_AUTO_BUILD_FILE_NAME) in the testserver-deployment.yml workflow
 # and with the build_workflow_name environment variable in the staging-deployment.yml workflow
 
+
+# Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
+env:
+  CI: true
+  node: 22
+  java: 21
+
 jobs:
 
-  define-inputs:
-    name: Define Inputs
+  build:
+    name: Build .war artifact
     runs-on: ubuntu-latest
-    outputs:
-      release_upload: ${{ steps.set-upload-release.outputs.release_upload }}
-      release_url: ${{ steps.set-upload-release.outputs.release_url }}
-      release_path: ${{ steps.set-upload-release.outputs.release_path }}
-      release_name: ${{ steps.set-upload-release.outputs.release_name }}
-      release_type: ${{ steps.set-upload-release.outputs.release_type }}
-      docker_build: ${{ steps.set-docker-build.outputs.docker_build }}
-      docker_ref: ${{ steps.set-docker-ref.outputs.docker_ref }}
-      docker_build_tag: ${{ steps.set-docker-tag.outputs.docker_build_tag }}
     steps:
-      - name: Set Upload Release Artifact Outputs
-        id: set-upload-release
-        run: |
-          # If event is release created, set the release_upload flag and the release artifact details
-          if [[ "${{ github.event_name }}" == "release" && "${{ github.event.action }}" == "created" ]]; then
-            echo "release_upload=true" >> $GITHUB_OUTPUT
-            echo "release_url=${{ github.event.release.upload_url }}" >> $GITHUB_OUTPUT
-            echo "release_path=build/libs/Artemis-${{ github.event.release.tag_name }}.war" >> $GITHUB_OUTPUT
-            echo "release_name=Artemis.war" >> $GITHUB_OUTPUT
-            echo "release_type=application/x-webarchive" >> $GITHUB_OUTPUT
-          else
-            echo "release_upload=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set Docker Build Flag
-        id: set-docker-build
-        run: |
-          if [[ ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }} ]]; then
-            echo "docker_build=true" >> $GITHUB_OUTPUT
-          else
-            echo "docker_build=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set Docker ref
-        if: ${{ steps.set-docker-build.outputs.docker_build == 'true' }}
-        id: set-docker-ref
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            # Checkout pull request HEAD commit instead of merge commit
-            # this is done to include the correct branch and git information inside the build
-            echo "docker_ref=${{ github.event.pull_request.head.ref }}" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event_name }}" == "push" ]]; then
-            echo "docker_ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Compute Docker Tag
-        if: ${{ steps.set-docker-build.outputs.docker_build == 'true' }}
-        uses: actions/github-script@v7
-        id: compute-tag
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          result-encoding: string
-          script: |
-            if (context.eventName === "pull_request") {
-              return "pr-" + context.issue.number;
-            }
-            if (context.eventName === "release") {
-              return "latest";
-            }
-            if (context.eventName === "push") {
-              if (context.ref.startsWith("refs/tags/")) {
-                return context.ref.slice(10);
-              }
-              if (context.ref === "refs/heads/develop") {
-                return "develop";
-              }
-            }
-            return "FALSE";
+          node-version: '${{ env.node }}'
+          cache: 'npm'
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '${{ env.java }}'
+          cache: 'gradle'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Production Build
+        run: ./gradlew -Pprod -Pwar clean bootWar
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Artemis.war
+          path: build/libs/Artemis-*.war
+      - name: Upload Release Artifact
+        if: github.event_name == 'release' && github.event.action == 'created'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/libs/Artemis-${{ github.event.release.tag_name }}.war
+          asset_name: Artemis.war
+          asset_content_type: application/x-webarchive
 
-      - name: Set Docker Tag
-        id: set-docker-tag
-        run: |
-          if [[ ${{ steps.compute-tag.outputs.result  != 'FALSE' }} ]]; then
-            echo "docker_build_tag=${{ steps.compute-tag.outputs.result }}" >> $GITHUB_OUTPUT
-          fi
-
-
-  call-build-workflow:
-    name: Call Build Workflow
-    needs: define-inputs
-    uses: ./.github/workflows/reusable-build.yml
+  docker:
+    name: Build and Push Docker Image
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@feat/multi-tag-support
     with:
-      build_war: true
-      release_upload: ${{ needs.define-inputs.outputs.release_upload == 'true' }}
-      release_url: ${{ needs.define-inputs.outputs.release_url }}
-      release_path: ${{ needs.define-inputs.outputs.release_path }}
-      release_name: ${{ needs.define-inputs.outputs.release_name }}
-      release_type: ${{ needs.define-inputs.outputs.release_type }}
-      docker: ${{ needs.define-inputs.outputs.docker_build == 'true' }}
-      docker_ref: ${{ needs.define-inputs.outputs.docker_ref }}
-      docker_build_tag: ${{ needs.define-inputs.outputs.docker_build_tag }}
+      # Checkout pull request HEAD commit instead of merge commit to include the correct branch and git information inside the build
+      # Or use the push event ref name
+      ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      tags: |
+        type=ref,event=tag
+
+    # TODO: Push to Docker Hub (develop + tag)
+
+    # TODO: Push to Chair Harbour (??)
