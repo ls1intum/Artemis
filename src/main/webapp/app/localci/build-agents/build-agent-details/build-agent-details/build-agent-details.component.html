@@ -47,14 +47,14 @@
                     <span>{{ buildAgent.buildAgentDetails?.averageBuildDuration }}</span>
                 </div>
                 <div>
-                    <span class="bold" jhiTranslate="artemisApp.buildAgents.averageBuildDuration"></span>
-                    <span class="bold">:</span>
-                    <span>{{ buildAgent.buildAgentDetails?.averageBuildDuration }}</span>
-                </div>
-                <div>
                     <span class="bold" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
                     <span class="bold">:</span>
                     <span>{{ buildAgent.maxNumberOfConcurrentBuildJobs }}</span>
+                </div>
+                <div>
+                    <span class="bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>
+                    <span class="bold">:</span>
+                    <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
                 </div>
             </div>
 
