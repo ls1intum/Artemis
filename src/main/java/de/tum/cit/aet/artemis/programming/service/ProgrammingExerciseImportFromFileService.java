@@ -290,24 +290,20 @@ public class ProgrammingExerciseImportFromFileService {
      * Checks if the Exercise-Details.json file exists in the extracted zip directory.
      *
      * @param path the path to the extracted zip directory
-     * @throws IOException if there is an error reading the directory
+     * @throws IOException              if there is an error reading the directory
      * @throws BadRequestAlertException if the Exercise-Details.json file is not found
      */
     private void checkDetailsJsonExists(Path path) throws IOException {
         try (Stream<Path> stream = Files.walk(path)) {
-            long count = stream.filter(Files::isRegularFile)
-                              .filter(file -> file.getFileName().toString().startsWith("Exercise-Details"))
-                              .filter(file -> file.toString().endsWith(".json"))
-                              .count();
-                              
+            long count = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().startsWith("Exercise-Details"))
+                    .filter(file -> file.toString().endsWith(".json")).count();
+
             if (count == 0) {
-                throw new BadRequestAlertException("The Exercise-Details.json file is missing in the uploaded zip file.", 
-                    "programmingExercise", "exerciseJsonNotFound");
+                throw new BadRequestAlertException("The Exercise-Details.json file is missing in the uploaded zip file.", "programmingExercise", "exerciseJsonNotFound");
             }
-            
+
             if (count > 1) {
-                throw new BadRequestAlertException("Multiple Exercise-Details.json files found in the uploaded zip file.", 
-                    "programmingExercise", "multipleExerciseJsonFiles");
+                throw new BadRequestAlertException("Multiple Exercise-Details.json files found in the uploaded zip file.", "programmingExercise", "multipleExerciseJsonFiles");
             }
         }
     }
