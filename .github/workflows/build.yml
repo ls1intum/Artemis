@@ -13,7 +13,6 @@ on:
     - '!.github/workflows/build.yml'
     - '!.github/workflows/testserver-deployment.yml'
     - '!.github/workflows/staging-deployment.yml'
-    - '!.github/workflows/reusable-build.yml'
   push:
     branches:
     - develop
