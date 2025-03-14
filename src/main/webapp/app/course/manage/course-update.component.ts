@@ -146,6 +146,8 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
+        this.croppedImage = this.course.courseIconPath;
+
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
@@ -163,7 +165,6 @@ export class CourseUpdateComponent implements OnInit {
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
             } else {
-                this.croppedImage = course.courseIconPath;
                 this.fileService.getTemplateCodeOfConduct().subscribe({
                     next: (res: HttpResponse<string>) => {
                         if (res.body) {
