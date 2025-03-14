@@ -19,6 +19,16 @@ jobs:
     name: Run E2E Tests
     runs-on: [self-hosted, e2e-test]
     environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
