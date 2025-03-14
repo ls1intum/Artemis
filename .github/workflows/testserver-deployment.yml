@@ -51,8 +51,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: JUnit Test Results
-          path: |
-            **/test-reports/*.xml
+          if-no-files-found: error
+          path: src/test/playwright/test-reports/*.xml
 
       - name: Run cleanup script (after E2E)
         run: .ci/E2E-tests/cleanup.sh
