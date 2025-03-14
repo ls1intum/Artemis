@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -89,13 +89,12 @@ public class SubmissionService {
 
     protected final FeedbackService feedbackService;
 
-    private final Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService;
+    private final Optional<AthenaApi> athenaApi;
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
-            Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -109,7 +108,7 @@ public class SubmissionService {
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
-        this.athenaSubmissionSelectionService = athenaSubmissionSelectionService;
+        this.athenaApi = athenaApi;
     }
 
     /**
@@ -271,9 +270,9 @@ public class SubmissionService {
      */
     public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
             Function<Long, Optional<S>> findSubmissionById) {
-        if (exercise.areFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
+        if (exercise.areFeedbackSuggestionsEnabled() && athenaApi.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
-            var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(exercise, assessableSubmissions.stream().map(Submission::getId).toList());
+            var athenaSubmissionId = athenaApi.get().getProposedSubmissionId(exercise, assessableSubmissions.stream().map(Submission::getId).toList());
             if (athenaSubmissionId.isPresent()) {
                 var submission = findSubmissionById.apply(athenaSubmissionId.get());
                 // Test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime):
