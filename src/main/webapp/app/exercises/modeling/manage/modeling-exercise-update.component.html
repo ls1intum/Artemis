@@ -260,6 +260,7 @@
                 </div>
             </div>
         }
+        <jhi-exercise-feedback-suggestion-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
         @if (!isExamMode) {
             <jhi-exercise-update-plagiarism [exercise]="modelingExercise" />
         }
