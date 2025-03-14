@@ -93,11 +93,12 @@ jobs:
   conditional-build:
     if: ${{ needs.determine-build-context.outputs.pr_number == '' }}
     needs: determine-build-context
-    uses: ./.github/workflows/reusable-build.yml
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@feat/multi-tag-support
     with:
-      docker: true
-      docker_ref: ${{ github.event.inputs.branch_name }}
-      docker_build_tag: ${{ needs.determine-build-context.outputs.tag }}
+      ref: ${{ github.event.inputs.branch_name }}
+      image-name: ls1intum/artemis
+      docker-file: ./docker/artemis/Dockerfile
+      tags: ${{ needs.determine-build-context.outputs.tag }}
 
   # Check if the build has run successfully (PR)
   check-existing-build:
