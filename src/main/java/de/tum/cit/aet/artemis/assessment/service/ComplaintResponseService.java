@@ -76,8 +76,6 @@ public class ComplaintResponseService {
         if (blockedByLock(complaintResponseRepresentingLock, user)) {
             throw new ComplaintResponseLockedException(complaintResponseRepresentingLock);
         }
-        // we need to remove the relationship between the complaint and the complaint response as we otherwise cannot delete the ComplaintResponse
-        // we need the save method calls to make the PersistenceContext aware of the changes
         complaintResponseRepresentingLock = disassociateComplaintAndComplaintResponse(complaint, complaintResponseRepresentingLock);
         complaintResponseRepository.deleteById(complaintResponseRepresentingLock.getId());
         log.debug("Removed empty complaint and thus lock for complaint with id : {}", complaint.getId());
