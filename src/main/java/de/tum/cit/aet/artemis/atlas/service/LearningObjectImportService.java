@@ -61,9 +61,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportServi
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
+import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 
 /**
  * Service for importing learning objects related to competencies.
@@ -86,9 +85,7 @@ public class LearningObjectImportService {
 
     private final ModelingExerciseImportService modelingExerciseImportService;
 
-    private final TextExerciseRepository textExerciseRepository;
-
-    private final TextExerciseImportService textExerciseImportService;
+    private final Optional<TextExerciseImportApi> textExerciseImportApi;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
@@ -114,8 +111,8 @@ public class LearningObjectImportService {
 
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService, TextExerciseRepository textExerciseRepository,
-            TextExerciseImportService textExerciseImportService, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
+            Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
             LectureRepository lectureRepository, LectureImportService lectureImportService, LectureUnitRepository lectureUnitRepository,
             LectureUnitImportService lectureUnitImportService, CourseCompetencyRepository courseCompetencyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
@@ -126,8 +123,7 @@ public class LearningObjectImportService {
         this.fileUploadImportApi = fileUploadImportApi;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
-        this.textExerciseRepository = textExerciseRepository;
-        this.textExerciseImportService = textExerciseImportService;
+        this.textExerciseImportApi = textExerciseImportApi;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.lectureRepository = lectureRepository;
@@ -207,8 +203,11 @@ public class LearningObjectImportService {
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
                     modelingExerciseImportService::importModelingExercise);
-            case TextExercise textExercise -> importOrLoadExercise(textExercise, course, textExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    textExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, textExerciseImportService::importTextExercise);
+            case TextExercise textExercise -> {
+                var api = textExerciseImportApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
+                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
+            }
             case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
                         try {
