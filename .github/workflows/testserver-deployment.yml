@@ -11,7 +11,7 @@ on:
         required: true
 
 concurrency:
-  group: 'e2e-default'
+  group: 'e2e-default-2'
   cancel-in-progress: true
 
 jobs:
