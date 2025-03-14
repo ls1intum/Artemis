@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
-import static de.tum.cit.aet.artemis.programming.domain.ProjectType.isMavenProject;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,7 +12,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -27,7 +22,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -35,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.isMavenProject;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -887,21 +886,45 @@ public class ProgrammingExerciseRepositoryService {
         }
     }
 
-    private static Map<String, String> replacementMapping(String oldRepositoryName, String newRepositoryName) {
+    /**
+     * Creates a map of replacements that should be applied to the repository files when exercise name is changed.
+     * @param oldRepositoryName the name of the repository that should be replaced
+     * @param newRepositoryName the name of the repository that should be used for the replacement
+     * @param programmingLanguage the programming language of the exercise
+     * @return a map of replacements that should be applied
+     */
+    private static Map<String, String> replacementMapping(String oldRepositoryName, String newRepositoryName, ProgrammingLanguage programmingLanguage) {
+        String oldRepositoryNamePomXml = oldRepositoryName.replaceAll(" ", "-");
+        String newRepositoryNamePomXml = newRepositoryName.replaceAll(" ", "-");
+
         Map<String, String> replacements = new HashMap<>();
 
-        // Used in pom.xml
-        replacements.put("<artifactId>" + oldRepositoryName.replaceAll(" ", "-"), "<artifactId>" + newRepositoryName.replaceAll(" ", "-"));
+        switch (programmingLanguage) {
+            case JAVA, KOTLIN -> {
+                // Maven specific
+                replacements.put("<artifactId>" + oldRepositoryNamePomXml + "</artifactId>", "<artifactId>" + newRepositoryNamePomXml + "</artifactId>");
+                replacements.put("<artifactId>" + oldRepositoryNamePomXml + "-Solution</artifactId>", "<artifactId>" + newRepositoryNamePomXml + "-Solution</artifactId>");
+                replacements.put("<artifactId>" + oldRepositoryNamePomXml + "-Tests</artifactId>", "<artifactId>" + newRepositoryNamePomXml + "-Tests</artifactId>");
 
-        // Used in settings.gradle
-        replacements.put("rootProject.name = '" + oldRepositoryName.replaceAll(" ", "-"), "rootProject.name = '" + newRepositoryName.replaceAll(" ", "-"));
+                replacements.put("<name>" + oldRepositoryNamePomXml + "</name>", "<name>" + newRepositoryNamePomXml + "</name>");
+                replacements.put("<name>" + oldRepositoryNamePomXml + " Solution</name>", "<name>" + newRepositoryNamePomXml + " Solution</name>");
+                replacements.put("<name>" + oldRepositoryNamePomXml + " Tests</name>", "<name>" + newRepositoryNamePomXml + " Tests</name>");
+                replacements.put("<name>" + oldRepositoryName + " Tests</name>", "<name>" + newRepositoryName + " Tests</name>");
+                
+                // Gradle specific
+                replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "'", "rootProject.name = '" + newRepositoryNamePomXml + "'");
+                replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "-Solution'", "rootProject.name = '" + newRepositoryNamePomXml + "-Solution'");
+                replacements.put("rootProject.name = '" + oldRepositoryNamePomXml + "-Tests'", "rootProject.name = '" + newRepositoryNamePomXml + "-Tests'");
 
-        // Used in readme.md (Gradle)
-        replacements.put("testImplementation(':" + oldRepositoryName.replaceAll(" ", "-"), "testImplementation(':" + newRepositoryName.replaceAll(" ", "-"));
+                replacements.put("\"buildName\":\"" + oldRepositoryNamePomXml + "\"", "\"buildName\":\"" + newRepositoryNamePomXml + "\"");
+                replacements.put("\"buildName\":\"" + oldRepositoryNamePomXml + "-Solution\"", "\"buildName\":\"" + newRepositoryNamePomXml + "-Solution\"");
+                replacements.put("\"buildName\":\"" + oldRepositoryNamePomXml + "-Tests\"", "\"buildName\":\"" + newRepositoryNamePomXml + "-Tests\"");
 
-        // Used in .project
-        replacements.put("<name>" + oldRepositoryName, "<name>" + newRepositoryName);
-
+                replacements.put("testImplementation(':" + oldRepositoryNamePomXml, "testImplementation(':" + newRepositoryNamePomXml);
+                replacements.put("testImplementation(':" + oldRepositoryNamePomXml + "-Solution", "testImplementation(':" + newRepositoryNamePomXml + "-Solution");
+                replacements.put("testImplementation(':" + oldRepositoryNamePomXml + "-Tests", "testImplementation(':" + newRepositoryNamePomXml + "-Tests");
+            }
+        }
         return replacements;
     }
 
@@ -909,20 +932,23 @@ public class ProgrammingExerciseRepositoryService {
      * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
      * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
      *
-     * @param templateExercise the exercise from which the values that should be replaced are extracted
+     * @param oldExerciseTitle the title of the old exercise
      * @param newExercise      the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
      * @throws IOException     If the values in the files could not be replaced
      */
-    void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
-        final var projectKey = newExercise.getProjectKey();
-        Map<String, String> replacements = replacementMapping(templateExercise.getTitle(), newExercise.getTitle());
+    void adjustProjectNames(String oldExerciseTitle, ProgrammingExercise newExercise) throws GitAPIException, IOException {
+        //If exercise names are the same, then there is no need for adjustment
+        if (!oldExerciseTitle.equals(newExercise.getTitle())) {
+            final var projectKey = newExercise.getProjectKey();
+            Map<String, String> replacements = replacementMapping(oldExerciseTitle, newExercise.getTitle(), newExercise.getProgrammingLanguage());
 
-        User user = userRepository.getUser();
+            User user = userRepository.getUser();
 
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
+            adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
+            adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
+            adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
+        }
     }
 
     /**

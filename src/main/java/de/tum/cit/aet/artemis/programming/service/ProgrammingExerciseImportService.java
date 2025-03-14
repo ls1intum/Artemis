@@ -122,7 +122,7 @@ public class ProgrammingExerciseImportService {
 
         try {
             // Adjust placeholders that were replaced during creation of template exercise
-            programmingExerciseRepositoryService.adjustProjectNames(templateExercise, newExercise);
+            programmingExerciseRepositoryService.adjustProjectNames(templateExercise.getTitle(), newExercise);
         }
         catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);

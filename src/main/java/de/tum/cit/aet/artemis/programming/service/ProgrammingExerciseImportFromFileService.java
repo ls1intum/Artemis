@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
@@ -111,7 +113,16 @@ public class ProgrammingExerciseImportFromFileService {
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
-            importRepositoriesFromFile(newProgrammingExercise, originalProgrammingExercise, importExerciseDir, user);
+            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, user);
+
+            
+            try {
+                programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
+            }
+            catch (GitAPIException | IOException e) {
+                log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
+            }
+
             newProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a local CI setup.
             if (profileService.isGitlabCiOrJenkinsActive()) {
@@ -166,7 +177,14 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, ProgrammingExercise oldExercise, Path basePath, User user)
+    /**
+     * Imports the repositories from the extracted zip file.
+     *
+     * @param newExercise the new programming exercise to which the repositories should be imported
+     * @param basePath the path to the extracted zip file
+     * @param user the user performing the import
+     */
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user)
             throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
@@ -177,7 +195,6 @@ public class ProgrammingExerciseImportFromFileService {
         }
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);
-        programmingExerciseRepositoryService.adjustProjectNames(oldExercise, newExercise);
 
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
@@ -220,7 +237,7 @@ public class ProgrammingExerciseImportFromFileService {
      * @param repository the repository to which the content should be copied
      * @param repoName   the name of the repository
      * @param basePath   the path to the extracted zip file
-     **/
+     */
     private void copyExerciseContentToRepository(Repository repository, String repoName, Path basePath) throws IOException {
         // @formatter:off
         FileUtils.copyDirectory(
@@ -232,6 +249,27 @@ public class ProgrammingExerciseImportFromFileService {
 
         try (var files = Files.walk(repository.getLocalPath())) {
             files.filter(file -> "gradlew".equals(file.getFileName().toString())).forEach(file -> file.toFile().setExecutable(true));
+        }
+    }
+
+    /**
+     * Reads the programming exercise details from the JSON file in the extracted zip path.
+     *
+     * @param extractedZipPath the path to the extracted zip file containing the exercise details
+     * @return the programming exercise object deserialized from the JSON file
+     * @throws IOException if there is an error reading the file
+     */
+    private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
+        var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+
+        try {
+            return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
+        }
+        catch (IOException e) {
+            throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
     }
 
@@ -263,6 +301,29 @@ public class ProgrammingExerciseImportFromFileService {
                     "There are either no or more than one sub-directories containing " + repoName + " in their name. Please make sure that there is exactly one.");
         }
 
+        return result.getFirst();
+    }
+
+    /**
+     * Retrieves the path to the Exercise-Details.json file in the extracted zip path.
+     *
+     * @param dirPath the path to the extracted zip file containing the exercise details
+     * @return the path to the Exercise-Details.json file
+     * @throws IOException if there is an error reading the file
+     */
+    private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
+        List<Path> result;
+        try (Stream<Path> stream = Files.walk(dirPath)) {
+            // if we do not convert the file name to a string, the second filter always returns false
+            // for the third filter, we need to convert it to a string as well as a path doesn't contain a file extension
+
+            result = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().startsWith("Exercise-Details"))
+                    .filter(file -> file.toString().endsWith(".json")).toList();
+        }
+
+        if (result.size() != 1) {
+            throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
+        }
         return result.getFirst();
     }
 }
