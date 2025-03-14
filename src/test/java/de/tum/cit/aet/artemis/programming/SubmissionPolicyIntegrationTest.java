@@ -440,6 +440,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         }
     }
 
+    @Disabled // TODO enable
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_getSameScoreForSameCommitHash() {

@@ -58,7 +58,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
 // TODO: rewrite this test to use LocalVC
 @ResourceLock("AbstractSpringIntegrationJenkinsLocalVcTest")
-
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI,
         PROFILE_AEOLUS, PROFILE_APOLLON })
@@ -67,7 +66,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
         "info.guided-tour.course-group-students=artemis-artemistutorial-students", "info.guided-tour.course-group-editors=artemis-artemistutorial-editors",
         "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_jenkins" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "artemis.version-control.ssh-port=1235", "info.contact=test@localhost",
+        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.

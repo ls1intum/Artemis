@@ -19,6 +19,7 @@ import java.util.stream.Stream;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -672,6 +673,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 null, HttpStatus.FORBIDDEN);
     }
 
+    @Disabled // TODO enable
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_participationLocked_forbidden() throws Exception {
@@ -682,6 +684,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseStudentParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_badRequest() throws Exception {

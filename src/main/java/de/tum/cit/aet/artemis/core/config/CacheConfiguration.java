@@ -196,7 +196,7 @@ public class CacheConfiguration {
             networkConfig.getJoin().getEurekaConfig().setEnabled(false);
 
             // Ensure the instance is a local-only, lite member to prevent connections
-            networkConfig.setPort(5701 + new Random().nextInt(1000)); // Randomize port to prevent conflicts
+            networkConfig.setPort(15701 + new Random().nextInt(1000)); // Randomize port to prevent conflicts
             networkConfig.setPortAutoIncrement(false);
             testConfig.setProperty("hazelcast.local.localAddress", "127.0.0.1");
 

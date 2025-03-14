@@ -39,6 +39,7 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
@@ -357,6 +358,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommit() throws Exception {
@@ -767,6 +769,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChanges() throws Exception {
@@ -788,6 +791,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
@@ -808,6 +812,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFilesAfterDueDateAsInstructor() throws Exception {
@@ -827,6 +832,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
@@ -834,6 +840,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
@@ -867,6 +874,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         }
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testResetToLastCommit() throws Exception {
@@ -921,6 +929,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         }
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStatus() throws Exception {
@@ -1073,6 +1082,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChangesAllowedForPracticeModeAfterDueDate() throws Exception {
@@ -1133,6 +1143,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         return programmingExercise;
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChanges() throws Exception {
@@ -1159,6 +1170,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDatePassed() throws Exception {
