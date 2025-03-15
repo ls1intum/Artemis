@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -7,6 +9,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -35,6 +38,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
  * Service responsible for initializing the database with specific testdata related to plagiarisms for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class PlagiarismUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);

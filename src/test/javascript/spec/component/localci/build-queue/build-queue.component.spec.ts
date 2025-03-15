@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { BuildQueueComponent, FinishedBuildJobFilter, FinishedBuildJobFilterStorageKey } from 'app/localci/build-queue/build-queue.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
@@ -10,15 +10,14 @@ import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
@@ -41,17 +40,6 @@ describe('BuildQueueComponent', () => {
         getBuildJobStatistics: jest.fn(),
         getBuildJobStatisticsForCourse: jest.fn(),
         getBuildJobLogs: jest.fn(),
-    };
-
-    const mockLocalStorageService = new MockLocalStorageService();
-    mockLocalStorageService.clear = (key?: string) => {
-        if (key) {
-            if (key in mockLocalStorageService.storage) {
-                delete mockLocalStorageService.storage[key];
-            }
-        } else {
-            mockLocalStorageService.storage = {};
-        }
     };
 
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
@@ -264,6 +252,7 @@ describe('BuildQueueComponent', () => {
 
     let alertService: AlertService;
     let alertServiceErrorStub: jest.SpyInstance;
+    let modalService: NgbModal;
 
     beforeEach(waitForAsync(() => {
         mockActivatedRoute = { params: of({ courseId: testCourseId }) };
@@ -275,16 +264,16 @@ describe('BuildQueueComponent', () => {
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: DataTableComponent, useClass: DataTableComponent },
-                { provide: LocalStorageService, useValue: mockLocalStorageService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildQueueComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
+        modalService = TestBed.inject(NgbModal);
         alertServiceErrorStub = jest.spyOn(alertService, 'error');
     }));
 
@@ -508,11 +497,6 @@ describe('BuildQueueComponent', () => {
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
     });
 
-    it('should return correct build agent addresses', () => {
-        component.finishedBuildJobs = mockFinishedJobs;
-        expect(component.buildAgentAddresses).toEqual(['agent5', 'agent6']);
-    });
-
     it('should trigger refresh on search term change', async () => {
         mockActivatedRoute.paramMap = of(new Map([]));
 
@@ -547,89 +531,25 @@ describe('BuildQueueComponent', () => {
         }
     });
 
-    it('should return correct number of filters applied', () => {
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
-        component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
-        component.filterBuildAgentAddressChanged();
-        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
-        component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.filterDurationChanged();
-        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
-        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
-        component.filterDateChanged();
-        component.toggleBuildStatusFilter('SUCCESSFUL');
-
-        expect(component.finishedBuildJobFilter.numberOfAppliedFilters).toBe(6);
-
-        component.finishedBuildJobFilter.buildAgentAddress = undefined;
-        component.filterBuildAgentAddressChanged();
-        component.finishedBuildJobFilter.buildDurationFilterLowerBound = undefined;
-        component.filterDurationChanged();
-
-        expect(component.finishedBuildJobFilter.numberOfAppliedFilters).toBe(4);
-    });
-
-    it('should save filter in local storage', () => {
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
-        component.finishedBuildJobFilter.buildAgentAddress = 'agent1';
-        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
-        component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
-        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
-        component.finishedBuildJobFilter.status = 'SUCCESSFUL';
-
-        component.filterDurationChanged();
-        component.filterDateChanged();
-        component.filterBuildAgentAddressChanged();
-        component.toggleBuildStatusFilter('SUCCESSFUL');
-
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBe('agent1');
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBe(1);
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBe(2);
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toEqual(dayjs('2023-01-01'));
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toEqual(dayjs('2023-01-02'));
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBe('SUCCESSFUL');
-
+    it('should correctly set filterModal values', () => {
+        const modalRef = {
+            componentInstance: {
+                finishedBuildJobFilter: undefined,
+                buildAgentAddress: undefined,
+                finishedBuildJobs: undefined,
+            },
+            result: Promise.resolve('close'),
+        } as NgbModalRef;
+        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        component.finishedBuildJobs = mockFinishedJobs;
         component.finishedBuildJobFilter = new FinishedBuildJobFilter();
 
-        component.filterDurationChanged();
-        component.filterDateChanged();
-        component.filterBuildAgentAddressChanged();
-        component.toggleBuildStatusFilter();
+        component.openFilterModal();
 
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildAgentAddress)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo)).toBeUndefined();
-        expect(mockLocalStorageService.retrieve(FinishedBuildJobFilterStorageKey.status)).toBeUndefined();
-    });
-
-    it('should validate correctly', () => {
-        component.finishedBuildJobFilter = new FinishedBuildJobFilter();
-        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 1;
-        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-01');
-        component.filterDurationChanged();
-        component.filterDateChanged();
-
-        expect(component.finishedBuildJobFilter.areDatesValid).toBeTruthy();
-        expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
-
-        component.finishedBuildJobFilter.buildDurationFilterUpperBound = 2;
-        component.finishedBuildJobFilter.buildSubmissionDateFilterTo = dayjs('2023-01-02');
-        component.filterDurationChanged();
-        component.filterDateChanged();
-
-        expect(component.finishedBuildJobFilter.areDatesValid).toBeTruthy();
-        expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeTruthy();
-
-        component.finishedBuildJobFilter.buildDurationFilterLowerBound = 3;
-        component.finishedBuildJobFilter.buildSubmissionDateFilterFrom = dayjs('2023-01-03');
-        component.filterDurationChanged();
-        component.filterDateChanged();
-
-        expect(component.finishedBuildJobFilter.areDatesValid).toBeFalsy();
-        expect(component.finishedBuildJobFilter.areDurationFiltersValid).toBeFalsy();
+        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
+        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs);
+        expect(modalRef.componentInstance.buildAgentFilterable).toEqual(true);
     });
 
     it('should download build logs', () => {
@@ -649,7 +569,7 @@ describe('BuildQueueComponent', () => {
 
         component.downloadBuildLogs();
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
+        expect(downloadSpy).toHaveBeenCalledTimes(1);
         expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
         expect(alertServiceErrorStub).toHaveBeenCalled();
 

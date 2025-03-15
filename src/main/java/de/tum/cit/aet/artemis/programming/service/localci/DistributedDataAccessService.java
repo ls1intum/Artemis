@@ -277,12 +277,4 @@ public class DistributedDataAccessService {
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
         return getProcessingJobs().stream().filter(job -> job.participationId() == participationId).toList();
     }
-
-    /**
-     * @return a list of the build agents with the unnecessary information removed
-     */
-    public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
-        return getBuildAgentInformation().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
-                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
-    }
 }
