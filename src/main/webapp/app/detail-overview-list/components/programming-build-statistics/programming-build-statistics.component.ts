@@ -11,20 +11,23 @@ import { CommonModule } from '@angular/common';
 export class ProgrammingBuildStatisticsComponent {
     detail = input.required<ProgrammingBuildStatisticsDetail>();
 
-    /**
-     * Formats the given duration to a string with two decimal places followed by 's'.
-     * If the duration is undefined or null, returns '-'.
-     *
-     * @param duration the duration in seconds to format
-     * @return the formatted duration string
-     */
-    private formatDuration(duration?: number): string {
-        const DECIMAL_PLACES = 2;
-        return duration ? `${duration.toFixed(DECIMAL_PLACES)}s` : '-';
-    }
+    agentSetupDuration = computed(() => {
+        const duration = this.detail().data.buildLogStatistics.agentSetupDuration;
+        return duration ? `${duration.toFixed(2)}s` : '-';
+    });
 
-    agentSetupDuration = computed(() => this.formatDuration(this.detail().data.buildLogStatistics.agentSetupDuration));
-    testDuration = computed(() => this.formatDuration(this.detail().data.buildLogStatistics.testDuration));
-    scaDuration = computed(() => this.formatDuration(this.detail().data.buildLogStatistics.scaDuration));
-    totalJobDuration = computed(() => this.formatDuration(this.detail().data.buildLogStatistics.totalJobDuration));
+    testDuration = computed(() => {
+        const duration = this.detail().data.buildLogStatistics.testDuration;
+        return duration ? `${duration.toFixed(2)}s` : '-';
+    });
+
+    scaDuration = computed(() => {
+        const duration = this.detail().data.buildLogStatistics.scaDuration;
+        return duration ? `${duration.toFixed(2)}s` : '-';
+    });
+
+    totalJobDuration = computed(() => {
+        const duration = this.detail().data.buildLogStatistics.totalJobDuration;
+        return duration ? `${duration.toFixed(2)}s` : '-';
+    });
 }
