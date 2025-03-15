@@ -10,6 +10,7 @@ import { ProfilePictureComponent } from '../profile-picture/profile-picture.comp
 import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 let selectorId = 0;
 
@@ -230,4 +231,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             this.searchInput.nativeElement.value = '';
         }
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
