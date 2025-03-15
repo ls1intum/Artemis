@@ -343,6 +343,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         verify(scheduleService, timeout(DELAY_MS * 2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, timeout(DELAY_MS * 2)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.SHORTLY_BEFORE_RELEASE), any(Runnable.class), any());
         verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
         // not yet locked on regular due date
@@ -372,6 +373,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         // special scheduling for both lock and build and test
         verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.SHORTLY_BEFORE_RELEASE), any(Runnable.class), any());
         verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(),
                 any());
     }

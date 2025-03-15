@@ -293,8 +293,10 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
+    // TODO: workaround to avoid an issue with jpa:
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:3.4.2"
     implementation "org.springframework.data:spring-data-jpa:3.4.2"
+    // TODO: we should switch back to ${spring_boot_version} as soon as the bugfix is released in a new version (3.4.4): https://github.com/spring-projects/spring-data-jpa/issues/3789
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"

@@ -367,12 +367,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
-        if (isScoreUpdateNeeded) {
-            scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
-                final List<Result> updatedResult = programmingExerciseGradingService.updateParticipationResults(participation);
-                resultRepository.saveAll(updatedResult);
-            }, "update student scores");
-        }
+        scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
+            lockStudentRepositoryAndParticipation(participation).run();
+
+            if (isScoreUpdateNeeded) {
+
+                scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
+                    final List<Result> updatedResult = programmingExerciseGradingService.updateParticipationResults(participation);
+                    resultRepository.saveAll(updatedResult);
+                }, "update student scores");
+            }
+        }, "lock student repository and participation");
         log.debug("Scheduled task to update student scores {} at the individual due date.", participation.getId());
     }
 
