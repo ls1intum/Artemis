@@ -6,12 +6,13 @@ import { CourseCompetencyType } from 'app/entities/competency.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-prerequisite-form',
     templateUrl: './prerequisite-form.component.html',
     styleUrls: ['./prerequisite-form.component.scss'],
-    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule],
+    imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
 export class PrerequisiteFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input() formData: CourseCompetencyFormData = {

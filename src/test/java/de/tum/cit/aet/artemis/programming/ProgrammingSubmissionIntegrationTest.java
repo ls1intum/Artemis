@@ -104,7 +104,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
@@ -128,7 +128,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
-        String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
+        String url = "/api/programming/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
@@ -144,7 +144,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 false);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK,
+                new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
@@ -157,7 +158,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
 
         // Trigger the call again and make sure that the submission shouldn't be recreated
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK,
+                new HttpHeaders());
         var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.getFirst().getId()).isEqualTo(submission.getId());
@@ -175,7 +177,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 false);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.NOT_FOUND,
+        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.NOT_FOUND,
                 new HttpHeaders());
     }
 
@@ -185,7 +187,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
@@ -195,7 +197,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
@@ -203,7 +205,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudentForbidden() throws Exception {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-build";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
@@ -242,7 +244,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         jenkinsRequestMockProvider.mockTriggerBuild(thirdProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
                 thirdProgrammingExerciseParticipation.getBuildPlanId(), false);
 
-        String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
+        String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
 
         // Note: the participations above have no submissions, so they are not triggered
@@ -261,21 +263,21 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void triggerBuildForExerciseEditorForbidden() throws Exception {
-        String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build-all";
+        String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void triggerBuildForExerciseTutorForbidden() throws Exception {
-        String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build-all";
+        String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildForExerciseStudentForbidden() throws Exception {
-        String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build-all";
+        String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
@@ -310,7 +312,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
         // aren't being re-created.
-        String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
+        String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
         request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
         request.postWithoutLocation(url, participationsToTrigger, HttpStatus.OK, new HttpHeaders());
 
@@ -322,28 +324,28 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorParticipationsEmpty() throws Exception {
-        String url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
+        String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
         request.postWithoutLocation(url, List.of(), HttpStatus.BAD_REQUEST, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void triggerBuildForParticipationsEditorForbidden() throws Exception {
-        String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build";
+        String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void triggerBuildForParticipationsTutorForbidden() throws Exception {
-        String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build";
+        String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildForParticipationsStudentForbidden() throws Exception {
-        String url = "/api/programming-exercises/" + 1L + "/trigger-instructor-build";
+        String url = "/api/programming/programming-exercises/" + 1L + "/trigger-instructor-build";
         request.postWithoutLocation(url, new ArrayList<>(), HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
@@ -366,7 +368,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Mock again because we call the trigger request two times
         mockGetBuildPlan(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), true, true, false, false);
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
 
         final Long submissionId = submission.getId();
@@ -385,7 +387,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build?lastGraded=true";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
     }
 
@@ -398,7 +400,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 
@@ -423,7 +425,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         String login = TEST_PREFIX + "student2";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
     }
 
@@ -439,7 +441,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
 
-        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
+        String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
@@ -453,14 +455,14 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
         modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, login);
 
-        String url = "/api/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-failed-build";
+        String url = "/api/programming/programming-submissions/" + modelingSubmission.getParticipation().getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getAllProgrammingSubmissionsAsUserForbidden() throws Exception {
-        request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -469,7 +471,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation = studentParticipationRepository.save(studentParticipation);
 
-        String url = "/api/public/programming-submissions/" + studentParticipation.getId();
+        String url = "/api/programming/public/programming-submissions/" + studentParticipation.getId();
         request.post(url, "test", HttpStatus.BAD_REQUEST);
     }
 
@@ -478,7 +480,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         doThrow(ContinuousIntegrationException.class).when(versionControlService).getLastCommitDetails(any());
-        String url = "/api/public/programming-submissions/" + participation.getId();
+        String url = "/api/programming/public/programming-submissions/" + participation.getId();
         request.post(url, "test", HttpStatus.BAD_REQUEST);
     }
 
@@ -492,7 +494,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         doReturn("branch").when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("another-branch").when(mockCommit).branch();
 
-        String url = "/api/public/programming-submissions/" + participation.getId();
+        String url = "/api/programming/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
     }
 
@@ -510,7 +512,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         doReturn(artemisGitEmail).when(mockCommit).authorEmail();
         doReturn(SETUP_COMMIT_MESSAGE).when(mockCommit).message();
 
-        String url = "/api/public/programming-submissions/" + participation.getId();
+        String url = "/api/programming/public/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
 
     }
@@ -536,7 +538,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         doReturn("student@tum.de").when(mockCommit).authorEmail();
         doReturn("my nice little solution").when(mockCommit).message();
 
-        String url = "/api/public/programming-submissions/" + participation.getId();
+        String url = "/api/programming/public/programming-submissions/" + participation.getId();
         // no request body needed since the commit information are mocked above
         request.postWithoutLocation(url, "test", HttpStatus.OK, null);
 
@@ -561,7 +563,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student" + i);
         }
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submissions";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submissions";
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         assertThat(responseSubmissions).containsExactly(submissions.toArray(ProgrammingSubmission[]::new));
@@ -581,7 +583,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.add("assessedByTutor", "true");
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submissions";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submissions";
         final var responseSubmissions = request.getList(url, HttpStatus.OK, ProgrammingSubmission.class, paramMap);
 
         assertThat(responseSubmissions).containsExactly(assessedSubmission);
@@ -598,7 +600,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true), login);
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         final var responseSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         assertThat(responseSubmission).isEqualTo(submission);
@@ -625,7 +627,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         submission = submissionRepository.save(submission);
         var submissions = submissionRepository.findAll();
 
-        String url = "/api/programming-submissions/" + submission.getId() + "/lock";
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure no new submissions are created
@@ -653,7 +655,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         // Make sure that there are no results on the current submission
         assertThat(submission.getLatestResult()).isNull();
 
-        String url = "/api/programming-submissions/" + submission.getId() + "/lock";
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure that the stored submission has a semi-automatic assessment by tutor 1
@@ -687,7 +689,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
 
-        String url = "/api/programming-submissions/" + submission.getId() + "/lock?correction-round=0";
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock?correction-round=0";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure that the stored submission has a latest manual assessment by tutor 1
@@ -708,7 +710,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
         var submissions = submissionRepository.findAll();
 
-        String url = "/api/programming-submissions/" + submission.getId() + "/lock";
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
         request.get(url, HttpStatus.FORBIDDEN, Participation.class);
 
         // Make sure no new submissions are created
@@ -724,7 +726,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, login);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         final String[] ignoringFields = { "results", "submissionDate", "participation" };
@@ -746,7 +748,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
@@ -772,7 +774,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         createTenLockedSubmissionsForExercise(TEST_PREFIX + "tutor1");
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         request.get(url, HttpStatus.BAD_REQUEST, ProgrammingSubmission.class);
     }
 
@@ -785,7 +787,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
                 TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
         request.get(url, HttpStatus.FORBIDDEN, String.class);
     }
 
@@ -814,7 +816,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         participationRepository.save((ProgrammingExerciseStudentParticipation) submission.getParticipation());
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
 
         if (isIndividualDueDateInFuture) {
             // the submission should not be returned as the due date is in the future
@@ -838,7 +840,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         final var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=" + lock;
+        String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=" + lock;
 
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
         assertThat(storedSubmission).isNull();

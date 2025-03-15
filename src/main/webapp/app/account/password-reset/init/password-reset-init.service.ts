@@ -7,6 +7,6 @@ export class PasswordResetInitService {
     private http = inject(HttpClient);
 
     save(mail: string): Observable<object> {
-        return this.http.post('api/public/account/reset-password/init', mail);
+        return this.http.post('api/core/public/account/reset-password/init', mail);
     }
 }

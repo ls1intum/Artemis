@@ -46,7 +46,7 @@ describe('SuspiciousSessionsService', () => {
         service.getSuspiciousSessions(1, 2, options).subscribe((resp) => expect(resp).toEqual(suspiciousSessions));
         const req = httpMock.expectOne({
             method: 'GET',
-            url: 'api/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=false',
+            url: 'api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=false',
         });
         req.flush(suspiciousSessions);
         tick();
@@ -57,7 +57,7 @@ describe('SuspiciousSessionsService', () => {
         service.getSuspiciousSessions(1, 2, options).subscribe((resp) => expect(resp).toEqual(suspiciousSessions));
         const req = httpMock.expectOne({
             method: 'GET',
-            url: 'api/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=true&ipSubnet=127.0.0.1/28',
+            url: 'api/exam/courses/1/exams/2/suspicious-sessions?differentStudentExamsSameIPAddress=true&differentStudentExamsSameBrowserFingerprint=true&sameStudentExamDifferentIPAddresses=true&sameStudentExamDifferentBrowserFingerprints=true&ipOutsideOfRange=true&ipSubnet=127.0.0.1/28',
         });
         req.flush(suspiciousSessions);
         tick();

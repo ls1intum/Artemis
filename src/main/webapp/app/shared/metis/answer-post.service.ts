@@ -11,8 +11,6 @@ type EntityResponseType = HttpResponse<AnswerPost>;
 export class AnswerPostService extends PostingService<AnswerPost> {
     protected http = inject(HttpClient);
 
-    public resourceUrl = 'api/courses/';
-
     constructor() {
         super();
     }
@@ -25,9 +23,7 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      */
     create(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(answerPost);
-        return this.http
-            .post<AnswerPost>(`${this.resourceUrl}${courseId}${AnswerPostService.getResourceEndpoint(answerPost)}`, copy, { observe: 'response' })
-            .pipe(map(this.convertPostingResponseDateFromServer));
+        return this.http.post<AnswerPost>(`${this.getResourceEndpoint(courseId, answerPost)}`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -39,7 +35,7 @@ export class AnswerPostService extends PostingService<AnswerPost> {
     update(courseId: number, answerPost: AnswerPost): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(answerPost);
         return this.http
-            .put<AnswerPost>(`${this.resourceUrl}${courseId}${AnswerPostService.getResourceEndpoint(answerPost)}/${answerPost.id}`, copy, { observe: 'response' })
+            .put<AnswerPost>(`${this.getResourceEndpoint(courseId, answerPost)}/${answerPost.id}`, copy, { observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
@@ -50,7 +46,7 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      * @return {Observable<HttpResponse<void>>}
      */
     delete(courseId: number, answerPost: AnswerPost): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}${courseId}${AnswerPostService.getResourceEndpoint(answerPost)}/${answerPost.id}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.getResourceEndpoint(courseId, answerPost)}/${answerPost.id}`, { observe: 'response' });
     }
 
     /**
@@ -66,11 +62,11 @@ export class AnswerPostService extends PostingService<AnswerPost> {
             .pipe(map((response) => response.body!));
     }
 
-    private static getResourceEndpoint(param: AnswerPost): string {
+    private getResourceEndpoint(courseId: number, param: AnswerPost): string {
         if (param.post?.conversation) {
-            return '/answer-messages';
+            return `api/communication/courses/${courseId}/answer-messages`;
         } else {
-            return '/answer-posts';
+            return `api/plagiarism/courses/${courseId}/answer-posts`;
         }
     }
 }

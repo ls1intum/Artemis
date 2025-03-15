@@ -105,44 +105,44 @@ describe('LectureUnitService', () => {
 
     it('should send a request to the server to get ngx representation of learning path', fakeAsync(() => {
         service.getLectureUnitForLearningPathNodeDetails(1).subscribe();
-        httpMock.expectOne({ method: 'GET', url: 'api/lecture-units/1/for-learning-path-node-details' });
+        httpMock.expectOne({ method: 'GET', url: 'api/lecture/lecture-units/1/for-learning-path-node-details' });
     }));
 
     it('should set lecture unit as completed', fakeAsync(() => {
         exerciseUnit.completed = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: true });
-        httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
+        httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=true' }).flush(null);
         expect(exerciseUnit.completed).toBeTrue();
     }));
 
     it('should set lecture unit as uncompleted', fakeAsync(() => {
         exerciseUnit.completed = true;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
-        httpMock.expectOne({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
+        httpMock.expectOne({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' }).flush(null);
         expect(exerciseUnit.completed).toBeFalse();
     }));
 
     it('should not set completion status if already completed', fakeAsync(() => {
         exerciseUnit.completed = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
-        httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
+        httpMock.expectNone({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
     }));
 
     it('should not set completion status if not visible', fakeAsync(() => {
         exerciseUnit.visibleToStudents = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
-        httpMock.expectNone({ method: 'POST', url: 'api/lectures/5/lecture-units/42/completion?completed=false' });
+        httpMock.expectNone({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
     }));
 
     it('should get lecture unit by id', fakeAsync(() => {
         service.getLectureUnitById(videoUnit.id!).subscribe();
-        httpMock.expectOne({ method: 'GET', url: `api/lecture-units/${videoUnit.id!}` });
+        httpMock.expectOne({ method: 'GET', url: `api/lecture/lecture-units/${videoUnit.id!}` });
     }));
 
     it('should delete lecture unit by id', fakeAsync(() => {
         const lectureId = 5;
         service.delete(videoUnit.id!, lectureId).subscribe();
-        httpMock.expectOne({ method: 'DELETE', url: `api/lectures/${lectureId}/lecture-units/${videoUnit.id!}` });
+        httpMock.expectOne({ method: 'DELETE', url: `api/lecture/lectures/${lectureId}/lecture-units/${videoUnit.id!}` });
     }));
 
     it('should handle empty response body when converting dates from server on response array', fakeAsync(() => {
@@ -182,7 +182,7 @@ describe('LectureUnitService', () => {
     it('should send a POST request to ingest a lecture unit and return an OK response', () => {
         const lectureUnitId = 123;
         const lectureId = 456;
-        const expectedUrl = `api/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`;
+        const expectedUrl = `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`;
 
         service.ingestLectureUnitInPyris(lectureUnitId, lectureId).subscribe((response) => {
             expect(response.status).toBe(200);

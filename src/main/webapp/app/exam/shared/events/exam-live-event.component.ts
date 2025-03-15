@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { faCheck, faEye, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import {
     ExamAttendanceCheckEvent,
@@ -23,17 +23,13 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [NgClass, TranslateDirective, FaIconComponent, WorkingTimeChangeComponent, ArtemisDatePipe, ArtemisTranslatePipe, HtmlForMarkdownPipe],
 })
 export class ExamLiveEventComponent {
-    @Input()
-    event: ExamLiveEvent;
+    event = input.required<ExamLiveEvent>();
 
-    @Input()
-    showAcknowledge = false;
+    showAcknowledge = input(false);
 
-    @Output()
-    onAcknowledge = new EventEmitter<ExamLiveEvent>();
+    onAcknowledge = output<ExamLiveEvent>();
 
-    @Output()
-    onNavigate = new EventEmitter<ExamLiveEvent>();
+    onNavigate = output<ExamLiveEvent>();
 
     protected readonly ExamLiveEventType = ExamLiveEventType;
 
@@ -43,26 +39,26 @@ export class ExamLiveEventComponent {
     faEye = faEye;
 
     get examWideAnnouncementEvent(): ExamWideAnnouncementEvent {
-        return this.event as ExamWideAnnouncementEvent;
+        return this.event() as ExamWideAnnouncementEvent;
     }
 
     get examAttendanceCheckEvent(): ExamAttendanceCheckEvent {
-        return this.event as ExamAttendanceCheckEvent;
+        return this.event() as ExamAttendanceCheckEvent;
     }
 
     get workingTimeUpdateEvent(): WorkingTimeUpdateEvent {
-        return this.event as WorkingTimeUpdateEvent;
+        return this.event() as WorkingTimeUpdateEvent;
     }
 
     get problemStatementUpdateEvent(): ProblemStatementUpdateEvent {
-        return this.event as ProblemStatementUpdateEvent;
+        return this.event() as ProblemStatementUpdateEvent;
     }
 
     acknowledgeEvent() {
-        this.onAcknowledge.emit(this.event);
+        this.onAcknowledge.emit(this.event());
     }
 
     navigateToExercise() {
-        this.onNavigate.emit(this.event);
+        this.onNavigate.emit(this.event());
     }
 }

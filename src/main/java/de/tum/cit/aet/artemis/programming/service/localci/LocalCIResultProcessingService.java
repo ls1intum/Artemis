@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,15 +19,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -44,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
@@ -80,16 +75,14 @@ public class LocalCIResultProcessingService {
 
     private final BuildLogEntryService buildLogEntryService;
 
-    private IQueue<ResultQueueItem> resultQueue;
-
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private UUID listenerId;
 
     public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService) {
         this.hazelcastInstance = hazelcastInstance;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
@@ -99,6 +92,7 @@ public class LocalCIResultProcessingService {
         this.programmingTriggerService = programmingTriggerService;
         this.buildLogEntryService = buildLogEntryService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -106,9 +100,7 @@ public class LocalCIResultProcessingService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
+        this.listenerId = distributedDataAccessService.getDistributedResultQueue().addItemListener(new ResultQueueListener(), true);
     }
 
     /**
@@ -120,7 +112,7 @@ public class LocalCIResultProcessingService {
         // check if Hazelcast is still active, before invoking this
         try {
             if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                this.resultQueue.removeItemListener(this.listenerId);
+                distributedDataAccessService.getDistributedResultQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -134,14 +126,14 @@ public class LocalCIResultProcessingService {
     public void processResult() {
 
         // set lock to prevent multiple nodes from processing the same build job
-        ResultQueueItem resultQueueItem = resultQueue.poll();
+        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedResultQueue().poll();
 
         if (resultQueueItem == null) {
             return;
         }
         log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
-        log.debug("Build jobs waiting in queue: {}", resultQueue.size());
-        log.debug("Queued build jobs: {}", getResultQueueBuildJobIds());
+        log.debug("Build jobs waiting in queue: {}", distributedDataAccessService.getResultQueueSize());
+        log.debug("Queued build jobs: {}", distributedDataAccessService.getResultQueueIds());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
@@ -202,7 +194,6 @@ public class LocalCIResultProcessingService {
                 if (programmingExerciseParticipation != null) {
                     if (result != null) {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
-                        addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                     }
                     else {
                         programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
@@ -236,33 +227,6 @@ public class LocalCIResultProcessingService {
                 }
             }
         }
-    }
-
-    /**
-     * Adds the given result to the recent build jobs of the build agent that processed the build job.
-     *
-     * @param buildJob the build job
-     * @param result   the result of the build job
-     */
-    private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
-        try {
-            buildAgentInformation.lock(buildJob.buildAgent().memberAddress());
-            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgent().memberAddress());
-            if (buildAgent != null) {
-                List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-                for (int i = 0; i < recentBuildJobs.size(); i++) {
-                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new BuildJobQueueItem(buildJob, ResultDTO.of(result)));
-                        break;
-                    }
-                }
-                buildAgentInformation.put(buildJob.buildAgent().memberAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
-            }
-        }
-        finally {
-            buildAgentInformation.unlock(buildJob.buildAgent().memberAddress());
-        }
-
     }
 
     /**
@@ -347,10 +311,5 @@ public class LocalCIResultProcessingService {
     private boolean isSolutionBuildOfTestOrAuxPush(BuildJobQueueItem buildJob) {
         return buildJob.repositoryInfo().repositoryType() == RepositoryType.SOLUTION
                 && (buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.TESTS || buildJob.repositoryInfo().triggeredByPushTo() == RepositoryType.AUXILIARY);
-    }
-
-    private List<String> getResultQueueBuildJobIds() {
-        List<ResultQueueItem> resultQueueList = new ArrayList<>(resultQueue);
-        return resultQueueList.stream().map(i -> i.buildJobQueueItem().id()).toList();
     }
 }

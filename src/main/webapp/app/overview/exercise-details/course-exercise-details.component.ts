@@ -181,7 +181,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     }
 
     ngOnInit() {
-        const courseIdParams$ = this.route.parent?.parent?.parent?.params;
+        const courseIdParams$ = this.route.parent?.parent?.params;
         const exerciseIdParams$ = this.route.params;
         if (courseIdParams$) {
             this.paramsSubscription = combineLatest([courseIdParams$, exerciseIdParams$]).subscribe(([courseIdParams, exerciseIdParams]) => {

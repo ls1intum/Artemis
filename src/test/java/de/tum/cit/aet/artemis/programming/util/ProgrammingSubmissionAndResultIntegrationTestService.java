@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * 1) Jenkins + Gitlab
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingSubmissionAndResultIntegrationTestService {
 
     @Autowired
@@ -99,7 +102,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         Object obj = mapper.readValue(jsonRequest, Object.class);
 
         // Api should return ok.
-        request.postWithoutLocation("/api/public/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
+        request.postWithoutLocation("/api/programming/public/programming-submissions/" + participationId, obj, expectedStatus, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
 

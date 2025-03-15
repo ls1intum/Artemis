@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class NotificationSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);

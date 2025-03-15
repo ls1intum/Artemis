@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
@@ -20,8 +21,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -45,7 +47,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
@@ -59,12 +61,12 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
-            Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
+    public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService, Optional<AthenaFeedbackApi> athenaFeedbackApi,
+            SubmissionService submissionService, ResultService resultService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ResultRepository resultRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService1,
+            ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -85,8 +87,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      */
     public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
-        if (this.athenaFeedbackSuggestionsService.isPresent()) {
-            this.athenaFeedbackSuggestionsService.get().checkRateLimitOrThrow(participation);
+        if (this.athenaFeedbackApi.isPresent()) {
+            this.athenaFeedbackApi.get().checkRateLimitOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise));
             return participation;
         }
@@ -132,8 +134,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission,
-                    false);
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
@@ -160,7 +162,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setCredits(individualFeedbackItem.credits());
                         return feedback;
                     }).sorted(Comparator.comparing(Feedback::getCredits, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
-            ;
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());

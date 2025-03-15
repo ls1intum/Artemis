@@ -66,7 +66,7 @@
                 "hide": "Konversationen ausblenden",
                 "notFound": "Keine Konversation gefunden",
                 "favoriteChannels": "Favoriten",
-                "hiddenChannels": "Ausgeblendet",
+                "archivedChannels": "Archiviert",
                 "savedPosts": "Gespeicherte Beiträge",
                 "progress": "In Bearbeitung",
                 "completed": "Erledigt",
@@ -169,6 +169,7 @@
                 "quizNotStartedShort": "Nicht begonnen",
                 "userNotParticipatedShort": "Nicht teilgenommen",
                 "userParticipatingShort": "Aktuelle Teilnahme",
+                "userWaitingForDueDateShort": "Abgegeben, warte auf Frist",
                 "userSubmittedShort": "Bereits abgegeben",
                 "noDateAssociated": "Ohne Datum",
                 "details": {

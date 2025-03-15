@@ -16,8 +16,6 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 export class PostService extends PostingService<Post> {
     private http = inject(HttpClient);
 
-    public resourceUrl = 'api/courses/';
-
     constructor() {
         super();
     }
@@ -30,9 +28,7 @@ export class PostService extends PostingService<Post> {
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
-        return this.http
-            .post<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}`, copy, { observe: 'response' })
-            .pipe(map(this.convertPostingResponseDateFromServer));
+        return this.http.post<Post>(`${this.getResourceEndpoint(courseId, undefined, post)}`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -81,7 +77,7 @@ export class PostService extends PostingService<Post> {
             params = params.set('pinnedOnly', postContextFilter.pinnedOnly);
         }
         return this.http
-            .get<Post[]>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(postContextFilter, undefined)}`, {
+            .get<Post[]>(`${this.getResourceEndpoint(courseId, postContextFilter, undefined)}`, {
                 params,
                 observe: 'response',
             })
@@ -97,7 +93,7 @@ export class PostService extends PostingService<Post> {
     update<T extends Posting>(courseId: number, post: T): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
         return this.http
-            .put<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, copy, { observe: 'response' })
+            .put<Post>(`${this.getResourceEndpoint(courseId, undefined, post)}/${post.id}`, copy, { observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
@@ -110,7 +106,7 @@ export class PostService extends PostingService<Post> {
      */
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
-            .put(`${this.resourceUrl}${courseId}/messages/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .put(`api/communication/courses/${courseId}/messages/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
@@ -121,7 +117,7 @@ export class PostService extends PostingService<Post> {
      * @return void
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.getResourceEndpoint(courseId, undefined, post)}/${post.id}`, { observe: 'response' });
     }
 
     /**
@@ -153,19 +149,19 @@ export class PostService extends PostingService<Post> {
     }
 
     /**
-     * Determines whether to use the /messages or /posts API endpoints based on the presence of certain properties in the postContextFilter or post objects.
-     * If any properties related to conversations are present (conversation, conversationId, or courseWideChannelIds), it returns /messages.
-     * Otherwise, it defaults to /posts.
+     * Determines the resource endpoint for communication posts.
+     * Decides between communication and plagiarism.
      *
+     * @param courseId the course id
      * @param postContextFilter current post context filter in use
      * @param post new or updated post
      * @return '/messages' or '/posts'
      */
-    private static getResourceEndpoint(postContextFilter?: PostContextFilter, post?: Post): string {
+    private getResourceEndpoint(courseId: number, postContextFilter?: PostContextFilter, post?: Post): string {
         if (post?.conversation || postContextFilter?.conversationId || postContextFilter?.courseWideChannelIds) {
-            return '/messages';
+            return `api/communication/courses/${courseId}/messages`;
         } else {
-            return '/posts';
+            return `api/plagiarism/courses/${courseId}/posts`;
         }
     }
 }
