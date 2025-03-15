@@ -13,9 +13,9 @@ import dayjs from 'dayjs/esm';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
-import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { provideHttpClient } from '@angular/common/http';
-import { BuildLogEntry } from '../../../../../../main/webapp/app/entities/programming/build-log.model';
+import { BuildLogEntry } from 'app/entities/programming/build-log.model';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;

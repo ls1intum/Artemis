@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, TemplateRef, ViewChild, inject, input } from '@angular/core';
 import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
@@ -22,7 +22,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
 
     @ViewChild('exportDialog') exportDialogRef: TemplateRef<any>;
 
-    @Input() courseId: number;
+    courseId = input.required<number>();
 
     @Output() exportFinished: EventEmitter<void> = new EventEmitter();
 
@@ -84,7 +84,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV(modal: NgbModalRef) {
-        this.tutorialGroupsService.exportTutorialGroupsToCSV(this.courseId, this.selectedFields).subscribe({
+        this.tutorialGroupsService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields).subscribe({
             next: (blob: Blob) => {
                 const a = document.createElement('a');
                 const objectUrl = URL.createObjectURL(blob);
@@ -104,7 +104,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportJSON(modal: NgbModalRef) {
-        this.tutorialGroupsService.exportToJson(this.courseId, this.selectedFields).subscribe(
+        this.tutorialGroupsService.exportToJson(this.courseId(), this.selectedFields).subscribe(
             (response) => {
                 const blob = new Blob([response], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.EMAIL_SUMMARY_SCHEDULE_DELAY_SEC;
 
 import java.time.DayOfWeek;
@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class WeeklyEmailSummaryScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(WeeklyEmailSummaryScheduleService.class);
