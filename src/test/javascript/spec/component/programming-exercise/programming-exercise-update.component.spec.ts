@@ -99,6 +99,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         const newProfileInfo = new ProfileInfo();
         newProfileInfo.activeProfiles = [];
+        newProfileInfo.activeModuleFeatures = [];
         getProfileInfoSub.mockReturnValue(of(newProfileInfo));
 
         comp.isSimpleMode.set(false);
