@@ -76,7 +76,8 @@ public class LtiDeepLinkingService {
             case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
             case IRIS -> populateIrisContentItems(String.valueOf(courseId));
             case LEARNING_PATH -> populateLearningPathsContentItems(String.valueOf(courseId));
-            default -> throw new BadRequestAlertException("Invalid target link", "LTI", "invalidType");
+            default -> throw new BadRequestAlertException("Invalid deep linking type provided", "LTI", "invalidType");
+        };
         };
 
         List<Map<String, Object>> contentItemsMap = contentItems.stream().map(LtiContentItem::toMap).toList();
