@@ -195,12 +195,12 @@ python3 delete_students.py
 ### Dependency management
 
 Find outdated dependencies using the following command:
-```
+```shell
 pip list --outdated
 ```
 
 Find unused dependencies using the following command:
-```
+```shell
 pip install deptry
 deptry .
 ```
