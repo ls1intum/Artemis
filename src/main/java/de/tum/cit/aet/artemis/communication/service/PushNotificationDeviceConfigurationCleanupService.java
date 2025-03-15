@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceCon
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class PushNotificationDeviceConfigurationCleanupService {
 
     private final PushNotificationDeviceConfigurationRepository deviceConfigurationRepository;

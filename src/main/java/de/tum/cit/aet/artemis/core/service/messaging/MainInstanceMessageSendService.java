@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class MainInstanceMessageSendService implements InstanceMessageSendService {
 
     public final InstanceMessageReceiveService instanceMessageReceiveService;
