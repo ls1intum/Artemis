@@ -14,14 +14,40 @@ concurrency:
     }}
   cancel-in-progress: true
 
+env:
+  STATUS_CONTEXT: "GitHub E2E Tests"
+  STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
+  TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
 jobs:
   run-e2e:
     name: Run E2E Tests
     if: github.event.workflow_run.conclusion == 'success'
     runs-on: [self-hosted, e2e-test]
+    environment: playwright-e2e-tests
+    timeout-minutes: 90
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
     steps:
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running...","target_url":"${{ env.TARGET_URL }}"}'
       - name: Git Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
       - name: Download Artemis.war
         uses: actions/download-artifact@v4
         with:
@@ -38,20 +64,102 @@ jobs:
         run: .ci/E2E-tests/cleanup.sh
 
       - name: Run E2E Playwright tests (MySQL, Local)
-        if: ${{ github.event.workflow_run.pull_requests }}
+        if: ${{ github.event.workflow_run.pull_requests != null && github.event.workflow_run.pull_requests.length > 0 }}
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
 
       - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
-        if: ${{ !github.event.workflow_run.pull_requests }}
+        if: ${{ github.event.workflow_run.pull_requests == null || github.event.workflow_run.pull_requests.length == 0 }}
         run: .ci/E2E-tests/execute.sh multi-node playwright
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 75
 
       - name: Upload JUnit Test Results
         if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: JUnit Test Results
-          path: |
-            **/test-reports/*.xml
+          if-no-files-found: error
+          path: src/test/playwright/test-reports/*.xml
 
       - name: Run cleanup script (after E2E)
         run: .ci/E2E-tests/cleanup.sh
+
+      - name: Parse test results
+        if: always()
+        id: parse-results
+        continue-on-error: true
+        run: |
+          TOTAL=0
+          PASSED=0
+          FAILED=0
+          SKIPPED=0
+
+          # Check if test results file exists
+          XML_FILE="src/test/playwright/test-reports/results.xml"
+          if [ -f "$XML_FILE" ]; then
+            echo "Final results.xml file found, started parsing..."
+
+            # Sum the totals for all testsuites
+            TESTS_COUNT=$(grep -o 'tests="[0-9]*"' "$XML_FILE" | grep -o '[0-9]*' | awk '{sum+=$1} END {print sum}')
+            FAILURES_COUNT=$(grep -o 'failures="[0-9]*"' "$XML_FILE" | grep -o '[0-9]*' | awk '{sum+=$1} END {print sum}')
+            SKIPPED_COUNT=$(grep -o 'skipped="[0-9]*"' "$XML_FILE" | grep -o '[0-9]*' | awk '{sum+=$1} END {print sum}')
+            set -e
+
+            # Use values if counts were found
+            if [ -n "$TESTS_COUNT" ]; then TOTAL=$TESTS_COUNT; fi
+            if [ -n "$FAILURES_COUNT" ]; then FAILED=$FAILURES_COUNT; fi
+            if [ -n "$SKIPPED_COUNT" ]; then SKIPPED=$SKIPPED_COUNT; fi
+
+            # Calculate passed tests
+            PASSED=$((TOTAL - FAILED - SKIPPED))
+          fi
+
+          echo "XML Parsing Results:"
+          echo "Total: $TOTAL"
+          echo "Failed: $FAILED"
+          echo "Skipped: $SKIPPED"
+          echo "Passed: $PASSED"
+
+          # Save to outputs
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "passed=$PASSED" >> $GITHUB_OUTPUT
+          echo "failed=$FAILED" >> $GITHUB_OUTPUT
+          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+
+      - name: Update status with results
+        if: always()
+        continue-on-error: true
+        run: |
+          # Determine workflow status
+          WORKFLOW_STATUS="${{ job.status }}"
+
+          # Get test results
+          TOTAL="${{ steps.parse-results.outputs.total || 0 }}"
+          PASSED="${{ steps.parse-results.outputs.passed || 0 }}"
+          FAILED="${{ steps.parse-results.outputs.failed || 0 }}"
+          SKIPPED="${{ steps.parse-results.outputs.skipped || 0 }}"
+
+          # Determine GitHub status state based on workflow status
+          if [ "$WORKFLOW_STATUS" = "success" ]; then
+            STATE="success"
+            DESCRIPTION="✅ E2E tests finished: $PASSED passed, $FAILED failed, $SKIPPED skipped"
+          elif [ "$WORKFLOW_STATUS" = "failure" ]; then
+            STATE="failure"
+            DESCRIPTION="❌ E2E tests failed: $PASSED passed, $FAILED failed, $SKIPPED skipped"
+          else
+            STATE="error"
+            DESCRIPTION="⚠️ E2E tests encountered an error"
+          fi
+
+          DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed 's/"/\\"/g')
+          JSON_PAYLOAD='{"state":"'$STATE'","context":"${{ env.STATUS_CONTEXT }}","description":"'$DESCRIPTION_ESCAPED'","target_url":"${{ env.TARGET_URL }}"}'
+          echo "JSON payload: $JSON_PAYLOAD"
+
+          # Update status
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d "$JSON_PAYLOAD"

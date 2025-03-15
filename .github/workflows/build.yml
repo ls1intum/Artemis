@@ -30,6 +30,9 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
+    - '!.github/workflows/test-e2e.yml'
+    - '!.github/workflows/testserver-deployment.yml'
+    - '!.github/workflows/staging-deployment.yml'
   release:
     types:
     - created

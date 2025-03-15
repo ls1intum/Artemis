@@ -14,6 +14,10 @@ concurrency:
   group: 'e2e-default-2'
   cancel-in-progress: true
 
+env:
+  STATUS_CONTEXT: "GitHub E2E Tests"
+  TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
 jobs:
   run-e2e:
     name: Run E2E Tests
