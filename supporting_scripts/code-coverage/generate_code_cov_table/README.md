@@ -17,15 +17,15 @@ The generated report is copied to the clipboard and pasted into a pull request o
     ```shell
     python3 -m venv venv
     ```
-    On Linux or macOS:
+    On **macOS/Linux**:
     ```shell
     source venv/bin/activate
     ```
-    On Windows (CMD):
+    On **Windows (CMD)**:
     ```shell
     venv\Scripts\activate.bat
     ```
-    On Windows (PowerShell):
+    On **Windows (PowerShell)**:
     ```shell
     venv\Scripts\Activate.ps1
     ```
