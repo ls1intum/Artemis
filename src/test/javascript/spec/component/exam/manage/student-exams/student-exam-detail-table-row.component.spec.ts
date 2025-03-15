@@ -24,6 +24,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideRouter } from '@angular/router';
+import { input } from '@angular/core';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
@@ -75,9 +77,6 @@ describe('StudentExamDetailTableRowComponent', () => {
 
     it('should route to modeling submission', () => {
         const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
-        studentExamDetailTableRowComponentFixture.detectChanges();
-        studentExamDetailTableRowComponent.courseId = 23;
-        studentExamDetailTableRowComponent.examId = exam1.id!;
         const modelingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -86,6 +85,18 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.MODELING,
             exerciseGroup: { id: 12 },
         };
+        TestBed.runInInjectionContext(() => {
+            studentExamDetailTableRowComponent.exercise = input(modelingExercise);
+            studentExamDetailTableRowComponent.examId = input(exam1.id!);
+            studentExamDetailTableRowComponent.isTestRun = input(false);
+            studentExamDetailTableRowComponent.course = input(course);
+            studentExamDetailTableRowComponent.busy = input(false);
+            studentExamDetailTableRowComponent.studentExam = input({} as StudentExam);
+            studentExamDetailTableRowComponent.achievedPointsPerExercise = input({ 1: 1 });
+        });
+        studentExamDetailTableRowComponentFixture.detectChanges();
+        studentExamDetailTableRowComponent.courseId = 23;
+
         const submission = { id: 14 };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(modelingExercise, submission);
         expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();

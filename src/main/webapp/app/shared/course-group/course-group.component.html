@@ -78,7 +78,7 @@
                             defaultPictureId="user-default-profile-picture"
                             [authorId]="value.id"
                             [authorName]="value.name"
-                            [imageUrl]="value.imageUrl"
+                            [imageUrl]="addPublicFilePrefix(value.imageUrl)"
                         />
                     </ng-template>
                 </ngx-datatable-column>
