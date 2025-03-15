@@ -320,6 +320,8 @@ public final class Constants {
      */
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
+    public static final String PROFILE_TEST_BUILDAGENT = "buildagent-test";
+
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
