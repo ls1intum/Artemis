@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.notification;
 
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.getDefaultNotificationSettings;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -67,7 +67,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
 
         List<NotificationSetting> notificationSettings = request.getList("/api/communication/notification-settings", HttpStatus.OK, NotificationSetting.class);
 
-        assertThat(notificationSettings).hasSameSizeAs(getDefaultNotificationSettings());
+        assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
         assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned")
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "user").contains(settingA);
         assertThat(notificationSettings).as("notificationSettings B with recipient equal to current user is returned")
@@ -86,7 +86,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetNotificationSettingsForCurrentUserWith_DB_EMTPY() throws Exception {
         List<NotificationSetting> notificationSettings = request.getList("/api/communication/notification-settings", HttpStatus.OK, NotificationSetting.class);
-        assertThat(notificationSettings).hasSameSizeAs(getDefaultNotificationSettings());
+        assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
     }
 
     /**

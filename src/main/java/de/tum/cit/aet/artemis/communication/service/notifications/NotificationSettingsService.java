@@ -313,7 +313,7 @@ public class NotificationSettingsService {
             // for those notification types that are not explicitly set by the user, we use the default settings
             Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
                     .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
-            for (NotificationSetting defaultSetting : getDefaultNotificationSettings()) {
+            for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
                     notificationSettings
                             .add(new NotificationSetting(user, defaultSetting.isWebapp(), defaultSetting.isEmail(), defaultSetting.isPush(), defaultSetting.getSettingId()));
@@ -419,7 +419,7 @@ public class NotificationSettingsService {
      * @return The updated and correct notification settings.
      */
     public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings, User user) {
-        var defaultSettings = getDefaultNotificationSettings();
+        var defaultSettings = DEFAULT_NOTIFICATION_SETTINGS;
         if (userNotificationSettings.isEmpty()) {
             return defaultSettings;
         }
