@@ -14,37 +14,37 @@ The generated report is copied to the clipboard and pasted into a pull request o
 ### Installation
 
 1. Optionally, create and activate a virtual environment:
-```bash
-python3 -m venv venv
-```
-On Linux or macOS:
-```bash
-source venv/bin/activate
-```
-On Windows (CMD):
-```bash
-venv\Scripts\activate.bat
-```
-On Windows (PowerShell):
-```bash
-venv\Scripts\Activate.ps1
-```
+    ```bash
+    python3 -m venv venv
+    ```
+    On Linux or macOS:
+    ```bash
+    source venv/bin/activate
+    ```
+    On Windows (CMD):
+    ```bash
+    venv\Scripts\activate.bat
+    ```
+    On Windows (PowerShell):
+    ```bash
+    venv\Scripts\Activate.ps1
+    ```
 
 2. Install the required packages:
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 3. Configure environment variables by copying the `env.example` file to `.env` (use with caution, security risk!):
-```bash
-cp env.example .env
-```
-Fill out the following variables:
-```
-TOKEN=ab12cd
-```
+    ```bash
+    cp env.example .env
+    ```
+    Fill out the following variables:
+    ```
+    TOKEN=ab12cd
+    ```
+    Alternatively, you can use the command line argument `--token` to pass the credentials.
 
-Alternatively, you can use the command line argument `--token` to pass the credentials.
 ### Token
 The token you must provide is a [GitHub token](https://github.com/settings/tokens) with "Public Repository Access" checked.
 
