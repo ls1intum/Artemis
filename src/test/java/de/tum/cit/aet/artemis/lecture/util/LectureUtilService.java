@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.util;
 
 import static org.assertj.core.api.Assertions.fail;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -12,6 +13,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class LectureUtilService {
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
