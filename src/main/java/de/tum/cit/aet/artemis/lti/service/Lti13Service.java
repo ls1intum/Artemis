@@ -337,7 +337,7 @@ public class Lti13Service {
         try {
             return repositoryFinder.apply(entityId);
         }
-        catch (NumberFormatException ex) {
+        catch (Exception ex) {
             log.info("Invalid {} ID in target link URL: {}", entityName, targetLinkUrl);
             return Optional.empty();
         }
@@ -392,7 +392,7 @@ public class Lti13Service {
         }
         catch (URISyntaxException ex) {
             log.info("Malformed target link URL: {}", targetLinkUrl);
-            return DeepLinkingType.UNKNOWN;
+            return DeepLinkingType.INVALID;
         }
 
         for (Map.Entry<String, DeepLinkingType> entry : TARGET_LINK_PATTERNS.entrySet()) {
@@ -402,7 +402,7 @@ public class Lti13Service {
         }
 
         log.info("No specific content type detected in target link: {}", targetLinkUrl);
-        return DeepLinkingType.UNKNOWN;
+        return DeepLinkingType.INVALID;
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {

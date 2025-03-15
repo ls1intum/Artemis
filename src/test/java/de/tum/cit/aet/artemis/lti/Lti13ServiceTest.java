@@ -619,7 +619,7 @@ class Lti13ServiceTest {
 
         DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
 
-        assertThat(linkType).isEqualTo(DeepLinkingType.UNKNOWN);
+        assertThat(linkType).isEqualTo(DeepLinkingType.INVALID);
     }
 
     @Test

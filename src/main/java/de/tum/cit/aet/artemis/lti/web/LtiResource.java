@@ -160,12 +160,12 @@ public class LtiResource {
         String targetLink = switch (resourceType) {
             case EXERCISE, LECTURE -> {
                 if (contentIds == null || contentIds.isEmpty()) {
-                    throw new BadRequestAlertException("Content IDs are required for this resource type", "LTI", "contentIdsRequired");
+                    throw new BadRequestAlertException("Content IDs are required for resource type: " + resourceType, "LTI", "contentIdsRequired");
                 }
                 yield ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, contentIds, resourceType);
             }
             case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
-            default -> throw new BadRequestAlertException("Invalid resource type provided", "LTI", "invalidResourceType");
+            default -> throw new BadRequestAlertException("Unsupported resource type provided: " + resourceType, "LTI", "invalidResourceType");
         };
 
         ObjectNode json = new ObjectMapper().createObjectNode();
