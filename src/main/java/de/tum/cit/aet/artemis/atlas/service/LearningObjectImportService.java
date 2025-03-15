@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -205,7 +206,7 @@ public class LearningObjectImportService {
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
                     modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
-                var api = textExerciseImportApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                var api = textExerciseImportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }
