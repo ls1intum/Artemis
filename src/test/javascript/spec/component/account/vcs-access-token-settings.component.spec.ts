@@ -49,7 +49,14 @@ describe('VcsAccessTokensSettingsComponent', () => {
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.deleteUserVcsAccessToken.mockReturnValue(of({}));
-        jest.spyOn(console, 'error').mockImplementation(() => {});
+        // Avoid NG0953: Unexpected emit for destroyed OutputRef for date-time-picker.component.ts
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+        fixture.destroy();
+        TestBed.resetTestingModule();
     });
 
     it('should cancel token creation', () => {
