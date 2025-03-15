@@ -20,7 +20,7 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         fixture = TestBed.createComponent(TutorialGroupUtilizationIndicatorComponent);
         component = fixture.componentInstance;
         tutorialGroup = generateExampleTutorialGroup({});
-        component.tutorialGroup = tutorialGroup;
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
         fixture.detectChanges();
     });
 
