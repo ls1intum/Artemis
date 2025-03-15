@@ -11,20 +11,20 @@
     </thead>
     <tbody>
         <tr>
-            <td>{{ detail().data.buildLogStatistics.buildCount ?? 0 }}</td>
+            <td>{{ detail.data.buildLogStatistics.buildCount ?? 0 }}</td>
             <td>
-                {{ agentSetupDuration() }}
+                {{ detail.data.buildLogStatistics.agentSetupDuration ? (detail.data.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's' : '-' }}
             </td>
             <td>
-                {{ testDuration() }}
+                {{ detail.data.buildLogStatistics.testDuration ? (detail.data.buildLogStatistics.testDuration | number: '1.2-2') + 's' : '-' }}
             </td>
             <td>
-                {{ scaDuration() }}
+                {{ detail.data.buildLogStatistics.scaDuration ? (detail.data.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-' }}
             </td>
             <td>
-                {{ totalJobDuration() }}
+                {{ detail.data.buildLogStatistics.totalJobDuration ? (detail.data.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's' : '-' }}
             </td>
-            <td>{{ detail().data.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
+            <td>{{ detail.data.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
         </tr>
     </tbody>
 </table>
