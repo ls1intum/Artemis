@@ -22,7 +22,7 @@ export class ScienceSettingsService {
     constructor() {
         // we need to handle the subscription here as this service is initialized independently of any component
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo.activeProfiles.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)) {
+            if (profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)) {
                 this.initialize();
                 this.listenForScienceSettingsChanges();
             }
