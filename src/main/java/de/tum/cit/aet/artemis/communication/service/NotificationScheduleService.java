@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.NOTIFICATION_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class NotificationScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);

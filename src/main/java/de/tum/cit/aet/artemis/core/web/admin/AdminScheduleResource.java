@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeaders;
 
 import java.util.List;
@@ -20,9 +20,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 
 /**
- * REST controller for getting the audit events.
+ * REST controller for getting the audit events. Currently limited to the primary node with scheduling enabled.
+ * In the future, we want to expose the information on all core nodes so that the information can be displayed in the admin UI in the webapp.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 @EnforceAdmin
 @RestController
 @RequestMapping("api/core/admin/")

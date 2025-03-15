@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
 
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ModelingExerciseScheduleService implements IExerciseScheduleService<ModelingExercise> {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);

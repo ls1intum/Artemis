@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static java.time.ZoneId.systemDefault;
 
 import java.time.Duration;
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 @Service
 public class ScheduleService {
 

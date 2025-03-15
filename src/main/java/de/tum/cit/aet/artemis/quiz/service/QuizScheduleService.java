@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.QUIZ_EXERCISE_SCHEDULE_DELAY_SEC;
 import static de.tum.cit.aet.artemis.quiz.domain.QuizAction.START_NOW;
 
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 @Service
 public class QuizScheduleService {
 

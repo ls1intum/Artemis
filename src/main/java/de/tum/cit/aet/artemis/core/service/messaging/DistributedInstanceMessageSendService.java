@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +20,7 @@ import com.hazelcast.core.HazelcastInstance;
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
  */
 @Service
-@Profile("!scheduling & core")
+@Profile("!" + PROFILE_SCHEDULING + " & " + PROFILE_CORE)
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedInstanceMessageSendService.class);
