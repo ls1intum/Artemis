@@ -217,7 +217,7 @@ dependencies {
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
-    // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
+    // NOTE: the following dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
 

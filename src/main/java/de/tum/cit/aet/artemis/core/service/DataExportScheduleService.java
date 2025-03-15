@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  * Service responsible for scheduling data exports.
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class DataExportScheduleService {
 
     private final DataExportRepository dataExportRepository;

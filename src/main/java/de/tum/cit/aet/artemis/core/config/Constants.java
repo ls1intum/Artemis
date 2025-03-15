@@ -372,6 +372,8 @@ public final class Constants {
 
     public static final String PROFILE_SCHEDULING = "scheduling";
 
+    public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
     /**
      * The name of the Spring profile used for Theia as an external online IDE.
      */

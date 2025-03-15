@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.COURSE;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.EXERCISE;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.GLOBAL;
@@ -89,7 +89,7 @@ public class IrisSettingsService {
      *
      * @param ignoredEvent Unused event param used to specify when the method should be executed
      */
-    @Profile(PROFILE_SCHEDULING)
+    @Profile(PROFILE_CORE_AND_SCHEDULING)
     @EventListener
     public void execute(ApplicationReadyEvent ignoredEvent) throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();

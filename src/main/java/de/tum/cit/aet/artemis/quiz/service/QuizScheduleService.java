@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.QUIZ_EXERCISE_SCHEDULE_DELAY_SEC;
 import static de.tum.cit.aet.artemis.quiz.domain.QuizAction.START_NOW;
 
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
-import de.tum.cit.aet.artemis.core.util.Tuple;
+import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 @Service
 public class QuizScheduleService {
 
@@ -89,7 +89,7 @@ public class QuizScheduleService {
             var quizBatch = quizExercise.getQuizBatches().stream().findAny();
             if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null) {
                 if (quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
-                    scheduleService.scheduleTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExercise.getId()));
+                    scheduleService.scheduleExerciseTask(quizExercise, quizBatch.get(), ExerciseLifecycle.START, () -> executeQuizStartNowTask(quizExercise.getId()), "quiz start");
                 }
             }
         }
@@ -104,8 +104,8 @@ public class QuizScheduleService {
     public void scheduleCalculateAllResults(QuizExercise quizExercise) {
         if (quizExercise.getDueDate() != null && !quizExercise.isQuizEnded()) {
             // we only schedule the task if the quiz is not over yet
-            scheduleService.scheduleTask(quizExercise, ExerciseLifecycle.DUE,
-                    Set.of(new Tuple<>(quizExercise.getDueDate().plusSeconds(5), () -> quizSubmissionService.calculateAllResults(quizExercise.getId()))));
+            scheduleService.scheduleExerciseTask(quizExercise, ExerciseLifecycle.DUE,
+                    new Pair<>(quizExercise.getDueDate().plusSeconds(5), () -> quizSubmissionService.calculateAllResults(quizExercise.getId())), "calculate all quiz results");
         }
     }
 
