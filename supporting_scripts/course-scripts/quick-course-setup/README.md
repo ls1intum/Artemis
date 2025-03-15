@@ -68,28 +68,25 @@ These scripts help you configure and set up your first Artemis course quickly.
     - Use the play button within IntelliJ (if Python is configured properly).
     - Alternatively, you can run the script directly from the terminal using the commands provided in this README.
 
-### Creating a Course with Standard User Groups
-
-Creates a course for which the users are registered according to their user groups (students, tutors, editors, instructors).
-
-```shell
-python3 create_course.py
-```
-
 ### Create Users
-
 Creates users 1-20 (students, tutors, editors, instructors - 5 for each group).
-    
+
 ```shell
 python3 create_users.py
 ```
 
 ### Authenticate Users
-
 If the users have already been created, they still need to be logged in order to be added to a course (without a first login, Artemis does not know that the users exist).
-    
+
 ```shell  
 python3 authenticate_all_users.py
+```
+
+### Creating a Course with Standard User Groups
+Creates a course for which the users are registered according to their user groups (students, tutors, editors, instructors).
+
+```shell
+python3 create_course.py
 ```
 
 ## Test Servers
