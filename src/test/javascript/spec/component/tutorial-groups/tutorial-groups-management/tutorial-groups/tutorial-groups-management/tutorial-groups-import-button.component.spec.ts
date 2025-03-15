@@ -25,7 +25,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
 
         fixture = TestBed.createComponent(TutorialGroupsImportButtonComponent);
         component = fixture.componentInstance;
-        component.courseId = exampleCourseId;
+        fixture.componentRef.setInput('courseId', exampleCourseId);
         fixture.detectChanges();
     });
 
