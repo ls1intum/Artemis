@@ -146,8 +146,6 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
-        this.croppedImage = this.course.courseIconPath;
-
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;

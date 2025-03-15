@@ -9,7 +9,6 @@ import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
 import { Exam } from 'app/entities/exam/exam.model';
-import { addPublicFilePrefix } from 'app/app.constants';
 
 /**
  * A class which encapsulates all API requests related to course management.
@@ -104,9 +103,7 @@ export class CourseManagementAPIRequests {
         }
 
         const response = await this.page.request.post(COURSE_ADMIN_BASE, { multipart });
-        const json = await response.json();
-        json.courseIconPath = addPublicFilePrefix(json.courseIcon);
-        return json;
+        return response.json();
     }
 
     /**
