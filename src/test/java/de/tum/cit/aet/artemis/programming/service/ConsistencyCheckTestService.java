@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
  * 1) Jenkins + LocalVc
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ConsistencyCheckTestService {
 
     @Autowired

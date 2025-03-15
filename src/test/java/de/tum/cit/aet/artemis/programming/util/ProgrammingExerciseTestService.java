@@ -22,6 +22,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -157,6 +160,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
  * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseTestService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestService.class);

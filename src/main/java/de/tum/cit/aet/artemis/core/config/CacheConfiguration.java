@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 
 import java.net.UnknownHostException;
 import java.nio.file.Path;
@@ -299,7 +300,7 @@ public class CacheConfiguration {
         }
 
         // build agents should not hold partitions and only be a lite member
-        if (!activeProfiles.contains(PROFILE_CORE) && activeProfiles.contains(PROFILE_BUILDAGENT)) {
+        if (!activeProfiles.contains(PROFILE_TEST_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE) && activeProfiles.contains(PROFILE_BUILDAGENT)) {
             log.info("Joining cluster as lite member");
             config.setLiteMember(true);
         }

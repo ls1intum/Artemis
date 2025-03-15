@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.user.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -66,6 +68,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
  * 1) Jenkins + LocalVc
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class UserTestService {
 
     @Autowired

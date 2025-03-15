@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -77,6 +79,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
  * Service responsible for initializing the database with specific testdata related to programming exercises for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);

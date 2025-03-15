@@ -17,6 +17,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ import java.util.Set;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -78,6 +80,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * 1) Jenkins + LocalVc
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseResultTestService {
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
