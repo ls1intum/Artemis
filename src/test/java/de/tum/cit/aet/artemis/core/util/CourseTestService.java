@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +47,7 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -168,6 +171,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class CourseTestService {
 
     @Value("${artemis.course-archives-path}")
@@ -3320,7 +3324,8 @@ public class CourseTestService {
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
-        var imgResult = request.performMvcRequest(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, course.getCourseIcon());
+        var imgResult = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
         assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());

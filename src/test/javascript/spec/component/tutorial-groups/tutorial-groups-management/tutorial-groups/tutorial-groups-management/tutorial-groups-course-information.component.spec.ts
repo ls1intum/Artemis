@@ -32,7 +32,7 @@ describe('TutorialGroupsCourseInformationComponent', () => {
         component = fixture.componentInstance;
         tutorialGroupOne = generateExampleTutorialGroup({ id: 1, numberOfRegisteredUsers: 5 });
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2, numberOfRegisteredUsers: 10 });
-        component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
+        fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
         fixture.detectChanges();
     });
 

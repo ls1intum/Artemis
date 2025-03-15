@@ -45,7 +45,7 @@
                     </div>
                 }
             </div>
-            @if (submittedFileName && submission?.filePath) {
+            @if (submittedFileName && submission?.filePathUrl) {
                 <div class="card-text">
                     @if (!displayedInExamSummary) {
                         <h6>
@@ -63,7 +63,7 @@
                             [smallButton]="true"
                             [buttonIcon]="faDownload"
                             [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
-                            (click)="downloadFile(submission!.filePath!)"
+                            (click)="downloadFile(submission!.filePathUrl!)"
                         ></button>
                         @if (submittedFileExtension) {
                             <span class="ms-2 badge bg-info">

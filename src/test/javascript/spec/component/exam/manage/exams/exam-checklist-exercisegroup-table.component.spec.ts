@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -96,8 +96,9 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
 
     describe('test onChanges', () => {
         it('should set properties false', () => {
-            examChecklistExerciseGroupTableComponent.ngOnChanges();
-            examChecklistExerciseGroupTableComponent.exerciseGroups = getExerciseGroups(false);
+            TestBed.runInInjectionContext(() => {
+                examChecklistExerciseGroupTableComponent.exerciseGroups = input(getExerciseGroups(false));
+            });
             examChecklistExerciseGroupTableComponent.ngOnChanges();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).toHaveLength(2);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExerciseGroup).toBe(1);
@@ -116,7 +117,9 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
         });
 
         it('should set properties true', () => {
-            examChecklistExerciseGroupTableComponent.exerciseGroups = getExerciseGroups(true);
+            TestBed.runInInjectionContext(() => {
+                examChecklistExerciseGroupTableComponent.exerciseGroups = input(getExerciseGroups(true));
+            });
             examChecklistExerciseGroupTableComponent.ngOnChanges();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).not.toHaveLength(0);
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns[0].indexExerciseGroup).toBe(1);
@@ -129,7 +132,9 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
 
         it('should reset group variant columns first', () => {
             examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns = [{} as ExerciseGroupVariantColumn];
-            examChecklistExerciseGroupTableComponent.exerciseGroups = [];
+            TestBed.runInInjectionContext(() => {
+                examChecklistExerciseGroupTableComponent.exerciseGroups = input([]);
+            });
             examChecklistExerciseGroupTableComponent.ngOnChanges();
             expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns).toBeEmpty();
         });

@@ -20,6 +20,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '../../language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-posting-header',
@@ -170,4 +171,5 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
     }
 
     protected readonly CachingStrategy = CachingStrategy;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

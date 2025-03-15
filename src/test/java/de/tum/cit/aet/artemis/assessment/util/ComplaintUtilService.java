@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.assessment.util;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
@@ -22,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
  * Service responsible for initializing the database with specific testdata related to complaints for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ComplaintUtilService {
 
     @Autowired
