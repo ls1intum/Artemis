@@ -51,10 +51,8 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
 
     faPlus = faPlus;
 
-    @Input()
-    tutorialGroupId: number;
-    @Input()
-    course: Course;
+    @Input() tutorialGroupId: number;
+    @Input() course: Course;
     tutorialGroup: TutorialGroup;
     sessions: TutorialGroupSession[] = [];
     tutorialGroupSchedule: TutorialGroupSchedule;

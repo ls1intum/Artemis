@@ -88,7 +88,7 @@
                     }
                     @case (DetailType.Image) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <img [alt]="detail.data.altText" class="details-image rounded-3" [src]="detail.data.imageUrl" />
+                            <img [alt]="detail.data.altText" class="details-image rounded-3" [src]="addPublicFilePrefix(detail.data.imageUrl)" />
                         </dd>
                     }
                     @case (DetailType.DefaultProfilePicture) {
