@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.shared.architecture.module;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
 import java.util.List;
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     @Test
-    void shouldOnlyAccessApiDomainDto() {
+    void shouldOnlyAccessApiDomainDtoAndAllowedException() {
         ArchCondition<JavaClass> onlyAllowedDependencies = new ArchCondition<>("have only allowed dependencies") {
 
             @Override
@@ -34,17 +35,19 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
                 for (Dependency dependency : targetsInModule) {
                     JavaClass target = dependency.getTargetClass();
 
-                    // target inside default-allowed packages (API, Domain, DTO)
-                    boolean inDefaultAllowedPackage = resideInAnyPackage(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage()).test(target);
-                    if (inDefaultAllowedPackage) {
-                        continue;
-                    }
+                    if (resideOutsideOfPackage(getModuleWithSubpackage()).test(origin)) { // ToDo: Remove?
+                        // target inside default-allowed packages (API, Domain, DTO)
+                        boolean inDefaultAllowedPackage = resideInAnyPackage(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage()).test(target);
+                        if (inDefaultAllowedPackage) {
+                            continue;
+                        }
 
-                    // target explicitly ignored
-                    boolean isIgnored = getIgnoredClasses().contains(target.reflect());
-                    if (!isIgnored) {
-                        String message = String.format("%s depends on %s which is not in an allowed package or explicitly ignored", origin.getName(), target.getName());
-                        events.add(SimpleConditionEvent.violated(origin, message));
+                        // target explicitly ignored
+                        boolean isIgnored = getIgnoredClasses().contains(target.reflect());
+                        if (!isIgnored) {
+                            String message = String.format("%s depends on %s which is not in an allowed package or explicitly ignored", origin.getName(), target.getName());
+                            events.add(SimpleConditionEvent.violated(origin, message));
+                        }
                     }
                 }
             }

@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.exercise.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -21,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * Service responsible for util methods / shared code that is helpful or common for testing all exercise types
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ExerciseIntegrationTestService {
 
     @Autowired

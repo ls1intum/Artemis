@@ -23,17 +23,16 @@ public class LocalCIQueueWebsocketService {
 
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
-    private final SharedQueueManagementService sharedQueueManagementService;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     /**
      * Instantiates a new Local ci queue websocket service.
      *
      * @param localCIWebsocketMessagingService the local ci build queue websocket service
-     * @param sharedQueueManagementService     the local ci shared build job queue service
      */
-    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, SharedQueueManagementService sharedQueueManagementService) {
+    public LocalCIQueueWebsocketService(LocalCIWebsocketMessagingService localCIWebsocketMessagingService, DistributedDataAccessService distributedDataAccessService) {
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
-        this.sharedQueueManagementService = sharedQueueManagementService;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -42,7 +41,7 @@ public class LocalCIQueueWebsocketService {
      * @param courseId the course id of the programming exercise related to the job
      */
     void sendQueuedJobsOverWebsocket(long courseId) {
-        var queuedJobs = removeUnnecessaryInformation(sharedQueueManagementService.getQueuedJobs());
+        var queuedJobs = removeUnnecessaryInformation(distributedDataAccessService.getQueuedJobs());
         var queuedJobsForCourse = queuedJobs.stream().filter(job -> job.courseId() == courseId).toList();
         localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
         localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobsForCourse);
@@ -54,7 +53,7 @@ public class LocalCIQueueWebsocketService {
      * @param courseId the course id of the programming exercise related to the job
      */
     void sendProcessingJobsOverWebsocket(long courseId) {
-        var processingJobs = removeUnnecessaryInformation(sharedQueueManagementService.getProcessingJobs());
+        var processingJobs = removeUnnecessaryInformation(distributedDataAccessService.getProcessingJobs());
         var processingJobsForCourse = processingJobs.stream().filter(job -> job.courseId() == courseId).toList();
         localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
         localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobsForCourse);
@@ -71,12 +70,12 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void sendBuildAgentSummaryOverWebsocket() {
-        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs());
+        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation());
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 
     private void sendBuildAgentDetailsOverWebsocket(String agentName) {
-        sharedQueueManagementService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
+        distributedDataAccessService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
                 .ifPresent(localCIWebsocketMessagingService::sendBuildAgentDetails);
     }
 

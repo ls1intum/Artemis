@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.util;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -35,6 +37,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRep
  * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class TutorialGroupUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);

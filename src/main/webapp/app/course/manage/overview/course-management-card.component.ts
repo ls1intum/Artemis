@@ -38,6 +38,7 @@ import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-to
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { getContrastingTextColor } from 'app/utils/color.utils';
 
 @Component({
@@ -58,6 +59,7 @@ import { getContrastingTextColor } from 'app/utils/color.utils';
         FeatureToggleHideDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
     ],
 })
 export class CourseManagementCardComponent implements OnInit, OnChanges {

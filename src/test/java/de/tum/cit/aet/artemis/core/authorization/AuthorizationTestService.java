@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.authorization;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.assertj.core.api.Fail.fail;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
  * This service is used to check if the authorization annotations are used correctly.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class AuthorizationTestService {
 
     private static final Set<Class<? extends Annotation>> AUTHORIZATION_ANNOTATIONS = Set.of(EnforceAdmin.class, EnforceAtLeastInstructor.class, EnforceAtLeastEditor.class,

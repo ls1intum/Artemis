@@ -185,6 +185,17 @@ describe('CodeButtonComponent', () => {
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
     });
 
+    it('should only display available authentication mechanisms', async () => {
+        fixture.componentRef.setInput('participations', [participation]);
+        localStorageState = RepositoryAuthenticationMethod.Password;
+        await component.ngOnInit();
+
+        component.authenticationMechanisms = [RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+        component.onClick();
+
+        expect(component.selectedAuthenticationMechanism).toEqual(RepositoryAuthenticationMethod.Token);
+    });
+
     it('should create new vcsAccessToken when it does not exist', async () => {
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));

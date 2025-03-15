@@ -125,7 +125,7 @@ describe('CourseExerciseDetailsComponent', () => {
     } as ProgrammingExercise;
 
     const parentParams = { courseId: 1 };
-    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
     const route = {
         params: of({ exerciseId: exercise.id }),
         parent: parentRoute,
@@ -466,9 +466,9 @@ describe('CourseExerciseDetailsComponent', () => {
             ...exercise,
             course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
         };
-        getExerciseDetailsMock.mockReturnValue(of({ body: newExercise }));
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: newExercise } }));
 
-        comp.handleNewExercise({ exercise });
+        fixture.detectChanges();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeFalsy();
