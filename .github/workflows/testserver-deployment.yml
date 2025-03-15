@@ -19,6 +19,7 @@ jobs:
     name: Run E2E Tests
     runs-on: [self-hosted, e2e-test]
     environment: playwright-e2e-tests
+    timeout-minutes: 90
     env:
       ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
       ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}

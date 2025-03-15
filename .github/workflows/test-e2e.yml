@@ -9,9 +9,9 @@ on:
 concurrency:
   group: |
     ${{
-      github.event.workflow_run.ref && format('e2e-{0}', replace(github.event.workflow_run.ref, 'refs/', ''))[0:400]
-      || (github.event.workflow_run.event == 'release' && format('e2e-release-{0}', github.event.workflow_run.tag_name))[0:400]
-      || 'e2e-default'
+      github.event.workflow_run.head_branch && format('e2e-{0}', github.event.workflow_run.head_branch)[0:400]
+      || github.event.workflow_run.event == 'release' && format('e2e-release-{0}', github.event.workflow_run.tag_name)[0:400]
+      || format('e2e-{0}', github.event.workflow_run.head_sha)[0:400]
     }}
   cancel-in-progress: true
 
@@ -23,10 +23,10 @@ jobs:
       (
         github.event.workflow_run.event == 'pull_request' ||
         github.event.workflow_run.event == 'push' && (
-          startsWith(github.event.workflow_run.ref, 'refs/heads/develop') ||
-          startsWith(github.event.workflow_run.ref, 'refs/heads/main') ||
-          startsWith(github.event.workflow_run.ref, 'refs/heads/release/') ||
-          startsWith(github.event.workflow_run.ref, 'refs/tags/')
+          github.event.workflow_run.head_branch == 'develop' ||
+          github.event.workflow_run.head_branch == 'main' ||
+          startsWith(github.event.workflow_run.head_branch, 'release/') ||
+          github.event.workflow_run.head_branch == ''
         ) ||
         github.event.workflow_run.event == 'release'
       )
