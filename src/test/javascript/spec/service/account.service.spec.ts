@@ -25,8 +25,8 @@ describe('AccountService', () => {
     let getStub: jest.SpyInstance;
     let httpMock: HttpTestingController;
 
-    const getUserUrl = 'api/public/account';
-    const updateLanguageUrl = 'api/public/account/change-language';
+    const getUserUrl = 'api/core/public/account';
+    const updateLanguageUrl = 'api/core/public/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
     const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
@@ -517,12 +517,12 @@ describe('AccountService', () => {
         });
 
         it('should return image url if authenticated', () => {
-            const expectedUrl = 'www.examp.le';
+            const expectedUrl = 'profiles-pictures/example.png';
             accountService.userIdentity = { imageUrl: expectedUrl } as User;
 
             url = accountService.getImageUrl();
 
-            expect(url).toBe(expectedUrl);
+            expect(url).toBe(`api/core/files/${expectedUrl}`);
         });
     });
 
@@ -582,7 +582,7 @@ describe('AccountService', () => {
         it('should delete user VCS access token', () => {
             accountService.deleteUserVcsAccessToken().subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/core/account/user-vcs-access-token' });
             req.flush(null);
         });
 
@@ -593,7 +593,7 @@ describe('AccountService', () => {
                 expect(response.status).toBe(200);
             });
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/user-vcs-access-token?expiryDate=${expiryDate}` });
             req.flush({ status: 200 });
         });
 
@@ -605,7 +605,7 @@ describe('AccountService', () => {
                 expect(response.body).toEqual(token);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush({ body: token });
         });
 
@@ -615,7 +615,7 @@ describe('AccountService', () => {
 
             accountService.createVcsAccessToken(participationId).subscribe(() => {});
 
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/core/account/participation-vcs-access-token?participationId=${participationId}` });
             req.flush({ body: token });
         });
     });

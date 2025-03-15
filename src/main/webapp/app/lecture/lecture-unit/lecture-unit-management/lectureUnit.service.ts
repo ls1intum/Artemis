@@ -23,7 +23,7 @@ export class LectureUnitService {
     private attachmentService = inject(AttachmentService);
     private alertService = inject(AlertService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/lecture';
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
         // Send an ordered list of ids of the lecture units
@@ -88,7 +88,7 @@ export class LectureUnitService {
         if (res.body) {
             if (res.body.type === LectureUnitType.ATTACHMENT) {
                 if ((<AttachmentUnit>res.body).attachment) {
-                    (<AttachmentUnit>res.body).attachment = this.attachmentService.convertAttachmentDatesFromServer((<AttachmentUnit>res.body).attachment);
+                    (<AttachmentUnit>res.body).attachment = this.attachmentService.convertAttachmentFromServer((<AttachmentUnit>res.body).attachment);
                 }
             } else if (res.body.type === LectureUnitType.EXERCISE) {
                 if ((<ExerciseUnit>res.body).exercise) {
@@ -105,7 +105,7 @@ export class LectureUnitService {
     convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
         if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
             if ((<AttachmentUnit>lectureUnit).attachment) {
-                (<AttachmentUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentDatesFromServer((<AttachmentUnit>lectureUnit).attachment);
+                (<AttachmentUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentFromServer((<AttachmentUnit>lectureUnit).attachment);
             }
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
@@ -172,7 +172,7 @@ export class LectureUnitService {
      * @returns Observable with the ingestion state
      */
     getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
-        return this.httpClient.get<Record<number, IngestionState>>(`${this.resourceURL}/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
+        return this.httpClient.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
             observe: 'response',
         });
     }

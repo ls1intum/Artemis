@@ -101,24 +101,24 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         mockGrantReadAccess(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
-        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
-        request.put("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
+        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
+        request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.OK);
+        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
         programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         var features = new HashMap<Feature, Boolean>();
         features.put(Feature.ProgrammingExercises, false);
-        request.put("/api/admin/feature-toggle", features, HttpStatus.OK);
+        request.put("/api/core/admin/feature-toggle", features, HttpStatus.OK);
         verify(this.websocketMessagingService).sendMessage("/topic/management/feature-toggles", featureToggleService.enabledFeatures());
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).as("Feature was disabled").isFalse();
 
         // Try to access 5 different endpoints with programming feature toggle disabled
-        request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
-        request.put("/api/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
-        request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
-        request.delete("/api/programming-exercises/" + programmingExercise1.getId(), HttpStatus.FORBIDDEN);
+        request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
+        request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise1.getId(), HttpStatus.FORBIDDEN);
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
@@ -127,7 +127,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getAllAuditEvents() throws Exception {
-        var auditEvents = request.getList("/api/admin/audits", HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvents = request.getList("/api/core/admin/audits", HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(2);
     }
 
@@ -136,7 +136,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     void getAllAuditEventsByDate() throws Exception {
         String pastDate = LocalDate.now().minusDays(1).toString();
         String currentDate = LocalDate.now().toString();
-        var auditEvents = request.getList("/api/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvents = request.getList("/api/core/admin/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(1);
         var auditEvent = auditEvents.getFirst();
         var auditEventsInDb = persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
@@ -147,7 +147,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void getAuditEvent() throws Exception {
-        var auditEvent = request.get("/api/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
+        var auditEvent = request.get("/api/core/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
         var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).orElseThrow();
         assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());

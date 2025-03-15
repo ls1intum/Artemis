@@ -14,7 +14,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
     let service: AttachmentService;
-    const resourceUrl = 'api/attachments';
+    const resourceUrl = 'api/lecture/attachments';
     let expectedResult: any;
     let elemDefault: Attachment;
 
@@ -34,7 +34,8 @@ describe('Attachment Service', () => {
         expectedResult = {} as HttpResponse<Attachment>;
         elemDefault = new Attachment();
         elemDefault.releaseDate = dayjs();
-        elemDefault.link = '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.link = 'attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.linkUrl = 'api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
         elemDefault.name = 'testss';
         elemDefault.lecture = new Lecture();
         elemDefault.attachmentType = AttachmentType.FILE;
@@ -118,7 +119,7 @@ describe('Attachment Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lectures/${lectureId}/attachments`,
+                url: `api/lecture/lectures/${lectureId}/attachments`,
                 method: 'GET',
             });
             req.flush(returnedFromService);
@@ -141,7 +142,7 @@ describe('Attachment Service', () => {
         });
 
         it('should convert attachment date from server', async () => {
-            const results = service.convertAttachmentDatesFromServer(elemDefault);
+            const results = service.convertAttachmentFromServer(elemDefault);
             expect(results).toEqual(elemDefault);
         });
     });
@@ -157,7 +158,7 @@ describe('Attachment Service', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/files/courses/${courseId}/attachments/${attachmentId}`,
+                url: `api/core/files/courses/${courseId}/attachments/${attachmentId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

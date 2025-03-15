@@ -65,7 +65,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
         notificationSettingRepository.save(settingA);
         notificationSettingRepository.save(settingsB);
 
-        List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
+        List<NotificationSetting> notificationSettings = request.getList("/api/communication/notification-settings", HttpStatus.OK, NotificationSetting.class);
 
         assertThat(notificationSettings).hasSameSizeAs(getDefaultNotificationSettings());
         assertThat(notificationSettings).as("notificationSettings A with recipient equal to current user is returned")
@@ -85,7 +85,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetNotificationSettingsForCurrentUserWith_DB_EMTPY() throws Exception {
-        List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
+        List<NotificationSetting> notificationSettings = request.getList("/api/communication/notification-settings", HttpStatus.OK, NotificationSetting.class);
         assertThat(notificationSettings).hasSameSizeAs(getDefaultNotificationSettings());
     }
 
@@ -97,8 +97,8 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     void testSaveNotificationSettingsForCurrentUser_OK() throws Exception {
         NotificationSetting[] newlyChangedSettingsToSave = { settingA, settingsB };
 
-        NotificationSetting[] notificationSettingsResponse = request.putWithResponseBody("/api/notification-settings", newlyChangedSettingsToSave, NotificationSetting[].class,
-                HttpStatus.OK);
+        NotificationSetting[] notificationSettingsResponse = request.putWithResponseBody("/api/communication/notification-settings", newlyChangedSettingsToSave,
+                NotificationSetting[].class, HttpStatus.OK);
 
         boolean foundA = false;
         boolean foundB = false;
@@ -120,7 +120,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveNotificationSettingsForCurrentUser_BAD_REQUEST() throws Exception {
-        request.putWithResponseBody("/api/notification-settings", null, NotificationSetting[].class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/communication/notification-settings", null, NotificationSetting[].class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -132,7 +132,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
         conversationUtilService.addParticipantToConversation(mutedChannel, TEST_PREFIX + "student1", true);
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
-        List<Long> mutedConversations = request.getList("/api/muted-conversations", HttpStatus.OK, Long.class);
+        List<Long> mutedConversations = request.getList("/api/communication/muted-conversations", HttpStatus.OK, Long.class);
         assertThat(mutedConversations).hasSize(1);
         assertThat(mutedConversations).contains(mutedChannel.getId());
     }

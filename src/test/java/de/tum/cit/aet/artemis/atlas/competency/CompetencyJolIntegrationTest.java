@@ -57,7 +57,7 @@ class CompetencyJolIntegrationTest extends AbstractAtlasIntegrationTest {
     class SetJudgementOfLearning {
 
         private String apiURL(long competencyId, int jolValue) {
-            return "/api/courses/" + courseId + "/course-competencies/" + competencyId + "/jol/" + jolValue;
+            return "/api/atlas/courses/" + courseId + "/course-competencies/" + competencyId + "/jol/" + jolValue;
         }
 
         private void sendRequest(long competencyId, short jolValue, HttpStatus status) throws Exception {
@@ -112,7 +112,7 @@ class CompetencyJolIntegrationTest extends AbstractAtlasIntegrationTest {
     class GetLatestJudgementOfLearningForCompetency {
 
         private String apiURL(long competencyId) {
-            return "/api/courses/" + courseId + "/course-competencies/" + competencyId + "/jol";
+            return "/api/atlas/courses/" + courseId + "/course-competencies/" + competencyId + "/jol";
         }
 
         private CompetencyJolPairDTO sendRequest(long competencyId, HttpStatus status) throws Exception {
@@ -160,7 +160,7 @@ class CompetencyJolIntegrationTest extends AbstractAtlasIntegrationTest {
     class GetLatestJudgementOfLearningForCourse {
 
         private String apiURL() {
-            return "/api/courses/" + courseId + "/course-competencies/jol";
+            return "/api/atlas/courses/" + courseId + "/course-competencies/jol";
         }
 
         private Map<Long, CompetencyJolPairDTO> sendRequest(HttpStatus status) throws Exception {

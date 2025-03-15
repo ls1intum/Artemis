@@ -28,7 +28,7 @@
                         defaultPictureId="post-default-profile-picture"
                         [authorId]="post()!.author!.id!"
                         [authorName]="post()!.author!.name!"
-                        [imageUrl]="post()!.author!.imageUrl!"
+                        [imageUrl]="addPublicFilePrefix(post()!.author!.imageUrl!)"
                     />
                     <div class="posting-summary-author-content fs-small flex-column align-items-start">
                         <div>

@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { SecuredImageComponent } from '../shared/image/secured-image.component';
 import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
+import { getContrastingTextColor } from 'app/utils/color.utils';
 
 @Component({
     selector: 'jhi-header-course',
@@ -24,6 +25,8 @@ export class HeaderCourseComponent implements OnChanges {
 
     @Input() public course: Course;
 
+    public courseColor: string;
+    public contentColor: string;
     public courseDescription?: string;
     public enableShowMore = false;
     public longDescriptionShown = false;
@@ -31,6 +34,8 @@ export class HeaderCourseComponent implements OnChanges {
     faArrowDown = faArrowDown;
 
     ngOnChanges() {
+        this.courseColor = this.course.color || ARTEMIS_DEFAULT_COLOR;
+        this.contentColor = getContrastingTextColor(this.courseColor);
         this.adjustCourseDescription();
     }
 
@@ -51,7 +56,7 @@ export class HeaderCourseComponent implements OnChanges {
      * Adjusts the course description and shows toggle buttons (if it is too long) based on the current window width
      */
     adjustCourseDescription() {
-        const shortDescriptionLength = window.innerWidth / (this.course.courseIcon ? 3.6 : 3.4);
+        const shortDescriptionLength = window.innerWidth / (this.course.courseIconPath ? 3.6 : 3.4);
         if (this.course && this.course.description) {
             this.enableShowMore = this.course.description.length > shortDescriptionLength;
             if (this.enableShowMore && !this.longDescriptionShown) {

@@ -21,7 +21,7 @@
             <div class="question-card-header-inputs">
                 <div class="form-group question-score">
                     <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                    <input class="form-control" title="score" type="number" min="1" [max]="MAX_POINTS" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
+                    <input class="form-control" title="score" type="number" min="0" [max]="MAX_POINTS" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
                 </div>
                 <div class="question-type">
                     <h3 class="mb-0"><span class="badge bg-warning align-text-top">DnD</span></h3>
@@ -282,7 +282,7 @@
                 <div class="background-area">
                     <jhi-secured-image
                         #backgroundImage
-                        [src]="filePreviewPaths.get(question.backgroundFilePath!) || ''"
+                        [src]="addPublicFilePrefix(filePreviewPaths.get(question.backgroundFilePath!)) || ''"
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     />
@@ -361,7 +361,7 @@
                         <div class="drag-item" id="drag-item-{{ i }}" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                             @if (dragItem.pictureFilePath) {
                                 <div>
-                                    <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath)!" />
+                                    <jhi-secured-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath))!" />
                                 </div>
                             }
                             @if (!dragItem.pictureFilePath) {
@@ -429,7 +429,7 @@
                                     </div>
                                     @if (dragItem.pictureFilePath) {
                                         <div>
-                                            <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath) || ''" />
+                                            <jhi-secured-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath)) || ''" />
                                         </div>
                                     }
                                     @if (!dragItem.pictureFilePath) {

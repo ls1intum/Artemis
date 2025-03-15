@@ -5,11 +5,12 @@ import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
     private http = inject(HttpClient);
-    private resourceUrl = 'api/files';
+    private resourceUrl = 'api/core/files';
 
     /**
      * Fetches the template file for the given programming language
@@ -27,11 +28,12 @@ export class FileService {
 
     /**
      * Fetches the file from the given path and returns it as a File object with a unique file name.
-     * @param filePath path of the file
+     * @param filePath path of the file (without API prefix)
      * @param mapOfFiles optional map to check if the generated file name already exists
      */
     async getFile(filePath: string, mapOfFiles?: Map<string, { path?: string; file: File }>): Promise<File> {
-        const blob = await lastValueFrom(this.http.get(filePath, { responseType: 'blob' }));
+        const filePathUrl = addPublicFilePrefix(filePath)!;
+        const blob = await lastValueFrom(this.http.get(filePathUrl, { responseType: 'blob' }));
         const file = new File([blob], this.getUniqueFileName(this.getExtension(filePath), mapOfFiles));
         return Promise.resolve(file);
     }
@@ -41,7 +43,7 @@ export class FileService {
      * @returns markdown file
      */
     getTemplateCodeOfConduct(): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`api/files/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
+        return this.http.get<string>(`${this.resourceUrl}/templates/code-of-conduct`, { observe: 'response', responseType: 'text' as 'json' });
     }
 
     /**
@@ -95,7 +97,7 @@ export class FileService {
      * @param lectureId the id of the lecture
      */
     downloadMergedFile(lectureId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`api/files/attachments/lecture/${lectureId}/merge-pdf`, {
+        return this.http.get(`${this.resourceUrl}/attachments/lecture/${lectureId}/merge-pdf`, {
             observe: 'response',
             responseType: 'blob',
         });

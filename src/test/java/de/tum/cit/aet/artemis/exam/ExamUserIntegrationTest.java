@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -141,8 +142,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         examUserDTOs.add(examUserDTO1);
         examUserDTOs.add(examUserDTO2);
 
-        List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
-                ExamUserDTO.class, OK);
+        List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students",
+                examUserDTOs, ExamUserDTO.class, OK);
         assertThat(responseNotFoundExamUsers).isEmpty();
         Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         var examUsers = exam.getExamUsers();
@@ -170,8 +171,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         examUserDTOs.add(examUserDTO4);
 
         // add students to exam with respective registration numbers, same as in pdf test file
-        List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
-                ExamUserDTO.class, OK);
+        List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students",
+                examUserDTOs, ExamUserDTO.class, OK);
         assertThat(responseNotFoundExamUsers).isEmpty();
 
         // upload exam user images
@@ -186,7 +187,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(exam.getExamUsers()).hasSize(4);
         for (ExamUser examUser : exam.getExamUsers()) {
             assertThat(examUser.getStudentImagePath()).isNotNull();
-            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
 
         // reupload the same file, should not change anything
@@ -203,7 +205,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(exam.getExamUsers()).hasSize(4);
         for (ExamUser examUser : exam.getExamUsers()) {
             assertThat(examUser.getStudentImagePath()).isNotNull();
-            assertThat(request.getFile(examUser.getStudentImagePath(), HttpStatus.OK)).isNotEmpty();
+            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
     }
 
@@ -234,7 +237,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         for (var studentExam : studentExams) {
             var user = studentExam.getUser();
             userUtilService.changeUser(user.getLogin());
-            var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
+            var response = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
@@ -255,7 +258,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(examUser.getDidCheckLogin()).isTrue();
 
         // as instructor, verify the attendance of the students
-        List<ExamUserAttendanceCheckDTO> examUsersWhoDidNotSign = request.getList("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/verify-exam-users",
+        List<ExamUserAttendanceCheckDTO> examUsersWhoDidNotSign = request.getList("/api/exam/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/verify-exam-users",
                 HttpStatus.OK, ExamUserAttendanceCheckDTO.class);
         // one student (student1) signed, the other 3 did not
         assertThat(examUsersWhoDidNotSign).hasSize(3);
@@ -285,7 +288,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testVerifyAttendance() throws Exception {
         // User started an exam, but attendance wasn't checked yet
-        var attendanceCheckResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
+        var attendanceCheckResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
         assertThat(attendanceCheckResponse).isFalse();
 
         // Verify attendance
@@ -303,7 +306,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         userUtilService.changeUser(TEST_PREFIX + "student2");
 
         // Check attendance again
-        attendanceCheckResponse = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
+        attendanceCheckResponse = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance", HttpStatus.OK, Boolean.class);
         assertThat(attendanceCheckResponse).isTrue();
     }
 
@@ -314,7 +317,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         assertThat(signedUsers).hasSize(1);
         for (var user : signedUsers) {
             assertThat(user.getSigningImagePath()).isNotNull();
-            assertThat(request.getFile(user.getSigningImagePath(), HttpStatus.OK)).isNotEmpty();
+            String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, user.getSigningImagePath());
+            assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
     }
 
@@ -322,11 +326,11 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
         var examUserPart = new MockMultipartFile("examUserDTO", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(examUserDTO).getBytes());
         if (hasSigned) {
             var signingImage = loadFile("classpath:test-data/exam-users", "examUserSigningImage.png");
-            return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart).file(signingImage)
+            return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart).file(signingImage)
                     .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         }
         else {
-            return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart)
+            return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users").file(examUserPart)
                     .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         }
     }
@@ -334,7 +338,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     private MockHttpServletRequestBuilder buildUploadExamUserImages(long courseId, long examId) throws Exception {
         var signingImage = loadFile("classpath:test-data/exam-users", "studentsWithImages.pdf");
 
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/courses/" + courseId + "/exams/" + examId + "/exam-users-save-images").file(signingImage)
+        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/exam/courses/" + courseId + "/exams/" + examId + "/exam-users-save-images").file(signingImage)
                 .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 

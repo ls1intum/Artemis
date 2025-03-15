@@ -301,6 +301,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachments: lecture.attachments?.map((attachment) => ({
                     ...attachment,
                     link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
+                    linkUrl: attachment.link && attachment.name ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, true) : attachment.link,
                 })),
             }));
 
@@ -332,7 +333,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const newAttachment = {
                 id: 53,
                 name: attachmentNameWithBrackets,
-                link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
                 version: 1,
                 uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                 attachmentType: 'FILE',

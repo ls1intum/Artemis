@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -199,13 +200,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testQuizExerciseForExamBadRequestOtherOperations() throws Exception {
         QuizExercise quizExercise = createQuizOnServerForExam();
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, BAD_REQUEST);
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     private QuizExercise importQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises/import/" + id);
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises/import/" + id);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
         for (MockMultipartFile file : files) {
@@ -220,7 +221,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private QuizExercise reevalQuizExerciseWithFiles(QuizExercise quizExercise, Long id, List<MockMultipartFile> files, HttpStatus expectedStatus) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz-exercises/" + id + "/re-evaluate");
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz/quiz-exercises/" + id + "/re-evaluate");
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
         for (MockMultipartFile file : files) {
@@ -243,7 +244,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @return the created quiz exercise or null if the request failed
      */
     private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus, boolean addBackgroundImage) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises");
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises");
         addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
@@ -270,7 +271,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
      */
     private QuizExercise updateQuizExerciseWithFiles(QuizExercise quizExercise, List<String> fileNames, HttpStatus expectedStatus, MultiValueMap<String, String> params)
             throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz-exercises/" + quizExercise.getId());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz/quiz-exercises/" + quizExercise.getId());
         if (params != null) {
             builder.params(params);
         }
@@ -307,7 +308,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void checkCreatedFile(String path) throws Exception {
         MediaType mediaType = path.endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
-        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, path);
+        MvcResult result = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
     }
@@ -483,7 +485,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 
@@ -494,7 +496,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = exerciseUtilService.addChannelToExercise(quizExercise);
 
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
@@ -515,7 +517,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Quiz submissions are now in database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
 
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK);
         assertThat(quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 
@@ -546,7 +548,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetQuizExercise(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, quizMode);
 
-        QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        QuizExercise quizExerciseGet = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
 
         // Start Date picker at Quiz Edit page should be populated correctly
@@ -555,8 +557,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         // get all exercises for a course
-        List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", OK,
-                QuizExercise.class);
+        List<QuizExercise> allQuizExercisesForCourse = request.getList("/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises",
+                OK, QuizExercise.class);
         assertThat(allQuizExercisesForCourse).hasSize(1).contains(quizExercise);
     }
 
@@ -569,7 +571,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().plusHours(5)));
 
         // get not yet started exercise for students
-        QuizExercise quizExerciseForStudent_notStarted = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
+        QuizExercise quizExerciseForStudent_notStarted = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_notStarted);
 
         // set exercise started 5 min ago
@@ -578,7 +580,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isSubmissionAllowed);
 
         // get started exercise for students
-        QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
+        QuizExercise quizExerciseForStudent_Started = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Started);
 
         // get finished exercise for students
@@ -586,7 +588,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(quizExercise.getQuizBatches()).allMatch(QuizBatch::isStarted);
         assertThat(quizExercise.getQuizBatches()).noneMatch(QuizBatch::isSubmissionAllowed);
 
-        QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
+        QuizExercise quizExerciseForStudent_Finished = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
         checkQuizExerciseForStudent(quizExerciseForStudent_Finished);
     }
 
@@ -599,12 +601,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         // get started exercise for students
         // when exercise due date is null
-        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
+        QuizExercise quizExerciseForStudent = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
         assertThat(quizExerciseForStudent.getQuizBatches()).usingRecursiveAssertion().hasNoNullFields();
 
         // when exercise due date is later than now
         quizExercise.setDueDate(ZonedDateTime.now().plusHours(1));
-        quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
+        quizExerciseForStudent = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
         assertThat(quizExerciseForStudent.getQuizBatches()).usingRecursiveAssertion().hasNoNullFields();
     }
 
@@ -615,7 +617,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.setDuration(400);
         quizExercise.setQuizBatches(null);
 
-        QuizExercise quizExerciseForStudent = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
+        QuizExercise quizExerciseForStudent = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", OK, QuizExercise.class);
         assertThat(quizExerciseForStudent.getQuizBatches()).hasSize(1);
         checkQuizExerciseForStudent(quizExerciseForStudent);
     }
@@ -626,7 +628,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now().minusHours(4), ZonedDateTime.now().plusHours(4));
         long examId = quizExercise.getExerciseGroup().getExam().getId();
 
-        List<QuizExercise> quizExercises = request.getList("/api/exams/" + examId + "/quiz-exercises", OK, QuizExercise.class);
+        List<QuizExercise> quizExercises = request.getList("/api/quiz/exams/" + examId + "/quiz-exercises", OK, QuizExercise.class);
         assertThat(quizExercises).as("Quiz exercise was retrieved").hasSize(1);
         assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.getFirst().getId());
     }
@@ -636,7 +638,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetExamQuizExercise() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(10));
 
-        QuizExercise quizExerciseGet = request.get("/api/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        QuizExercise quizExerciseGet = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
         checkQuizExercises(quizExercise, quizExerciseGet);
 
         assertThat(quizExerciseGet).as("Quiz exercise was retrieved").isEqualTo(quizExercise).isNotNull();
@@ -648,7 +650,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExamQuizExercise_asTutor_forbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveExamQuiz(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(10));
-        request.get("/api/quiz-exercises/" + quizExercise.getId(), FORBIDDEN, QuizExercise.class);
+        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), FORBIDDEN, QuizExercise.class);
     }
 
     @Test
@@ -658,7 +660,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         long exerciseId = quizExercise.getId();
 
         var searchTerm = pageableSearchUtilService.configureSearch(String.valueOf(exerciseId));
-        SearchResultPageDTO<QuizExercise> searchResult = request.getSearchResult("/api/quiz-exercises", OK, QuizExercise.class,
+        SearchResultPageDTO<QuizExercise> searchResult = request.getSearchResult("/api/quiz/quiz-exercises", OK, QuizExercise.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
 
         assertThat(searchResult.getResultsOnPage()).filteredOn(quiz -> quiz.getId() == exerciseId).hasSize(1);
@@ -674,7 +676,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         quizExerciseUtilService.renameAndSaveQuiz(quizExercise, searchTerm);
         quizExerciseUtilService.renameAndSaveQuiz(examQuizExercise, searchTerm + "-Morpork");
 
-        exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz-exercises", searchTerm);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz/quiz-exercises", searchTerm);
     }
 
     @Test
@@ -699,7 +701,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         // calculate statistics
-        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
+        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
@@ -714,7 +716,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         // calculate statistics
-        quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
+        quizExerciseWithRecalculatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
 
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
@@ -762,7 +764,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
 
         // calculate statistics
-        quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
+        quizExercise = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
 
         log.debug("QuizPointStatistic before re-evaluate: {}", quizExercise.getQuizPointStatistic());
 
@@ -782,7 +784,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
 
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
 
         var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().getFirst();
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
@@ -801,7 +803,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
 
         var shortAnswerQuestionAfterReevaluation = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         assertThat(shortAnswerQuestionAfterReevaluation.isInvalid()).isTrue();
@@ -816,7 +818,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
 
@@ -870,7 +872,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(resultRepository.findAllByParticipationExerciseId(quizExercise.getId())).hasSize(10);
 
         // calculate statistics
-        quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
+        quizExercise = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
 
         log.debug("QuizPointStatistic before re-evaluate: {}", quizExercise.getQuizPointStatistic());
 
@@ -961,7 +963,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         submission = participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         assertThat(submission.getResults()).hasSize(1);
 
-        request.postWithoutResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/evaluate", null, OK);
+        request.postWithoutResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/evaluate", null, OK);
 
         var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(newResult).isPresent();
@@ -976,7 +978,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var submission = participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         assertThat(submission.getResults()).isEmpty();
 
-        request.postWithoutResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/evaluate", null, OK);
+        request.postWithoutResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/evaluate", null, OK);
 
         var newResult = resultRepository.findDistinctBySubmissionId(submission.getId());
         assertThat(newResult).isPresent();
@@ -987,8 +989,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testAddAndStartQuizBatch() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
 
-        QuizBatch batch = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
-        request.put("/api/quiz-exercises/" + batch.getId() + "/start-batch", null, OK);
+        QuizBatch batch = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
+        request.put("/api/quiz/quiz-exercises/" + batch.getId() + "/start-batch", null, OK);
     }
 
     @Test
@@ -996,8 +998,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testAddAndStartQuizBatch_AsStudentNotAllowed() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.BATCHED);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, FORBIDDEN);
-        request.put("/api/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, FORBIDDEN);
+        request.put("/api/quiz/quiz-exercises/" + null + "/start-batch", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1006,7 +1008,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, OK);
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, OK);
 
         long millis = ChronoUnit.MILLIS.between(Objects.requireNonNull(updatedQuizExercise.getQuizBatches().stream().findAny().orElseThrow().getStartTime()), ZonedDateTime.now());
         // actually the two dates should be "exactly" the same, but for the sake of slow CI testing machines and to prevent flaky tests, we live with the following rule
@@ -1021,7 +1023,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, quizMode);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1031,11 +1033,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(5), null, quizMode);
 
         // we expect a bad request because the quiz is already visible
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         quizExerciseService.save(quizExercise);
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, OK);
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, OK);
         assertThat(updatedQuizExercise.isVisibleToStudents()).isTrue();
     }
 
@@ -1046,13 +1048,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
 
         quizExercise.setDuration(180);
         quizExerciseService.endQuiz(quizExercise);
         quizExerciseService.save(quizExercise);
 
-        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, OK);
+        QuizExercise updatedQuizExercise = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class,
+                OK);
         assertThat(updatedQuizExercise.isIsOpenForPractice()).isTrue();
     }
 
@@ -1068,8 +1071,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // switch to student
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
 
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, resultStart);
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, resultJoin);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, resultStart);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(password), QuizBatch.class, resultJoin);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1081,12 +1084,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         batch.setStartTime(ZonedDateTime.now().minusMinutes(1));
         batch.setPassword("1234");
         quizExerciseUtilService.setQuizBatchExerciseAndSave(batch, quizExercise);
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
-            request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.OK);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.OK);
         }
-        request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO("1234"), QuizBatch.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -1109,7 +1112,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testGetAllQuizExercisesAsNonTutorForbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
 
-        request.getList("/api/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", FORBIDDEN, QuizExercise.class);
+        request.getList("/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises", FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1121,7 +1124,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testPerformPutActionAsNonEditorForbidden(String action) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
-        request.put("/api/quiz-exercises/" + quizExercise.getId() + "/" + action, quizExercise, FORBIDDEN);
+        request.put("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/" + action, quizExercise, FORBIDDEN);
     }
 
     /**
@@ -1132,7 +1135,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testViewQuizExerciseAsNonTutorNotVisibleForbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 
-        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", FORBIDDEN, QuizExercise.class);
+        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1143,7 +1146,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testDeleteQuizExerciseAsNonInstructorForbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
 
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), FORBIDDEN);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), FORBIDDEN);
     }
 
     /**
@@ -1154,7 +1157,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testRecalculateStatisticsAsNonTutorForbidden() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
 
-        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", FORBIDDEN, QuizExercise.class);
+        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1166,7 +1169,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(4), null, QuizMode.SYNCHRONIZED);
         userUtilService.removeUserFromAllCourses(TEST_PREFIX + "student1");
 
-        request.get("/api/quiz-exercises/" + quizExercise.getId() + "/for-student", FORBIDDEN, QuizExercise.class);
+        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/for-student", FORBIDDEN, QuizExercise.class);
     }
 
     /**
@@ -1491,18 +1494,18 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         // set-visible
         assertThat(quizExercise.isVisibleToStudents()).isTrue();
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/set-visible", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
 
         // start-now
         assertThat(quizExercise.isQuizStarted()).isTrue();
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-now", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
 
         // open-for-practice
         quizExercise.setIsOpenForPractice(true);
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
 
         // misspelled request
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/lorem-ipsum", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -1573,7 +1576,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             quizQuestion.setInvalid(true);
         }
-        request.delete("/api/exercises/" + quizExercise.getId() + "/reset", OK);
+        request.delete("/api/exercise/exercises/" + quizExercise.getId() + "/reset", OK);
 
         quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
@@ -1782,11 +1785,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
 
-                assertThat(request.get(dragAndDropQuestion.getBackgroundFilePath(), OK, byte[].class)).isNotEmpty();
+                String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
+                assertThat(request.get(requestUrl, OK, byte[].class)).isNotEmpty();
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        assertThat(request.get(dragItem.getPictureFilePath(), OK, byte[].class)).isNotEmpty();
+                        String requestUrlPath = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath());
+                        assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
                     }
                 }
             }
@@ -1903,7 +1908,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private QuizExercise createMultipleChoiceQuizExercise() {
         Course course = courseUtilService.createAndSaveCourse(null, ZonedDateTime.now().minusDays(1), null, Set.of());
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED, course);
-        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
 
         question.setScoringType(ScoringType.ALL_OR_NOTHING);
         question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));

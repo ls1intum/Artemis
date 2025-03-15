@@ -196,8 +196,8 @@ public class TutorialGroupScheduleService {
             tutorialGroupRepository.save(tutorialGroup);
             tutorialGroupScheduleRepository.delete(oldSchedule.get()); // old schedule present but not new schedule -> delete old schedule
         }
-        else if (newSchedule.isPresent()) { // new schedule present but not old schedule -> create new schedule
-            saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, newSchedule.get());
+        else {
+            newSchedule.ifPresent(tutorialGroupSchedule -> saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, tutorialGroupSchedule));
         }
     }
 

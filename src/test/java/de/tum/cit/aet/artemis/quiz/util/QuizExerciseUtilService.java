@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -58,6 +60,7 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
  * Service responsible for initializing the database with specific testdata related to quiz exercises for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class QuizExerciseUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
@@ -353,7 +356,7 @@ public class QuizExerciseUtilService {
         }
         FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_and_drop_background.jpg"), backgroundPathInFileSystem.toFile());
         FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/data-export/drag_item.jpg"), dragItemPathInFileSystem.toFile());
-        dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
+        dragAndDropQuestion.setBackgroundFilePath("drag-and-drop/backgrounds/3/drag_and_drop_background.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();

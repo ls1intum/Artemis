@@ -28,6 +28,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 import { CourseForArchiveDTO } from './course-for-archive-dto';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -45,7 +46,7 @@ export class CourseManagementService {
     private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
 
-    private resourceUrl = 'api/courses';
+    private resourceUrl = 'api/core/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
@@ -79,7 +80,7 @@ export class CourseManagementService {
      * @param onlineCourseConfiguration - the updates to the online course configuration
      */
     updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
-        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
+        return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
@@ -219,7 +220,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     findAllParticipationsWithResults(courseId: number): Observable<StudentParticipation[]> {
-        return this.http.get<StudentParticipation[]>(`${this.resourceUrl}/${courseId}/participations`);
+        return this.http.get<StudentParticipation[]>(`api/exercise/courses/${courseId}/participations`);
     }
 
     /**
@@ -514,6 +515,7 @@ export class CourseManagementService {
      * @param courseRes
      */
     processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+        this.processCourseIcon(courseRes);
         this.convertTutorialGroupDatesFromServer(courseRes);
         this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
@@ -521,6 +523,17 @@ export class CourseManagementService {
         this.setAccessRightsCourseEntityResponseType(courseRes);
         this.convertExerciseCategoriesFromServer(courseRes);
         this.sendCourseTitleAndExerciseTitlesToTitleService(courseRes?.body);
+        return courseRes;
+    }
+
+    /**
+     * THis method adds the public file prefix to the course icon.
+     * @param courseRes
+     */
+    private processCourseIcon(courseRes: EntityResponseType): EntityResponseType {
+        if (courseRes.body) {
+            courseRes.body.courseIconPath = addPublicFilePrefix(courseRes.body.courseIcon);
+        }
         return courseRes;
     }
 

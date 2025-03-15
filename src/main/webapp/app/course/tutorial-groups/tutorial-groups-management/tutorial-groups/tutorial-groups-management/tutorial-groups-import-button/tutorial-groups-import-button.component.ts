@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, TemplateRef, ViewChild, inject, input } from '@angular/core';
 import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -19,7 +19,7 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
     @ViewChild('warning')
     public warningRef: TemplateRef<any>;
 
-    @Input() courseId: number;
+    courseId = input.required<number>();
 
     @Output() importFinished: EventEmitter<void> = new EventEmitter();
 
@@ -31,7 +31,7 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
             backdrop: 'static',
             animation: false,
         });
-        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.courseId = this.courseId();
 
         from(modalRef.result)
             .pipe(

@@ -42,6 +42,15 @@ public final class Constants {
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
     /**
+     * The default REST/URL-path prefix for accessing file uploads.
+     * Don't use this constant elsewhere than in the Presentation-Layer to reduce
+     * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
+     * presentation layer ({@link org.springframework.web.bind.annotation.RestController}).
+     * There might be exceptions if the path can be considered part of the business logic, and not presentation.
+     */
+    public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
+
+    /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
      * <p>
@@ -60,7 +69,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -70,7 +79,7 @@ public final class Constants {
 
     public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
-    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/public/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -287,6 +296,12 @@ public final class Constants {
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
+    public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
+
+    public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
+
+    public static final String DOCKER_FLAG_MEMORY_SWAP_MB = "defaultContainerMemorySwapLimitInMB";
+
     public static final String USE_EXTERNAL = "useExternal";
 
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
@@ -313,6 +328,8 @@ public final class Constants {
      * The name of the Spring profile used to process build jobs in a local CI setup.
      */
     public static final String PROFILE_BUILDAGENT = "buildagent";
+
+    public static final String PROFILE_TEST_BUILDAGENT = "buildagent-test";
 
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
