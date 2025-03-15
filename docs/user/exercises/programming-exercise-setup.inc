@@ -417,20 +417,22 @@ Edit Container Configuration
 
 This section is optional. In most cases, the default container configuration does not need to be changed.
 
-Currently, instructors can only change whether the container has internet access and add additional environment variables.
+Currently, instructors can change whether the container has internet access, add additional environment variables, and configure resource limits such as CPU and memory.
 Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
 If internet access is disabled, the container cannot access the internet during the build process. Thus, it will not be able to download additional dependencies.
-The dependencies must then be included/cached in the docker image.
+The dependencies must then be included/cached in the Docker image.
 
-Additional environment variables can be added to the container configuration. This can be useful if the build process requires additional environment variables to be set.
+Additional environment variables can be added to the container configuration. This can be useful if the build process requires specific variables to be set.
+
+Instructors can also adjust resource limits for the container.
+The number of CPU cores allocated to the container can be modified, as well as the maximum amount of memory and memory swap that the container is allowed to use.
+These settings help ensure that resource usage is balanced while allowing for flexibility in configuring the build environment.
+If set too high, the specified values may be overwritten by the maximum restrictions set by the administrators. Contact the administrators for more information.
 
 .. figure:: programming/docker-flags-edit.png
           :align: center
 
 We plan to add more options to the container configuration in the future.
-
-.. warning::
-  - Disabling internet access is not currently supported for Swift and Haskell exercises.
 
 
 .. _configure_static_code_analysis_tools:
