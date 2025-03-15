@@ -94,7 +94,7 @@
                             [isGray]="false"
                             [authorId]="otherUser.id"
                             [authorName]="otherUser.name"
-                            [imageUrl]="otherUser.imageUrl"
+                            [imageUrl]="addPublicFilePrefix(otherUser.imageUrl)"
                             [isEditable]="false"
                         />
                     } @else if (sidebarItem.icon) {

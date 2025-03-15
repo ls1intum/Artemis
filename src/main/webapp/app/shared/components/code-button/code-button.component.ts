@@ -84,7 +84,7 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
 
     // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
-    authenticationMechanism = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+    authenticationMechanisms = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
     selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Password;
 
     userTokenStillValid = false;
@@ -160,7 +160,7 @@ export class CodeButtonComponent implements OnInit {
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
             if (profileInfo.repositoryAuthenticationMechanisms?.length) {
-                this.authenticationMechanism = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
+                this.authenticationMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
                     Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
                 );
             }
@@ -222,7 +222,9 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        this.selectedAuthenticationMechanism = this.localStorage.retrieve('code-button-state') || RepositoryAuthenticationMethod.Password;
+        this.selectedAuthenticationMechanism = this.authenticationMechanisms.includes(this.localStorage.retrieve('code-button-state'))
+            ? this.localStorage.retrieve('code-button-state')
+            : this.authenticationMechanisms[0];
 
         if (this.useSsh) {
             this.useSshUrl();

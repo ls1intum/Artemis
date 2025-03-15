@@ -124,7 +124,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         catch (GitAPIException | VersionControlException ex) {
             if (isReadFullyShortReadOfBlockException(ex)) {
                 // NOTE: we ignore this particular error: it sometimes happens when pushing code that includes binary files, however the push operation typically worked correctly
-                // TODO: verify that the push operation actually worked correctly, e.g. by comparing the number of commits in the source and target repo
                 log.warn("TransportException/EOFException with 'Short read of block' when copying repository {} to {}. Will ignore it", sourceRepoUri, targetRepoUri);
                 return targetRepoUri;
             }

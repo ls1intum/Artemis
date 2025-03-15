@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, inject, input } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -24,9 +24,9 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private modalService = inject(NgbModal);
 
-    @Input() course: Course;
-    @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
-    @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
+    course = input.required<Course>();
+    tutorialGroupConfiguration = input.required<TutorialGroupsConfiguration>();
+    tutorialFreePeriod = input.required<TutorialGroupFreePeriod>();
 
     @Output() tutorialFreePeriodDeleted = new EventEmitter<void>();
     @Output() tutorialFreePeriodEdited = new EventEmitter<void>();
@@ -41,7 +41,7 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
 
     deleteTutorialFreePeriod = () => {
         this.tutorialGroupFreePeriodService
-            .delete(this.course.id!, this.tutorialGroupConfiguration.id!, this.tutorialFreePeriod.id!)
+            .delete(this.course().id!, this.tutorialGroupConfiguration().id!, this.tutorialFreePeriod().id!)
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe({
                 next: () => {
@@ -55,9 +55,9 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     openEditFreePeriodDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.tutorialGroupFreePeriod = this.tutorialFreePeriod;
-        modalRef.componentInstance.tutorialGroupsConfiguration = this.tutorialGroupConfiguration;
+        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.tutorialGroupFreePeriod = this.tutorialFreePeriod();
+        modalRef.componentInstance.tutorialGroupsConfiguration = this.tutorialGroupConfiguration();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(

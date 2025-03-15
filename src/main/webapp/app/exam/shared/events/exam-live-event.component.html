@@ -1,17 +1,17 @@
-<div class="event-wrapper" [ngClass]="event.eventType">
+<div class="event-wrapper" [ngClass]="event().eventType">
     <div class="headline">
         <div class="type">
-            {{ 'artemisApp.exam.events.type.' + event.eventType | artemisTranslate }}
+            {{ 'artemisApp.exam.events.type.' + event().eventType | artemisTranslate }}
         </div>
     </div>
     <div class="date">
-        <span><fa-icon [icon]="faPaperPlane" /> {{ event.createdDate | artemisDate }}</span>
-        @if (event.acknowledgeTimestamps?.user) {
-            <span>| <fa-icon [icon]="faEye" /> {{ event.acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
+        <span><fa-icon [icon]="faPaperPlane" /> {{ event().createdDate | artemisDate }}</span>
+        @if (event().acknowledgeTimestamps?.user) {
+            <span>| <fa-icon [icon]="faEye" /> {{ event().acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
         }
     </div>
     <div class="content">
-        @switch (event.eventType) {
+        @switch (event().eventType) {
             @case (ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT) {
                 <div [innerHTML]="examWideAnnouncementEvent.text | htmlForMarkdown"></div>
             }
@@ -29,25 +29,25 @@
             @case (ExamLiveEventType.EXAM_ATTENDANCE_CHECK) {
                 <div>
                     <div jhiTranslate="artemisApp.exam.events.messages.examAttendanceCheck.description" class="wt-title"></div>
-                    @if (event.user) {
+                    @if (event().user) {
                         <table class="table table-borderless mx-auto">
                             <tbody>
                                 <tr>
                                     <th jhiTranslate="artemisApp.studentExamDetail.name"></th>
-                                    <td>{{ event.user?.firstName }} {{ event.user?.lastName }}</td>
+                                    <td>{{ event().user?.firstName }} {{ event().user?.lastName }}</td>
                                 </tr>
                                 <tr>
                                     <th jhiTranslate="artemisApp.studentExamDetail.login"></th>
-                                    <td>{{ event.user?.login }}</td>
+                                    <td>{{ event().user?.login }}</td>
                                 </tr>
                                 <tr>
                                     <th jhiTranslate="artemisApp.studentExamDetail.email"></th>
-                                    <td>{{ event.user?.email }}</td>
+                                    <td>{{ event().user?.email }}</td>
                                 </tr>
-                                @if (event.user?.visibleRegistrationNumber) {
+                                @if (event().user?.visibleRegistrationNumber) {
                                     <tr>
                                         <th jhiTranslate="artemisApp.studentExamDetail.matriculationNumber"></th>
-                                        <td>{{ event.user?.visibleRegistrationNumber }}</td>
+                                        <td>{{ event().user?.visibleRegistrationNumber }}</td>
                                     </tr>
                                 }
                             </tbody>
@@ -70,13 +70,13 @@
         }
     </div>
     <div class="d-flex gap-2">
-        @if (showAcknowledge) {
+        @if (showAcknowledge()) {
             <button class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
                 <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.exam.events.acknowledge"></span>
             </button>
         }
-        @if (event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
+        @if (event().eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
             <button class="btn btn-primary w-100 mt-2" (click)="navigateToExercise()">
                 <span jhiTranslate="artemisApp.exam.events.navigateToExercise"></span>
             </button>

@@ -107,7 +107,7 @@ public class ProgrammingExerciseImportFromFileService {
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise, true);
+            newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise);
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
