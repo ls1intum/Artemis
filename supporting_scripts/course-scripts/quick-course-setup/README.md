@@ -2,62 +2,55 @@
 
 This project contains Python scripts that automate the setup and management of courses and users in an Artemis instance. The scripts help you create a course, generate users, enroll them into courses, and manage programming exercises, including participations and commits. The project is useful for setting up test environments or quickly initializing a course with a large number of students.
 
-# Setup
+## Setup
 
-### 1. Install Python and the Python Plugin for IntelliJ
+### Prerequisites
 
-- Ensure that Python (preferably version 3.12) is installed on your system.
-```shell
-python3 --version
-```
-- Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
-- Enable Python support in IntelliJ:
-  - Go to `File > Project Structure > Facets > Add - Python`.
-  - Add a Python environment by configuring the Python interpreter. 
+- Python 3.12 or higher
+- pip
 
-    ![IntelliJ Python Facet Configuration](./images/facets-config.png)
-  - Add a module in IntelliJ by navigating to `File > Project Structure > Modules > Add - Python`.
+### 1. Optionally, create and activate a virtual environment
+_It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean._
 
-    ![IntelliJ Module Configuration](./images/module-config.png)
+1. Install `virtualenv` if it's not already installed:
+    ```shell
+    python3 -m pip install virtualenv
+    ```
+    if you are using [brew](https://brew.sh/) on macOS, you can install `virtualenv` using:
+    ```shell
+    brew install virtualenv
+    ```
 
-### 2. **(Optional)**: Setting Up a Virtual Environment
+2. Create a virtual environment in your project folder:
+    ```shell
+    python3 -m venv venv
+    ```
 
-It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
+3. Activate the virtual environment:
+   - On **macOS/Linux**:
+    ```shell
+    source venv/bin/activate
+    ```
+   - On **Windows**:
+    ```shell
+    venv\Scripts\activate
+    ```
 
-- Install `virtualenv` if it's not already installed:
-```shell
-python3 -m pip install virtualenv
-```
-
-- Create a virtual environment in your project folder:
-```shell
-python3 -m virtualenv venv
-```
-
-- Activate the virtual environment:
-
-- On **Windows**:
-```shell
-venv\Scripts\activate
-```
-
-- On **macOS/Linux**:
-```shell
-source venv/bin/activate
-```
 
 Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
 
 To install any packages into this virtual environment, proceed with the same steps as described below.
+
+### 2. Install the Required Packages
+```shell
+pip install -r requirements.txt
+```
+
 ### 3. Configure the Environment
 
-- Start your local Artemis instance.
-- Configure the [config.ini](./config.ini) file according to your local or test server setup.
-- If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
+1. Start your local Artemis instance.
+2. Configure the [config.ini](./config.ini) file according to your local or test server setup.
 
-```shell
-python3 -m pip install <packageName>
-```
 # Usage
 
 ## Section 1: Create Local Course and Users
