@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.cit.aet.artemis.coursenotification.service.CourseNotificationPushProxyService;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
 
 /**
  * Handles the sending of iOS Notifications to the Relay Service

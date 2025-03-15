@@ -42,12 +42,12 @@ import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
 import de.tum.cit.aet.artemis.communication.service.notifications.InstantNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.coursenotification.dto.CourseNotificationDTO;
-import de.tum.cit.aet.artemis.coursenotification.service.CourseNotificationPushProxyService;
 
 /**
  * Wraps the sending of iOS and Android Notifications to the Relay Service

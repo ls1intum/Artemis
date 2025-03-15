@@ -18,7 +18,7 @@ import com.google.common.collect.Lists;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.cit.aet.artemis.coursenotification.service.CourseNotificationPushProxyService;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
 
 /**
  * Handles the sending of Android Notifications to the Relay Service
