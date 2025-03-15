@@ -11,7 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
-import { PROFILE_ATLAS } from '../../../../../../main/webapp/app/app.constants';
+import { MODULE_FEATURE_ATLAS } from '../../../../../../main/webapp/app/app.constants';
 
 const scienceSetting: ScienceSetting = {
     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
@@ -38,7 +38,7 @@ describe('ScienceSettingsService', () => {
 
                 const profileService = TestBed.inject(ProfileService);
                 const profileInfo = new ProfileInfo();
-                profileInfo.activeProfiles = [PROFILE_ATLAS];
+                profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
             });
     });

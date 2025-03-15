@@ -7,7 +7,7 @@ import { Observable, ReplaySubject } from 'rxjs';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATLAS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
@@ -22,7 +22,7 @@ export class ScienceSettingsService {
     constructor() {
         // we need to handle the subscription here as this service is initialized independently of any component
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo.activeProfiles.includes(PROFILE_ATLAS)) {
+            if (profileInfo.activeProfiles.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)) {
                 this.initialize();
                 this.listenForScienceSettingsChanges();
             }
@@ -54,7 +54,7 @@ export class ScienceSettingsService {
 
     public refreshScienceSettings(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (!profileInfo.activeProfiles.includes(PROFILE_ATLAS)) {
+            if (!profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)) {
                 return;
             }
 

@@ -20,7 +20,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '../language/translate.directive';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATLAS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -73,7 +73,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
         this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+            const atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
             if (atlasEnabled) {
                 this.initialize();
             }
