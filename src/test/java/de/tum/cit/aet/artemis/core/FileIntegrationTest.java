@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -96,7 +97,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
                 ExamUser.class, HttpStatus.OK);
-        byte[] getUserSignatureResponse = request.get(updateExamUserResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updateExamUserResponse.getSigningImagePath());
+        byte[] getUserSignatureResponse = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         assertThat(getUserSignatureResponse).isEqualTo(file.getBytes());
     }
@@ -136,7 +138,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentRepo.save(attachment);
         attachmentUnit = attachmentUnitRepo.save(attachmentUnit);
 
-        request.get(attachmentUnit.getAttachment().getLink(), HttpStatus.OK, String.class);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentUnit.getAttachment().getLink());
+        request.get(requestUrl, HttpStatus.OK, String.class);
     }
 
     @Test

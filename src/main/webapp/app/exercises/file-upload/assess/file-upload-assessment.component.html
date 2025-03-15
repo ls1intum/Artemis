@@ -28,10 +28,10 @@
                 <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise!.maxPoints!" [maxBonusPoints]="exercise!.bonusPoints!" [course]="course" />
                 <div left-body>
                     <div class="row">
-                        @if (submission?.filePath) {
+                        @if (submission?.filePathUrl) {
                             <div class="col-12 card-text">
-                                <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
-                                <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePath!) | uppercase }}</span>
+                                <a class="text-primary" (click)="downloadFile(submission!.filePathUrl!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
+                                <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePathUrl!) | uppercase }}</span>
                             </div>
                         }
                     </div>
@@ -78,10 +78,10 @@
             <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise!.maxPoints!" [maxBonusPoints]="exercise!.bonusPoints!" [course]="course" />
             <div left-body>
                 <div class="row">
-                    @if (submission?.filePath) {
+                    @if (submission?.filePathUrl) {
                         <div class="col-12 card-text">
-                            <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
-                            <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePath!) | uppercase }}</span>
+                            <a class="text-primary" (click)="downloadFile(submission!.filePathUrl!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
+                            <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePathUrl!) | uppercase }}</span>
                         </div>
                     }
                 </div>

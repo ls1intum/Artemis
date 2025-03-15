@@ -18,6 +18,7 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
 import { ProfilePictureComponent } from '../profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from '../delete-dialog/delete-button.directive';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 const cssClasses = {
     alreadyMember: 'already-member',
@@ -259,4 +260,5 @@ export class CourseGroupComponent implements OnDestroy {
         const csvData = generateCsv(csvExportConfig)(rows);
         download(csvExportConfig)(csvData);
     };
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
