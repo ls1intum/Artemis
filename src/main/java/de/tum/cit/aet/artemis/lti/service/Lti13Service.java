@@ -102,7 +102,7 @@ public class Lti13Service {
     private final RestTemplate restTemplate;
 
     private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
-            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS);
+            DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN, DeepLinkingType.LECTURE);
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, CourseRepository courseRepository,
             Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever,
