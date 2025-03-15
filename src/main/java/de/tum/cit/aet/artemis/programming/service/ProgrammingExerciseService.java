@@ -272,12 +272,11 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -344,7 +343,7 @@ public class ProgrammingExerciseService {
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         // Step 10: Setup build plans for template and solution participation
-        setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
+        setupBuildPlansForNewExercise(savedProgrammingExercise);
         savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
         // Step 11: Update task from problem statement
@@ -509,10 +508,8 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                                exercise should contain a fully initialized template and solution participation.
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
-     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws JsonProcessingException {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
@@ -539,13 +536,9 @@ public class ProgrammingExerciseService {
             programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
 
-        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
-        // we do not trigger them here
-        if (!isImportedFromFile) {
-            // trigger BASE and SOLUTION build plans once here
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
-        }
+        // trigger BASE and SOLUTION build plans once here
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**
