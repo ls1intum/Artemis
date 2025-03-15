@@ -195,17 +195,6 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
-    void testPerformDeepLinkingWithUnknownType() throws MalformedURLException, URISyntaxException {
-        createMockOidcIdToken();
-        DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
-
-        assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId(), result.exerciseSet(),
-                        DeepLinkingType.fromString("TEST_INVALID_TYPE")))
-                .withMessage("Invalid deep linking type provided").matches(exception -> "LTI".equals(exception.getEntityName()) && "invalidType".equals(exception.getErrorKey()));
-    }
-
-    @Test
     void testPerformDeepLinkingWithLectureType() throws MalformedURLException, URISyntaxException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");

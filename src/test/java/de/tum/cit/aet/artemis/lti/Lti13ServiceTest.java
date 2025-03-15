@@ -10,7 +10,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -51,7 +50,6 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -217,12 +215,19 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_courseNotFound() {
-        this.prepareForPerformExerciseLaunch(1000L, 123L, true);
+        long courseId = 1000L;
+        long exerciseId = 123L;
+        prepareForPerformExerciseLaunch(courseId, exerciseId, true);
 
-        doThrow(EntityNotFoundException.class).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(1000L);
-        doThrow(EntityNotFoundException.class).when(courseRepository).findById(1000L);
+        when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId))
+                .thenThrow(new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound"));
+        when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId)).withMessage("Course not found")
+                .satisfies(exception -> {
+                    assertThat(exception.getEntityName()).isEqualTo("LTI");
+                    assertThat(exception.getErrorKey()).isEqualTo("ltiCourseNotFound");
+                });
     }
 
     @Test
