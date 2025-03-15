@@ -5,5 +5,6 @@ export class MockProfileService {
     getProfileInfo = () =>
         new BehaviorSubject<ProfileInfo | undefined>({
             activeProfiles: [],
+            activeModuleFeatures: [],
         } as unknown as ProfileInfo);
 }
