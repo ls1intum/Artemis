@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
@@ -617,9 +618,12 @@ class Lti13ServiceTest {
     void getTargetLinkType_unknownPath() {
         String targetLinkUrl = "https://some-artemis-domain.org/courses/123/invalid-path";
 
-        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+        BadRequestAlertException exception = assertThrows(BadRequestAlertException.class, () -> {
+            lti13Service.getTargetLinkType(targetLinkUrl);
+        });
 
-        assertThat(linkType).isEqualTo(DeepLinkingType.INVALID);
+        assertThat(exception.getMessage()).isEqualTo("Content type not found");
+        assertThat(exception.getErrorKey()).isEqualTo("ltiContentTypeNotFound");
     }
 
     @Test

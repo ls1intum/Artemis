@@ -392,7 +392,7 @@ public class Lti13Service {
         }
         catch (URISyntaxException ex) {
             log.info("Malformed target link URL: {}", targetLinkUrl);
-            return DeepLinkingType.INVALID;
+            throw new BadRequestAlertException("Malformed target link URL", "LTI", "ltiMalformedUrl");
         }
 
         for (Map.Entry<String, DeepLinkingType> entry : TARGET_LINK_PATTERNS.entrySet()) {
@@ -402,7 +402,7 @@ public class Lti13Service {
         }
 
         log.info("No specific content type detected in target link: {}", targetLinkUrl);
-        return DeepLinkingType.INVALID;
+        throw new BadRequestAlertException("Content type not found", "LTI", "ltiContentTypeNotFound");
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {

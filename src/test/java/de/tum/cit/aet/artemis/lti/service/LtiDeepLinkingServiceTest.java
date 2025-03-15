@@ -200,7 +200,8 @@ class LtiDeepLinkingServiceTest {
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
 
         assertThatExceptionOfType(BadRequestAlertException.class)
-                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId(), result.exerciseSet(), DeepLinkingType.INVALID))
+                .isThrownBy(() -> ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", result.courseId(), result.exerciseSet(),
+                        DeepLinkingType.fromString("TEST_INVALID_TYPE")))
                 .withMessage("Invalid deep linking type provided").matches(exception -> "LTI".equals(exception.getEntityName()) && "invalidType".equals(exception.getErrorKey()));
     }
 
