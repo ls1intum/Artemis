@@ -13,12 +13,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
     private tutorialGroupsService = inject(TutorialGroupsService);

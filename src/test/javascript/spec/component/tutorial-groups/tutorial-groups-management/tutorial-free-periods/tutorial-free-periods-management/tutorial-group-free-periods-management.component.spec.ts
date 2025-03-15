@@ -138,8 +138,8 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     it('should display three rows for three free periods', () => {
         const rowButtons = fixture.debugElement.queryAll(By.css('jhi-tutorial-group-free-period-row-buttons'));
         expect(rowButtons).toHaveLength(3);
-        expect(rowButtons[0].componentInstance.tutorialFreePeriod).toEqual(thirdOfJanuaryPeriod);
-        expect(rowButtons[1].componentInstance.tutorialFreePeriod).toEqual(secondOfJanuaryPeriod);
-        expect(rowButtons[2].componentInstance.tutorialFreePeriod).toEqual(firstOfJanuaryPeriod);
+        expect(rowButtons[0].componentInstance.tutorialFreePeriod()).toEqual(thirdOfJanuaryPeriod);
+        expect(rowButtons[1].componentInstance.tutorialFreePeriod()).toEqual(secondOfJanuaryPeriod);
+        expect(rowButtons[2].componentInstance.tutorialFreePeriod()).toEqual(firstOfJanuaryPeriod);
     });
 });

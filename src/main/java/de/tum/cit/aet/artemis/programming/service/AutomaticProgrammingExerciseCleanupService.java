@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URISyntaxException;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class AutomaticProgrammingExerciseCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticProgrammingExerciseCleanupService.class);
