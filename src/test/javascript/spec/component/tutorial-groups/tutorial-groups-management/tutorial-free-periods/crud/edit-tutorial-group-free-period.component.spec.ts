@@ -125,9 +125,9 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         periodService = TestBed.inject(TutorialGroupFreePeriodService);
         examplePeriod = freePeriod;
         exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
-        component.course = course;
-        component.tutorialGroupFreePeriod = examplePeriod;
-        component.tutorialGroupsConfiguration = exampleConfiguration;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroupFreePeriod', examplePeriod);
+        fixture.componentRef.setInput('tutorialGroupsConfiguration', exampleConfiguration);
         component.initialize();
         fixture.detectChanges();
     }
