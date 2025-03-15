@@ -67,9 +67,14 @@
                     </a>
                 </div>
             }
-            @if (exercise.type === ExerciseType.PROGRAMMING) {
+            @if (
+                submission &&
+                exercise.type === ExerciseType.PROGRAMMING &&
+                (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                    (exercise.assessmentType === AssessmentType.AUTOMATIC && exercise.allowComplaintsForAutomaticAssessments === true))
+            ) {
                 <div>
-                    <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise)" class="btn btn-primary btn-sm mb-1">
+                    <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise, submission)" class="btn btn-primary btn-sm mb-1">
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         {{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}
                     </a>
