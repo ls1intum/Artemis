@@ -22,7 +22,7 @@ export enum CourseOverviewRoutePath {
     COMMUNICATION = 'communication',
 }
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/overview/courses.component').then((m) => m.CoursesComponent),
@@ -34,7 +34,12 @@ const routes: Routes = [
     },
     {
         path: CourseOverviewRoutePath.ENROLL,
-        loadChildren: () => import('./course-registration/course-registration.route').then((m) => m.routes),
+        loadComponent: () => import('app/overview/course-registration/course-registration.component').then((m) => m.CourseRegistrationComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.studentDashboard.enroll.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: CourseOverviewRoutePath.ARCHIVE,
@@ -50,7 +55,13 @@ const routes: Routes = [
     // so we need to load it outside the normal course routing
     {
         path: ':courseId/register',
-        loadChildren: () => import('./course-registration/course-registration-detail/course-registration-detail.route').then((m) => m.routes),
+        loadComponent: () =>
+            import('app/overview/course-registration/course-registration-detail/course-registration-detail.component').then((m) => m.CourseRegistrationDetailComponent),
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.studentDashboard.enroll.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':courseId',
@@ -82,7 +93,8 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/exercise-details/course-exercise-details.route').then((m) => m.routes),
+                        loadComponent: () => import('app/orion/participation/orion-course-exercise-details.component').then((m) => m.OrionCourseExerciseDetailsComponent),
+                        pathMatch: 'full',
                     },
                 ],
             },
@@ -95,12 +107,13 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/text/participate/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
-                path: 'exercises/programming-exercises/:exerciseId/code-editor',
+                path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
+                loadComponent: () => import('app/exercises/programming/participate/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.programmingExercise',
                 },
-                loadChildren: () => import('../exercises/programming/participate/programming-participation.route').then((m) => m.routes),
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'exercises/:exerciseId/repository',
@@ -127,12 +140,14 @@ const routes: Routes = [
                 loadChildren: () => import('../exercises/quiz/participate/quiz-participation.route').then((m) => m.routes),
             },
             {
-                path: 'exercises/file-upload-exercises/:exerciseId',
+                path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
+                loadComponent: () => import('app/exercises/file-upload/participate/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',
                 },
-                loadChildren: () => import('../exercises/file-upload/participate/file-upload-participation.route').then((m) => m.routes),
+                canActivate: [UserRouteAccessService],
+                canDeactivate: [PendingChangesGuard],
             },
 
             {
@@ -155,7 +170,7 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/course-lectures/course-lecture-details.route').then((m) => m.routes),
+                        loadComponent: () => import('app/overview/course-lectures/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
                     },
                 ],
             },
@@ -180,17 +195,29 @@ const routes: Routes = [
                 children: [
                     {
                         path: '',
-                        loadChildren: () => import('./course-competencies/course-competencies.route').then((m) => m.routes),
+                        pathMatch: 'full',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.competencies',
+                        },
+                        loadComponent: () => import('app/overview/course-competencies/course-competencies.component').then((m) => m.CourseCompetenciesComponent),
+                        canActivate: [UserRouteAccessService],
                     },
                     {
                         path: ':competencyId',
-                        loadChildren: () => import('../overview/course-competencies/course-competencies-details.route').then((m) => m.routes),
+                        loadComponent: () => import('app/overview/course-competencies/course-competencies-details.component').then((m) => m.CourseCompetenciesDetailsComponent),
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.competencies',
+                        },
+                        canActivate: [UserRouteAccessService],
                     },
                 ],
             },
             {
                 path: CourseOverviewRoutePath.DASHBOARD,
-                loadChildren: () => import('./course-dashboard/course-dashboard.route').then((m) => m.routes),
+                pathMatch: 'full',
+                loadComponent: () => import('app/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
@@ -210,7 +237,8 @@ const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.COMMUNICATION,
-                loadChildren: () => import('./course-conversations/course-conversations.route').then((m) => m.routes),
+                pathMatch: 'full',
+                loadComponent: () => import('app/overview/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',
@@ -242,7 +270,6 @@ const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadChildren: () => import('../overview/tutorial-group-details/course-tutorial-group-details.route').then((m) => m.routes),
                     },
                 ],
             },
@@ -273,12 +300,16 @@ const routes: Routes = [
                 ],
             },
             {
-                path: 'plagiarism-cases',
-                loadChildren: () => import('../course/plagiarism-cases/student-view/plagiarism-cases-student-view.route').then((m) => m.routes),
+                path: 'plagiarism-cases/:plagiarismCaseId',
+                loadComponent: () =>
+                    import('app/course/plagiarism-cases/student-view/detail-view/plagiarism-case-student-detail-view.component').then(
+                        (m) => m.PlagiarismCaseStudentDetailViewComponent,
+                    ),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.plagiarismCases',
                 },
+                canActivate: [UserRouteAccessService],
             },
             {
                 path: CourseOverviewRoutePath.FAQ,
@@ -297,14 +328,5 @@ const routes: Routes = [
                 pathMatch: 'full',
             },
         ],
-    },
-];
-
-const COURSE_ROUTES = [...routes];
-
-export const coursesState: Routes = [
-    {
-        path: '',
-        children: COURSE_ROUTES,
     },
 ];
