@@ -58,7 +58,13 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/iris-settings',
-                loadChildren: () => import('app/iris/settings/iris-course-settings-update/iris-course-settings-update.route').then((m) => m.routes),
+                loadComponent: () => import('app/iris/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.iris.settings.title.course',
+                },
+                canActivate: [UserRouteAccessService, IrisGuard],
+                canDeactivate: [PendingChangesGuard],
             },
             {
                 path: ':courseId/lectures',
