@@ -468,7 +468,7 @@ public class Lti13Service {
         return username.replaceAll("[\r\n]", "");
     }
 
-    private boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {
+    public boolean hasTargetLinkWithoutExercise(String targetLinkUrl, Optional<Lecture> targetLecture) {
         DeepLinkingType linkType = getTargetLinkType(targetLinkUrl);
         return linkType == DeepLinkingType.COMPETENCY || linkType == DeepLinkingType.LEARNING_PATH || targetLecture.isPresent() || linkType == DeepLinkingType.IRIS;
     }

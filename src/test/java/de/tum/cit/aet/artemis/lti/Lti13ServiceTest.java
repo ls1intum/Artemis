@@ -671,6 +671,36 @@ class Lti13ServiceTest {
         verify(ltiService).prepareLogoutCookie(response);
     }
 
+    @Test
+    void hasTargetLinkWithoutExercise_competencyPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/competencies";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_learningPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/learning-path";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_irisPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
