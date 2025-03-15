@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, input } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
@@ -38,8 +38,8 @@ export class ScheduleFormComponent implements OnInit {
     formatter = inject(NgbDateParserFormatter);
     cdr = inject(ChangeDetectorRef);
 
-    @Input() course: Course;
-    @Input() parentFormGroup: FormGroup;
+    course = input.required<Course>();
+    parentFormGroup = input.required<FormGroup>();
     formGroup: FormGroup;
 
     defaultPeriod?: Date[] = undefined;
@@ -52,7 +52,7 @@ export class ScheduleFormComponent implements OnInit {
     }
 
     get parentIsOnlineControl() {
-        return this.parentFormGroup.get('isOnline');
+        return this.parentFormGroup().get('isOnline');
     }
 
     get periodControl() {
@@ -99,8 +99,9 @@ export class ScheduleFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        if (this.course.tutorialGroupsConfiguration) {
-            const { tutorialPeriodStartInclusive, tutorialPeriodEndInclusive } = this.course.tutorialGroupsConfiguration;
+        const tutorialGroupsConfiguration = this.course().tutorialGroupsConfiguration;
+        if (tutorialGroupsConfiguration) {
+            const { tutorialPeriodStartInclusive, tutorialPeriodEndInclusive } = tutorialGroupsConfiguration;
             this.defaultPeriod = [tutorialPeriodStartInclusive!.toDate(), tutorialPeriodEndInclusive!.toDate()];
         }
 
@@ -116,7 +117,7 @@ export class ScheduleFormComponent implements OnInit {
             { validators: validTimeRange },
         );
 
-        this.parentFormGroup.addControl('schedule', this.formGroup);
+        this.parentFormGroup().addControl('schedule', this.formGroup);
 
         this.parentIsOnlineControl?.valueChanges.subscribe(() => {
             this.cdr.detectChanges();
