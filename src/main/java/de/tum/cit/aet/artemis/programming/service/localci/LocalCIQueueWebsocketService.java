@@ -70,7 +70,7 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void sendBuildAgentSummaryOverWebsocket() {
-        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformationWithoutRecentBuildJobs());
+        var buildAgentSummary = removeUnnecessaryInformationFromBuildAgentInformation(distributedDataAccessService.getBuildAgentInformation());
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 

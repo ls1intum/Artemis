@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
@@ -18,11 +18,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, NgClass, TutorialGroupFreePeriodRowButtonsComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class TutorialGroupFreePeriodsTableComponent {
-    @Input() course: Course;
-    @Input() tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    @Input() tutorialGroupFreePeriods: TutorialGroupFreePeriod[];
-    @Input() labelText: string;
-    @Input() loadAll: () => void;
+    course = input.required<Course>();
+    tutorialGroupsConfiguration = input.required<TutorialGroupsConfiguration>();
+    tutorialGroupFreePeriods = input.required<TutorialGroupFreePeriod[]>();
+    labelText = input.required<string>();
+    loadAll = input.required<() => void>();
 
     protected readonly TutorialGroupFreePeriodsManagementComponent = TutorialGroupFreePeriodsManagementComponent;
 

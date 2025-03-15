@@ -52,9 +52,9 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     });
 
     const setInputValues = () => {
-        component.course = course;
-        component.tutorialGroupConfiguration = configuration;
-        component.tutorialFreePeriod = tutorialFreePeriod;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroupConfiguration', configuration);
+        fixture.componentRef.setInput('tutorialFreePeriod', tutorialFreePeriod);
     };
 
     afterEach(() => {

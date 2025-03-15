@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.user.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class UserUtilService {
 
     private static final Logger log = LoggerFactory.getLogger(UserUtilService.class);
