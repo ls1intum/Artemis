@@ -14,7 +14,9 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
+    </changeSet>
 
+    <changeSet id="20240513101555" author="mkawka">
         <addColumn tableName="participation">
             <column defaultValueNumeric="0"
                     name="attempt"
@@ -22,9 +24,10 @@
                 <constraints nullable="false"/>
             </column>
         </addColumn>
+    </changeSet>
 
+    <changeSet id="20240513101557" author="mkawka">
         <dropIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation"/>
-
         <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
             <column name="student_id"/>
             <column name="exercise_id"/>
