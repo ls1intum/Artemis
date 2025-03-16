@@ -44,6 +44,7 @@ import {
     faQuestion,
     faSync,
     faTable,
+    faTableCells,
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -478,10 +479,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     getSidebarItems(): SidebarItem[] {
         const sidebarItems = this.getDefaultItems();
-        const lecturesItem: SidebarItem = this.getLecturesItems();
-        sidebarItems.splice(-1, 0, lecturesItem);
-        const examsItem: SidebarItem = this.getExamsItems();
-        sidebarItems.unshift(examsItem);
 
         const currentCourse = this.course();
         if (currentCourse && isCommunicationEnabled(currentCourse)) {
@@ -622,9 +619,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
         const overviewItem: SidebarItem = {
             routerLink: '',
-            icon: faEye,
+            icon: faTableCells,
             title: 'Overview',
-            translation: 'artemisApp.courseOverview.menu.overview',
+            translation: 'artemisApp.course.overview',
             hidden: false,
         };
         const exercisesItem: SidebarItem = {
@@ -646,7 +643,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             hidden: false,
         };
 
-        return items.concat([overviewItem, exercisesItem, statisticsItem]);
+        return items.concat([overviewItem, this.getExamsItems(), exercisesItem, this.getLecturesItems(), statisticsItem]);
     }
 
     // only the communication tab has a sidebar in the management view
