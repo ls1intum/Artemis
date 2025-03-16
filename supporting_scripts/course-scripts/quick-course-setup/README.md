@@ -56,13 +56,11 @@ These scripts help you configure and set up your first Artemis course quickly.
 
 1. Start your local Artemis instance.
 2. Configure the values in [config.ini](./config.ini) according to your setup.
-3. Run the main script using IntelliJ:
-    - Use the play button within IntelliJ (if Python is configured properly).
-    - Alternatively, you can run the script directly from the terminal using the commands provided in this README.
+3. Run the scripts of your choice _(see the shell commands provided below)_
 
-### Notes
-1.  Ensure that the [config.ini](./config.ini) file is correctly configured before running any scripts.
-2.  Always test the scripts on a local setup before running them on a production or test server. ⚠️
+**Note:**
+1. Ensure that the [config.ini](./config.ini) file is correctly configured before running any scripts.
+2. **Always test the scripts on a local setup before running them on a production or test server! ⚠️**
 
 ### Create Users
 Creates users 1-20 (students, tutors, editors, instructors - 5 for each group).
