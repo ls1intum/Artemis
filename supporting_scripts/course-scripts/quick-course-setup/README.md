@@ -2,14 +2,14 @@
 
 This project contains Python scripts that automate the setup and management of courses and users in an Artemis instance. The scripts help you create a course, generate users, enroll them into courses, and manage programming exercises, including participations and commits. The project is useful for setting up test environments or quickly initializing a course with a large number of students.
 
-## Setup
+# Setup
 
-### Prerequisites
+## Prerequisites
 
 - Python 3.12 or higher
 - pip
 
-### 1. Optionally, create and activate a virtual environment
+## 1. Optionally, create and activate a virtual environment
 It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
 
 1. Install `virtualenv` if it's not already installed:
@@ -39,18 +39,18 @@ It is recommended to use a virtual environment to manage dependencies in isolati
 
 Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
 
-### 2. Install the Required Packages
+## 2. Install the Required Packages
 ```shell
 pip install -r requirements.txt
 ```
 
-### 3. Configure the Environment
+## 3. Configure the Environment
 1. Start your local Artemis instance.
 2. Configure the [config.ini](./config.ini) file according to your local or test server setup.
 
 # Usage
 
-## Section 1: Create Local Course and Users
+## Create Local Course and Users
 
 These scripts help you configure and set up your first Artemis course quickly.
 
@@ -59,6 +59,10 @@ These scripts help you configure and set up your first Artemis course quickly.
 3. Run the main script using IntelliJ:
     - Use the play button within IntelliJ (if Python is configured properly).
     - Alternatively, you can run the script directly from the terminal using the commands provided in this README.
+
+### Notes
+1.  Ensure that the [config.ini](./config.ini) file is correctly configured before running any scripts.
+2.  Always test the scripts on a local setup before running them on a production or test server. ⚠️
 
 ### Create Users
 Creates users 1-20 (students, tutors, editors, instructors - 5 for each group).
@@ -81,41 +85,35 @@ Creates a course for which the users are registered according to their user grou
 python3 create_course.py
 ```
 
-## Test Servers
+### Test Servers
+#### Create a Course with Default Users
 
-### To configure the scripts for use with Artemis test servers:
+1.	Adjust `server_url` and `client_url` according to the test server.
+2.  Update `admin_user` and `admin_password` to valid values for the test server.
+3.  Set `is_local_course` in [config.ini](./config.ini) to `False`.
+4. Create a Course and Assign the Default Users
 
-1.	Adjust server_url and client_url according to the test server.
-2.  Update admin_user and admin_password to valid values for the test server.
-3.  Set is_local_course in [config.ini](./config.ini) to False.
+    | User Range | Role        |
+    |------------|-------------|
+    | 1-5        | Students    |
+    | 6-10       | Tutors      |
+    | 11-15      | Instructors |
+    | 16-20      | Editors     |
 
-Create a Course and Assign the Default Users
+5. Define the name of your course in the [config.ini](./config.ini) as `course_name`.
+6. Run the script to create a new course with the default users:
+    ```shell  
+    python3 create_course.py
+    ```
 
-1-5: students
-6-10: tutors
-11-15: instructors
-16-20: editors
+#### Add Users to Existing Course
+1. Define the `course_id` in the [config.ini](./config.ini).
+2. Run the script to add users to the existing course:
+    ```shell  
+    python3 add_users_to_course.py
+    ```
 
-Define the name of your course in the [config.ini](./config.ini) as `course_name`.
-
-```shell  
-python3 create_course.py
-```
-
-### Add Users to Existing Course
-
-Define the `course_id` in the [config.ini](./config.ini).
-
-```shell  
-python3 add_users_to_course.py
-```
-
-## Notes
-
-1.  Ensure that the [config.ini](./config.ini) file is correctly configured before running any scripts.
-2.  Always test the scripts on a local setup before running them on a production or test server.
-
-## Section 2: Artemis Large Course with Submissions on Programming Exercise Automation
+## Artemis Large Course with Submissions on Programming Exercise Automation
 
 This section details how to use the large_course_main script that orchestrates the entire process, from user creation to course setup, and finally user participation in programming exercises.
 
@@ -128,12 +126,15 @@ The large_course_main script performs all necessary steps to set up a large cour
 1. Open the project in IntelliJ. 
 2. Locate the large_course_main.py file in the project directory.
 3. Update the [config.ini](./config.ini) to your needs
-   1. To change the number of students created, modify the students variable in the config.ini file.
-   2. To change the number of commits each student should perform in the example exercise, modify the commits variable in the config.ini file.
-   3. To change the number of programming exercises created, modify the exercises variable in the config.ini file.
-   4. To change the name of programming exercises created, modify the exercise_name variable in the config.ini file.
-   5. To use an existing course, modify the create_course variable to False and provide a valid course_id in the config.ini file.
-   6. To use an existing programming exercise, modify the create_exercises variable to False and provide a valid exercise_Ids in the config.ini file.
+ 
+   | Variable           | Description                                                                              |
+   |--------------------|------------------------------------------------------------------------------------------|
+   | `students`         | Number of students to be created                                                         |
+   | `commits`          | Number of commits each student should perform in the example exercise                    |
+   | `exercises`        | Number of programming exercises to be created                                            |
+   | `exercise_name`    | Name of the programming exercises to be created                                          |
+   | `create_course`    | Set to `False` to use an existing course and provide a valid `course_id`.                |
+   | `create_exercises` | Set to `False` to use an existing programming exercise and provide valid `exercise_Ids`. |
 4. You can use the play button within IntelliJ (if Python is configured properly) to run the script.
 ```shell
 python3 large_course_main.py
@@ -175,8 +176,6 @@ Make sure to adjust the [config.ini](./config.ini) file to use the existing prog
 ### Optional: Deleting All Created Students
 
 If you want to delete all the students created by the script:
-
-1.	Run the main in delete_students.py.
 ```shell
 python3 delete_students.py
 ```
