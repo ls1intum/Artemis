@@ -11,7 +11,10 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    computed,
+    effect,
     inject,
+    signal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -110,36 +113,41 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
-
-    // course id of the course that is currently displayed
-    private courseId: number;
     private subscription: Subscription;
     dashboardSubscription: Subscription;
-    // currently displayed course
-    course?: Course;
-    // all courses of the current user, used for the dropdown menu
-    courses?: Course[];
-    refreshingCourse = false;
-    hasUnreadMessages: boolean;
-    communicationRouteLoaded: boolean;
-    atlasEnabled = false;
-    isProduction = true;
-    isTestServer = false;
-    pageTitle: string;
-    hasSidebar = false;
-    isNavbarCollapsed = false;
-    isSidebarCollapsed = false;
     profileSubscription?: Subscription;
-    showRefreshButton = false;
-    isExamStarted = false;
     private examStartedSubscription: Subscription;
-    readonly MIN_DISPLAYED_COURSES: number = 6;
-    isShownViaLti = false;
     private ltiSubscription: Subscription;
+    private controlsSubscription?: Subscription;
+    private vcSubscription?: Subscription;
 
-    private conversationServiceInstantiated = false;
-    private checkedForUnreadMessages = false;
-    activatedComponentReference:
+    // Signals for reactive state management
+    private courseId = signal<number | undefined>(undefined);
+    course = signal<Course | undefined>(undefined);
+    courses = signal<Course[]>([]);
+    refreshingCourse = signal<boolean>(false);
+    hasUnreadMessages = signal<boolean>(false);
+    communicationRouteLoaded = signal<boolean>(false);
+    atlasEnabled = signal<boolean>(false);
+    isProduction = signal<boolean>(true);
+    isTestServer = signal<boolean>(false);
+    pageTitle = signal<string>('');
+    hasSidebar = signal<boolean>(false);
+    isNavbarCollapsed = signal<boolean>(false);
+    isSidebarCollapsed = signal<boolean>(false);
+    isExamStarted = signal<boolean>(false);
+    isShownViaLti = signal<boolean>(false);
+
+    // These aren't in the original but needed for the template
+    courseActionItems: CourseActionItem[] = [];
+
+    sidebarItems = computed(() => this.getSidebarItems());
+
+    readonly MIN_DISPLAYED_COURSES: number = 6;
+
+    private conversationServiceInstantiated = signal<boolean>(false);
+    private checkedForUnreadMessages = signal<boolean>(false);
+    activatedComponentReference = signal<
         | CourseDetailComponent
         | ExamManagementComponent
         | CourseManagementExercisesComponent
@@ -153,18 +161,16 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         | AssessmentDashboardComponent
         | CourseScoresComponent
         | FaqComponent
-        | BuildQueueComponent;
+        | BuildQueueComponent
+        | null
+    >(null);
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
-    // Subscription to listen to changes on the control configuration
-    private controlsSubscription?: Subscription;
-    // Subscription to listen for the ng-container for controls to be mounted
-    private vcSubscription?: Subscription;
     // The current controls template from the sub-route component to render
-    private controls?: TemplateRef<any>;
+    private controls = signal<TemplateRef<any> | undefined>(undefined);
     // The current controls configuration from the sub-route component
-    public controlConfiguration?: BarControlConfiguration;
+    public controlConfiguration = signal<BarControlConfiguration | undefined>(undefined);
 
     // ng-container mount point extracted from our own template so we can render sth in it
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
@@ -192,46 +198,62 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
+    constructor() {
+        // Set up effects to react to signal changes
+        effect(() => {
+            if (this.controlConfiguration() && this.controls() && this.controlsViewContainer) {
+                this.tryRenderControls();
+            }
+        });
+
+        effect(() => {
+            if (this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
+                this.setUpConversationService();
+            }
+        });
+    }
+
     async ngOnInit() {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
-            this.isSidebarCollapsed = true;
+            this.isSidebarCollapsed.set(true);
         });
 
         this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
-            this.isSidebarCollapsed = false;
+            this.isSidebarCollapsed.set(false);
         });
 
         this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
-            this.courseId = Number(params.courseId);
+            this.courseId.set(Number(params.courseId));
         });
 
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo: any) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-            this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+            this.isProduction.set(profileInfo?.inProduction);
+            this.isTestServer.set(profileInfo.testServer ?? false);
+            this.atlasEnabled.set(profileInfo.activeProfiles.includes(PROFILE_ATLAS));
         });
 
         this.getCollapseStateFromStorage();
-        this.course = this.courseStorageService.getCourse(this.courseId);
+        const storedCourse = this.courseStorageService.getCourse(this.courseId() || 0);
+        this.course.set(storedCourse);
+
         // Notify the course access storage service that the course has been accessed
-        // If course is not active, it means that it is accessed from course archive, which should not
-        // be stored in local storage and therefore displayed in recently accessed
-        if (this.course) {
+        if (storedCourse) {
             this.courseAccessStorageService.onCourseAccessed(
-                this.courseId,
+                this.courseId() || 0,
                 CourseAccessStorageService.STORAGE_KEY,
                 CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
             );
             this.courseAccessStorageService.onCourseAccessed(
-                this.courseId,
+                this.courseId() || 0,
                 CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
                 CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
             );
         }
 
         await this.updateRecentlyAccessedCourses();
+
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
-            this.isShownViaLti = isShownViaLti;
+            this.isShownViaLti.set(isShownViaLti);
         });
     }
 
@@ -240,16 +262,17 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         this.dashboardSubscription = this.courseService.findAllForDropdown().subscribe({
             next: (res: HttpResponse<Course[]>) => {
                 if (res.body) {
-                    const courses: Course[] = [];
+                    let courses: Course[] = [];
                     res.body?.forEach((course) => {
                         courses.push(course);
                     });
-                    this.courses = sortCourses(courses);
-                    if (this.courses.length > this.MIN_DISPLAYED_COURSES) {
+                    courses = sortCourses(courses);
+                    if (courses.length > this.MIN_DISPLAYED_COURSES) {
                         const lastAccessedCourseIds = this.courseAccessStorageService.getLastAccessedCourses(CourseAccessStorageService.STORAGE_KEY_DROPDOWN);
-                        this.courses = this.courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
+                        courses = courses.filter((course) => lastAccessedCourseIds.includes(course.id!));
                     }
-                    this.courses = this.courses.filter((course) => course.id !== this.courseId);
+                    courses = courses.filter((course) => course.id !== this.courseId());
+                    this.courses.set(courses);
                 }
             },
         });
@@ -263,25 +286,26 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     }
 
     private setUpConversationService() {
-        if (!isMessagingEnabled(this.course) && !isCommunicationEnabled(this.course)) {
+        const currentCourse = this.course();
+        if (!currentCourse || (!isMessagingEnabled(currentCourse) && !isCommunicationEnabled(currentCourse))) {
             return;
         }
 
-        if (!this.conversationServiceInstantiated && this.communicationRouteLoaded) {
+        if (!this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
             this.metisConversationService
-                .setUpConversationService(this.course!)
+                .setUpConversationService(currentCourse)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
                     complete: () => {
-                        this.conversationServiceInstantiated = true;
+                        this.conversationServiceInstantiated.set(true);
                         // service is fully set up, now we can subscribe to the respective observables
                         this.subscribeToHasUnreadMessages();
                     },
                 });
-        } else if (!this.checkedForUnreadMessages && isMessagingEnabled(this.course)) {
-            this.metisConversationService.checkForUnreadMessages(this.course!);
+        } else if (!this.checkedForUnreadMessages() && isMessagingEnabled(currentCourse)) {
+            this.metisConversationService.checkForUnreadMessages(currentCourse);
             this.subscribeToHasUnreadMessages();
-            this.checkedForUnreadMessages = true;
+            this.checkedForUnreadMessages.set(true);
         }
     }
 
@@ -301,8 +325,8 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     }
 
     private subscribeToHasUnreadMessages() {
-        this.metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
-            this.hasUnreadMessages = hasUnreadMessages ?? false;
+        this.metisConversationService.hasUnreadMessages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((hasUnreadMessages: boolean) => {
+            this.hasUnreadMessages.set(hasUnreadMessages ?? false);
         });
     }
 
@@ -313,22 +337,21 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
      */
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
-
         this.setUpConversationService();
-
-        this.hasSidebar = this.getHasSidebar();
+        this.hasSidebar.set(this.getHasSidebar());
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
-            this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
-            this.controlsSubscription =
-                this.controlConfiguration.subject?.subscribe(async (controls: TemplateRef<any>) => {
-                    this.controls = controls;
-                    this.tryRenderControls();
-                    await firstValueFrom(provider.controlsRendered);
-                    this.tryRenderControls();
-                }) || undefined;
+            this.controlConfiguration.set(provider.controlConfiguration as BarControlConfiguration);
+
+            this.controlsSubscription = provider.controlConfiguration?.subject?.subscribe(async (controls: TemplateRef<any>) => {
+                this.controls.set(controls);
+                this.tryRenderControls();
+                await firstValueFrom(provider.controlsRendered);
+                this.tryRenderControls();
+            });
         }
+
         if (
             componentRef instanceof CourseDetailComponent ||
             componentRef instanceof CourseManagementExercisesComponent ||
@@ -344,25 +367,16 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             componentRef instanceof FaqComponent ||
             componentRef instanceof BuildQueueComponent
         ) {
-            this.activatedComponentReference = componentRef;
+            this.activatedComponentReference.set(componentRef);
         }
 
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
         this.changeDetectorRef.detectChanges();
     }
 
-    // toggleSidebar() {
-    //     if (!this.activatedComponentReference) {
-    //         return;
-    //     }
-    //     const childRouteComponent = this.activatedComponentReference;
-    //     childRouteComponent.toggleSidebar();
-    //     this.isSidebarCollapsed = childRouteComponent.isCollapsed;
-    // }
-
     getPageTitle(): void {
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
-        this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
+        this.pageTitle.set(routePageTitle?.substring(routePageTitle.indexOf('.') + 1));
     }
 
     getHasSidebar(): boolean {
@@ -375,9 +389,8 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
      */
     onSubRouteDeactivate() {
         this.removeCurrentControlsView();
-        this.controls = undefined;
-        this.controlConfiguration = undefined;
-        this.controlsSubscription?.unsubscribe();
+        this.controls.set(undefined);
+        this.controlConfiguration.set(undefined);
         this.changeDetectorRef.detectChanges();
     }
 
@@ -391,9 +404,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
      * if all required data is available.
      */
     tryRenderControls() {
-        if (this.controlConfiguration && this.controls && this.controlsViewContainer) {
+        if (this.controlConfiguration() && this.controls() && this.controlsViewContainer) {
             this.removeCurrentControlsView();
-            this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls);
+            this.controlsEmbeddedView = this.controlsViewContainer.createEmbeddedView(this.controls()!);
             this.controlsEmbeddedView.detectChanges();
         }
     }
@@ -408,9 +421,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         this.closeSidebarEventSubscription?.unsubscribe();
         this.openSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-        this.ltiSubscription?.unsubscribe();
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])
@@ -421,12 +434,12 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     getCollapseStateFromStorage() {
         const storedCollapseState: string | null = localStorage.getItem('navbar.collapseState');
-        if (storedCollapseState) this.isNavbarCollapsed = JSON.parse(storedCollapseState);
+        if (storedCollapseState) this.isNavbarCollapsed.set(JSON.parse(storedCollapseState));
     }
 
     toggleCollapseState() {
-        this.isNavbarCollapsed = !this.isNavbarCollapsed;
-        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
+        this.isNavbarCollapsed.update((value) => !value);
+        localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed()));
     }
 
     /**
@@ -446,26 +459,26 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         sidebarItems.splice(-1, 0, lecturesItem);
         const examsItem: SidebarItem = this.getExamsItems();
         sidebarItems.unshift(examsItem);
-        if (isCommunicationEnabled(this.course)) {
+
+        const currentCourse = this.course();
+        if (currentCourse && isCommunicationEnabled(currentCourse)) {
             const communicationsItem: SidebarItem = this.getCommunicationsItems();
             sidebarItems.push(communicationsItem);
         }
 
-        //if (this.hasTutorialGroups()) {
         const tutorialGroupsItem: SidebarItem = this.getTutorialGroupsItems();
         sidebarItems.push(tutorialGroupsItem);
-        //}
 
-        if (this.atlasEnabled) {
+        if (this.atlasEnabled()) {
             const competenciesItem: SidebarItem = this.getCompetenciesItems();
             sidebarItems.push(competenciesItem);
-            if (this.course?.learningPathsEnabled) {
+            if (currentCourse?.learningPathsEnabled) {
                 const learningPathItem: SidebarItem = this.getLearningPathItems();
                 sidebarItems.push(learningPathItem);
             }
         }
 
-        if (this.course?.faqEnabled) {
+        if (currentCourse?.faqEnabled) {
             const faqItem: SidebarItem = this.getFaqItem();
             sidebarItems.push(faqItem);
         }
@@ -583,7 +596,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     getDefaultItems() {
         const items = [];
-        if (this.course?.studentCourseAnalyticsDashboardEnabled) {
+        if (this.course()?.studentCourseAnalyticsDashboardEnabled) {
             const dashboardItem: SidebarItem = this.getDashboardItems();
             items.push(dashboardItem);
         }

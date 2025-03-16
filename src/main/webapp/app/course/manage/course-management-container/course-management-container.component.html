@@ -1,32 +1,32 @@
 <!-- @if can't be used for isShownViaLti as it removes the element from the DOM, disrupting dropdown stability for the More-Menu. -->
-<div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti }">
+<div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti() }">
     <div class="vw-100 bg-body">
         <mat-sidenav-container
             class="vw-100"
             [ngClass]="{
-                'sidenav-height-dev': !isProduction || isTestServer,
-                'container-closed': isNavbarCollapsed,
+                'sidenav-height-dev': !isProduction() || isTestServer(),
+                'container-closed': isNavbarCollapsed(),
             }"
         >
             <mat-sidenav
                 disableClose
-                [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }"
+                [ngClass]="{ 'sidenav-height-dev': !isProduction() || isTestServer() }"
                 class="module-bg rounded-3"
                 opened="true"
                 mode="side"
-                [hidden]="isExamStarted"
+                [hidden]="isExamStarted()"
             >
                 <jhi-course-sidebar
-                    [course]="course"
-                    [courses]="courses"
-                    [sidebarItems]="sidebarItems"
+                    [course]="course()"
+                    [courses]="courses()"
+                    [sidebarItems]="sidebarItems()"
                     [courseActionItems]="courseActionItems"
-                    [isNavbarCollapsed]="isNavbarCollapsed"
-                    [isExamStarted]="isExamStarted"
-                    [isProduction]="isProduction"
-                    [isTestServer]="isTestServer"
-                    [hasUnreadMessages]="hasUnreadMessages"
-                    [communicationRouteLoaded]="communicationRouteLoaded"
+                    [isNavbarCollapsed]="isNavbarCollapsed()"
+                    [isExamStarted]="isExamStarted()"
+                    [isProduction]="isProduction()"
+                    [isTestServer]="isTestServer()"
+                    [hasUnreadMessages]="hasUnreadMessages()"
+                    [communicationRouteLoaded]="communicationRouteLoaded()"
                     (switchCourse)="switchCourse($event)"
                     (courseActionItemClick)="courseActionItemClick($event)"
                     (toggleCollapseState)="toggleCollapseState()"
@@ -35,22 +35,16 @@
 
             <mat-sidenav-content
                 [ngClass]="{
-                    'exam-wrapper': isExamStarted,
-                    'exam-height-dev': isExamStarted && (!isProduction || isTestServer),
-                    'sidenav-height-dev': !isProduction || isTestServer,
+                    'sidenav-height-dev': !isProduction() || isTestServer(),
                 }"
             >
-                @if (course) {
-                    <div
-                        id="course-title-bar-test"
-                        class="h5 module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top"
-                        [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }"
-                    >
+                @if (course()) {
+                    <div id="course-title-bar-test" class="h5 module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top" [ngStyle]="{ display: 'flex' }">
                         <div class="align-self-center d-flex">
-                            <!--                            @if (hasSidebar) {-->
+                            <!--                            @if (hasSidebar()) {-->
                             <!--                                <button-->
                             <!--                                    [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"-->
-                            <!--                                    [ngClass]="{ 'is-collapsed': isSidebarCollapsed, 'is-communication-module': pageTitle === 'communication' }"-->
+                            <!--                                    [ngClass]="{ 'is-collapsed': isSidebarCollapsed(), 'is-communication-module': pageTitle() === 'communication' }"-->
                             <!--                                    triggers="hover"-->
                             <!--                                    class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"-->
                             <!--                                    (click)="toggleSidebar()"-->
@@ -67,14 +61,14 @@
                             <!--                                    </div>-->
                             <!--                                </button>-->
                             <!--                            }-->
-                            <div class="align-self-center" [jhiTranslate]="'artemisApp.courseOverview.menu.' + pageTitle"></div>
+                            <div class="align-self-center" [jhiTranslate]="'artemisApp.courseOverview.menu.' + pageTitle()"></div>
                         </div>
                         <div class="d-flex gap-2">
                             <div id="student-view-button">
                                 <a
                                     class="btn btn-sm btn-outline-secondary"
-                                    [ngClass]="{ 'd-none d-sm-block': pageTitle === 'communication' }"
-                                    [routerLink]="['/courses', course.id]"
+                                    [ngClass]="{ 'd-none d-sm-block': pageTitle() === 'communication' }"
+                                    [routerLink]="['/courses', course()?.id]"
                                     jhiTranslate="artemisApp.courseOverview.manage"
                                 ></a>
                             </div>
@@ -83,16 +77,16 @@
                     <div
                         class="course-body-container"
                         [ngClass]="{
-                            'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar,
-                            'content-height-dev': !isProduction || isTestServer,
-                            'mx-2': !isExamStarted,
+                            'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
+                            'content-height-dev': !isProduction() || isTestServer(),
+                            'mx-2': !isExamStarted(),
                         }"
                     >
-                        @if (!hasSidebar) {
+                        @if (!hasSidebar()) {
                             <ng-container class="d-flex ms-auto" #controlsViewContainer />
                         }
                         <!-- Check for !isLTI to render the router outlet only once and avoid side effects on route updates. -->
-                        @if (!isShownViaLti) {
+                        @if (!isShownViaLti()) {
                             <ng-template *ngTemplateOutlet="routerOutlet" />
                         }
                     </div>
@@ -101,12 +95,12 @@
         </mat-sidenav-container>
     </div>
 </div>
-<div class="course-body-container" [ngClass]="{ 'd-none': !isShownViaLti }">
-    @if (!hasSidebar) {
+<div class="course-body-container" [ngClass]="{ 'd-none': !isShownViaLti() }">
+    @if (!hasSidebar()) {
         <ng-container class="d-flex ms-auto" #controlsViewContainer />
     }
     <!-- Check isLTI to render the router outlet only once and avoid side effects on route updates. -->
-    @if (isShownViaLti) {
+    @if (isShownViaLti()) {
         <ng-template *ngTemplateOutlet="routerOutlet" />
     }
 </div>
@@ -115,7 +109,4 @@
 
 <ng-template #routerOutlet>
     <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
-    <div class="refresh-overlay" [class.active]="refreshingCourse">
-        <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
-    </div>
 </ng-template>
