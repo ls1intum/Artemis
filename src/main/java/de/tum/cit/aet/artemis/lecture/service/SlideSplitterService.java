@@ -116,7 +116,7 @@ public class SlideSplitterService {
      * @param pdfFilename    The name of the PDF file.
      */
     public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename) {
-        log.debug("Processing slides for Attachment Unit {}", attachmentUnit.getId());
+        log.debug("Splitting Attachment Unit file {} into single slides", attachmentUnit.getAttachment().getName());
         try {
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
@@ -248,8 +248,8 @@ public class SlideSplitterService {
             }
 
             // Clean up slides that are no longer in the page order
-            Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> (String) page.get("slideId")).filter(id -> !id.startsWith("temp_"))  // Don't include temporary IDs
-                                                                                                                                                      // in the cleanup check
+            Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> (String) page.get("slideId")).filter(id -> !id.startsWith("temp_"))
+
                     .collect(Collectors.toSet());
 
             if (!slideIdsInPageOrder.isEmpty()) {
@@ -262,8 +262,8 @@ public class SlideSplitterService {
             }
         }
         catch (IOException e) {
-            log.error("Error while processing slides for Attachment Unit {}", attachmentUnit.getId(), e);
-            throw new InternalServerErrorException("Could not process slides: " + e.getMessage());
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
         }
     }
 

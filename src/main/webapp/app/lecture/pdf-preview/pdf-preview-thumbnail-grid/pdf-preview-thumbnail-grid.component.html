@@ -1,6 +1,5 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
     @if (isAttachmentUnit()) {
-        <!-- With drag and drop enabled for attachment units -->
         @for (page of orderedPages(); track page.slideId) {
             <div
                 [id]="'pdf-page-' + page.slideId"
@@ -121,7 +120,6 @@
             </div>
         }
     }
-
     @if (isEnlargedView()) {
         <jhi-pdf-preview-enlarged-canvas-component
             class="enlarged-canvas"
