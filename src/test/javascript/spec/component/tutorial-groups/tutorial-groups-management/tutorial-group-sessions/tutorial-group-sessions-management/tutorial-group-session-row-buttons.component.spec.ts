@@ -44,9 +44,9 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
     });
 
     const setInputValues = () => {
-        component.course = course;
-        component.tutorialGroup = tutorialGroup;
-        component.tutorialGroupSession = tutorialGroupSession;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroup', tutorialGroup);
+        fixture.componentRef.setInput('tutorialGroupSession', tutorialGroupSession);
     };
 
     afterEach(() => {

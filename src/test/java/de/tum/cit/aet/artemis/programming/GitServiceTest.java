@@ -288,7 +288,7 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     }
 
     @Test
-    void testListFilesAndFolders() {
+    void testGetFilesAndFolders() {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
         var map = gitService.listFilesAndFolders(localRepo);
@@ -314,10 +314,10 @@ class GitServiceTest extends AbstractProgrammingIntegrationIndependentTest {
     }
 
     @Test
-    void testListFiles() {
+    void testGetFiles() {
         Repository localRepo = gitUtilService.getRepoByType(GitUtilService.REPOS.LOCAL);
 
-        var fileList = gitService.listFiles(localRepo);
+        var fileList = gitService.getFiles(localRepo);
 
         assertThat(fileList).hasSize(4).contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE1), localRepo))
                 .contains(new File(gitUtilService.getFile(GitUtilService.REPOS.LOCAL, GitUtilService.FILES.FILE2), localRepo))
