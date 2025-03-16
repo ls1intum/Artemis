@@ -12,7 +12,7 @@ import org.springframework.cache.CacheManager;
 import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.core.util.Tuple;
+import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -69,7 +69,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteCourse() {
         var course = courseUtilService.addEmptyCourse();
-        testCacheEvicted("courseTitle", () -> new Tuple<>(course.getId(), course.getTitle()), List.of(
+        testCacheEvicted("courseTitle", () -> new Pair<>(course.getId(), course.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
                     course.setTitle("testEvictsTitleOnUpdateTitleOrDeleteCourse");
@@ -93,7 +93,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     void testEvictsTitleOnUpdateTitleOrDeleteExercise() {
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         var exercise = course.getExercises().stream().findAny().orElseThrow();
-        testCacheEvicted("exerciseTitle", () -> new Tuple<>(exercise.getId(), exercise.getTitle()), List.of(
+        testCacheEvicted("exerciseTitle", () -> new Pair<>(exercise.getId(), exercise.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
                     exercise.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExercise");
@@ -116,7 +116,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteLecture() {
         var lecture = lectureUtilService.createCourseWithLecture(true);
-        testCacheEvicted("lectureTitle", () -> new Tuple<>(lecture.getId(), lecture.getTitle()), List.of(
+        testCacheEvicted("lectureTitle", () -> new Pair<>(lecture.getId(), lecture.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
                     lecture.setTitle("testEvictsTitleOnUpdateTitleOrDeleteLecture");
@@ -139,7 +139,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testEvictsTitleOnUpdateNameOrDeleteOrganization() {
         var org = organizationUtilService.createOrganization();
-        testCacheEvicted("organizationTitle", () -> new Tuple<>(org.getId(), org.getName()), List.of(
+        testCacheEvicted("organizationTitle", () -> new Pair<>(org.getId(), org.getName()), List.of(
                 // Should evict as we change the name
                 () -> {
                     org.setName("testEvictsTitleOnUpdateNameOrDeleteOrganization");
@@ -162,7 +162,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram() {
         var apollonDiagram = apollonDiagramRepository.save(ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
-        testCacheEvicted("diagramTitle", () -> new Tuple<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
+        testCacheEvicted("diagramTitle", () -> new Pair<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
                     apollonDiagram.setTitle("testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram");
@@ -186,7 +186,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     void testEvictsTitleOnUpdateTitleOrDeleteExam() {
         var course = courseUtilService.createCourse();
         var exam = examUtilService.addExam(course);
-        testCacheEvicted("examTitle", () -> new Tuple<>(exam.getId(), exam.getTitle()), List.of(
+        testCacheEvicted("examTitle", () -> new Pair<>(exam.getId(), exam.getTitle()), List.of(
                 // Should evict as we change the title
                 () -> {
                     exam.setTitle("testEvictsTitleOnUpdateTitleOrDeleteExam");
@@ -206,25 +206,25 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
                 }));
     }
 
-    private void testCacheEvicted(String cacheName, Supplier<Tuple<Object, String>> idTitleSupplier, List<Supplier<Boolean>> entityModifiers) {
+    private void testCacheEvicted(String cacheName, Supplier<Pair<Object, String>> idTitleSupplier, List<Supplier<Boolean>> entityModifiers) {
         var cache = cacheManager.getCache(cacheName);
         assertThat(cache).isNotNull();
 
         for (var modifier : entityModifiers) {
             var objInCache = idTitleSupplier.get();
-            cache.put(objInCache.x(), objInCache.y());
-            var cacheValueWrapper = cache.get(objInCache.x());
+            cache.put(objInCache.first(), objInCache.second());
+            var cacheValueWrapper = cache.get(objInCache.first());
             assertThat(cacheValueWrapper).isNotNull();
-            assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.y());
+            assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.second());
 
             boolean shouldEvict = modifier.get();
-            cacheValueWrapper = cache.get(objInCache.x());
+            cacheValueWrapper = cache.get(objInCache.first());
             if (shouldEvict) {
                 assertThat(cacheValueWrapper).isNull();
             }
             else {
                 assertThat(cacheValueWrapper).isNotNull();
-                assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.y());
+                assertThat(cacheValueWrapper.get()).isEqualTo(objInCache.second());
             }
         }
     }

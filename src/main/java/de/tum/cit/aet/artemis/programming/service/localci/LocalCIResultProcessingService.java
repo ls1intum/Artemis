@@ -25,7 +25,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
@@ -196,7 +194,6 @@ public class LocalCIResultProcessingService {
                 if (programmingExerciseParticipation != null) {
                     if (result != null) {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
-                        addResultToBuildAgentsRecentBuildJobs(buildJob, result);
                     }
                     else {
                         programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
@@ -230,34 +227,6 @@ public class LocalCIResultProcessingService {
                 }
             }
         }
-    }
-
-    /**
-     * Adds the given result to the recent build jobs of the build agent that processed the build job.
-     *
-     * @param buildJob the build job
-     * @param result   the result of the build job
-     */
-    private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
-        try {
-            distributedDataAccessService.getDistributedBuildAgentInformation().lock(buildJob.buildAgent().memberAddress());
-            BuildAgentInformation buildAgent = distributedDataAccessService.getDistributedBuildAgentInformation().get(buildJob.buildAgent().memberAddress());
-            if (buildAgent != null) {
-                List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
-                for (int i = 0; i < recentBuildJobs.size(); i++) {
-                    if (recentBuildJobs.get(i).id().equals(buildJob.id())) {
-                        recentBuildJobs.set(i, new BuildJobQueueItem(buildJob, ResultDTO.of(result)));
-                        break;
-                    }
-                }
-                distributedDataAccessService.getDistributedBuildAgentInformation().put(buildJob.buildAgent().memberAddress(),
-                        new BuildAgentInformation(buildAgent, recentBuildJobs));
-            }
-        }
-        finally {
-            distributedDataAccessService.getDistributedBuildAgentInformation().unlock(buildJob.buildAgent().memberAddress());
-        }
-
     }
 
     /**
