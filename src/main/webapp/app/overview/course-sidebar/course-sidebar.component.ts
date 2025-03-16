@@ -106,16 +106,18 @@ export class CourseSidebarComponent implements OnInit {
     applyThreshold(threshold: number, height: number) {
         const newHiddenItems: SidebarItem[] = [];
         let newAnyItemHidden = false;
+        if (this.sidebarItems()) {
+            const reversedSidebarItems = [...this.sidebarItems()].reverse();
 
-        const reversedSidebarItems = [...this.sidebarItems()].reverse();
-        reversedSidebarItems.forEach((item, index) => {
-            const currentThreshold = threshold - index * this.ITEM_HEIGHT;
-            item.hidden = height <= currentThreshold;
-            if (item.hidden) {
-                newAnyItemHidden = true;
-                newHiddenItems.unshift(item);
-            }
-        });
+            reversedSidebarItems.forEach((item, index) => {
+                const currentThreshold = threshold - index * this.ITEM_HEIGHT;
+                item.hidden = height <= currentThreshold;
+                if (item.hidden) {
+                    newAnyItemHidden = true;
+                    newHiddenItems.unshift(item);
+                }
+            });
+        }
 
         this.anyItemHidden.set(newAnyItemHidden);
         this.hiddenItems.set(newHiddenItems);
@@ -123,6 +125,6 @@ export class CourseSidebarComponent implements OnInit {
 
     /** Calculate threshold levels based on the number of entries in the sidebar */
     calculateThreshold(): number {
-        return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+        return this.sidebarItems()?.length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 }
