@@ -122,15 +122,13 @@ public class SlideSplitterService {
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
                 Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
-
                 Optional<Slide> existingSlideOpt = Optional.ofNullable(slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnit.getId(), slideNumber));
-                Slide slide = existingSlideOpt.orElseGet(Slide::new);
-                slide.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) slideNumber).toString());
-                slide.setSlideNumber(slideNumber);
-                slide.setAttachmentUnit(attachmentUnit);
-                slide.setHidden(hiddenPagesList.contains(slideNumber) ? java.sql.Date.valueOf(FOREVER) : null);
-                slideRepository.save(slide);
-
+                Slide slideEntity = existingSlideOpt.orElseGet(Slide::new);
+                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
+                slideEntity.setSlideNumber(slideNumber);
+                slideEntity.setAttachmentUnit(attachmentUnit);
+                slideEntity.setHidden(hiddenPagesList.contains(slideNumber) ? java.sql.Date.valueOf(FOREVER) : null);
+                slideRepository.save(slideEntity);
             }
         }
         catch (IOException e) {

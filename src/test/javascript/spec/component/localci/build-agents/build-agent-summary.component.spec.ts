@@ -14,6 +14,8 @@ import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { AlertService, AlertType } from '../../../../../../main/webapp/app/core/util/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -90,42 +92,12 @@ describe('BuildAgentSummaryComponent', () => {
         },
     ];
 
-    const mockRunningJobs2: BuildJob[] = [
-        {
-            id: '1',
-            name: 'Build Job 1',
-            buildAgent: { name: 'agent1', memberAddress: 'localhost:8080', displayName: 'Agent 1' },
-            participationId: 101,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 4,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo1,
-            buildConfig: buildConfig,
-        },
-        {
-            id: '3',
-            name: 'Build Job 3',
-            buildAgent: { name: 'agent3', memberAddress: 'localhost:8080', displayName: 'Agent 3' },
-            participationId: 103,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 5,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo1,
-            buildConfig: buildConfig,
-        },
-    ];
-
     const mockBuildAgents: BuildAgentInformation[] = [
         {
             id: 1,
             buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
-            runningBuildJobs: mockRunningJobs1,
             status: BuildAgentStatus.ACTIVE,
         },
         {
@@ -133,12 +105,12 @@ describe('BuildAgentSummaryComponent', () => {
             buildAgent: { name: 'buildagent2', displayName: 'Build Agent 2', memberAddress: 'agent2' },
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
-            runningBuildJobs: mockRunningJobs2,
             status: BuildAgentStatus.ACTIVE,
         },
     ];
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
+    let modalService: NgbModal;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -147,6 +119,7 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -156,6 +129,7 @@ describe('BuildAgentSummaryComponent', () => {
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
+        modalService = TestBed.inject(NgbModal);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
     }));
 
@@ -275,5 +249,18 @@ describe('BuildAgentSummaryComponent', () => {
             type: AlertType.DANGER,
             message: 'artemisApp.buildAgents.alerts.distributedDataClearFailed',
         });
+    });
+
+    it('should correctly open modals', () => {
+        const modalRef = {
+            result: Promise.resolve('close'),
+        } as NgbModalRef;
+        const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+
+        component.displayPauseBuildAgentModal();
+        expect(openSpy).toHaveBeenCalledTimes(1);
+
+        component.displayClearDistributedDataModal();
+        expect(openSpy).toHaveBeenCalledTimes(2);
     });
 });

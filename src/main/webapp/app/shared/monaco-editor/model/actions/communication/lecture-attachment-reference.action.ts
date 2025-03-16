@@ -11,6 +11,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 import { FileService } from 'app/shared/http/file.service';
 import { cloneDeep } from 'lodash-es';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 interface LectureWithDetails {
     id: number;
@@ -53,6 +54,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                         const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
                             if (attachment.link && attachment.name) {
                                 attachment.link = this.fileService.createAttachmentFileUrl(attachment.link!, attachment.name!, false);
+                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
                             }
 
                             return attachment;

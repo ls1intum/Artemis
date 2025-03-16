@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Manages continuous plagiarism control.
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);

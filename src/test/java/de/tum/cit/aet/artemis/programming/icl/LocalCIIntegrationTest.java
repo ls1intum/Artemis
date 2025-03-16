@@ -128,14 +128,14 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         testsRepository.localGit.push().call();
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        dockerClientTestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
                 Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
 
-        localVCLocalCITestService.mockInspectImage(dockerClient);
+        dockerClientTestService.mockInspectImage(dockerClient);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -457,7 +457,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testFaultyResultFiles() throws IOException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        dockerClientTestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
     }
@@ -467,7 +467,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testLegacyResultFormat() throws IOException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, OLD_REPORT_FORMAT_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        dockerClientTestService.mockTestResults(dockerClient, OLD_REPORT_FORMAT_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, false);
 
@@ -506,7 +506,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         resultPaths.add(PMD_RESULTS_PATH);
         resultPaths.add(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, resultPaths, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        dockerClientTestService.mockTestResults(dockerClient, resultPaths, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
 
@@ -518,7 +518,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testEmptyResultFile() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, EMPTY_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        dockerClientTestService.mockTestResults(dockerClient, EMPTY_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
 

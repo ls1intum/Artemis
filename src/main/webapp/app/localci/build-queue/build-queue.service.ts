@@ -6,7 +6,7 @@ import { throwError } from 'rxjs';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
-import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
+import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
@@ -40,10 +40,12 @@ export class BuildQueueService {
     }
 
     /**
-     * Get all running build jobs
+     * Get all running build jobs, optionally filtered by agent name
+     * @param agentName the name of the agent (optional)
      */
-    getRunningBuildJobs(): Observable<BuildJob[]> {
-        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running-jobs`);
+    getRunningBuildJobs(agentName?: string): Observable<BuildJob[]> {
+        const params: { agentName?: string } = agentName ? { agentName } : {};
+        return this.http.get<BuildJob[]>(`${this.adminResourceUrl}/running-jobs`, { params });
     }
 
     /**

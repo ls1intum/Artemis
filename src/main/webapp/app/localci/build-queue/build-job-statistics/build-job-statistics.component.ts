@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, effect, inject, input } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +27,8 @@ export class BuildJobStatisticsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
 
+    buildJobStatisticsInput = input<BuildJobStatistics>();
+
     readonly faAngleDown = faAngleDown;
     readonly faAngleRight = faAngleRight;
 
@@ -40,7 +42,18 @@ export class BuildJobStatisticsComponent implements OnInit {
     timeoutBuildsPercentage: string;
     missingBuildsPercentage: string;
 
+    displaySpanSelector = true;
+    displayMissingBuilds = true;
+
     buildJobStatistics = new BuildJobStatistics();
+
+    constructor() {
+        effect(() => {
+            if (this.buildJobStatisticsInput()) {
+                this.updateDisplayedBuildJobStatistics(this.buildJobStatisticsInput()!);
+            }
+        });
+    }
 
     ngOnInit() {
         this.getBuildJobStatistics(this.currentSpan);
@@ -55,10 +68,22 @@ export class BuildJobStatisticsComponent implements OnInit {
         domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.YELLOW, GraphColors.BLUE, GraphColors.GREY],
     } as Color;
 
+    getBuildJobStatistics(span: SpanType) {
+        this.route.url.pipe(take(1)).subscribe((url) => {
+            if (url[0].path === 'build-queue') {
+                this.getBuildJobStatisticsForBuildQueue(span);
+            } else {
+                this.displayMissingBuilds = false;
+                this.displaySpanSelector = false;
+                this.updateDisplayedBuildJobStatistics(this.buildJobStatisticsInput()!);
+            }
+        });
+    }
+
     /**
-     * Get Build Job Result statistics. Should be called in admin view only.
+     * Get Build Job Result statistics in the build queue view
      */
-    getBuildJobStatistics(span: SpanType = SpanType.WEEK) {
+    getBuildJobStatisticsForBuildQueue(span: SpanType = SpanType.WEEK) {
         this.route.paramMap.pipe(take(1)).subscribe((params) => {
             const courseId = Number(params.get('courseId'));
             if (courseId) {
