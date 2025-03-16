@@ -10,17 +10,17 @@ This project contains Python scripts that automate the setup and management of c
 - pip
 
 ### 1. Optionally, create and activate a virtual environment
-_It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean._
+It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
 
-1. Install `virtualenv` if it's not already installed :
-   If you are using [brew](https://brew.sh/) on macOS, you can install `virtualenv` using:
-    ```shell
-    brew install virtualenv
-    ``` 
-   Otherwise, you can use pip to install `virtualenv`:
-    ```shell
-    python3 -m pip install virtualenv
-    ```
+1. Install `virtualenv` if it's not already installed:
+   - If you are using [brew](https://brew.sh/) on macOS, you can install `virtualenv` using:
+      ```shell
+      brew install virtualenv
+      ```
+   - Otherwise, you can use pip to install `virtualenv`:
+      ```shell
+      python3 -m pip install virtualenv
+      ```
 
 2. Create a virtual environment in your project folder:
     ```shell
@@ -29,13 +29,13 @@ _It is recommended to use a virtual environment to manage dependencies in isolat
 
 3. Activate the virtual environment:
    - On **macOS/Linux**:
-    ```shell
-    source venv/bin/activate
-    ```
+     ```shell
+     source venv/bin/activate
+     ```
    - On **Windows**:
-    ```shell
-    venv\Scripts\activate
-    ```
+     ```shell
+     venv\Scripts\activate
+     ```
 
 Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
 
