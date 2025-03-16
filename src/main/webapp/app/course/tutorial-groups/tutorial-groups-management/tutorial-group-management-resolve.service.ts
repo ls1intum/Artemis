@@ -12,7 +12,8 @@ export class TutorialGroupManagementResolve implements Resolve<Course> {
     private router = inject(Router);
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
-        return this.service.find(route.params['courseId']).pipe(
+        //console.log('params are' + "abc" + route.parent?.params);
+        return this.service.find(route.parent?.params['courseId']).pipe(
             filter((response: HttpResponse<Course>) => response.ok),
             map((course: HttpResponse<Course>) => course.body!),
             pipe(

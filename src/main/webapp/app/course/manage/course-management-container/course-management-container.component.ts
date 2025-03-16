@@ -18,8 +18,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { Subject, Subscription, firstValueFrom } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
@@ -60,7 +60,7 @@ import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/overview/course-sidebar/course-sidebar.component';
+import { CourseSidebarComponent, SidebarItem } from 'app/overview/course-sidebar/course-sidebar.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { LectureComponent } from 'app/lecture/lecture.component';
@@ -77,6 +77,8 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { sortCourses } from 'app/shared/util/course.util';
+import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -96,6 +98,7 @@ import { sortCourses } from 'app/shared/util/course.util';
         FaIconComponent,
         TranslateDirective,
         CourseSidebarComponent,
+        CourseExamArchiveButtonComponent,
     ],
 })
 export class CourseManagementContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -112,11 +115,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
-    private toggleSidebarEventSubscription: Subscription;
     private subscription: Subscription;
     dashboardSubscription: Subscription;
     profileSubscription?: Subscription;
-    private examStartedSubscription: Subscription;
     private ltiSubscription: Subscription;
     private controlsSubscription?: Subscription;
     private vcSubscription?: Subscription;
@@ -132,14 +133,11 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     isProduction = signal<boolean>(true);
     isTestServer = signal<boolean>(false);
     pageTitle = signal<string>('');
-    hasSidebar = signal<boolean>(false);
     isNavbarCollapsed = signal<boolean>(false);
     isSidebarCollapsed = signal<boolean>(false);
     isExamStarted = signal<boolean>(false);
     isShownViaLti = signal<boolean>(false);
-
-    // These aren't in the original but needed for the template
-    courseActionItems: CourseActionItem[] = [];
+    hasSidebar = signal<boolean>(false);
 
     sidebarItems = computed(() => this.getSidebarItems());
 
@@ -162,8 +160,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         | CourseScoresComponent
         | FaqComponent
         | BuildQueueComponent
-        | null
-    >(null);
+    >(new CourseDetailComponent());
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -199,7 +196,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     constructor() {
-        // Set up effects to react to signal changes
         effect(() => {
             if (this.controlConfiguration() && this.controls() && this.controlsViewContainer) {
                 this.tryRenderControls();
@@ -223,6 +219,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         });
 
         this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
+            //console.log('params', params);
             this.courseId.set(Number(params.courseId));
         });
 
@@ -250,11 +247,24 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             );
         }
 
+        await firstValueFrom(this.loadCourse());
         await this.updateRecentlyAccessedCourses();
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti.set(isShownViaLti);
         });
+    }
+
+    loadCourse(): Observable<void> {
+        return this.courseService.findOneForDashboard(this.courseId()!).pipe(
+            map((res: HttpResponse<Course>) => {
+                if (res.body) {
+                    this.course.set(res.body);
+                }
+
+                this.setUpConversationService();
+            }),
+        );
     }
 
     /** initialize courses attribute by retrieving all courses from the server */
@@ -309,12 +319,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         }
     }
 
-    courseActionItemClick(item?: CourseActionItem) {
-        if (item?.action) {
-            item.action(item);
-        }
-    }
-
     ngAfterViewInit() {
         // Check if controls mount point is available, if not, wait for it
         if (this.controlsViewContainer) {
@@ -330,6 +334,12 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         });
     }
 
+    @HostListener('window:keydown.Control.Shift.b', ['$event'])
+    onKeyDownControlShiftB(event: KeyboardEvent) {
+        event.preventDefault();
+        this.toggleSidebar();
+    }
+
     /**
      * Accepts a component reference of the subcomponent rendered based on the current route.
      * If it provides a controlsConfiguration, we try to render the controls component
@@ -337,8 +347,14 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
      */
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
-        this.setUpConversationService();
+        //console.log('this.route.snapshot', this.route.snapshot);
+        const urlSegments = this.router.url.split('/');
+        //console.log('urlSegments', urlSegments);
+        // this is intentional. The url segments are "", "course-management", "courseId", "communication"
+        this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
         this.hasSidebar.set(this.getHasSidebar());
+
+        this.setUpConversationService();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
@@ -375,12 +391,21 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     }
 
     getPageTitle(): void {
-        const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
-        this.pageTitle.set(routePageTitle?.substring(routePageTitle.indexOf('.') + 1));
-    }
+        // Get the most deeply active route
+        let activeRoute = this.route.snapshot;
+        while (activeRoute.firstChild) {
+            activeRoute = activeRoute.firstChild;
+        }
 
-    getHasSidebar(): boolean {
-        return this.route.snapshot.firstChild?.data?.hasSidebar;
+        // Now get the page title from the most deeply active route
+        const routePageTitle: string = activeRoute.data?.pageTitle;
+
+        if (routePageTitle) {
+            this.pageTitle.set(routePageTitle);
+        } else {
+            // Fallback if no page title found
+            this.pageTitle.set('');
+        }
     }
 
     /**
@@ -416,11 +441,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
-        this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.openSidebarEventSubscription?.unsubscribe();
-        this.toggleSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
@@ -542,9 +565,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     getCompetenciesItems() {
         const competenciesItem: SidebarItem = {
-            routerLink: 'competencies',
+            routerLink: 'competency-management',
             icon: faFlag,
-            title: 'Competencies',
+            title: 'Competency Management',
             translation: 'artemisApp.courseOverview.menu.competencies',
             hasInOrionProperty: true,
             showInOrionWindow: false,
@@ -555,7 +578,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     getLearningPathItems() {
         const learningPathItem: SidebarItem = {
-            routerLink: 'learning-path',
+            routerLink: 'learning-path-management',
             icon: faNetworkWired,
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
@@ -583,7 +606,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     getFaqItem() {
         const faqItem: SidebarItem = {
-            routerLink: 'faq',
+            routerLink: 'faqs',
             icon: faQuestion,
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
@@ -595,11 +618,15 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     }
 
     getDefaultItems() {
-        const items = [];
-        if (this.course()?.studentCourseAnalyticsDashboardEnabled) {
-            const dashboardItem: SidebarItem = this.getDashboardItems();
-            items.push(dashboardItem);
-        }
+        const items: SidebarItem[] = [];
+
+        const overviewItem: SidebarItem = {
+            routerLink: '',
+            icon: faEye,
+            title: 'Overview',
+            translation: 'artemisApp.courseOverview.menu.overview',
+            hidden: false,
+        };
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
             icon: faListAlt,
@@ -609,7 +636,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         };
 
         const statisticsItem: SidebarItem = {
-            routerLink: 'statistics',
+            routerLink: 'course-statistics',
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
@@ -619,6 +646,22 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             hidden: false,
         };
 
-        return items.concat([exercisesItem, statisticsItem]);
+        return items.concat([overviewItem, exercisesItem, statisticsItem]);
     }
+
+    // only the communication tab has a sidebar in the management view
+    getHasSidebar(): boolean {
+        return this.communicationRouteLoaded();
+    }
+    toggleSidebar() {
+        if (!this.activatedComponentReference() || !(this.activatedComponentReference() instanceof CourseConversationsComponent)) {
+            return;
+        }
+        const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
+        childRouteComponent.toggleSidebar();
+        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed);
+    }
+
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 }

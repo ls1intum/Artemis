@@ -260,3 +260,14 @@ a:not(.btn):not(.tab-link):hover {
         transform: rotateZ(-180deg);
     }
 }
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-left: auto;
+    gap: 0.5rem;
+
+    button.active {
+        box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
+    }
+}
