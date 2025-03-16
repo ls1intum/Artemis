@@ -217,7 +217,7 @@ dependencies {
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
-    // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
+    // NOTE: the following dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
 
@@ -293,8 +293,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa:3.4.2"
-    implementation "org.springframework.data:spring-data-jpa:3.4.2"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
+    implementation "org.springframework.data:spring-data-jpa:3.4.4"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -305,14 +305,14 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    implementation "org.springframework.data:spring-data-ldap:3.4.3"
+    implementation "org.springframework.data:spring-data-ldap:3.4.4"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty:1.2.3"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.4"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -351,7 +351,7 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:76.1"
+    implementation "com.ibm.icu:icu4j-charset:77.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.5.1"
 
