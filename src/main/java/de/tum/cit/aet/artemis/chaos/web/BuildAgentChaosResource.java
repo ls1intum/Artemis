@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 /**
  * REST controller for causing chaos on the build agent.
  */
-@Profile(PROFILE_CHAOS)
+@Profile({ PROFILE_CHAOS, PROFILE_LOCALCI })
 @EnforceAdmin
 @RestController
 @RequestMapping("api/chaos/")
@@ -30,7 +30,7 @@ public class BuildAgentChaosResource {
     /**
      * Kill random build agent.
      */
-    @PostMapping("/kill-build-agent/{agentName}")
+    @PostMapping("kill-build-agent/{agentName}")
     public ResponseEntity<Void> kill(@PathVariable String agentName) {
         chaosService.triggerKillBuildAgent(agentName);
         return ResponseEntity.noContent().build();

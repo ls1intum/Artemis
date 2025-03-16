@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile(PROFILE_CHAOS)
+@Profile({ PROFILE_CHAOS, PROFILE_LOCALCI })
 public class ChaosService {
 
     private static final Logger log = LoggerFactory.getLogger(ChaosService.class);
