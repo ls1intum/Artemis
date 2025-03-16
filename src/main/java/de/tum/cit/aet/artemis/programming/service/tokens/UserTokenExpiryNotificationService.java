@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.tokens;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNoti
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 @Service
 public class UserTokenExpiryNotificationService {
 

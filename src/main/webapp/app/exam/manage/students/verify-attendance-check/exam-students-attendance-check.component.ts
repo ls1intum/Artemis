@@ -15,6 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',
@@ -101,4 +102,6 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     sortRows() {
         this.sortService.sortByProperty(this.allExamUsersAttendanceCheck, this.predicate, this.ascending);
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.vcs;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
  * Uses the scheduled task {@link #renewAllVcsAccessTokens} to periodically renew all VCS access tokens that have expired or that are about to expire.
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class VcsTokenRenewalService {
 
     /**
