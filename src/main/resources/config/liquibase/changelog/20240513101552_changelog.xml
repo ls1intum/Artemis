@@ -14,5 +14,22 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
+
+        <addColumn tableName="participation">
+            <column defaultValueNumeric="0"
+                    name="attempt"
+                    type="tinyint(3) UNSIGNED">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <dropIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation"/>
+
+        <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
+            <column name="student_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+            <column name="attempt"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
