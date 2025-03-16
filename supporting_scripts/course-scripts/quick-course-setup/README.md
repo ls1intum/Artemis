@@ -39,15 +39,12 @@ It is recommended to use a virtual environment to manage dependencies in isolati
 
 Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
 
-To install any packages into this virtual environment, proceed with the same steps as described below.
-
 ### 2. Install the Required Packages
 ```shell
 pip install -r requirements.txt
 ```
 
 ### 3. Configure the Environment
-
 1. Start your local Artemis instance.
 2. Configure the [config.ini](./config.ini) file according to your local or test server setup.
 
@@ -58,13 +55,8 @@ pip install -r requirements.txt
 These scripts help you configure and set up your first Artemis course quickly.
 
 1. Start your local Artemis instance.
-
 2. Configure the values in [config.ini](./config.ini) according to your setup.
-
-3. Install the missing packages of the Python scripts that you want to execute (if not done already). You can check the [requirements.txt](./requirements.txt) file for the required packages.
-
-4. Run the main script using IntelliJ:
-
+3. Run the main script using IntelliJ:
     - Use the play button within IntelliJ (if Python is configured properly).
     - Alternatively, you can run the script directly from the terminal using the commands provided in this README.
 
@@ -104,7 +96,7 @@ Create a Course and Assign the Default Users
 11-15: instructors
 16-20: editors
 
-Define the name of your course in the config.ini as course_name.
+Define the name of your course in the [config.ini](./config.ini) as `course_name`.
 
 ```shell  
 python3 create_course.py
@@ -112,7 +104,7 @@ python3 create_course.py
 
 ### Add Users to Existing Course
 
-Define the course_id in the [config.ini](./config.ini).
+Define the `course_id` in the [config.ini](./config.ini).
 
 ```shell  
 python3 add_users_to_course.py
@@ -120,7 +112,7 @@ python3 add_users_to_course.py
 
 ## Notes
 
-1.  Ensure that the config.ini file is correctly configured before running any scripts.
+1.  Ensure that the [config.ini](./config.ini) file is correctly configured before running any scripts.
 2.  Always test the scripts on a local setup before running them on a production or test server.
 
 ## Section 2: Artemis Large Course with Submissions on Programming Exercise Automation
