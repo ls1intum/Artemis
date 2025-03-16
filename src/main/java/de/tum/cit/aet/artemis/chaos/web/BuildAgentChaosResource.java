@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 /**
  * REST controller for causing chaos on the build agent.
  */
-@Profile({ PROFILE_CHAOS, PROFILE_LOCALCI })
+@Profile(PROFILE_CHAOS + " & " + PROFILE_LOCALCI)
 @EnforceAdmin
 @RestController
 @RequestMapping("api/chaos/")

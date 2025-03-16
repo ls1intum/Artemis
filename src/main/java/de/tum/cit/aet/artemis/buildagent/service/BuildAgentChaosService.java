@@ -14,7 +14,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
-@Profile({ PROFILE_CHAOS, PROFILE_BUILDAGENT })
+@Profile(PROFILE_BUILDAGENT + " & " + PROFILE_CHAOS)
 public class BuildAgentChaosService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentChaosService.class);
