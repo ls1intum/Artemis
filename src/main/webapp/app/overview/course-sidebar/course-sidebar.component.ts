@@ -125,6 +125,9 @@ export class CourseSidebarComponent implements OnInit {
 
     /** Calculate threshold levels based on the number of entries in the sidebar */
     calculateThreshold(): number {
-        return this.sidebarItems()?.length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
+        if (!this.sidebarItems()) {
+            return this.WINDOW_OFFSET;
+        }
+        return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
 }
