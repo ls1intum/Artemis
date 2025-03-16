@@ -5,8 +5,8 @@ import { EntityResponseType, ExampleSubmissionService } from 'app/exercises/shar
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';

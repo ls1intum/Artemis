@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { FormsModule } from '@angular/forms';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

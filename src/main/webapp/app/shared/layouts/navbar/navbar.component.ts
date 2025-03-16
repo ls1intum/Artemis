@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -62,10 +62,10 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { JhiConnectionWarningComponent } from '../../connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from '../../notification/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from '../../notification/system-notification/system-notification.component';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 
 @Component({
     selector: 'jhi-navbar',

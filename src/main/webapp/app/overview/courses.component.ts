@@ -3,8 +3,8 @@ import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
