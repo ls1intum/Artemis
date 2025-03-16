@@ -95,29 +95,6 @@ class CourseNotificationSettingPresetRegistryServiceTest {
         assertThat(result).isTrue();
     }
 
-    @Test
-    void shouldReturnCorrectSettingPresetIdentifiersInCamelCase() {
-        UserCourseNotificationSettingPreset defaultPreset = new DefaultTestPreset();
-        UserCourseNotificationSettingPreset advancedPreset = new AdvancedTestPreset();
-
-        Map<Integer, UserCourseNotificationSettingPreset> presets = Map.of(1, defaultPreset, 2, advancedPreset);
-
-        ReflectionTestUtils.setField(settingPresetRegistry, "presets", presets);
-
-        List<String> result = ReflectionTestUtils.invokeMethod(settingPresetRegistry, "getSettingPresetIdentifiers");
-
-        assertThat(result).hasSize(2).contains("defaultTestPreset", "advancedTestPreset");
-    }
-
-    @Test
-    void shouldReturnEmptyListWhenNoPresetsRegistered() {
-        ReflectionTestUtils.setField(settingPresetRegistry, "presets", Map.of());
-
-        List<String> result = ReflectionTestUtils.invokeMethod(settingPresetRegistry, "getSettingPresetIdentifiers");
-
-        assertThat(result).isEmpty();
-    }
-
     @CourseNotificationSettingPreset(1)
     static class DefaultTestPreset extends UserCourseNotificationSettingPreset {
 

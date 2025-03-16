@@ -155,7 +155,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
                 .andExpect(jsonPath("$.presets").isNotEmpty())
                 .andExpect(jsonPath("$.channels[*]").value(org.hamcrest.Matchers.containsInAnyOrder(NotificationChannelOption.values()[0].name(),
                         NotificationChannelOption.values()[1].name(), NotificationChannelOption.values()[2].name())))
-                .andExpect(jsonPath("$.notificationTypes").isArray()).andExpect(jsonPath("$.notificationTypes").isNotEmpty());
+                .andExpect(jsonPath("$.notificationTypes").isNotEmpty());
     }
 
     @Test

@@ -80,9 +80,11 @@ class CourseNotificationRegistryServiceTest {
 
         ReflectionTestUtils.setField(courseNotificationRegistryService, "notificationTypes", notificationTypes);
 
-        List<String> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationTypes");
+        Map<Short, String> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationTypes");
 
-        assertThat(result).hasSize(2).contains("testNotification", "anotherTestNotification");
+        assertThat(result).hasSize(2);
+        assertThat(result.get((short) 1)).isEqualTo("testNotification");
+        assertThat(result.get((short) 2)).isEqualTo("anotherTestNotification");
     }
 
     /**
