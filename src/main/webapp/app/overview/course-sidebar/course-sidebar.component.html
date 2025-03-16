@@ -7,17 +7,17 @@
                 @if (course()) {
                     @if (courses()?.length) {
                         <div ngbDropdownToggle class="pointer">
-                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course()?.courseIcon, courseTitle: course()?.title }" />
+                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course()?.courseIconPath, courseTitle: course()?.title }" />
                         </div>
                     } @else {
-                        <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course()?.courseIcon, courseTitle: course()?.title }" />
+                        <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course()?.courseIconPath, courseTitle: course()?.title }" />
                     }
                 }
 
                 <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
                     @for (courseItem of courses() ?? []; track courseItem) {
                         <button ngbDropdownItem (click)="switchCourse.emit(courseItem)" class="d-flex align-items-center py-1 px-2">
-                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: courseItem.courseIcon, courseTitle: courseItem.title }" />
+                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: courseItem.courseIconPath, courseTitle: courseItem.title }" />
                             <div class="h6 fw-normal mb-0 course-title text-wrap">{{ courseItem?.title }}</div>
                         </button>
                     }

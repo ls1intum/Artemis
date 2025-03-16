@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.util;
 
 import static org.assertj.core.api.Assertions.fail;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
  * used only for testing purposes.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ZipFileTestUtilService {
 
     /**

@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -99,8 +100,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseFeedbackService;
 
 /**
  * REST controller for managing Participation.
@@ -167,7 +168,7 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
-    private final TextExerciseFeedbackService textExerciseFeedbackService;
+    private final Optional<TextFeedbackApi> textFeedbackApi;
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
@@ -180,7 +181,7 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService,
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
             ModelingExerciseFeedbackService modelingExerciseFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -207,7 +208,7 @@ public class ParticipationResource {
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
-        this.textExerciseFeedbackService = textExerciseFeedbackService;
+        this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
     }
 
@@ -260,7 +261,7 @@ public class ParticipationResource {
             // 2) create a scheduled lock operation (see ProgrammingExerciseScheduleService)
             // var task = programmingExerciseScheduleService.lockStudentRepository(participation);
             // 3) add the task to the schedule service
-            // scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, task);
+            // scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.DUE, task);
         }
 
         // remove sensitive information before sending participation to the client
@@ -421,7 +422,8 @@ public class ParticipationResource {
         // Process feedback request
         StudentParticipation updatedParticipation;
         if (exercise instanceof TextExercise) {
-            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
+            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
+            updatedParticipation = api.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
         }
         else if (exercise instanceof ModelingExercise) {
             updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);

@@ -21,11 +21,12 @@
                 <jhi-course-sidebar
                     [course]="course"
                     [courses]="courses"
+                    [sidebarItems]="sidebarItems"
+                    [courseActionItems]="courseActionItems"
                     [isNavbarCollapsed]="isNavbarCollapsed"
                     [isExamStarted]="isExamStarted"
                     [isProduction]="isProduction"
                     [isTestServer]="isTestServer"
-                    [atlasEnabled]="atlasEnabled"
                     [hasUnreadMessages]="hasUnreadMessages"
                     [communicationRouteLoaded]="communicationRouteLoaded"
                     (switchCourse)="switchCourse($event)"
