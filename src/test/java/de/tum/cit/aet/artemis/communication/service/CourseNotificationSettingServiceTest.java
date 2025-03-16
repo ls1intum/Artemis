@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNo
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
-import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingPresetTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,10 +42,10 @@ class CourseNotificationSettingServiceTest {
     private CourseNotificationRegistryService courseNotificationRegistryService;
 
     @Mock
-    private UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
+    private UserCourseNotificationSettingSpecificationTestRepository userCourseNotificationSettingSpecificationRepository;
 
     @Mock
-    private UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository;
+    private UserCourseNotificationSettingPresetTestRepository userCourseNotificationSettingPresetRepository;
 
     @Mock
     private CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
