@@ -58,10 +58,10 @@
                                                 </td>
                                                 <td>
                                                     @if (!isDownloadingAttachmentLink) {
-                                                        <a class="text-primary" (click)="downloadAttachment(attachment.name || '', attachment.link || '')">
+                                                        <a class="text-primary" (click)="downloadAttachment(attachment.name || '', attachment.linkUrl || '')">
                                                             {{ attachment.name }}
                                                         </a>
-                                                    } @else if (isDownloadingAttachmentLink === attachment.link) {
+                                                    } @else if (isDownloadingAttachmentLink === attachment.linkUrl) {
                                                         <a class="text-primary">
                                                             <fa-icon [icon]="faSpinner" animation="spin" />
                                                             {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}

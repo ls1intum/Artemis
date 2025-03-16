@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.Optional;
 
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
  * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class InstanceMessageReceiveService {
 
     private static final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);

@@ -320,10 +320,10 @@ public class GitService extends AbstractGitService {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUrl, boolean pullOnGet)
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
-        Path localPath = getDefaultLocalPathOfRepo(targetUrl);
-        return getOrCheckoutRepository(repoUri, targetUrl, localPath, pullOnGet);
+        Path localPath = getDefaultLocalPathOfRepo(targetUri);
+        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet);
     }
 
     public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
@@ -1015,7 +1015,7 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Lists all files and directories within the given repository, excluding symbolic links.
+     * Returns all files and directories within the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
      * It supports bare and checked-out repositories.
      * <p>
@@ -1057,13 +1057,13 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * List all files in the repository. In an empty git repo, this method returns 0.
+     * List all files in the repository. In an empty git repo, this method returns en empty list.
      *
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
     @NotNull
-    public Collection<File> listFiles(Repository repo) {
+    public Collection<File> getFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
             FileAndDirectoryFilter filter = new FileAndDirectoryFilter();

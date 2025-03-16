@@ -277,8 +277,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(DELAY_MS * 2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+        verify(scheduleService, timeout(DELAY_MS * 2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, timeout(DELAY_MS * 2)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.SHORTLY_BEFORE_RELEASE), any(Runnable.class), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
         // not yet locked on regular due date
         verify(programmingTriggerService, after(DELAY_MS * 2).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
@@ -301,8 +302,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // special scheduling for both lock and build and test
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.SHORTLY_BEFORE_RELEASE), any(Runnable.class), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(),
+                any());
     }
 
     @Test
@@ -321,11 +324,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
-        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
+        verify(scheduleService, never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class), any());
     }
 
     @Test
@@ -343,11 +346,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
-        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
+        verify(scheduleService, never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class), any());
 
         // remove due date and schedule again
         programmingExercise.setDueDate(null);
@@ -379,8 +382,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
 
         // remove individual due date and schedule again
         participationIndividualDueDate.setIndividualDueDate(null);
@@ -391,7 +394,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         // called twice: first time when removing potential old schedules before scheduling, second time only cancelling
         verify(scheduleService, timeout(TIMEOUT_MS).times(2)).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participationIndividualDueDate.getId(),
                 ParticipationLifecycle.DUE);
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
     }
 
     @Test
@@ -406,8 +409,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
 
         // change individual due date and schedule again
         participationIndividualDueDate.setIndividualDueDate(nowPlusMillis(DELAY_MS));
@@ -417,7 +420,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         // scheduling called twice, each scheduling cancels potential old schedules
         verify(scheduleService, timeout(TIMEOUT_MS).times(2)).cancelScheduledTaskForParticipationLifecycle(programmingExercise.getId(), participationIndividualDueDate.getId(),
                 ParticipationLifecycle.DUE);
-        verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
     }
 
     @Test
@@ -435,22 +438,22 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
-        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
+        verify(scheduleService, never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class), any());
 
         // change exercise due date and schedule again
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any());
+        verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, never()).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(), any());
 
-        verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
-        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS).times(2)).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
+        verify(scheduleService, never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE), any(Runnable.class), any());
     }
 
     @Test
@@ -467,8 +470,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any());
-        verify(scheduleService, never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, timeout(TIMEOUT_MS)).scheduleParticipationTask(eq(participationIndividualDueDate), eq(ParticipationLifecycle.DUE), any(), any());
+        verify(scheduleService, never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class), any());
     }
 
     @Test
@@ -484,7 +487,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verify(scheduleService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).scheduleTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class));
+        verify(scheduleService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).scheduleExerciseTask(eq(programmingExercise), eq(ExerciseLifecycle.DUE), any(Runnable.class),
+                any());
         verify(scheduleService, timeout(TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.RELEASE);
         verify(scheduleService, timeout(TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.DUE);
         verify(scheduleService, timeout(TIMEOUT_MS)).cancelScheduledTaskForLifecycle(programmingExercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);

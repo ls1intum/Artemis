@@ -517,12 +517,12 @@ describe('AccountService', () => {
         });
 
         it('should return image url if authenticated', () => {
-            const expectedUrl = 'www.examp.le';
+            const expectedUrl = 'profiles-pictures/example.png';
             accountService.userIdentity = { imageUrl: expectedUrl } as User;
 
             url = accountService.getImageUrl();
 
-            expect(url).toBe(expectedUrl);
+            expect(url).toBe(`api/core/files/${expectedUrl}`);
         });
     });
 

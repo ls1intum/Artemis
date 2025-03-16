@@ -261,7 +261,7 @@ public class ParticipationResource {
             // 2) create a scheduled lock operation (see ProgrammingExerciseScheduleService)
             // var task = programmingExerciseScheduleService.lockStudentRepository(participation);
             // 3) add the task to the schedule service
-            // scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, task);
+            // scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.DUE, task);
         }
 
         // remove sensitive information before sending participation to the client

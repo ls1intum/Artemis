@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.Map;
 import java.util.Optional;
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class UserScheduleService {
 
     @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")

@@ -1,15 +1,12 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,7 +24,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -39,8 +35,8 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
-import de.tum.cit.aet.artemis.core.util.Tuple;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -52,17 +48,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ProgrammingExerciseScheduleService implements IExerciseScheduleService<ProgrammingExercise> {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseScheduleService.class);
 
     private final ScheduleService scheduleService;
-
-    private final Environment env;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -86,11 +79,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final TaskScheduler scheduler;
 
+    private final ProfileService profileService;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            ProfileService profileService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -101,9 +97,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.groupNotificationService = groupNotificationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.env = env;
         this.gitService = gitService;
         this.scheduler = scheduler;
+        this.profileService = profileService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -115,8 +111,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @Override
     public void scheduleRunningExercisesOnStartup() {
         try {
-            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+            if (profileService.isDevActive()) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
                 return;
@@ -278,26 +273,25 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private void scheduleTemplateCommitCombination(ProgrammingExercise exercise) {
         if (exercise.getReleaseDate() != null) {
-            var scheduledRunnable = Set.of(new Tuple<>(exercise.getReleaseDate().minusSeconds(Constants.SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS),
-                    combineTemplateCommitsForExercise(exercise)));
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.RELEASE, scheduledRunnable);
-            log.debug("Scheduled combining template commits before release date for Programming Exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.SHORTLY_BEFORE_RELEASE, () -> combineTemplateCommitsForExercise(exercise).run(),
+                    "combine template commits");
+            log.info("Scheduled combining template commits before release date for programming exercise \"{}\" (#{}) for {}.", exercise.getTitle(), exercise.getId(),
                     exercise.getReleaseDate());
         }
     }
 
     private void scheduleScoreUpdate(ProgrammingExercise exercise) {
         final boolean updateScores = isScoreUpdateAfterDueDateNeeded(exercise);
+        if (updateScores) {
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.DUE, () -> updateStudentScoresRegularDueDate(exercise).run(), "update student scores");
+        }
 
-        scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> {
-            if (updateScores) {
-                updateStudentScoresRegularDueDate(exercise).run();
-            }
-        });
+        log.debug("Scheduled lock student repositories after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
     private void scheduleBuildAndTestAfterDueDate(ProgrammingExercise exercise) {
-        scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
+        scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise),
+                "build and test student submissions");
         log.debug("Scheduled build and test for student submissions after due date for Programming Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(),
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate());
     }
@@ -313,8 +307,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private void scheduleParticipationTasks(final ProgrammingExercise exercise, final ZonedDateTime now) {
         final boolean isScoreUpdateNeeded = isScoreUpdateAfterDueDateNeeded(exercise);
 
-        final List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseParticipationRepository
-                .findWithSubmissionsAndTeamStudentsByExerciseId(exercise.getId());
+        final var participations = programmingExerciseParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exercise.getId());
         for (final var participation : participations) {
             if (exercise.getDueDate() == null || participation.getIndividualDueDate() == null) {
                 scheduleService.cancelAllScheduledParticipationTasks(exercise.getId(), participation.getId());
@@ -325,8 +318,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
     }
 
-    private void scheduleParticipationWithIndividualDueDate(final ZonedDateTime now, final ProgrammingExercise exercise,
-            final ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
+    private void scheduleParticipationWithIndividualDueDate(ZonedDateTime now, ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation,
+            boolean isScoreUpdateNeeded) {
         final boolean isBeforeDueDate = now.isBefore(participation.getIndividualDueDate());
         // Update scores on due date
         if (isBeforeDueDate) {
@@ -350,10 +343,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     private void scheduleAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation, boolean isScoreUpdateNeeded) {
         scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
             if (isScoreUpdateNeeded) {
-                final List<Result> updatedResult = programmingExerciseGradingService.updateParticipationResults(participation);
-                resultRepository.saveAll(updatedResult);
+
+                scheduleService.scheduleParticipationTask(participation, ParticipationLifecycle.DUE, () -> {
+                    final List<Result> updatedResult = programmingExerciseGradingService.updateParticipationResults(participation);
+                    resultRepository.saveAll(updatedResult);
+                }, "update student scores");
             }
-        });
+        }, "lock student repository and participation");
+        log.debug("Scheduled task to update student scores {} at the individual due date.", participation.getId());
     }
 
     private void scheduleBuildAndTestAfterDueDateForParticipation(ProgrammingExerciseStudentParticipation participation) {
@@ -368,7 +365,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 log.error("Programming participation with id {} in exercise {} is no longer available in database for use in scheduled task.", participation.getId(),
                         exercise.getId());
             }
-        });
+        }, "build and test student submission");
     }
 
     private boolean isScoreUpdateAfterDueDateNeeded(ProgrammingExercise exercise) {
@@ -388,7 +385,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         }
 
         if (exercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null && now.isBefore(exercise.getBuildAndTestStudentSubmissionsAfterDueDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, buildAndTestRunnableForExercise(exercise));
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE, () -> buildAndTestRunnableForExercise(exercise).run(),
+                    "build and test student submissions");
         }
         else {
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.BUILD_AND_TEST_AFTER_DUE_DATE);
@@ -399,6 +397,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     @NotNull
     private Runnable combineTemplateCommitsForExercise(ProgrammingExercise exercise) {
         return () -> {
+            log.debug("Start combine template commits for programming exercise {}.", exercise.getId());
             SecurityUtils.setAuthorizationObject();
             try {
                 ProgrammingExercise programmingExerciseWithTemplateParticipation = programmingExerciseRepository
@@ -407,7 +406,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
             }
             catch (GitAPIException e) {
-                log.error("Failed to communicate with GitAPI for combining template commits of exercise {}", exercise.getId(), e);
+                log.error("Failed to communicate with GitService for combining template commits of exercise {}", exercise.getId(), e);
             }
         };
     }
@@ -539,8 +538,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             for (var future : futures) {
                 future.whenComplete((participation, exception) -> {
                     if (exception != null) {
-                        log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
-                                programmingExercise.getId(), participation.getId()), exception);
+                        log.error("'{}' failed for programming exercise with id {} for student repository with participation id {}", operationName, programmingExercise.getId(),
+                                participation.getId(), exception);
                         failedOperations.add(participation);
                     }
                 });
