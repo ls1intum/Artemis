@@ -32,7 +32,7 @@ export const courseManagementState: Routes = [
     },
     {
         path: '',
-        loadComponent: () => import('app/course/manage/course-management-tab-bar/course-management-tab-bar.component').then((m) => m.CourseManagementTabBarComponent),
+        loadComponent: () => import('app/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainer),
         children: [
             {
                 path: ':courseId',

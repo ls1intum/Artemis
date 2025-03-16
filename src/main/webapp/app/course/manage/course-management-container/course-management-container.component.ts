@@ -14,9 +14,9 @@ import {
     inject,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, firstValueFrom, of, throwError } from 'rxjs';
-import { catchError, map, takeUntil } from 'rxjs/operators';
+import { HttpResponse } from '@angular/common/http';
+import { Subject, Subscription, firstValueFrom } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
@@ -24,14 +24,20 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import {
+    faChalkboardUser,
     faChartBar,
+    faChartColumn,
     faChevronLeft,
     faChevronRight,
     faCircleNotch,
     faClipboard,
+    faComments,
     faEye,
     faFlag,
+    faGraduationCap,
     faListAlt,
+    faNetworkWired,
+    faPersonChalkboard,
     faQuestion,
     faSync,
     faTable,
@@ -39,41 +45,40 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/icons/icons';
-
-import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TeamService } from 'app/exercises/shared/team/team.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
-import { TranslateDirective } from '../shared/language/translate.directive';
-
-import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
-import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
-import { CourseExamsComponent } from './course-exams/course-exams.component';
-import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/overview/course-sidebar/course-sidebar.component';
+import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
+import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
+import { LectureComponent } from 'app/lecture/lecture.component';
+import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
+import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component';
+import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
+import { CourseScoresComponent } from 'app/course/course-scores/course-scores.component';
+import { FaqComponent } from 'app/faq/faq.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { sortCourses } from 'app/shared/util/course.util';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-
-import { CourseActionItem, CourseSidebarComponent } from './course-sidebar/course-sidebar.component';
 
 @Component({
     selector: 'jhi-course-management-container',
-    templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
+    templateUrl: './course-management-container.component.html',
+    styleUrls: ['course-management-container.component.scss'],
     providers: [MetisConversationService],
     imports: [
         NgClass,
@@ -90,20 +95,15 @@ import { CourseActionItem, CourseSidebarComponent } from './course-sidebar/cours
         CourseSidebarComponent,
     ],
 })
-export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseManagementContainerComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseService = inject(CourseManagementService);
-    private courseExerciseService = inject(CourseExerciseService);
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
-    private teamService = inject(TeamService);
-    private websocketService = inject(WebsocketService);
-    private alertService = inject(AlertService);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private metisConversationService = inject(MetisConversationService);
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
     private profileService = inject(ProfileService);
-    private examParticipationService = inject(ExamParticipationService);
     private ltiService = inject(LtiService);
 
     private ngUnsubscribe = new Subject<void>();
@@ -120,8 +120,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     // all courses of the current user, used for the dropdown menu
     courses?: Course[];
     refreshingCourse = false;
-    private teamAssignmentUpdateListener: Subscription;
-    private quizExercisesChannel: string;
     hasUnreadMessages: boolean;
     communicationRouteLoaded: boolean;
     atlasEnabled = false;
@@ -129,7 +127,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isTestServer = false;
     pageTitle: string;
     hasSidebar = false;
-    isNotManagementView: boolean;
     isNavbarCollapsed = false;
     isSidebarCollapsed = false;
     profileSubscription?: Subscription;
@@ -142,12 +139,24 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
-    activatedComponentReference: CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent;
+    activatedComponentReference:
+        | CourseDetailComponent
+        | ExamManagementComponent
+        | CourseManagementExercisesComponent
+        | LectureComponent
+        | CourseManagementStatisticsComponent
+        | IrisCourseSettingsUpdateComponent
+        | CourseConversationsComponent
+        | TutorialGroupsChecklistComponent
+        | CompetencyManagementComponent
+        | LearningPathInstructorPageComponent
+        | AssessmentDashboardComponent
+        | CourseScoresComponent
+        | FaqComponent
+        | BuildQueueComponent;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
-    // Subscription for the course fetching
-    private loadCourseSubscription?: Subscription;
     // Subscription to listen to changes on the control configuration
     private controlsSubscription?: Subscription;
     // Subscription to listen for the ng-container for controls to be mounted
@@ -181,9 +190,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
 
-    readonly isMessagingEnabled = isMessagingEnabled;
-    readonly isCommunicationEnabled = isCommunicationEnabled;
-
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     async ngOnInit() {
@@ -193,10 +199,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
             this.isSidebarCollapsed = false;
-        });
-
-        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
-            this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
         });
 
         this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
@@ -209,16 +211,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
         });
 
-        this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
-            this.isExamStarted = isStarted;
-        });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
-        this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
         // If course is not active, it means that it is accessed from course archive, which should not
         // be stored in local storage and therefore displayed in recently accessed
-        if (this.course && this.isCourseActive(this.course)) {
+        if (this.course) {
             this.courseAccessStorageService.onCourseAccessed(
                 this.courseId,
                 CourseAccessStorageService.STORAGE_KEY,
@@ -231,10 +229,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             );
         }
 
-        await firstValueFrom(this.loadCourse());
-        await this.initAfterCourseLoad();
         await this.updateRecentlyAccessedCourses();
-        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti = isShownViaLti;
         });
@@ -263,13 +258,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Navigate to a new Course */
     switchCourse(course: Course) {
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate(['courses', course.id, 'exercises']);
+            this.router.navigate(['course-management', course.id, 'exercises']);
         });
-    }
-
-    async initAfterCourseLoad() {
-        await this.subscribeToTeamAssignmentUpdates();
-        this.subscribeForQuizChanges();
     }
 
     private setUpConversationService() {
@@ -323,8 +313,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
-        this.getShowRefreshButton();
-        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'communication';
 
         this.setUpConversationService();
 
@@ -342,43 +330,39 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 }) || undefined;
         }
         if (
-            componentRef instanceof CourseExercisesComponent ||
-            componentRef instanceof CourseLecturesComponent ||
-            componentRef instanceof CourseTutorialGroupsComponent ||
-            componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
+            componentRef instanceof CourseDetailComponent ||
+            componentRef instanceof CourseManagementExercisesComponent ||
+            componentRef instanceof ExamManagementComponent ||
+            componentRef instanceof LectureComponent ||
+            componentRef instanceof CourseManagementStatisticsComponent ||
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof TutorialGroupsChecklistComponent ||
+            componentRef instanceof CompetencyManagementComponent ||
+            componentRef instanceof LearningPathInstructorPageComponent ||
+            componentRef instanceof AssessmentDashboardComponent ||
+            componentRef instanceof CourseScoresComponent ||
+            componentRef instanceof FaqComponent ||
+            componentRef instanceof BuildQueueComponent
         ) {
             this.activatedComponentReference = componentRef;
         }
 
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
         this.changeDetectorRef.detectChanges();
-
-        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
-    toggleSidebar() {
-        if (!this.activatedComponentReference) {
-            return;
-        }
-        const childRouteComponent = this.activatedComponentReference;
-        childRouteComponent.toggleSidebar();
-        this.isSidebarCollapsed = childRouteComponent.isCollapsed;
-    }
-
-    @HostListener('window:keydown.Control.Shift.b', ['$event'])
-    onKeyDownControlShiftB(event: KeyboardEvent) {
-        event.preventDefault();
-        this.toggleSidebar();
-    }
+    // toggleSidebar() {
+    //     if (!this.activatedComponentReference) {
+    //         return;
+    //     }
+    //     const childRouteComponent = this.activatedComponentReference;
+    //     childRouteComponent.toggleSidebar();
+    //     this.isSidebarCollapsed = childRouteComponent.isCollapsed;
+    // }
 
     getPageTitle(): void {
         const routePageTitle: string = this.route.snapshot.firstChild?.data?.pageTitle;
         this.pageTitle = routePageTitle?.substring(routePageTitle.indexOf('.') + 1);
-    }
-
-    getShowRefreshButton(): void {
-        this.showRefreshButton = this.route.snapshot.firstChild?.data?.showRefreshButton ?? false;
     }
 
     getHasSidebar(): boolean {
@@ -414,89 +398,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    /**
-     * Determines whether the user can register for the course by trying to fetch the for-registration version
-     */
-    canRegisterForCourse(): Observable<boolean> {
-        return this.courseService.findOneForRegistration(this.courseId).pipe(
-            map(() => true),
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 403) {
-                    return of(false);
-                } else {
-                    return throwError(() => error);
-                }
-            }),
-        );
-    }
-
-    redirectToCourseRegistrationPage() {
-        this.router.navigate(['courses', this.courseId, 'register']);
-    }
-
-    redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error: Error): void {
-        this.canRegisterForCourse().subscribe((canRegister) => {
-            if (canRegister) {
-                this.redirectToCourseRegistrationPage();
-            } else {
-                throw error;
-            }
-        });
-    }
-
-    /**
-     * Fetch the course from the server including all exercises, lectures, exams and competencies
-     * @param refresh Whether this is a force refresh (displays loader animation)
-     */
-    loadCourse(refresh = false): Observable<void> {
-        this.refreshingCourse = refresh;
-        const observable = this.courseService.findOneForDashboard(this.courseId).pipe(
-            map((res: HttpResponse<Course>) => {
-                if (res.body) {
-                    this.course = res.body;
-                }
-
-                this.setUpConversationService();
-
-                setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
-            }),
-            // catch 403 errors where registration is possible
-            catchError((error: HttpErrorResponse) => {
-                if (error.status === 403) {
-                    this.redirectToCourseRegistrationPageIfCanRegisterOrElseThrow(error);
-                    // Emit a default value, for example `undefined`
-                    return of(undefined);
-                } else {
-                    return throwError(() => error);
-                }
-            }),
-            // handle other errors
-            catchError((error: HttpErrorResponse) => {
-                const errorMessage = error.headers.get('X-artemisApp-message')!;
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: errorMessage,
-                    disableTranslation: true,
-                });
-                return throwError(() => error);
-            }),
-        );
-        // Start fetching, even if we don't subscribe to the result.
-        // This enables just calling this method to refresh the course, without subscribing to it:
-        this.loadCourseSubscription?.unsubscribe();
-        if (refresh) {
-            this.loadCourseSubscription = observable.subscribe();
-        }
-        return observable;
-    }
     ngOnDestroy() {
-        if (this.teamAssignmentUpdateListener) {
-            this.teamAssignmentUpdateListener.unsubscribe();
-        }
-        if (this.quizExercisesChannel) {
-            this.websocketService.unsubscribe(this.quizExercisesChannel);
-        }
-        this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
@@ -509,38 +411,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.ltiSubscription?.unsubscribe();
-    }
-
-    subscribeForQuizChanges() {
-        // subscribe to quizzes which get visible
-        if (!this.quizExercisesChannel) {
-            this.quizExercisesChannel = '/topic/courses/' + this.courseId + '/quizExercises';
-
-            // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-            this.websocketService.subscribe(this.quizExercisesChannel);
-            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
-                quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
-                // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
-                if (this.course && this.course.exercises) {
-                    this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
-                    this.course.exercises.push(quizExercise);
-                }
-            });
-        }
-    }
-
-    /**
-     * Receives team assignment changes and updates related attributes of the affected exercise
-     */
-    async subscribeToTeamAssignmentUpdates() {
-        const teamAssignmentUpdates = await this.teamService.teamAssignmentUpdates;
-        this.teamAssignmentUpdateListener = teamAssignmentUpdates.subscribe((teamAssignment: TeamAssignmentPayload) => {
-            const exercise = this.course?.exercises?.find((courseExercise) => courseExercise.id === teamAssignment.exerciseId);
-            if (exercise) {
-                exercise.studentAssignedTeamId = teamAssignment.teamId;
-                exercise.studentParticipations = teamAssignment.studentParticipations;
-            }
-        });
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])
@@ -568,5 +438,174 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     isCourseActive(course: Course): boolean {
         return course.endDate ? dayjs(course.endDate).isAfter(dayjs()) : true;
+    }
+
+    getSidebarItems(): SidebarItem[] {
+        const sidebarItems = this.getDefaultItems();
+        const lecturesItem: SidebarItem = this.getLecturesItems();
+        sidebarItems.splice(-1, 0, lecturesItem);
+        const examsItem: SidebarItem = this.getExamsItems();
+        sidebarItems.unshift(examsItem);
+        if (isCommunicationEnabled(this.course)) {
+            const communicationsItem: SidebarItem = this.getCommunicationsItems();
+            sidebarItems.push(communicationsItem);
+        }
+
+        //if (this.hasTutorialGroups()) {
+        const tutorialGroupsItem: SidebarItem = this.getTutorialGroupsItems();
+        sidebarItems.push(tutorialGroupsItem);
+        //}
+
+        if (this.atlasEnabled) {
+            const competenciesItem: SidebarItem = this.getCompetenciesItems();
+            sidebarItems.push(competenciesItem);
+            if (this.course?.learningPathsEnabled) {
+                const learningPathItem: SidebarItem = this.getLearningPathItems();
+                sidebarItems.push(learningPathItem);
+            }
+        }
+
+        if (this.course?.faqEnabled) {
+            const faqItem: SidebarItem = this.getFaqItem();
+            sidebarItems.push(faqItem);
+        }
+
+        return sidebarItems;
+    }
+
+    getLecturesItems() {
+        const lecturesItem: SidebarItem = {
+            routerLink: 'lectures',
+            icon: faChalkboardUser,
+            title: 'Lectures',
+            translation: 'artemisApp.courseOverview.menu.lectures',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return lecturesItem;
+    }
+
+    getExamsItems() {
+        const examsItem: SidebarItem = {
+            routerLink: 'exams',
+            icon: faGraduationCap,
+            title: 'Exams',
+            testId: 'exam-tab',
+            translation: 'artemisApp.courseOverview.menu.exams',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return examsItem;
+    }
+
+    getCommunicationsItems() {
+        const communicationsItem: SidebarItem = {
+            routerLink: 'communication',
+            icon: faComments,
+            title: 'Communication',
+            translation: 'artemisApp.courseOverview.menu.communication',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return communicationsItem;
+    }
+
+    getTutorialGroupsItems() {
+        const tutorialGroupsItem: SidebarItem = {
+            routerLink: 'tutorial-groups',
+            icon: faPersonChalkboard,
+            title: 'Tutorials',
+            translation: 'artemisApp.courseOverview.menu.tutorialGroups',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.TutorialGroups,
+            hidden: false,
+        };
+        return tutorialGroupsItem;
+    }
+
+    getCompetenciesItems() {
+        const competenciesItem: SidebarItem = {
+            routerLink: 'competencies',
+            icon: faFlag,
+            title: 'Competencies',
+            translation: 'artemisApp.courseOverview.menu.competencies',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return competenciesItem;
+    }
+
+    getLearningPathItems() {
+        const learningPathItem: SidebarItem = {
+            routerLink: 'learning-path',
+            icon: faNetworkWired,
+            title: 'Learning Path',
+            translation: 'artemisApp.courseOverview.menu.learningPath',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.LearningPaths,
+            hidden: false,
+        };
+        return learningPathItem;
+    }
+
+    getDashboardItems() {
+        const dashboardItem: SidebarItem = {
+            routerLink: 'dashboard',
+            icon: faChartBar,
+            title: 'Dashboard',
+            translation: 'artemisApp.courseOverview.menu.dashboard',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
+            hidden: false,
+        };
+        return dashboardItem;
+    }
+
+    getFaqItem() {
+        const faqItem: SidebarItem = {
+            routerLink: 'faq',
+            icon: faQuestion,
+            title: 'FAQs',
+            translation: 'artemisApp.courseOverview.menu.faq',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return faqItem;
+    }
+
+    getDefaultItems() {
+        const items = [];
+        if (this.course?.studentCourseAnalyticsDashboardEnabled) {
+            const dashboardItem: SidebarItem = this.getDashboardItems();
+            items.push(dashboardItem);
+        }
+        const exercisesItem: SidebarItem = {
+            routerLink: 'exercises',
+            icon: faListAlt,
+            title: 'Exercises',
+            translation: 'artemisApp.courseOverview.menu.exercises',
+            hidden: false,
+        };
+
+        const statisticsItem: SidebarItem = {
+            routerLink: 'statistics',
+            icon: faChartColumn,
+            title: 'Statistics',
+            translation: 'artemisApp.courseOverview.menu.statistics',
+            hasInOrionProperty: true,
+            showInOrionWindow: false,
+            guidedTour: true,
+            hidden: false,
+        };
+
+        return items.concat([exercisesItem, statisticsItem]);
     }
 }

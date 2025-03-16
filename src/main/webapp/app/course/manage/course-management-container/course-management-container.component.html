@@ -4,8 +4,6 @@
         <mat-sidenav-container
             class="vw-100"
             [ngClass]="{
-                'exam-wrapper exam-is-active': isExamStarted,
-                'exam-height-dev': isExamStarted && (!isProduction || isTestServer),
                 'sidenav-height-dev': !isProduction || isTestServer,
                 'container-closed': isNavbarCollapsed,
             }"
@@ -21,11 +19,12 @@
                 <jhi-course-sidebar
                     [course]="course"
                     [courses]="courses"
+                    [sidebarItems]="sidebarItems"
+                    [courseActionItems]="courseActionItems"
                     [isNavbarCollapsed]="isNavbarCollapsed"
                     [isExamStarted]="isExamStarted"
                     [isProduction]="isProduction"
                     [isTestServer]="isTestServer"
-                    [atlasEnabled]="atlasEnabled"
                     [hasUnreadMessages]="hasUnreadMessages"
                     [communicationRouteLoaded]="communicationRouteLoaded"
                     (switchCourse)="switchCourse($event)"
@@ -48,45 +47,37 @@
                         [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }"
                     >
                         <div class="align-self-center d-flex">
-                            @if (hasSidebar) {
-                                <button
-                                    [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                                    [ngClass]="{ 'is-collapsed': isSidebarCollapsed, 'is-communication-module': pageTitle === 'communication' }"
-                                    triggers="hover"
-                                    class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
-                                    (click)="toggleSidebar()"
-                                >
-                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
-                                    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
-                                        <fa-icon
-                                            [fixedWidth]="true"
-                                            [icon]="faChevronRight"
-                                            class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
-                                            size="xs"
-                                        />
-                                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
-                                    </div>
-                                </button>
-                            }
+                            <!--                            @if (hasSidebar) {-->
+                            <!--                                <button-->
+                            <!--                                    [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"-->
+                            <!--                                    [ngClass]="{ 'is-collapsed': isSidebarCollapsed, 'is-communication-module': pageTitle === 'communication' }"-->
+                            <!--                                    triggers="hover"-->
+                            <!--                                    class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"-->
+                            <!--                                    (click)="toggleSidebar()"-->
+                            <!--                                >-->
+                            <!--                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />-->
+                            <!--                                    <div class="btn-sidebar-collapse-chevron d-flex gap-1">-->
+                            <!--                                        <fa-icon-->
+                            <!--                                            [fixedWidth]="true"-->
+                            <!--                                            [icon]="faChevronRight"-->
+                            <!--                                            class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"-->
+                            <!--                                            size="xs"-->
+                            <!--                                        />-->
+                            <!--                                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />-->
+                            <!--                                    </div>-->
+                            <!--                                </button>-->
+                            <!--                            }-->
                             <div class="align-self-center" [jhiTranslate]="'artemisApp.courseOverview.menu.' + pageTitle"></div>
                         </div>
                         <div class="d-flex gap-2">
-                            @if (isNotManagementView && course.isAtLeastTutor) {
-                                <div id="manage-button">
-                                    <a
-                                        class="btn btn-sm btn-outline-secondary"
-                                        [ngClass]="{ 'd-none d-sm-block': pageTitle === 'communication' }"
-                                        [routerLink]="['/course-management', course.id]"
-                                        jhiTranslate="artemisApp.courseOverview.manage"
-                                    ></a>
-                                </div>
-                            }
-                            @if (showRefreshButton) {
-                                <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse ? 'spin' : undefined" />
-                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                                </button>
-                            }
+                            <div id="student-view-button">
+                                <a
+                                    class="btn btn-sm btn-outline-secondary"
+                                    [ngClass]="{ 'd-none d-sm-block': pageTitle === 'communication' }"
+                                    [routerLink]="['/courses', course.id]"
+                                    jhiTranslate="artemisApp.courseOverview.manage"
+                                ></a>
+                            </div>
                         </div>
                     </div>
                     <div
