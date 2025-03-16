@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
-import Stomp, { Client, ConnectionHeaders, Message, Subscription as StompSubscription } from 'webstomp-client';
+import Stomp, { Client, ConnectionHeaders, Frame, Message, Subscription as StompSubscription } from 'webstomp-client';
 import { gzip, ungzip } from 'pako';
 import { captureException } from '@sentry/angular';
 
@@ -98,6 +98,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
     private connecting = false;
+    private subscriptionCounter = 0;
+    private sessionId = '';
 
     constructor() {
         this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
@@ -170,7 +172,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
         this.stompClient.connect(
             headers,
-            () => {
+            (frame?: Frame) => {
+                // check if a session id is part of the frame, otherwise use a random string
+                this.sessionId = frame?.headers['session'] || Math.random().toString(16).slice(2, 10);
                 this.connecting = false;
                 if (!this.connectionStateInternal.getValue().connected) {
                     this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
@@ -194,7 +198,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @param channel the path (e.g. '/courses/5/exercises/10') that should be subscribed
      */
     private addSubscription(channel: string) {
-        const subscription = this.stompClient!.subscribe(channel, this.handleIncomingMessage(channel));
+        const subscription = this.stompClient!.subscribe(channel, this.handleIncomingMessage(channel), {
+            id: this.sessionId + '-' + this.subscriptionCounter++,
+        });
         this.stompSubscriptions.set(channel, subscription);
     }
 
