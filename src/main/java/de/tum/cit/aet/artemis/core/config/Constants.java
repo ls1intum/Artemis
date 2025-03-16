@@ -378,6 +378,11 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * The name of the Spring profile used for the Chaos experiments.
+     */
+    public static final String PROFILE_CHAOS = "chaos";
+
+    /**
      * The InfoContributor's detail key for the Theia Portal URL
      */
 
