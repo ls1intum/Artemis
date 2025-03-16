@@ -226,11 +226,24 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             } else {
                 const currentOrder = [...this.pageOrder()];
 
-                for (let i = 0; i < currentOrder.length && i < pdf.numPages; i++) {
-                    currentOrder[i].pageProxy = await pdf.getPage(i + 1);
+                if (currentOrder.length === 0) {
+                    const newPages: OrderedPage[] = [];
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const pageProxy = await pdf.getPage(i);
+                        newPages.push({
+                            slideId: `attachment_${Date.now()}_${i - 1}`,
+                            pageIndex: i,
+                            order: i,
+                            pageProxy: pageProxy,
+                        });
+                    }
+                    this.pageOrder.set(newPages);
+                } else {
+                    for (let i = 0; i < currentOrder.length && i < pdf.numPages; i++) {
+                        currentOrder[i].pageProxy = await pdf.getPage(i + 1);
+                    }
+                    this.pageOrder.set(currentOrder);
                 }
-
-                this.pageOrder.set(currentOrder);
             }
         } catch (error) {
             onError(this.alertService, error);

@@ -1,38 +1,39 @@
 <div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
-    @for (page of orderedPages(); track page.slideId) {
-        <div
-            [id]="'pdf-page-' + page.slideId"
-            class="pdf-canvas-container"
-            [class.dragging]="dragSlideId() === page.slideId"
-            draggable="true"
-            (dragstart)="onDragStart($event, page.slideId)"
-            (dragover)="onDragOver($event)"
-            (drop)="onDrop($event, page.slideId)"
-            (dragenter)="onDragEnter($event, page.slideId)"
-            (dragleave)="onDragLeave($event, page.slideId)"
-            (dragend)="onDragEnd()"
-            (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()"
-        >
-            <div class="drag-handle">
-                <fa-icon [icon]="faGripLines" />
-            </div>
+    @if (isAttachmentUnit()) {
+        <!-- With drag and drop enabled for attachment units -->
+        @for (page of orderedPages(); track page.slideId) {
+            <div
+                [id]="'pdf-page-' + page.slideId"
+                class="pdf-canvas-container"
+                [class.dragging]="dragSlideId() === page.slideId"
+                draggable="true"
+                (dragstart)="onDragStart($event, page.slideId)"
+                (dragover)="onDragOver($event)"
+                (drop)="onDrop($event, page.slideId)"
+                (dragenter)="onDragEnter($event, page.slideId)"
+                (dragleave)="onDragLeave($event, page.slideId)"
+                (dragend)="onDragEnd()"
+                (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()"
+            >
+                <div class="drag-handle">
+                    <fa-icon [icon]="faGripLines" />
+                </div>
 
-            @if (hiddenPages()[page.slideId]) {
-                <ng-container>
-                    <div class="hidden-overlay pdf-overlay" style="opacity: 1">
-                        <span>
-                            <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
-                        </span>
-                    </div>
-                </ng-container>
-            }
-            <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
-                <span>{{ getPageOrder(page.slideId) }}</span>
-            </span>
-            @if (loadedPages().has(page.pageIndex)) {
-                <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
-            }
-            @if (isAttachmentUnit()) {
+                @if (hiddenPages()[page.slideId]) {
+                    <ng-container>
+                        <div class="hidden-overlay pdf-overlay" style="opacity: 1">
+                            <span>
+                                <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                            </span>
+                        </div>
+                    </ng-container>
+                }
+                <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+                    <span>{{ getPageOrder(page.slideId) }}</span>
+                </span>
+                @if (loadedPages().has(page.pageIndex)) {
+                    <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
+                }
                 <button
                     [id]="'hide-show-button-' + page.slideId"
                     style="'opacity' : activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
@@ -96,9 +97,31 @@
                         </div>
                     </div>
                 </ng-template>
-            }
-        </div>
+            </div>
+        }
+    } @else {
+        <!-- Without drag and drop for regular attachments -->
+        @for (page of orderedPages(); track page.slideId) {
+            <div [id]="'pdf-page-' + page.slideId" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()">
+                @if (hiddenPages()[page.slideId]) {
+                    <ng-container>
+                        <div class="hidden-overlay pdf-overlay" style="opacity: 1">
+                            <span>
+                                <fa-icon class="hidden-icon" [icon]="faEyeSlash" />
+                            </span>
+                        </div>
+                    </ng-container>
+                }
+                <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
+                    <span>{{ getPageOrder(page.slideId) }}</span>
+                </span>
+                @if (loadedPages().has(page.pageIndex)) {
+                    <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
+                }
+            </div>
+        }
     }
+
     @if (isEnlargedView()) {
         <jhi-pdf-preview-enlarged-canvas-component
             class="enlarged-canvas"
