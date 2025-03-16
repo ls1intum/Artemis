@@ -1,5 +1,5 @@
 package de.tum.cit.aet.artemis.communication.domain;
 
-public enum NotificationSettingOption {
+public enum NotificationChannelOption {
     WEBAPP, PUSH, EMAIL
 }

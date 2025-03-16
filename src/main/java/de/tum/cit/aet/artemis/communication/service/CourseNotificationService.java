@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSettingOption;
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
@@ -50,7 +50,7 @@ public class CourseNotificationService {
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
-    private final Map<NotificationSettingOption, CourseNotificationBroadcastService> serviceMap;
+    private final Map<NotificationChannelOption, CourseNotificationBroadcastService> serviceMap;
 
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
@@ -61,7 +61,7 @@ public class CourseNotificationService {
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
-        this.serviceMap = Map.of(NotificationSettingOption.WEBAPP, webappService, NotificationSettingOption.PUSH, pushService, NotificationSettingOption.EMAIL, emailService);
+        this.serviceMap = Map.of(NotificationChannelOption.WEBAPP, webappService, NotificationChannelOption.PUSH, pushService, NotificationChannelOption.EMAIL, emailService);
     }
 
     /**

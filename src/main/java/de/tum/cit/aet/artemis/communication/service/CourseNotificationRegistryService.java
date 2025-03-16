@@ -66,6 +66,28 @@ public class CourseNotificationRegistryService {
     }
 
     /**
+     * Returns a list of all registered notifications in camelCase format.
+     *
+     * @return list of all notifications in camelCase format.
+     */
+    public Map<Short, String> getNotificationTypes() {
+        Map<Short, String> result = new HashMap<>();
+
+        for (Map.Entry<Short, Class<? extends CourseNotification>> entry : notificationTypes.entrySet()) {
+            Short key = entry.getKey();
+            Class<?> clazz = entry.getValue();
+
+            String className = clazz.getSimpleName();
+
+            className = Character.toLowerCase(className.charAt(0)) + className.substring(1);
+
+            result.put(key, className);
+        }
+
+        return result;
+    }
+
+    /**
      * Retrieves the notification class type that corresponds to the given database type identifier.
      *
      * @param typeId the database tinyint value representing a notification type

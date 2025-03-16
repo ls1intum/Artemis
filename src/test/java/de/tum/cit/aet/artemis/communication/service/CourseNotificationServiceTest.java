@@ -29,7 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSettingOption;
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
@@ -79,13 +79,13 @@ class CourseNotificationServiceTest {
 
     @Test
     void shouldSendNotificationsToAllChannelsWhenMultipleChannelsSupported() {
-        TestNotification notification = createTestNotification(NotificationSettingOption.WEBAPP, NotificationSettingOption.PUSH);
+        TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
         List<User> allRecipients = List.of(createTestUser(1L), createTestUser(2L));
         List<User> webappRecipients = List.of(createTestUser(1L));
         List<User> pushRecipients = List.of(createTestUser(2L));
 
-        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationSettingOption.WEBAPP)).thenReturn(webappRecipients);
-        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationSettingOption.PUSH)).thenReturn(pushRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationChannelOption.WEBAPP)).thenReturn(webappRecipients);
+        when(courseNotificationSettingService.filterRecipientsBy(notification, allRecipients, NotificationChannelOption.PUSH)).thenReturn(pushRecipients);
         when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
         when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
 
@@ -102,7 +102,7 @@ class CourseNotificationServiceTest {
 
     @Test
     void shouldCreateCourseNotificationWhenSending() {
-        TestNotification notification = createTestNotification(NotificationSettingOption.WEBAPP);
+        TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
 
         when(courseNotificationSettingService.filterRecipientsBy(any(), any(), any())).thenReturn(recipients);
@@ -166,7 +166,7 @@ class CourseNotificationServiceTest {
         return user;
     }
 
-    private TestNotification createTestNotification(NotificationSettingOption... supportedChannels) {
+    private TestNotification createTestNotification(NotificationChannelOption... supportedChannels) {
         return new TestNotification(123L, ZonedDateTime.now(), new HashMap<String, String>(Map.of("key1", "val1", "key2", "val2")), supportedChannels);
     }
 
@@ -186,15 +186,15 @@ class CourseNotificationServiceTest {
 
     static class TestNotification extends de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification {
 
-        final Set<NotificationSettingOption> supportedChannels;
+        final Set<NotificationChannelOption> supportedChannels;
 
         // This constructor is needed for the test case shouldReturnCourseNotificationsWhenRequested
         TestNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
             super(courseId, creationDate, parameters);
-            this.supportedChannels = Set.of(NotificationSettingOption.WEBAPP);
+            this.supportedChannels = Set.of(NotificationChannelOption.WEBAPP);
         }
 
-        TestNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters, NotificationSettingOption... supportedChannels) {
+        TestNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters, NotificationChannelOption... supportedChannels) {
             super(courseId, creationDate, parameters);
             this.supportedChannels = new HashSet<>(Arrays.asList(supportedChannels));
         }
@@ -210,7 +210,7 @@ class CourseNotificationServiceTest {
         }
 
         @Override
-        public List<NotificationSettingOption> getSupportedChannels() {
+        public List<NotificationChannelOption> getSupportedChannels() {
             return supportedChannels.stream().toList();
         }
 

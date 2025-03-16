@@ -16,8 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSettingOption;
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.UserCourseNotificationSettingPreset;
@@ -36,7 +37,7 @@ class CourseNotificationSettingPresetRegistryServiceTest {
     void shouldReturnFalseWhenPresetIdDoesNotExist() {
         int nonExistentPresetId = 999;
         Class<? extends CourseNotification> notificationType = TestNotification.class;
-        NotificationSettingOption option = NotificationSettingOption.WEBAPP;
+        NotificationChannelOption option = NotificationChannelOption.WEBAPP;
 
         boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(settingPresetRegistry, "isPresetSettingEnabled", nonExistentPresetId, notificationType, option));
 
@@ -47,7 +48,7 @@ class CourseNotificationSettingPresetRegistryServiceTest {
     void shouldReturnTrueWhenPresetExistsAndSettingIsEnabled() {
         int presetId = 1;
         Class<? extends CourseNotification> notificationType = TestNotification.class;
-        NotificationSettingOption option = NotificationSettingOption.WEBAPP;
+        NotificationChannelOption option = NotificationChannelOption.WEBAPP;
 
         UserCourseNotificationSettingPreset mockPreset = mock(UserCourseNotificationSettingPreset.class);
         when(mockPreset.isEnabled(any(), any())).thenReturn(true);
@@ -64,7 +65,7 @@ class CourseNotificationSettingPresetRegistryServiceTest {
     void shouldReturnFalseWhenPresetExistsButSettingIsDisabled() {
         int presetId = 1;
         Class<? extends CourseNotification> notificationType = TestNotification.class;
-        NotificationSettingOption option = NotificationSettingOption.WEBAPP;
+        NotificationChannelOption option = NotificationChannelOption.WEBAPP;
 
         UserCourseNotificationSettingPreset mockPreset = mock(UserCourseNotificationSettingPreset.class);
         when(mockPreset.isEnabled(any(), any())).thenReturn(false);
@@ -81,7 +82,7 @@ class CourseNotificationSettingPresetRegistryServiceTest {
     void shouldPassCorrectParametersToPresetWhenCheckingIfEnabled() {
         int presetId = 1;
         Class<? extends CourseNotification> notificationType = TestNotification.class;
-        NotificationSettingOption option = NotificationSettingOption.PUSH;
+        NotificationChannelOption option = NotificationChannelOption.PUSH;
 
         UserCourseNotificationSettingPreset mockPreset = mock(UserCourseNotificationSettingPreset.class);
         when(mockPreset.isEnabled(notificationType, option)).thenReturn(true);
@@ -92,6 +93,47 @@ class CourseNotificationSettingPresetRegistryServiceTest {
         boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(settingPresetRegistry, "isPresetSettingEnabled", presetId, notificationType, option));
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void shouldReturnCorrectSettingPresetIdentifiersInCamelCase() {
+        UserCourseNotificationSettingPreset defaultPreset = new DefaultTestPreset();
+        UserCourseNotificationSettingPreset advancedPreset = new AdvancedTestPreset();
+
+        Map<Integer, UserCourseNotificationSettingPreset> presets = Map.of(1, defaultPreset, 2, advancedPreset);
+
+        ReflectionTestUtils.setField(settingPresetRegistry, "presets", presets);
+
+        List<String> result = ReflectionTestUtils.invokeMethod(settingPresetRegistry, "getSettingPresetIdentifiers");
+
+        assertThat(result).hasSize(2).contains("defaultTestPreset", "advancedTestPreset");
+    }
+
+    @Test
+    void shouldReturnEmptyListWhenNoPresetsRegistered() {
+        ReflectionTestUtils.setField(settingPresetRegistry, "presets", Map.of());
+
+        List<String> result = ReflectionTestUtils.invokeMethod(settingPresetRegistry, "getSettingPresetIdentifiers");
+
+        assertThat(result).isEmpty();
+    }
+
+    @CourseNotificationSettingPreset(1)
+    static class DefaultTestPreset extends UserCourseNotificationSettingPreset {
+
+        @Override
+        public boolean isEnabled(Class<? extends CourseNotification> notificationType, NotificationChannelOption option) {
+            return true;
+        }
+    }
+
+    @CourseNotificationSettingPreset(2)
+    static class AdvancedTestPreset extends UserCourseNotificationSettingPreset {
+
+        @Override
+        public boolean isEnabled(Class<? extends CourseNotification> notificationType, NotificationChannelOption option) {
+            return option == NotificationChannelOption.WEBAPP;
+        }
     }
 
     @CourseNotificationType(1)
@@ -112,8 +154,8 @@ class CourseNotificationSettingPresetRegistryServiceTest {
         }
 
         @Override
-        public List<NotificationSettingOption> getSupportedChannels() {
-            return List.of(NotificationSettingOption.EMAIL, NotificationSettingOption.WEBAPP, NotificationSettingOption.PUSH);
+        public List<NotificationChannelOption> getSupportedChannels() {
+            return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
         }
     }
 }

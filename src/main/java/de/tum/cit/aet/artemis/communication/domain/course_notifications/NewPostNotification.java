@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSettingOption;
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 
 /**
  * Notification that tells the user there was a new post in a channel of any type. Announcement posts and thread answers
@@ -65,7 +65,7 @@ public class NewPostNotification extends CourseNotification {
     }
 
     @Override
-    public List<NotificationSettingOption> getSupportedChannels() {
-        return List.of(NotificationSettingOption.WEBAPP, NotificationSettingOption.PUSH);
+    public List<NotificationChannelOption> getSupportedChannels() {
+        return List.of(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
     }
 }

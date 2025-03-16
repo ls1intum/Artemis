@@ -28,9 +28,13 @@ public class CourseNotificationCacheService {
 
     public static final String USER_COURSE_NOTIFICATION_CACHE = "courseNotification";
 
+    public static final String USER_COURSE_NOTIFICATION_SETTING_SPECIFICATION_CACHE = "userCourseNotificationSettingSpecification";
+
     private static final String USER_COURSE_NOTIFICATION_CACHE_KEY_PREFIX = "user_course_notification_";
 
     private static final String USER_COURSE_NOTIFICATION_COUNT_CACHE_KEY_PREFIX = "user_course_notification_count_";
+
+    private static final String USER_COURSE_NOTIFICATION_SETTING_SPECIFICATION_CACHE_PREFIX = "setting_specifications_";
 
     private static final Logger log = LoggerFactory.getLogger(CourseNotificationCacheService.class);
 
@@ -69,6 +73,17 @@ public class CourseNotificationCacheService {
             invalidateCacheForKeyStartingWith(USER_COURSE_NOTIFICATION_CACHE, USER_COURSE_NOTIFICATION_CACHE_KEY_PREFIX + user.getId() + '_' + courseId);
             invalidateCacheForKey(USER_COURSE_NOTIFICATION_CACHE, USER_COURSE_NOTIFICATION_COUNT_CACHE_KEY_PREFIX + user.getId() + '_' + courseId);
         }
+    }
+
+    /**
+     * Invalidates course notification setting specification cache entries for the specified users.
+     *
+     * @param userId   the id of the user
+     * @param courseId the id of the course
+     */
+    @Async
+    protected void invalidateCourseNotificationSettingSpecificationCacheForUser(long userId, long courseId) {
+        invalidateCacheForKey(USER_COURSE_NOTIFICATION_SETTING_SPECIFICATION_CACHE, USER_COURSE_NOTIFICATION_SETTING_SPECIFICATION_CACHE_PREFIX + userId + '_' + courseId);
     }
 
     /**

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSettingOption;
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.AllActivityUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.IgnoreUserCourseNotificationSettingPreset;
@@ -212,5 +212,5 @@ public abstract class CourseNotification {
      *
      * @return Returns list of supported channels.
      */
-    public abstract List<NotificationSettingOption> getSupportedChannels();
+    public abstract List<NotificationChannelOption> getSupportedChannels();
 }

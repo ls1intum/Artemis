@@ -23,6 +23,17 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface UserCourseNotificationSettingSpecificationRepository extends ArtemisJpaRepository<UserCourseNotificationSettingSpecification, Long> {
 
     /***
+     * Get the user setting specification for a given notification type id, user id and course id. Not cached.
+     *
+     * @param userId           to query for
+     * @param courseId         to query for
+     * @param notificationType to query for
+     *
+     * @return The setting specification entity or null if not exists
+     */
+    List<UserCourseNotificationSettingSpecification> findAllByUserIdAndCourseIdAndCourseNotificationTypeIn(Long userId, Long courseId, List<Short> notificationType);
+
+    /***
      * Get the user setting specifications for a given user id and course id. Cached until changed (save or delete is called).
      *
      * @param userId   to query for

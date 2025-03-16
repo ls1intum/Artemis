@@ -61,16 +61,18 @@ public class UserCourseNotificationSettingSpecification implements Serializable 
     /**
      * Constructor with all fields except id.
      *
-     * @param user    the user associated with the setting
-     * @param course  the course associated with the setting
-     * @param email   email notification setting
-     * @param push    push notification setting
-     * @param webapp  webapp notification setting
-     * @param summary summary notification setting
+     * @param user                   the user associated with the setting
+     * @param course                 the course associated with the setting
+     * @param courseNotificationType the notification type identifier
+     * @param email                  email notification setting
+     * @param push                   push notification setting
+     * @param webapp                 webapp notification setting
+     * @param summary                summary notification setting
      */
-    public UserCourseNotificationSettingSpecification(User user, Course course, boolean email, boolean push, boolean webapp, boolean summary) {
+    public UserCourseNotificationSettingSpecification(User user, Course course, Short courseNotificationType, boolean email, boolean push, boolean webapp, boolean summary) {
         this.user = user;
         this.course = course;
+        this.courseNotificationType = courseNotificationType;
         this.email = email;
         this.push = push;
         this.webapp = webapp;

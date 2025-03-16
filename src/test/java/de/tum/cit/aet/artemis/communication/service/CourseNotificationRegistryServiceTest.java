@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSettingOption;
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 
@@ -71,6 +71,46 @@ class CourseNotificationRegistryServiceTest {
         assertThat(result).isEqualTo(expectedTypeId);
     }
 
+    @Test
+    void shouldReturnCorrectNotificationTypesInCamelCase() {
+        Class<? extends CourseNotification> testNotificationClass = TestNotification.class;
+        Class<? extends CourseNotification> anotherTestClass = AnotherTestNotification.class;
+
+        Map<Short, Class<? extends CourseNotification>> notificationTypes = Map.of((short) 1, testNotificationClass, (short) 2, anotherTestClass);
+
+        ReflectionTestUtils.setField(courseNotificationRegistryService, "notificationTypes", notificationTypes);
+
+        List<String> result = ReflectionTestUtils.invokeMethod(courseNotificationRegistryService, "getNotificationTypes");
+
+        assertThat(result).hasSize(2).contains("testNotification", "anotherTestNotification");
+    }
+
+    /**
+     * Another test notification class for testing multiple notification types
+     */
+    @CourseNotificationType(2)
+    static class AnotherTestNotification extends CourseNotification {
+
+        public AnotherTestNotification(Long courseId, ZonedDateTime creationDate) {
+            super(courseId, "Another Test", "another-image.url", creationDate);
+        }
+
+        @Override
+        public CourseNotificationCategory getCourseNotificationCategory() {
+            return CourseNotificationCategory.GENERAL;
+        }
+
+        @Override
+        public Duration getCleanupDuration() {
+            return Duration.ofDays(2);
+        }
+
+        @Override
+        public List<NotificationChannelOption> getSupportedChannels() {
+            return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP);
+        }
+    }
+
     /**
      * Helper method to create a test notification class
      */
@@ -103,8 +143,8 @@ class CourseNotificationRegistryServiceTest {
         }
 
         @Override
-        public List<NotificationSettingOption> getSupportedChannels() {
-            return List.of(NotificationSettingOption.EMAIL, NotificationSettingOption.WEBAPP, NotificationSettingOption.PUSH);
+        public List<NotificationChannelOption> getSupportedChannels() {
+            return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
         }
     }
 }

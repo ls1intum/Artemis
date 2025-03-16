@@ -11,23 +11,39 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationInfoDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationRegistryService;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingPresetRegistryService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 
 @Profile(PROFILE_CORE)
 @RestController
+@FeatureToggle(Feature.CourseSpecificNotifications)
 @RequestMapping("api/communication/")
 public class CourseNotificationResource {
 
     private final CourseNotificationService courseNotificationService;
 
+    private final CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService;
+
+    private final CourseNotificationRegistryService courseNotificationRegistryService;
+
     private final UserRepository userRepository;
 
-    public CourseNotificationResource(CourseNotificationService courseNotificationService, UserRepository userRepository) {
+    public CourseNotificationResource(CourseNotificationService courseNotificationService,
+            CourseNotificationSettingPresetRegistryService courseNotificationSettingPresetRegistryService, CourseNotificationRegistryService courseNotificationRegistryService,
+            UserRepository userRepository) {
         this.courseNotificationService = courseNotificationService;
+        this.courseNotificationSettingPresetRegistryService = courseNotificationSettingPresetRegistryService;
+        this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.userRepository = userRepository;
     }
 
@@ -43,5 +59,19 @@ public class CourseNotificationResource {
     public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
                 .body(courseNotificationService.getCourseNotifications(pageable, courseId, userRepository.getUser().getId()));
+    }
+
+    /**
+     * GET communication/notification/info: get all notification types and presets
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of all notification types and presets
+     */
+    @EnforceAtLeastStudent
+    @GetMapping("notification/info")
+    public ResponseEntity<CourseNotificationInfoDTO> getCourseNotificationInfo() {
+        var presetDTOs = courseNotificationSettingPresetRegistryService.getSettingPresetDTOs();
+        var notificationTypes = courseNotificationRegistryService.getNotificationTypes();
+
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(new CourseNotificationInfoDTO(notificationTypes, NotificationChannelOption.values(), presetDTOs));
     }
 }
