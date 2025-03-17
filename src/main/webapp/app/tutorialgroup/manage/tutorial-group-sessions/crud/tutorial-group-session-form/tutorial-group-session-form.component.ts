@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnI
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
-import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { validTimeRange } from 'app/tutorialgroup/shared/timeRangeValidator';
+import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/ngbTimeStringAdapter';
 
 export interface TutorialGroupSessionFormData {
     date?: Date;

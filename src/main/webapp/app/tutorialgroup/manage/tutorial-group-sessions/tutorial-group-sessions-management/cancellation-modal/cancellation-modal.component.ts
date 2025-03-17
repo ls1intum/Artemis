@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, inject } 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,6 +10,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
 
 @Component({
     selector: 'jhi-cancellation-modal',

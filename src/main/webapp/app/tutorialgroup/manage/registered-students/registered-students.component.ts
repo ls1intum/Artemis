@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -14,6 +13,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 import { captureException } from '@sentry/angular';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-registered-students',

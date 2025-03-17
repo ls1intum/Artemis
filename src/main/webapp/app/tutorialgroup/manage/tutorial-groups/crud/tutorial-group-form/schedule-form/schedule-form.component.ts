@@ -2,19 +2,19 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, 
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
-import { weekDays } from 'app/course/tutorial-groups/shared/weekdays';
 import { Course } from 'app/entities/course.model';
 import * as _ from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
-import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
-import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/ngbTimeStringAdapter';
+import { weekDays } from 'app/tutorialgroup/shared/weekdays';
+import { validTimeRange } from 'app/tutorialgroup/shared/timeRangeValidator';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;

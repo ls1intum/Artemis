@@ -10,13 +10,13 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { isEqual } from 'lodash-es';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 export interface TutorialGroupFormData {
     title?: string;

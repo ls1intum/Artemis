@@ -5,7 +5,6 @@ import { TutorialGroupFormComponent, TutorialGroupFormData } from '../tutorial-g
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest } from 'rxjs';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
@@ -13,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',

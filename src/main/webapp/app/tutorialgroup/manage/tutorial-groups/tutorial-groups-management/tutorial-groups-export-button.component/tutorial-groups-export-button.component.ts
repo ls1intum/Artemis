@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, Te
 import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-tutorial-groups-export-button',

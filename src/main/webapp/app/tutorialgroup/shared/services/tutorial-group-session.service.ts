@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/services/tutorial-group-free-period.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
 

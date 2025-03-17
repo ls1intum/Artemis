@@ -5,7 +5,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { Subject, finalize } from 'rxjs';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -16,6 +15,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { captureException } from '@sentry/angular';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/services/tutorial-group-free-period.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',

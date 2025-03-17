@@ -4,7 +4,6 @@ import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
@@ -17,6 +16,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { titleRegex } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 /**
  * Each row is a object with the structure

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, inject, input } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/services/tutorial-group-free-period.service';
 
 @Component({
     selector: 'jhi-tutorial-group-free-period-row-buttons',

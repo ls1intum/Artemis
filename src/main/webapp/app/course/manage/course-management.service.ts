@@ -19,8 +19,6 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
@@ -29,6 +27,8 @@ import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model
 import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
 import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;

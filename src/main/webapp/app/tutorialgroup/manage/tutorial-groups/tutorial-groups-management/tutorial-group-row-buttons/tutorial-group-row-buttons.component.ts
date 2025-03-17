@@ -3,7 +3,6 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
@@ -14,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',

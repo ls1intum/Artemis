@@ -5,10 +5,10 @@ import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;

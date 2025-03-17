@@ -1,8 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
-import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
 import { TranslateService } from '@ngx-translate/core';
-import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
+import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
 
 /**
  * A pipe that generates a translated meeting pattern given a tutorial group schedule

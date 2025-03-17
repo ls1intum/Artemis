@@ -4,7 +4,6 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -18,6 +17,7 @@ import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },

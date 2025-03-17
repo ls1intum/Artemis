@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { BehaviorSubject, Subscription, catchError, combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,7 +10,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AsyncPipe, NgClass } from '@angular/common';
-import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail',

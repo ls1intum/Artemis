@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -13,6 +12,7 @@ import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupFormComponent, TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-create-tutorial-group',

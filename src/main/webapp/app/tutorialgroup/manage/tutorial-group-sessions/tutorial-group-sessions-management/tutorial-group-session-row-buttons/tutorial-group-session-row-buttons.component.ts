@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, inject, input } from '@angular/core';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
@@ -15,6 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
 
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons',
