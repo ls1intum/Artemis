@@ -294,7 +294,7 @@ public class ProgrammingExerciseParticipationResource {
         participation.setProgrammingExercise(exercise);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        if (participation.isLocked()) {
+        if (participationAuthCheckService.isLocked(participation, exercise)) {
             throw new AccessForbiddenException("participation", participationId);
         }
         if (exercise.isExamExercise()) {

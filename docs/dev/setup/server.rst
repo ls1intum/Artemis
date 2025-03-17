@@ -40,7 +40,7 @@ You can override the following configuration options in this file.
                password: <password>
                base: <base>
        version-control:
-           url: https://gitlab.ase.in.tum.de
+           url: https://artemis.in.tum.de
            user: <username>    # e.g. ga12abc
            password: <password>
            token: <token>                 # VCS API token giving Artemis full Admin access.
@@ -196,8 +196,8 @@ Other run / debug configurations
 
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
-* **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
-  ``dev,jenkins,gitlab,artemis``.
+* **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles
+  ``dev,localvc,jenkins,artemis``.
 * **Artemis (Server with Integrated Code Lifecycle):** The server will be started separated from the client with the profiles ``dev,localci,localvc,artemis``. To use this configuration, Docker needs to be running on your system as Integrated Code Lifecycle uses it to run build jobs.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
   (see `Athena Service <#athena-service>`__).
@@ -212,11 +212,11 @@ The Artemis server should startup by running the main class
     Artemis uses Spring profiles to segregate parts of the
     application configuration and make it only available in certain
     environments. For development purposes, the following program arguments
-    can be used to enable the ``dev`` profile and the profiles for Jenkins and Gitlab:
+    can be used to enable the ``dev`` profile and the profiles for Jenkins and LocalVC:
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling
+   --spring.profiles.active=dev,jenkins,localvc,artemis,atlas,scheduling
 
 If you use IntelliJ (Community or Ultimate) you can set the active
 profiles by
@@ -224,7 +224,7 @@ profiles by
 * Choosing ``Run | Edit Configurations...``
 * Going to the ``Configuration Tab``
 * Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
-  ``-Dspring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling``
+  ``-Dspring.profiles.active=dev,jenkins,localvc,artemis,atlas,scheduling``
 
 Set Spring profiles with IntelliJ Ultimate
 """"""""""""""""""""""""""""""""""""""""""
@@ -235,7 +235,7 @@ configuration:
 
 ::
 
-   dev,jenkins,gitlab,artemis,scheduling
+   dev,jenkins,localvc,artemis,scheduling
 
 Run the server with the command line (Gradle wrapper)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -245,4 +245,4 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
 .. code:: bash
 
-   ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,gitlab,artemis,atlas,scheduling'
+   ./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,atlas,scheduling'

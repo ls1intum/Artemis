@@ -121,7 +121,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -159,8 +158,6 @@ public class CourseResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
     private final ExerciseRepository exerciseRepository;
@@ -192,9 +189,9 @@ public class CourseResource {
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
-            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
+            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService,
+            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
@@ -205,7 +202,6 @@ public class CourseResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCiUserManagementService = optionalCiUserManagementService;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
@@ -343,8 +339,6 @@ public class CourseResource {
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
-        optionalVcsUserManagementService
-                .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
@@ -909,7 +903,7 @@ public class CourseResource {
         courseService.archiveCourse(course);
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow
-        // instructors to download student repos in order to delete those on Gitlab
+        // instructors to download student repos in order to delete those in the VCS
 
         // Note: Lectures are not part of the archive at the moment and will be included in a future version
         // 1) Get all lectures (attachments) of the course and store them in a folder
