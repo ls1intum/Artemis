@@ -4,7 +4,6 @@ import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -23,13 +22,7 @@ describe('DataExportConfirmationDialogComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, NgbModule],
-            declarations: [
-                DataExportConfirmationDialogComponent,
-                AlertOverlayComponent,
-                ConfirmEntityNameComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-            ],
+            declarations: [DataExportConfirmationDialogComponent, ConfirmEntityNameComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService, MockProvider(NgbActiveModal)],
         }).compileComponents();
         fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);

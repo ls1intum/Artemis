@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { of } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { RouterModule } from '@angular/router';

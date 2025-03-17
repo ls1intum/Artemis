@@ -14,7 +14,6 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -108,7 +107,6 @@ describe('CourseLectureDetailsComponent', () => {
                 MockComponent(VideoUnitComponent),
                 MockComponent(OnlineUnitComponent),
                 CompetenciesPopoverComponent,
-                AlertOverlayComponent,
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,

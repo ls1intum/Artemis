@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/angular';
 import { AppComponent } from '../../../main/webapp/app/app.component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { TranslateService } from '@ngx-translate/core';

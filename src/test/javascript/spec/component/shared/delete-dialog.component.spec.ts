@@ -7,7 +7,6 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject } from 'rxjs';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,7 +23,7 @@ describe('DeleteDialogComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ReactiveFormsModule, FormsModule, NgbModule],
-            declarations: [DeleteDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), ConfirmEntityNameComponent],
+            declarations: [DeleteDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), ConfirmEntityNameComponent],
             providers: [JhiLanguageHelper, AlertService, MockProvider(NgbActiveModal)],
         }).compileComponents();
         fixture = TestBed.createComponent(DeleteDialogComponent);

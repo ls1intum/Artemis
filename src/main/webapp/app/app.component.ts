@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
-import { AlertOverlayComponent } from './shared/alert/alert-overlay.component';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { PageRibbonComponent } from './shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from './shared/notification/notification-popup/notification-popup.component';

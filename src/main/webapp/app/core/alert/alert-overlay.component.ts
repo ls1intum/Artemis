@@ -3,9 +3,9 @@ import { Alert, AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 import { NgClass, NgStyle } from '@angular/common';
-import { CloseCircleComponent } from '../close-circle/close-circle.component';
+import { CloseCircleComponent } from '../../shared/close-circle/close-circle.component';
 
 @Component({
     selector: 'jhi-alert-overlay',
