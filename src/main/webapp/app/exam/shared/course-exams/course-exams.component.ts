@@ -6,7 +6,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';

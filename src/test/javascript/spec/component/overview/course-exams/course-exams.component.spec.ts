@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';

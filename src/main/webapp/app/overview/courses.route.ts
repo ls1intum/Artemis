@@ -286,7 +286,7 @@ export const routes: Routes = [
                 children: [
                     {
                         path: ':examId',
-                        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
+                        loadComponent: () => import('app/exam/overview/exam-participation.component').then((m) => m.ExamParticipationComponent),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exams',
@@ -295,7 +295,7 @@ export const routes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
-                        loadChildren: () => import('../exam/participate/exam-participation.route').then((m) => m.examParticipationRoute),
+                        loadChildren: () => import('../exam/overview/exam-participation.route').then((m) => m.examParticipationRoute),
                     },
                 ],
             },

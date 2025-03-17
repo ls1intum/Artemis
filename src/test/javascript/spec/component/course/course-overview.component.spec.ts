@@ -52,7 +52,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

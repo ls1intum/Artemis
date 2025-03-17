@@ -7,7 +7,7 @@ import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-rep
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
+import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';

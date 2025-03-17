@@ -2,12 +2,12 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';

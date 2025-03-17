@@ -20,7 +20,7 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;

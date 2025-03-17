@@ -5,7 +5,7 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TestExamWorkingTimeComponent } from 'app/exam/participate/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

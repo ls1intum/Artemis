@@ -26,7 +26,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

@@ -62,7 +62,7 @@ import { CourseExercisesComponent } from './course-exercises/course-exercises.co
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';

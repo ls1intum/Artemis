@@ -6,7 +6,7 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';

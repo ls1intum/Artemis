@@ -313,7 +313,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:testRunId/conduction',
-        loadComponent: () => import('app/exam/participate/exam-participation.component').then((m) => m.ExamParticipationComponent),
+        loadComponent: () => import('app/exam/overview/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.exam.title',

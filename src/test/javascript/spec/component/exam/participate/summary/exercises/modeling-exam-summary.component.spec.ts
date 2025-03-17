@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
+import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

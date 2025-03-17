@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
+import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { By } from '@angular/platform-browser';
 import { FileUploadSubmissionComponent } from 'app/file-upload/overview/file-upload-submission.component';

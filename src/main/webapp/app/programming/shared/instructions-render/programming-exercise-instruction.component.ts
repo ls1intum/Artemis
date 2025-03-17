@@ -34,7 +34,7 @@ import { Result } from 'app/entities/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
-import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';

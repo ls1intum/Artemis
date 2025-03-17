@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
+import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
