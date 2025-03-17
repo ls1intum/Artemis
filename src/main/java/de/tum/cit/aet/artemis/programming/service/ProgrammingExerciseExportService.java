@@ -160,7 +160,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 }
             });
 
-            // Export the build plan of a programming exercise, if one exists. Only relevant for Gitlab/Jenkins or Gitlab/GitlabCI setups.
+            // Export the build plan of a programming exercise, if one exists. Only relevant for Jenkins setups.
             var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(exercise.getId());
             if (buildPlan.isPresent()) {
                 Path buildPlanPath = exportDir.orElseThrow().resolve(BUILD_PLAN_FILE_NAME);

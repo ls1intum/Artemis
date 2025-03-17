@@ -1151,33 +1151,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
 
-    /**
-     * Finds all users which a non-null VCS access token that expires before some given date.
-     *
-     * @param expirationDate the maximal expiration date of the retrieved users
-     * @return all users with expiring VCS access tokens before the given date
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-            WHERE user.vcsAccessToken IS NOT NULL
-                AND user.vcsAccessTokenExpiryDate IS NOT NULL
-                AND user.vcsAccessTokenExpiryDate <= :date
-            """)
-    Set<User> getUsersWithAccessTokenExpirationDateBefore(@Param("date") ZonedDateTime expirationDate);
-
-    /**
-     * Finds all users with VCS access tokens set to null.
-     *
-     * @return all users without VCS access tokens
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-            WHERE user.vcsAccessToken IS NULL
-            """)
-    Set<User> getUsersWithAccessTokenNull();
-
     @Query("""
             SELECT user.login
             FROM User user
