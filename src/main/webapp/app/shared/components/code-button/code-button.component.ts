@@ -13,7 +13,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
@@ -126,7 +126,6 @@ export class CodeButtonComponent implements OnInit {
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
-    readonly faDesktop = faDesktop;
     ideName: string;
 
     constructor() {
