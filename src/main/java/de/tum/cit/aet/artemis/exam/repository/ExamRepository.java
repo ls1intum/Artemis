@@ -212,10 +212,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             "exerciseGroups.exercises.teamAssignmentConfig" })
     Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
-            "exerciseGroups.exercises.studentParticipations.submissions" })
-    Optional<Exam> findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(long examId);
-
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
     Optional<Exam> findWithExamUsersById(long examId);
 

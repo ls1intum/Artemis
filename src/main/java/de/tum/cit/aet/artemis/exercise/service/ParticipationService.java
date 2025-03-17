@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
@@ -28,8 +27,6 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -103,8 +100,6 @@ public class ParticipationService {
 
     private final Optional<SharedQueueManagementService> localCISharedBuildJobQueueService;
 
-    private final ProfileService profileService;
-
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -115,7 +110,7 @@ public class ParticipationService {
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ParticipantScoreRepository participantScoreRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
-            ProfileService profileService, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -133,7 +128,6 @@ public class ParticipationService {
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.profileService = profileService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.competencyProgressApi = competencyProgressApi;
     }
@@ -244,7 +238,7 @@ public class ParticipationService {
 
         participation = studentParticipationRepository.saveAndFlush(participation);
 
-        if (exercise instanceof ProgrammingExercise && participant instanceof User user && profileService.isLocalVcsActive()) {
+        if (exercise instanceof ProgrammingExercise && participant instanceof User user) {
             participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
         }
 
@@ -300,9 +294,7 @@ public class ParticipationService {
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
         participation = configureBuildPlan(participation);
-        // Step 3) configure the web hook of the student repository
-        configureRepositoryWebHook(participation);
-        // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
+        // Step 3a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;
@@ -396,20 +388,7 @@ public class ParticipationService {
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUri(), programmingParticipation);
             programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
-            configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
-            if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
-                    || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
-                // restrict access for the student
-                try {
-                    versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
-                            programmingParticipation.getStudents());
-                }
-                catch (VersionControlException e) {
-                    log.error("Removing write permissions failed for programming exercise with id {} for student repository with participation id {}: {}",
-                            programmingExercise.getId(), programmingParticipation.getId(), e.getMessage());
-                }
-            }
         }
 
         participation.setInitializationState(InitializationState.FINISHED);
@@ -490,12 +469,10 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
-            boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getParticipationStartDate());
             if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
                 // eager load the team with students so their information can be used for the repository configuration
                 participation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
-            versionControlService.orElseThrow().configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
@@ -527,7 +504,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             try {
-                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(participation);
+                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
                 continuousIntegrationService.orElseThrow().configureBuildPlan(participation, branch);
             }
             catch (ContinuousIntegrationException ex) {
@@ -544,12 +521,6 @@ public class ParticipationService {
         }
         else {
             return participation;
-        }
-    }
-
-    private void configureRepositoryWebHook(ProgrammingExerciseStudentParticipation participation) {
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
-            versionControlService.orElseThrow().addWebHookForParticipation(participation);
         }
     }
 
@@ -672,21 +643,6 @@ public class ParticipationService {
             return studentParticipationRepository.findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
         return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
-    }
-
-    /**
-     * Get one participation (in any state) by its student and exercise with eager submissions else throw exception.
-     *
-     * @param exercise the exercise for which to find a participation
-     * @param username the username of the student
-     * @return the participation of the given student and exercise with eager submissions in any state
-     */
-    public StudentParticipation findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyStateElseThrow(Exercise exercise, String username) {
-        Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, username);
-        if (optionalParticipation.isEmpty()) {
-            throw new EntityNotFoundException("No participation found in exercise with id " + exercise.getId() + " for user " + username);
-        }
-        return optionalParticipation.get();
     }
 
     /**
@@ -836,11 +792,9 @@ public class ParticipationService {
      * Delete the participation by participationId.
      *
      * @param participationId         the participationId of the entity
-     * @param deleteBuildPlan         determines whether the corresponding build plan should be deleted as well
-     * @param deleteRepository        determines whether the corresponding repository should be deleted as well
      * @param deleteParticipantScores false if the participant scores have already been bulk deleted, true by default otherwise
      */
-    public void delete(long participationId, boolean deleteBuildPlan, boolean deleteRepository, boolean deleteParticipantScores) {
+    public void delete(long participationId, boolean deleteParticipantScores) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         log.info("Request to delete Participation : {}", participation);
 
@@ -848,13 +802,11 @@ public class ParticipationService {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            // If LocalVC is active the flag deleteBuildPlan is ignored and build plans are always deleted
-            if ((deleteBuildPlan || profileService.isLocalVcsActive()) && buildPlanId != null) {
+            if (buildPlanId != null) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
             }
-            // If LocalVC is active the flag deleteRepository is ignored and repositories are always deleted
-            if ((deleteRepository || profileService.isLocalVcsActive()) && programmingExerciseParticipation.getRepositoryUri() != null) {
+            if (programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
                 }
@@ -920,11 +872,9 @@ public class ParticipationService {
      * Delete all participations belonging to the given exercise
      *
      * @param exercise                      the exercise
-     * @param deleteBuildPlan               specify if build plan should be deleted
-     * @param deleteRepository              specify if repository should be deleted
      * @param recalculateCompetencyProgress specify if the competency progress should be recalculated
      */
-    public void deleteAllByExercise(Exercise exercise, boolean deleteBuildPlan, boolean deleteRepository, boolean recalculateCompetencyProgress) {
+    public void deleteAllByExercise(Exercise exercise, boolean recalculateCompetencyProgress) {
         var participationsToDelete = studentParticipationRepository.findByExerciseId(exercise.getId());
         log.info("Request to delete all {} participations of exercise with id : {}", participationsToDelete.size(), exercise.getId());
 
@@ -932,7 +882,7 @@ public class ParticipationService {
         participantScoreRepository.deleteAllByExerciseId(exercise.getId());
 
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
+            delete(participation.getId(), false);
         }
 
         if (recalculateCompetencyProgress) {
@@ -943,11 +893,9 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given team
      *
-     * @param teamId           the id of the team
-     * @param deleteBuildPlan  specify if build plan should be deleted
-     * @param deleteRepository specify if repository should be deleted
+     * @param teamId the id of the team
      */
-    public void deleteAllByTeamId(Long teamId, boolean deleteBuildPlan, boolean deleteRepository) {
+    public void deleteAllByTeamId(Long teamId) {
         log.info("Request to delete all participations of Team with id : {}", teamId);
 
         // First remove all participant scores, as we are deleting all participations for the team
@@ -955,7 +903,7 @@ public class ParticipationService {
 
         List<StudentParticipation> participationsToDelete = studentParticipationRepository.findByTeamId(teamId);
         for (StudentParticipation participation : participationsToDelete) {
-            delete(participation.getId(), deleteBuildPlan, deleteRepository, false);
+            delete(participation.getId(), false);
         }
     }
 }

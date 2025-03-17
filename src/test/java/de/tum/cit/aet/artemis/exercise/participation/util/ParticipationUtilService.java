@@ -62,7 +62,9 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -131,6 +133,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -682,6 +687,21 @@ public class ParticipationUtilService {
         return submission;
     }
 
+    /**
+     * Updates and saves the given Submission by adding it to the given Participation.
+     *
+     * @param participation The Participation the Submission belongs to
+     * @param submission    The Submission to add and update
+     * @return The updated Submission
+     */
+    public Submission addSubmission(SolutionProgrammingExerciseParticipation participation, Submission submission) {
+        participation.addSubmission(submission);
+        submission.setParticipation(participation);
+        submissionRepository.save(submission);
+        solutionProgrammingExerciseParticipationRepository.save(participation);
+        return submission;
+    }
+
     public Submission addSubmissionWithTwoFinishedResultsWithAssessor(Exercise exercise, Submission submission, String login, String assessorLogin) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         submission = addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
@@ -930,11 +950,8 @@ public class ParticipationUtilService {
     private void mockCreationOfExerciseParticipationInternal(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService) {
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(any());
 
-        doNothing().when(versionControlService).configureRepository(any(), any(), anyBoolean());
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
-        doNothing().when(versionControlService).addWebHookForParticipation(any());
     }
 }
