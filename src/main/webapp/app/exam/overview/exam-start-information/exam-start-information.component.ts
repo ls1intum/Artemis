@@ -28,6 +28,7 @@ export class ExamStartInformationComponent implements OnInit {
     numberOfExercisesInExam?: number;
     examinedStudent?: string;
     startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
     gracePeriodInMinutes?: number;
 
     ngOnInit(): void {
@@ -39,6 +40,7 @@ export class ExamStartInformationComponent implements OnInit {
         this.numberOfExercisesInExam = this.exam.numberOfExercisesInExam;
         this.examinedStudent = this.studentExam.user?.name;
         this.startDate = this.exam.startDate;
+        this.endDate = this.exam.endDate;
         this.gracePeriodInMinutes = Math.floor(this.exam.gracePeriod! / 60);
 
         this.prepareInformationBoxData();

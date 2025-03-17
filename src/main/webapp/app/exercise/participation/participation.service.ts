@@ -101,16 +101,6 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.convertParticipationResponseDatesFromServer(res)));
     }
 
-    downloadArtifact(participationId: number): Observable<BuildArtifact> {
-        return this.http.get(`${this.resourceUrl}/${participationId}/build-artifact`, { observe: 'response', responseType: 'blob' }).pipe(
-            map((res: EntityBlobResponseType) => {
-                const fileNameCandidate = (res.headers.get('content-disposition') || '').split('filename=')[1];
-                const fileName = fileNameCandidate ? fileNameCandidate.replace(/"/g, '') : 'artifact';
-                return { fileName, fileContent: res.body } as BuildArtifact;
-            }),
-        );
-    }
-
     shouldPreferPractice(exercise?: Exercise): boolean {
         return !!exercise?.dueDate && dayjs().isAfter(exercise.dueDate);
     }

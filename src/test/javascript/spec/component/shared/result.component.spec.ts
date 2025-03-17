@@ -21,7 +21,6 @@ import { By } from '@angular/platform-browser';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -80,7 +79,6 @@ describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
-    let mockLink: HTMLAnchorElement;
     let router: Router;
 
     beforeEach(async () => {
@@ -120,35 +118,6 @@ describe('ResultComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
         global.URL.revokeObjectURL = jest.fn();
-    });
-
-    it('should download build result when participation ID is provided', () => {
-        // Arrange
-        const fakeArtifact = {
-            fileContent: new Blob(['test'], { type: 'text/plain' }),
-            fileName: 'test.txt',
-        };
-        mockLink = document.createElement('a');
-        jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
-        jest.spyOn(document.body, 'appendChild').mockImplementation((child) => child);
-        jest.spyOn(document.body, 'removeChild').mockImplementation((child) => child);
-
-        const urlSpy = jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
-
-        participationServiceMock.downloadArtifact.mockReturnValue(of(fakeArtifact));
-
-        // Act
-        comp.downloadBuildResult(123);
-
-        // Assert
-        expect(participationServiceMock.downloadArtifact).toHaveBeenCalledWith(123);
-        expect(document.createElement).toHaveBeenCalledWith('a');
-        expect(urlSpy).toHaveBeenCalledWith(fakeArtifact.fileContent);
-        expect(mockLink.download).toBe(fakeArtifact.fileName);
-        expect(mockLink.href).toBe('blob:test-url');
-        expect(document.body.appendChild).toHaveBeenCalledWith(mockLink);
-        // Cleanup to avoid memory leaks
-        URL.revokeObjectURL(mockLink.href);
     });
 
     it('should set template status to BUILDING if isBuilding changes to true even though participation changes', () => {

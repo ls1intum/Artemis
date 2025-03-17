@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
@@ -263,25 +263,6 @@ describe('Participation Service', () => {
 
         expect(resultGetBuildJobId).toEqual(expected);
     }));
-
-    it.each<any>([
-        ['attachment; filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
-        ['', 'artifact'],
-        ['filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
-        ['f="abc"', 'artifact'],
-    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string) => {
-        const expectedBlob = new Blob(['abc', 'cfe'], { type: 'application/java-archive' });
-        const headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
-        const response = { body: expectedBlob, headers, status: 200 };
-
-        service.downloadArtifact(123).subscribe((resp) => {
-            expect(resp.fileName).toBe(expectedFileName);
-            expect(resp.fileContent).toBe(expectedBlob);
-        });
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.event(new HttpResponse<Blob>(response));
-    });
 
     afterEach(() => {
         httpMock.verify();

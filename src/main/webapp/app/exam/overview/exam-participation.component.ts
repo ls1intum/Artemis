@@ -1,15 +1,15 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
+import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { TextSubmissionService } from 'app/text/overview/text-submission.service';
+import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -21,7 +21,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
@@ -29,8 +29,9 @@ import { Course } from 'app/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
-import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
+import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -40,7 +41,7 @@ import {
     ExamParticipationLiveEventsService,
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
-} from 'app/exam/overview/exam-participation-live-events.service';
+} from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
@@ -49,18 +50,17 @@ import { ExamParticipationCoverComponent } from './exam-cover/exam-participation
 import { AsyncPipe, NgClass } from '@angular/common';
 import { ExamBarComponent } from './exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from './exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
-import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
-import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
-import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
-import { ProgrammingExamSubmissionComponent } from 'app/exam/overview/exercises/programming/programming-exam-submission.component';
+import { QuizExamSubmissionComponent } from './exercises/quiz/quiz-exam-submission.component';
+import { FileUploadExamSubmissionComponent } from './exercises/file-upload/file-upload-exam-submission.component';
+import { TextExamSubmissionComponent } from './exercises/text/text-exam-submission.component';
+import { ModelingExamSubmissionComponent } from './exercises/modeling/modeling-exam-submission.component';
+import { ProgrammingExamSubmissionComponent } from './exercises/programming/programming-exam-submission.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ExamExerciseOverviewPageComponent } from './exercises/exercise-overview-page/exam-exercise-overview-page.component';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -74,7 +74,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         NgClass,
         ExamBarComponent,
         ExamNavigationSidebarComponent,
-        ExamExerciseOverviewPageComponent,
         QuizExamSubmissionComponent,
         FileUploadExamSubmissionComponent,
         TextExamSubmissionComponent,
@@ -87,6 +86,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         AsyncPipe,
         ArtemisTranslatePipe,
+        ExamExerciseOverviewPageComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -221,12 +221,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
-            if (params['studentExamId']) {
-                // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
+            const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
+            if (studentExamId) {
                 this.testExam = true;
-                if (params['studentExamId'] !== 'start') {
-                    this.studentExamId = parseInt(params['studentExamId'], 10);
-                }
+                this.studentExamId = parseInt(studentExamId, 10);
             }
             this.loadingExam = true;
             if (this.testRunId) {
@@ -240,6 +238,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
+                });
+            } else if (this.testExam && this.studentExamId) {
+                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExamId).subscribe({
+                    next: (studentExam) => {
+                        this.handleStudentExam(studentExam);
+                    },
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
                 });
             } else {
                 this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
@@ -428,10 +435,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: () => {
-                    if (this.testExam) {
-                        // If we have a test exam, we reload the summary from the server right away
-                        this.loadAndDisplaySummary();
-                    }
                     this.submitInProgress = false;
 
                     // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
@@ -448,6 +451,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     if (this.testExam) {
                         this.examParticipationService.resetExamLayout();
+                        this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
