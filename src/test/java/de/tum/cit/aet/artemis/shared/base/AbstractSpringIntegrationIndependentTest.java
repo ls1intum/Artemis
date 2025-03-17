@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
-        PROFILE_THEIA, PROFILE_LTI })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS,
+        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_LTI })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
@@ -110,11 +110,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) {
-        log.debug("Called mockRemoveRepositoryAccess with args {}, {}, {}", exercise, team, firstStudent);
-    }
-
-    @Override
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         log.debug("Called mockCopyRepositoryForParticipation with args {}, {}", exercise, username);
     }
@@ -155,11 +150,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
-        log.debug("Called mockGrantReadAccess with args {}", participation);
-    }
-
-    @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
         log.debug("Called mockNotifyPush with args {}", participation);
     }
@@ -177,11 +167,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void resetMockProvider() {
         log.debug("Called resetMockProvider");
-    }
-
-    @Override
-    public void verifyMocks() {
-        log.debug("Called verifyMocks");
     }
 
     @Override
@@ -267,11 +252,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        log.debug("Called mockConfigureBuildPlan with args {}, {}", participation, defaultBranch);
-    }
-
-    @Override
     public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
         log.debug("Called mockCheckIfProjectExistsInVcs with args {}, {}", exercise, existsInVcs);
     }
@@ -299,16 +279,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         log.debug("Called mockTriggerBuildFailed with args {}", solutionParticipation);
-    }
-
-    @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) {
-        log.debug("Called mockSetRepositoryPermissionsToReadOnly with args {}, {}, {}", repositoryUri, projectKey, users);
-    }
-
-    @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) {
-        log.debug("Called mockConfigureRepository with args {}, {}, {}, {}", exercise, participantIdentifier, students, userExists);
     }
 
     @Override

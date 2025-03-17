@@ -96,14 +96,6 @@
                         <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                     }
                 </span>
-                @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
-                    <span>
-                        <a (click)="downloadBuildResult(participation.id)">
-                            &nbsp; <fa-icon [icon]="faFile" />
-                            <span jhiTranslate="artemisApp.editor.downloadBuildResult"></span>
-                        </a>
-                    </span>
-                }
                 @if (showBadge) {
                     <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
                         {{ badge.text | artemisTranslate | uppercase }}
