@@ -17,6 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { DragItemComponent } from './drag-item.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 // options are optional ;)
 polyfill({
@@ -59,6 +60,8 @@ enum MappingResult {
 export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
     @ViewChild(SecuredImageComponent, { static: false })

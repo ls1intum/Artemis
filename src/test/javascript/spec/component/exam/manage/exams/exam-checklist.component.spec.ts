@@ -19,6 +19,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { input } from '@angular/core';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -88,21 +89,23 @@ describe('ExamChecklistComponent', () => {
 
     beforeEach(() => {
         // reset exam
-        component.exam = exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should count mandatory exercises correctly', () => {
-        component.exam.exerciseGroups = getExerciseGroups(true);
+        component.exam().exerciseGroups = getExerciseGroups(true);
 
         component.ngOnChanges();
 
         expect(component.countMandatoryExercises).toBe(0);
         expect(component.hasOptionalExercises).toBeTrue();
 
-        component.exam.exerciseGroups[0].isMandatory = true;
+        component.exam().exerciseGroups![0].isMandatory = true;
 
         component.ngOnChanges();
 
@@ -121,7 +124,8 @@ describe('ExamChecklistComponent', () => {
                 },
             ],
         };
-        component.exam.exerciseGroups.push(additionalExerciseGroup);
+
+        component.exam().exerciseGroups!.push(additionalExerciseGroup);
 
         component.ngOnChanges();
 

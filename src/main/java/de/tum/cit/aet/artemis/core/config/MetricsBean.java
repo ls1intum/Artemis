@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MultiGauge;
@@ -105,7 +105,7 @@ public class MetricsBean {
 
     private final Optional<HikariDataSource> hikariDataSource;
 
-    private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
+    private final Optional<DistributedDataAccessService> localCIDistributedDataAccessService;
 
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed every 60 minutes.
@@ -177,7 +177,7 @@ public class MetricsBean {
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
             StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
+            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
         this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
@@ -192,7 +192,7 @@ public class MetricsBean {
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
         this.profileService = profileService;
-        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+        this.localCIDistributedDataAccessService = localCIBuildJobQueueService;
     }
 
     /**
@@ -292,38 +292,39 @@ public class MetricsBean {
      */
     private void registerLocalCIMetrics() {
         // Publish the number of running builds
-        Gauge.builder("artemis.global.localci.running", localCIBuildJobQueueService, MetricsBean::extractRunningBuilds).strongReference(true)
+        Gauge.builder("artemis.global.localci.running", localCIDistributedDataAccessService, MetricsBean::extractRunningBuilds).strongReference(true)
                 .description("Number of running builds").register(meterRegistry);
 
         // Publish the number of queued builds
-        Gauge.builder("artemis.global.localci.queued", localCIBuildJobQueueService, MetricsBean::extractQueuedBuilds).strongReference(true).description("Number of queued builds")
-                .register(meterRegistry);
+        Gauge.builder("artemis.global.localci.queued", localCIDistributedDataAccessService, MetricsBean::extractQueuedBuilds).strongReference(true)
+                .description("Number of queued builds").register(meterRegistry);
 
         // Publish the number of build agents
-        Gauge.builder("artemis.global.localci.agents", localCIBuildJobQueueService, MetricsBean::extractBuildAgents).strongReference(true)
+        Gauge.builder("artemis.global.localci.agents", localCIDistributedDataAccessService, MetricsBean::extractBuildAgents).strongReference(true)
                 .description("Number of active build agents").register(meterRegistry);
 
         // Publish the number of max concurrent builds
-        Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIBuildJobQueueService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
+        Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIDistributedDataAccessService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
                 .description("Number of max concurrent builds").register(meterRegistry);
     }
 
-    private static int extractRunningBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(SharedQueueManagementService::getProcessingJobsSize).orElse(0);
+    private static int extractRunningBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getProcessingJobsSize).orElse(0);
     }
 
-    private static int extractQueuedBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(SharedQueueManagementService::getQueuedJobsSize).orElse(0);
+    private static int extractQueuedBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getQueuedJobsSize).orElse(0);
     }
 
-    private static int extractBuildAgents(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(SharedQueueManagementService::getBuildAgentInformationSize).orElse(0);
+    private static int extractBuildAgents(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getBuildAgentInformationSize).orElse(0);
     }
 
-    private static int extractMaxConcurrentBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().stream()
-                .filter(agent -> agent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED).map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs)
-                .reduce(0, Integer::sum)).orElse(0);
+    private static int extractMaxConcurrentBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(
+                dataManagementService -> dataManagementService.getBuildAgentInformation().stream().filter(agent -> agent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED)
+                        .map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum))
+                .orElse(0);
     }
 
     // This is ALWAYS active on all nodes

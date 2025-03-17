@@ -2,7 +2,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Routes } from '@angular/router';
 
-const routes: Routes = [
+export const routes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/overview/course-statistics/course-statistics.component').then((m) => m.CourseStatisticsComponent),
@@ -22,4 +22,3 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
-export { routes };
