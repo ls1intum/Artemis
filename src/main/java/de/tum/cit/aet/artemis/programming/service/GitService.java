@@ -170,7 +170,6 @@ public class GitService extends AbstractGitService {
      * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
-     * For GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
      * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI

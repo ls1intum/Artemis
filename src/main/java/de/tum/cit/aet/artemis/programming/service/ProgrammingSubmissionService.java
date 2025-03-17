@@ -222,13 +222,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
         programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
 
-        // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
-                && submissionPolicy instanceof LockRepositoryPolicy) {
-            // we set the participation to locked when the new submission count is at least as high as the submission limit
-            programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
-        }
-
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
     }
@@ -297,7 +290,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private boolean exceedsSubmissionPolicy(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionPolicy submissionPolicy) {
         if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
                 && submissionPolicy instanceof LockRepositoryPolicy) {
-            return programmingExerciseParticipation.getSubmissions().size() > submissionPolicy.getSubmissionLimit();
+            return programmingExerciseParticipation.getSubmissions().size() >= submissionPolicy.getSubmissionLimit();
         }
         return false;
     }
