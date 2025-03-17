@@ -11,9 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,37 +27,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "programmingexamtest";
 
     @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -76,9 +64,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
     private Course course1;
 
     private Exam exam1;
@@ -87,24 +72,18 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
 
     private static final int NUMBER_OF_TUTORS = 1;
 
-    private User student1;
-
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
 
         course1 = courseUtilService.addEmptyCourse();
-        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         exam1 = examUtilService.addExam(course1);
-
-        gitlabRequestMockProvider.enableMockingOfRequests();
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         if (programmingExerciseTestService.exerciseRepo != null) {
             programmingExerciseTestService.tearDown();
@@ -124,7 +103,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingEx.getId());
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
@@ -141,7 +119,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingEx.getId());
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
@@ -159,7 +136,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
     }
 
     @Test
@@ -172,141 +148,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleProgramming_startDateChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
-        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
-
-        ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithProgrammingEx.getStartDate();
-        ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate.plusSeconds(1), endDate);
-
-        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
-
-        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
-        verify(instanceMessageSendService, never()).sendRescheduleAllStudentExams(any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleProgramming_endDateChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
-        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
-
-        ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithProgrammingEx.getStartDate();
-        ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate, endDate.plusMinutes(1));
-
-        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
-
-        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
-        verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExamWorkingTime_rescheduleProgramming_endDateChanged_shouldReschedule() throws Exception {
-        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
-        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
-
-        var workingTimeExtensionSeconds = 60;
-
-        request.patch("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId() + "/working-time", workingTimeExtensionSeconds,
-                HttpStatus.OK);
-
-        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
-        verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void lockAllRepositories() throws Exception {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-        Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).orElseThrow();
-        ExerciseGroup exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
-
-        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
-        programmingExerciseRepository.save(programmingExercise);
-
-        ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
-        programmingExerciseRepository.save(programmingExercise2);
-
-        Integer numOfLockedExercises = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/lock-all-repositories", Optional.empty(),
-                Integer.class, HttpStatus.OK);
-
-        assertThat(numOfLockedExercises).isEqualTo(2);
-
-        verify(programmingExerciseScheduleService).lockAllStudentRepositories(programmingExercise);
-        verify(programmingExerciseScheduleService).lockAllStudentRepositories(programmingExercise2);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void lockAllRepositories_noInstructor() throws Exception {
-        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/lock-all-repositories", Optional.empty(), Integer.class,
-                HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void unlockAllRepositories_preAuthNoInstructor() throws Exception {
-        request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/unlock-all-repositories", Optional.empty(), Integer.class,
-                HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void unlockAllRepositories() throws Exception {
-        assertThat(studentExamRepository.findStudentExam(new ProgrammingExercise(), null)).isEmpty();
-        Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
-        ExerciseGroup exerciseGroup1 = exam.getExerciseGroups().getFirst();
-
-        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
-        programmingExerciseRepository.save(programmingExercise);
-
-        ProgrammingExercise programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
-        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
-        programmingExerciseRepository.save(programmingExercise2);
-
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        var studentExam1 = examUtilService.addStudentExamWithUser(exam, student1, 10);
-        studentExam1.setExercises(List.of(programmingExercise, programmingExercise2));
-        var studentExam2 = examUtilService.addStudentExamWithUser(exam, student2, 0);
-        studentExam2.setExercises(List.of(programmingExercise, programmingExercise2));
-        studentExamRepository.saveAll(Set.of(studentExam1, studentExam2));
-
-        var participationExSt1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var participationExSt2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-
-        var participationEx2St1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise2, TEST_PREFIX + "student1");
-        var participationEx2St2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise2, TEST_PREFIX + "student2");
-
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt1)).contains(studentExam1);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise, participationExSt2)).contains(studentExam2);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St1)).contains(studentExam1);
-        assertThat(studentExamRepository.findStudentExam(programmingExercise2, participationEx2St2)).contains(studentExam2);
-
-        mockConfigureRepository(programmingExercise, TEST_PREFIX + "student1", Set.of(student1), true);
-        mockConfigureRepository(programmingExercise, TEST_PREFIX + "student2", Set.of(student2), true);
-        mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student1", Set.of(student1), true);
-        mockConfigureRepository(programmingExercise2, TEST_PREFIX + "student2", Set.of(student2), true);
-
-        Integer numOfUnlockedExercises = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/unlock-all-repositories",
-                Optional.empty(), Integer.class, HttpStatus.OK);
-
-        assertThat(numOfUnlockedExercises).isEqualTo(2);
-
-        verify(programmingExerciseScheduleService).unlockAllStudentRepositories(programmingExercise);
-        verify(programmingExerciseScheduleService).unlockAllStudentRepositories(programmingExercise2);
     }
 
     @Test

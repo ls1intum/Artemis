@@ -95,7 +95,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         else {
             log.debug("tutor is responsible to process feedback request: {}", exerciseId);
             groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
-            return setIndividualDueDateAndLockRepository(participation, programmingExercise, true);
+            return setIndividualDueDate(participation, programmingExercise, true);
         }
     }
 
@@ -186,15 +186,14 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * @param participation       the programming exercise student participation.
      * @param programmingExercise the associated programming exercise.
      */
-    private ProgrammingExerciseStudentParticipation setIndividualDueDateAndLockRepository(ProgrammingExerciseStudentParticipation participation,
-            ProgrammingExercise programmingExercise, boolean invalidatePreviousResults) {
+    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise,
+            boolean invalidatePreviousResults) {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(now());
 
         participation = programmingExerciseStudentParticipationRepository.save(participation);
         // Circumvent lazy loading after save
         participation.setParticipant(participation.getParticipant());
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         if (invalidatePreviousResults) {
             var participationResults = participation.getResults();
@@ -203,19 +202,5 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         }
 
         return participation;
-    }
-
-    /**
-     * Removes the individual due date for a participation. If the due date for an exercise is empty or is in the future, unlocks the repository,
-     *
-     * @param participation       the programming exercise student participation.
-     * @param programmingExercise the associated programming exercise.
-     */
-    private void unlockRepository(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate())) {
-            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-            participation.setIndividualDueDate(null);
-            this.programmingExerciseStudentParticipationRepository.save(participation);
-        }
     }
 }

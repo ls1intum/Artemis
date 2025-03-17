@@ -119,8 +119,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -196,7 +196,7 @@ public class CourseTestService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private ExamRepository examRepo;
+    private ExamTestRepository examRepo;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
