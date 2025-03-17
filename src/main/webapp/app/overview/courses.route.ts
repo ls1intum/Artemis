@@ -275,7 +275,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.EXAMS,
-                loadComponent: () => import('./course-exams/course-exams.component').then((m) => m.CourseExamsComponent),
+                loadComponent: () => import('app/exam/shared/course-exams/course-exams.component').then((m) => m.CourseExamsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exams',

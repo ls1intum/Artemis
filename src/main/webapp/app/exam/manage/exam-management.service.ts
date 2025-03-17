@@ -10,7 +10,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';

@@ -62,7 +62,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/scores',
-        loadComponent: () => import('app/exam/exam-scores/exam-scores.component').then((m) => m.ExamScoresComponent),
+        loadComponent: () => import('app/exam/manage/exam-scores/exam-scores.component').then((m) => m.ExamScoresComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.examScores.title',

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/participate/testExam-workingTime/test-exam-working-time.component';
 import { round } from 'app/shared/util/utils';
 import { input } from '@angular/core';
 

@@ -9,10 +9,10 @@ import {
     ExerciseInfo,
     ExerciseResult,
     StudentResult,
-} from 'app/exam/exam-scores/exam-score-dtos.model';
+} from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
-import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
+import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';

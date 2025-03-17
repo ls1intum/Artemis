@@ -4,7 +4,7 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/participate/student-exam-working-time/student-exam-working-time.component';
 import { NgClass } from '@angular/common';
 import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';

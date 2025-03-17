@@ -18,7 +18,7 @@ import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamResultSummaryComponent, ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/participate/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';

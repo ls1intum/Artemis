@@ -61,7 +61,7 @@ import { facSidebar } from 'app/icons/icons';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
-import { CourseExamsComponent } from './course-exams/course-exams.component';
+import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';

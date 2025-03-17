@@ -7,7 +7,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';

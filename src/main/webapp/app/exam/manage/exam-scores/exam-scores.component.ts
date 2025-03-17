@@ -13,7 +13,7 @@ import {
     ExerciseGroup,
     StudentResult,
     TableState,
-} from 'app/exam/exam-scores/exam-score-dtos.model';
+} from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -58,7 +58,7 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { BonusStrategy } from 'app/entities/bonus.model';
-import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/exam-scores-average-scores-graph.component';
 
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
@@ -80,7 +80,7 @@ export enum MedianType {
     selector: 'jhi-exam-scores',
     templateUrl: './exam-scores.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./exam-scores.component.scss', '../../../shared/chart/vertical-bar-chart.scss'],
     imports: [
         RouterLink,
         ExamScoresAverageScoresGraphComponent,

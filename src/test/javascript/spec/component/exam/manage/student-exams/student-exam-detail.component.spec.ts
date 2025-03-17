@@ -18,7 +18,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { AlertService } from 'app/shared/service/alert.service';

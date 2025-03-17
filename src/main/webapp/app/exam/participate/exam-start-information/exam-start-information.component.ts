@@ -5,7 +5,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { SafeHtml } from '@angular/platform-browser';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/participate/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({

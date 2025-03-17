@@ -10,7 +10,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
-import { CourseOverviewService } from '../course-overview.service';
+import { CourseOverviewService } from '../../../overview/course-overview.service';
 import { cloneDeep } from 'lodash-es';
 import { lastValueFrom } from 'rxjs';
 import { NgClass } from '@angular/common';

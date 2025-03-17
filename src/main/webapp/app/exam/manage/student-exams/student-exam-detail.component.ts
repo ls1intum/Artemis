@@ -5,7 +5,7 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/participate/testExam-workingTime/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -13,7 +13,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

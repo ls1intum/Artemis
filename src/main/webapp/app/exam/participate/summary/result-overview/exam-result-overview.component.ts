@@ -4,7 +4,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';

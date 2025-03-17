@@ -4,7 +4,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/participate/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

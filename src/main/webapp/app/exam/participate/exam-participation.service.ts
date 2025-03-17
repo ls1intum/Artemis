@@ -9,7 +9,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { SidebarCardElement } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
