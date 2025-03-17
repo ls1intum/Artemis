@@ -3378,7 +3378,8 @@ public class CourseTestService {
         for (int i = 1; i < 3; i++) {
             coursesExpected.add(courseUtilService.createCourse());
         }
-        var searchTerm = pageableSearchUtilService.configureSearch("");
+        // when the search tem is not "", the sort order is descending, and we get the last inserted courses first and these contain the courses we just created
+        var searchTerm = pageableSearchUtilService.configureSearch("Course");
 
         SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/core/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
