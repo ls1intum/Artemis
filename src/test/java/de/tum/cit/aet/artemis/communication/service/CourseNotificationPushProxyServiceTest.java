@@ -89,13 +89,13 @@ class CourseNotificationPushProxyServiceTest {
         parameters.put("postId", "456");
         parameters.put("channelId", "789");
 
-        return new CourseNotificationDTO("newMessageNotification", 1L, creationDate, CourseNotificationCategory.COMMUNICATION, parameters);
+        return new CourseNotificationDTO("newMessageNotification", 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, parameters);
     }
 
     /**
      * Helper method to create a notification with a specific type
      */
     private CourseNotificationDTO createNotificationWithType(ZonedDateTime creationDate, String notificationType) {
-        return new CourseNotificationDTO(notificationType, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, new HashMap<>());
+        return new CourseNotificationDTO(notificationType, 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, new HashMap<>());
     }
 }

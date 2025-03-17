@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
@@ -83,7 +84,7 @@ public class CourseNotificationService {
                 continue;
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
-            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification), filteredRecipients);
+            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), filteredRecipients);
 
             // We keep track of the notified users so that we only create notification status entries for them
             setOfNotifiedUsers.addAll(filteredRecipients);
@@ -117,16 +118,17 @@ public class CourseNotificationService {
     public CourseNotificationPageableDTO<CourseNotificationDTO> getCourseNotifications(Pageable pageable, long courseId, long userId) {
         var courseNotificationsEntityPage = courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable);
 
-        return CourseNotificationPageableDTO.from(courseNotificationsEntityPage.map((courseNotificationEntity) -> {
+        return CourseNotificationPageableDTO.from(courseNotificationsEntityPage.map((courseNotificationEntityDTO) -> {
+            var courseNotificationEntity = courseNotificationEntityDTO.notification();
             var classType = courseNotificationRegistryService.getNotificationClass(courseNotificationEntity.getType());
 
             try {
                 var parameters = courseNotificationParameterRepository.findByCourseNotificationIdEquals(courseNotificationEntity.getId());
 
-                CourseNotification courseNotification = classType.getDeclaredConstructor(Long.class, ZonedDateTime.class, Map.class)
-                        .newInstance(courseNotificationEntity.getCourse().getId(), courseNotificationEntity.getCreationDate(), parametersToMap(parameters));
+                CourseNotification courseNotification = classType.getDeclaredConstructor(Long.class, Long.class, ZonedDateTime.class, Map.class).newInstance(
+                        courseNotificationEntity.getId(), courseNotificationEntity.getCourse().getId(), courseNotificationEntity.getCreationDate(), parametersToMap(parameters));
 
-                return convertToCourseNotificationDTO(courseNotification);
+                return convertToCourseNotificationDTO(courseNotification, courseNotificationEntityDTO.status().getStatus());
             }
             catch (InstantiationException | IllegalAccessException | IllegalArgumentException | ExceptionInInitializerError | InvocationTargetException | SecurityException
                     | NoSuchMethodException e) {
@@ -159,9 +161,9 @@ public class CourseNotificationService {
      *
      * @return Returns the notification as a DTO.
      */
-    private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification) {
-        return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.courseId, notification.creationDate, notification.getCourseNotificationCategory(),
-                notification.getParameters());
+    private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
+        return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
+                notification.getCourseNotificationCategory(), notification.getParameters(), status);
     }
 
     /**

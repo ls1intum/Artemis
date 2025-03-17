@@ -89,6 +89,17 @@ public class CourseNotificationSettingPresetRegistryService {
     }
 
     /**
+     * Checks whether given preset identifier exists.
+     *
+     * @param settingPresetTypeId the identifier of the setting preset
+     *
+     * @return Returns {@code true} if preset exists and {@code false} otherwise.
+     */
+    public boolean isValidSettingPreset(Integer settingPresetTypeId) {
+        return settingPresetTypeId == 0 || presets.containsKey(settingPresetTypeId);
+    }
+
+    /**
      * Finds whether a setting is enabled or disabled for preset beans annotated with {@link CourseNotificationSettingPreset}.
      *
      * @param typeId           the identifier of the setting preset

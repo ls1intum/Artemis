@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.communication.domain.setting_presets.IgnoreUserCou
  */
 public abstract class CourseNotification {
 
+    public final long notificationId;
+
     public final long courseId;
 
     public final ZonedDateTime creationDate;
@@ -46,7 +48,8 @@ public abstract class CourseNotification {
     /**
      * Default constructor used when creating a new notification.
      */
-    public CourseNotification(Long courseId, String courseTitle, String courseIconUrl, ZonedDateTime creationDate) {
+    public CourseNotification(Long notificationId, Long courseId, String courseTitle, String courseIconUrl, ZonedDateTime creationDate) {
+        this.notificationId = notificationId;
         this.courseId = courseId;
         this.courseTitle = courseTitle;
         this.courseIconUrl = courseIconUrl;
@@ -58,7 +61,8 @@ public abstract class CourseNotification {
      * Constructor used when loading an existing notification from the database. Will automatically initialize the
      * fields of the given notification.
      */
-    public CourseNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+    public CourseNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+        this.notificationId = notificationId;
         this.courseId = courseId;
         this.creationDate = creationDate;
         this.parameters = parameters;

@@ -30,9 +30,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotificationParameter;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatus;
+import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -129,8 +132,11 @@ class CourseNotificationServiceTest {
         CourseNotificationParameter param1 = new CourseNotificationParameter(entity, "key1", "value1");
         CourseNotificationParameter param2 = new CourseNotificationParameter(entity, "key2", "value2");
         entity.setParameters(Set.of(param1, param2));
+        UserCourseNotificationStatus status = new UserCourseNotificationStatus();
+        status.setCourseNotification(entity);
+        status.setStatus(UserCourseNotificationStatusType.SEEN);
 
-        PageImpl<CourseNotification> page = new PageImpl<>(List.of(entity));
+        PageImpl<CourseNotificationWithStatusDTO> page = new PageImpl<>(List.of(new CourseNotificationWithStatusDTO(entity, status)));
 
         when(courseNotificationRepository.findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(userId, courseId, pageable)).thenReturn(page);
         when(courseNotificationRegistryService.getNotificationClass(any())).thenReturn((Class) TestNotification.class);
@@ -140,7 +146,7 @@ class CourseNotificationServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.content()).hasSize(1);
 
-        CourseNotificationDTO dto = result.content().getFirst();
+        var dto = result.content().getFirst();
         assertThat(dto.notificationType()).isEqualTo("testNotification");
         assertThat(dto.courseId()).isEqualTo(123L);
     }
@@ -167,7 +173,7 @@ class CourseNotificationServiceTest {
     }
 
     private TestNotification createTestNotification(NotificationChannelOption... supportedChannels) {
-        return new TestNotification(123L, ZonedDateTime.now(), new HashMap<String, String>(Map.of("key1", "val1", "key2", "val2")), supportedChannels);
+        return new TestNotification(1L, 123L, ZonedDateTime.now(), new HashMap<String, String>(Map.of("key1", "val1", "key2", "val2")), supportedChannels);
     }
 
     private CourseNotification createTestCourseNotificationEntity(Long id) {
@@ -189,13 +195,13 @@ class CourseNotificationServiceTest {
         final Set<NotificationChannelOption> supportedChannels;
 
         // This constructor is needed for the test case shouldReturnCourseNotificationsWhenRequested
-        TestNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
-            super(courseId, creationDate, parameters);
+        TestNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+            super(notificationId, courseId, creationDate, parameters);
             this.supportedChannels = Set.of(NotificationChannelOption.WEBAPP);
         }
 
-        TestNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters, NotificationChannelOption... supportedChannels) {
-            super(courseId, creationDate, parameters);
+        TestNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters, NotificationChannelOption... supportedChannels) {
+            super(notificationId, courseId, creationDate, parameters);
             this.supportedChannels = new HashSet<>(Arrays.asList(supportedChannels));
         }
 

@@ -186,7 +186,7 @@ class CourseNotificationEmailServiceTest {
         var creationDate = ZonedDateTime.now();
         var category = CourseNotificationCategory.COMMUNICATION;
 
-        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 123L, creationDate, category, parameters);
+        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, parameters);
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
@@ -236,6 +236,6 @@ class CourseNotificationEmailServiceTest {
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
-        return new CourseNotificationDTO(notificationType, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"));
+        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"));
     }
 }

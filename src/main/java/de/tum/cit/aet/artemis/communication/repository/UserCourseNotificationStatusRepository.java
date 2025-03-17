@@ -47,6 +47,30 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
             @Param("status") UserCourseNotificationStatusType status);
 
     /**
+     * Updates the status of multiple user course notifications for a specific user.
+     *
+     * <p>
+     * Important: Does not invalidate cache by itself. Use {@link CourseNotificationCacheService} for that.
+     * </p>
+     *
+     * @param userId   the ID of the user
+     * @param courseId the ID of the course
+     * @param status   the new status to set
+     */
+    @Modifying
+    @Transactional
+    @Query("""
+            UPDATE UserCourseNotificationStatus ucns
+            SET ucns.status = :status
+            WHERE ucns.user.id = :userId
+                AND ucns.courseNotification.id IN (
+                    SELECT ucn.id FROM CourseNotification ucn WHERE ucn.course.id = :courseId
+                )
+            """)
+    void updateUserCourseNotificationStatusForUserIdCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId,
+            @Param("status") UserCourseNotificationStatusType status);
+
+    /**
      * Counts the number of unseen course notifications for a specific user in a specific course.
      *
      * @param userId   the ID of the user

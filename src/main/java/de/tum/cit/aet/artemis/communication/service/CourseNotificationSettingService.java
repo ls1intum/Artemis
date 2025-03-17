@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationSetting
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationSettingSpecification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -132,6 +134,10 @@ public class CourseNotificationSettingService {
         var specificationEntities = new ArrayList<UserCourseNotificationSettingSpecification>();
 
         notificationTypeChannels.forEach((notificationTypeId, channel) -> {
+            if (courseNotificationRegistryService.getNotificationClass(notificationTypeId) == null) {
+                return;
+            }
+
             var specificationOptional = specifications.stream().filter((spec) -> Objects.equals(spec.getCourseNotificationType(), notificationTypeId)).findFirst();
             UserCourseNotificationSettingSpecification specification;
 
@@ -163,6 +169,66 @@ public class CourseNotificationSettingService {
 
         userCourseNotificationSettingSpecificationRepository.saveAll(specificationEntities);
         courseNotificationCacheService.invalidateCourseNotificationSettingSpecificationCacheForUser(userId, courseId);
+    }
+
+    /**
+     * Retrieves the notification setting information for a specific user in a specific course.
+     *
+     * <p>
+     * This method fetches the user's current notification setting preset for the given course.
+     * If no preset exists, it creates a default one using the DefaultUserCourseNotificationSettingPreset.
+     * The method then transforms the notification settings from the preset into a map of
+     * notification type identifiers to channel options.
+     * </p>
+     *
+     * <p>
+     * For custom presets (indicated by settingPreset == 0), the method applies any user-specific
+     * notification setting overrides from the database.
+     * </p>
+     *
+     * @param userId   The ID of the user whose notification settings are being retrieved
+     * @param courseId The ID of the course for which to retrieve notification settings
+     * @return A CourseNotificationSettingInfoDTO containing the preset ID and a map of
+     *         notification type identifiers to their channel configurations
+     */
+    public CourseNotificationSettingInfoDTO getSettingInfo(long userId, long courseId) {
+        var course = new Course();
+        course.setId(courseId);
+        var user = new User(userId);
+        short presetId;
+        short defaultPresetId = courseNotificationSettingPresetRegistryService.getPresetId(DefaultUserCourseNotificationSettingPreset.class).shortValue();
+        var currentPresetEntity = userCourseNotificationSettingPresetRepository.findUserCourseNotificationSettingPresetByUserIdAndCourseId(userId, courseId);
+
+        if (currentPresetEntity != null) {
+            presetId = currentPresetEntity.getSettingPreset();
+        }
+        else {
+            presetId = defaultPresetId;
+        }
+
+        if (currentPresetEntity == null || currentPresetEntity.getSettingPreset() == 0) {
+            currentPresetEntity = new UserCourseNotificationSettingPreset(user, course, defaultPresetId);
+        }
+
+        var currentPreset = courseNotificationSettingPresetRegistryService.getPresetById(currentPresetEntity.getSettingPreset());
+
+        Map<Short, Map<NotificationChannelOption, Boolean>> notificationTypeChannels = new HashMap<>();
+
+        for (var entry : currentPreset.getPresetMap().entrySet()) {
+            notificationTypeChannels.put(courseNotificationRegistryService.getNotificationIdentifier(entry.getKey()), entry.getValue());
+        }
+
+        if (presetId == 0) {
+            var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
+
+            // If custom is specified, we want to overwrite the settings that are present in the database. Note that not all may be present.
+            specifications.forEach(specification -> {
+                notificationTypeChannels.put(specification.getCourseNotificationType(), Map.of(NotificationChannelOption.EMAIL, specification.isEmail(),
+                        NotificationChannelOption.PUSH, specification.isPush(), NotificationChannelOption.WEBAPP, specification.isWebapp()));
+            });
+        }
+
+        return new CourseNotificationSettingInfoDTO(presetId, notificationTypeChannels);
     }
 
     /**

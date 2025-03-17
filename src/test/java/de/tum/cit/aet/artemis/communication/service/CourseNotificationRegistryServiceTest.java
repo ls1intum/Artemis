@@ -94,7 +94,7 @@ class CourseNotificationRegistryServiceTest {
     static class AnotherTestNotification extends CourseNotification {
 
         public AnotherTestNotification(Long courseId, ZonedDateTime creationDate) {
-            super(courseId, "Another Test", "another-image.url", creationDate);
+            super(1L, courseId, "Another Test", "another-image.url", creationDate);
         }
 
         @Override
@@ -131,7 +131,7 @@ class CourseNotificationRegistryServiceTest {
     static class TestNotification extends CourseNotification {
 
         public TestNotification(Long courseId, ZonedDateTime creationDate) {
-            super(courseId, "Test", "image.url", creationDate);
+            super(1L, courseId, "Test", "image.url", creationDate);
         }
 
         @Override

@@ -34,9 +34,9 @@ public class NewPostNotification extends CourseNotification {
     /**
      * Default constructor used when creating a new post notification.
      */
-    public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
-            String channelType, String authorName, String authorImageUrl, Long authorId) {
-        super(courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
+    public NewPostNotification(Long notificationId, Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId,
+            String channelName, String channelType, String authorName, String authorImageUrl, Long authorId) {
+        super(notificationId, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.postId = postId;
         this.postMarkdownContent = postMarkdownContent;
         this.channelName = channelName;
@@ -50,8 +50,8 @@ public class NewPostNotification extends CourseNotification {
     /**
      * Constructor used when loading the existing notification from the database.
      */
-    public NewPostNotification(Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
-        super(courseId, creationDate, parameters);
+    public NewPostNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+        super(notificationId, courseId, creationDate, parameters);
     }
 
     @Override

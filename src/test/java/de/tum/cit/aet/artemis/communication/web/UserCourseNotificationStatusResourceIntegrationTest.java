@@ -135,4 +135,27 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
             assertThat(newStatus.getStatus()).isEqualTo(UserCourseNotificationStatusType.SEEN);
         }
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldArchiveAllNotificationsWhenArchiveAllIsCalled() throws Exception {
+        List<CourseNotification> notifications = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            var courseNotification = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
+            courseNotificationRepository.save(courseNotification);
+
+            var status = new UserCourseNotificationStatus(courseNotification, user, UserCourseNotificationStatusType.UNSEEN);
+            userCourseNotificationStatusRepository.save(status);
+
+            notifications.add(courseNotification);
+        }
+
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/" + course.getId() + "/archive-all").contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        for (var courseNotification : notifications) {
+            var newStatus = userCourseNotificationStatusRepository.findByCourseNotificationId(courseNotification.getId());
+            assertThat(newStatus.getStatus()).isEqualTo(UserCourseNotificationStatusType.ARCHIVED);
+        }
+    }
 }

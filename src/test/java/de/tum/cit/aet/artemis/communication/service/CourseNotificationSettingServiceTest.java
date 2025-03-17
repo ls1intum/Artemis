@@ -309,7 +309,7 @@ class CourseNotificationSettingServiceTest {
         final Long courseId;
 
         TestNotification(Long courseId) {
-            super(courseId, "Test Course", "image.url", ZonedDateTime.now());
+            super(1L, courseId, "Test Course", "image.url", ZonedDateTime.now());
             this.courseId = courseId;
         }
 

@@ -71,4 +71,16 @@ public class UserCourseNotificationStatusService {
 
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(user), courseId);
     }
+
+    /**
+     * Archives all user viewing status for a given course.
+     *
+     * @param courseId The id of the course
+     * @param userId   The id of the user
+     */
+    public void archiveUserCourseNotificationStatus(long courseId, long userId) {
+        userCourseNotificationStatusRepository.updateUserCourseNotificationStatusForUserIdCourseId(userId, courseId, UserCourseNotificationStatusType.ARCHIVED);
+
+        courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(new User(userId)), courseId);
+    }
 }

@@ -54,4 +54,22 @@ public class UserCourseNotificationStatusResource {
 
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * PUT communication/notification/{courseId}/archive-all : Update status of all notifications for the course to archived
+     *
+     * @param courseId the ID of the course
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @EnforceAtLeastStudentInCourse
+    @PutMapping("notification/{courseId}/archive-all")
+    public ResponseEntity<Void> archiveAll(@PathVariable Long courseId) {
+        log.debug("REST request to update notification status to ARCHIVED for all notifications in course {}", courseId);
+
+        var currentUser = userRepository.getUser();
+
+        userCourseNotificationStatusService.archiveUserCourseNotificationStatus(courseId, currentUser.getId());
+
+        return ResponseEntity.ok().build();
+    }
 }

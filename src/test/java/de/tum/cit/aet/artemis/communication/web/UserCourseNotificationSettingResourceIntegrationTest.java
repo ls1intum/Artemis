@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSettingSpecificationRequestDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingPresetTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
@@ -184,5 +185,50 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         var specsAfterChange = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(user.getId(), course.getId());
 
         assertThat(specsAfterChange).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnCorrectSettingInfoWhenGetSettingInfoIsCalled() throws Exception {
+        Short presetId = 2;
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-preset", course.getId()).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(presetId))).andExpect(status().isOk());
+
+        var result = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        var responseDTO = objectMapper.readValue(responseContent, CourseNotificationSettingInfoDTO.class);
+
+        assertThat(responseDTO).isNotNull();
+        assertThat(responseDTO.selectedPreset()).isEqualTo(presetId);
+        assertThat(responseDTO.notificationTypeChannels()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnDefaultSettingInfoWhenNoPresetExists() throws Exception {
+        userCourseNotificationSettingPresetRepository.deleteAll();
+
+        var result = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+
+        String responseContent = result.getResponse().getContentAsString();
+        var responseDTO = objectMapper.readValue(responseContent, CourseNotificationSettingInfoDTO.class);
+
+        assertThat(responseDTO).isNotNull();
+        assertThat(responseDTO.notificationTypeChannels()).isNotNull();
+        assertThat(responseDTO.selectedPreset()).isEqualTo((short) 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReturnSettingInfoWhenFeatureIsDisabled() throws Exception {
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 }

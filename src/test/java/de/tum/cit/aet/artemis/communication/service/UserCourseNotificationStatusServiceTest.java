@@ -85,6 +85,24 @@ class UserCourseNotificationStatusServiceTest {
         verify(courseNotificationCacheService).invalidateCourseNotificationCacheForUsers(eq(Set.of(user)), eq(courseId));
     }
 
+    @Test
+    void shouldArchiveAllUserNotificationsInCourseWhenArchiving() {
+        long userId = 42L;
+        long courseId = 100L;
+        User user = createTestUser(userId);
+
+        userCourseNotificationStatusService.archiveUserCourseNotificationStatus(courseId, userId);
+
+        verify(userCourseNotificationStatusRepository).updateUserCourseNotificationStatusForUserIdCourseId(eq(userId), eq(courseId), eq(UserCourseNotificationStatusType.ARCHIVED));
+
+        ArgumentCaptor<Set<User>> userCaptor = ArgumentCaptor.forClass(Set.class);
+        verify(courseNotificationCacheService).invalidateCourseNotificationCacheForUsers(userCaptor.capture(), eq(courseId));
+
+        Set<User> capturedUsers = userCaptor.getValue();
+        assertThat(capturedUsers).hasSize(1);
+        assertThat(capturedUsers.iterator().next().getId()).isEqualTo(userId);
+    }
+
     private User createTestUser(Long id) {
         User user = new User();
         user.setId(id);

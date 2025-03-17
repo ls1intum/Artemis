@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -33,14 +34,15 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      * @return list of course notifications that match the criteria
      */
     @Query("""
-            SELECT DISTINCT cn
+            SELECT new de.tum.cit.aet.artemis.communication.dto.CourseNotificationWithStatusDTO(cn, us)
             FROM CourseNotification cn
                 JOIN cn.userStatuses us
             WHERE us.user.id = :userId
                 AND cn.course.id = :courseId
                 AND us.status <> 2
             """)
-    Page<CourseNotification> findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(@Param("userId") Long userId, @Param("courseId") Long courseId, Pageable pageable);
+    Page<CourseNotificationWithStatusDTO> findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(@Param("userId") Long userId, @Param("courseId") Long courseId,
+            Pageable pageable);
 
     /**
      * Find all course notifications that are past the specified deletion date.
