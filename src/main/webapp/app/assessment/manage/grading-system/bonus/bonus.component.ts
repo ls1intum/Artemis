@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { BonusService } from 'app/grading-system/bonus/bonus.service';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
@@ -11,7 +11,7 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';

@@ -1,16 +1,16 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { BonusService } from 'app/grading-system/bonus/bonus.service';
+import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
+import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
-import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
+import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
@@ -20,7 +20,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 @Component({
     selector: 'jhi-grade-key-table',
     templateUrl: './grading-key-table.component.html',
-    styleUrls: ['../grading-key-overview.scss'],
+    styleUrls: ['../grading-key-overview/grading-key-overview.scss'],
     imports: [TranslateDirective, ArtemisTranslatePipe, GradeStepBoundsPipe, SafeHtmlPipe, HelpIconComponent],
 })
 export class GradingKeyTableComponent implements OnInit {

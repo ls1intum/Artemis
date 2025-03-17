@@ -48,13 +48,13 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/grading-system',
-                loadComponent: () => import('app/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
+                loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
-                loadChildren: () => import('app/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+                loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
             },
             {
                 path: ':courseId/iris-settings',

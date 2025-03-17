@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { BaseGradingSystemComponent, CsvGradeStep } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { BaseGradingSystemComponent, CsvGradeStep } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

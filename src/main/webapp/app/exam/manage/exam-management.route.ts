@@ -179,17 +179,17 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/grading-system',
-        loadComponent: () => import('app/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
+        loadComponent: () => import('app/assessment/manage/grading-system/grading-system.component').then((m) => m.GradingSystemComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
-        loadChildren: () => import('app/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
     {
         path: ':examId/bonus',
-        loadComponent: () => import('app/grading-system/bonus/bonus.component').then((m) => m.BonusComponent),
+        loadComponent: () => import('app/assessment/manage/grading-system/bonus/bonus.component').then((m) => m.BonusComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.bonus.title',
@@ -294,7 +294,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/grading-key',
-        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
@@ -303,7 +303,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary/overview/bonus-grading-key',
-        loadComponent: () => import('app/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
+        loadComponent: () => import('app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component').then((m) => m.GradingKeyOverviewComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',

@@ -153,7 +153,7 @@ const routes: Routes = [
     // ===== GRADING SYSTEM =====
     {
         path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
 
     {
@@ -179,7 +179,7 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',

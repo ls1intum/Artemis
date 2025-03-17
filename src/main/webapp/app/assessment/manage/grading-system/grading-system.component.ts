@@ -2,15 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { BaseGradingSystemComponent } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { GradingSystemInfoModalComponent } from './grading-system-info-modal/grading-system-info-modal.component';
+import { GradingSystemInfoModalComponent } from 'app/assessment/manage/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { GradingSystemPresentationsComponent } from './grading-system-presentations/grading-system-presentations.component';
+import { GradingSystemPresentationsComponent } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 

@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
-import { EntityResponseType, GradingSystemService } from 'app/grading-system/grading-system.service';
+import { EntityResponseType, GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -14,7 +14,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { PresentationType, PresentationsConfig } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
+import { PresentationType, PresentationsConfig } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',

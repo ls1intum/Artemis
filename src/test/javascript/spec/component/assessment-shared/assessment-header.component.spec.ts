@@ -12,7 +12,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { GradeStep } from 'app/entities/grade-step.model';

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<Bonus>;

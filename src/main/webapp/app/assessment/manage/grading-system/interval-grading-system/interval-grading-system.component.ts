@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ModePickerComponent, ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { BaseGradingSystemComponent, CsvGradeStep, GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { BaseGradingSystemComponent, CsvGradeStep, GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

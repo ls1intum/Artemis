@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
+import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/assessment/manage/grading-system/bonus/bonus.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus.service';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { BonusService, EntityResponseType } from 'app/assessment/manage/grading-system/bonus/bonus.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { of, throwError } from 'rxjs';

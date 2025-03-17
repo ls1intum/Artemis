@@ -10,7 +10,7 @@ export const gradingSystemState: Routes = [
     },
     {
         path: 'interval',
-        loadComponent: () => import('app/grading-system/interval-grading-system/interval-grading-system.component').then((m) => m.IntervalGradingSystemComponent),
+        loadComponent: () => import('app/assessment/manage/grading-system/interval-grading-system/interval-grading-system.component').then((m) => m.IntervalGradingSystemComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.gradingSystem.intervalTab.title',
@@ -19,7 +19,7 @@ export const gradingSystemState: Routes = [
     },
     {
         path: 'detailed',
-        loadComponent: () => import('app/grading-system/detailed-grading-system/detailed-grading-system.component').then((m) => m.DetailedGradingSystemComponent),
+        loadComponent: () => import('app/assessment/manage/grading-system/detailed-grading-system/detailed-grading-system.component').then((m) => m.DetailedGradingSystemComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.gradingSystem.detailedTab.title',
