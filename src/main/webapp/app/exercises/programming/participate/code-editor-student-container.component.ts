@@ -95,7 +95,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
-                        this.repositoryIsLocked = this.participation.locked ?? false;
+                        this.repositoryIsLocked = false; // TODO: load this information dynamically from the server
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);

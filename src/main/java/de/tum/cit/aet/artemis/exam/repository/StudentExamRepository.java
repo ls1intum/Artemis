@@ -191,6 +191,27 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
+     * Retrieves the submission status of a student exam.
+     * <p>
+     * This query fetches the {@code submitted} status of a {@link StudentExam} for a given student
+     * and exam. The result is wrapped in an {@link Optional} to handle cases where no matching
+     * record exists.
+     * </p>
+     *
+     * @param examId The ID of the exam.
+     * @param userId The ID of the user (student).
+     * @return An {@link Optional} containing {@code true} if the student has submitted the exam,
+     *         {@code false} if not, or an empty {@code Optional} if no record is found.
+     */
+    @Query("""
+            SELECT se.submitted
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+            	AND se.user.id = :userId
+            """)
+    Optional<Boolean> isSubmitted(@Param("examId") long examId, @Param("userId") long userId);
+
+    /**
      * Checks if any StudentExam exists for the given user (student) id in the given course.
      *
      * @param courseId the id of the course which should have the exam.

@@ -6,6 +6,7 @@ import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-d
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FitTextDirective } from '../../fit-text/fit-text.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-drag-item',
@@ -28,4 +29,6 @@ export class DragItemComponent implements OnInit {
     ngOnInit(): void {
         this.isMobile = isMobile(window.navigator.userAgent).any;
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

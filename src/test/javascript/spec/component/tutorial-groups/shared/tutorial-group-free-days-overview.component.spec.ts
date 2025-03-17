@@ -56,8 +56,8 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
         component = fixture.componentInstance;
 
-        component.tutorialGroupFreeDays = [{ ...firstOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }];
-        component.timeZone = 'Europe/Berlin';
+        fixture.componentRef.setInput('tutorialGroupFreeDays', [{ ...firstOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }]);
+        fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
         jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
         fixture.detectChanges();
     });
@@ -68,6 +68,6 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
     it('should sort the free days by start date', () => {
         component.ngDoCheck();
-        expect(component.tutorialGroupFreeDays).toEqual([thirdOfJanuaryPeriod, firstOfJanuaryPeriod]);
+        expect(component.tutorialGroupFreeDays()).toEqual([thirdOfJanuaryPeriod, firstOfJanuaryPeriod]);
     });
 });

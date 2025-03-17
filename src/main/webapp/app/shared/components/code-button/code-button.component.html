@@ -47,7 +47,7 @@
                     }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
-                    @for (mechanism of authenticationMechanism; track mechanism) {
+                    @for (mechanism of authenticationMechanisms; track mechanism) {
                         @if (mechanism === RepositoryAuthenticationMethod.Password) {
                             <a
                                 (click)="useHttpsPassword()"

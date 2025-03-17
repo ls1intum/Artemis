@@ -16,10 +16,10 @@
                 </span>
             }
             @if (!isTestExam) {
-                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (finish)="reloadExamWithRegisteredUsers()" />
+                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importDone)="reloadExamWithRegisteredUsers()" />
             }
             @if (!isTestExam) {
-                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()" />
+                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
             }
             @if (!isTestExam) {
                 <button

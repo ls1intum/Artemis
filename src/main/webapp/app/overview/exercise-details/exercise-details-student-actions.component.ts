@@ -89,10 +89,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
-    localVCEnabled = false;
+    localVCEnabled = true;
     athenaEnabled = false;
     routerLink: string;
-    repositoryLink: string;
 
     // Icons
     readonly faFolderOpen = faFolderOpen;
