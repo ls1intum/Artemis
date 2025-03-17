@@ -506,4 +506,5 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
+
 }

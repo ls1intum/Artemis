@@ -21,7 +21,6 @@ import { By } from '@angular/platform-browser';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -80,7 +79,6 @@ describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
-    let mockLink: HTMLAnchorElement;
     let router: Router;
 
     beforeEach(async () => {
