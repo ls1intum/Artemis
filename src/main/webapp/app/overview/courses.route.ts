@@ -200,12 +200,13 @@ export const routes: Routes = [
                             authorities: [Authority.USER],
                             pageTitle: 'overview.competencies',
                         },
-                        loadComponent: () => import('app/overview/course-competencies/course-competencies.component').then((m) => m.CourseCompetenciesComponent),
+                        loadComponent: () => import('app/atlas/overview/course-competencies/course-competencies.component').then((m) => m.CourseCompetenciesComponent),
                         canActivate: [UserRouteAccessService],
                     },
                     {
                         path: ':competencyId',
-                        loadComponent: () => import('app/overview/course-competencies/course-competencies-details.component').then((m) => m.CourseCompetenciesDetailsComponent),
+                        loadComponent: () =>
+                            import('app/atlas/overview/course-competencies/course-competencies-details.component').then((m) => m.CourseCompetenciesDetailsComponent),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.competencies',
@@ -226,8 +227,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.LEARNING_PATH,
-                loadComponent: () =>
-                    import('app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component').then((c) => c.LearningPathStudentPageComponent),
+                loadComponent: () => import('app/atlas/overview/learning-path-student-page/learning-path-student-page.component').then((c) => c.LearningPathStudentPageComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.learningPath',

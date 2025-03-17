@@ -6,7 +6,7 @@ import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

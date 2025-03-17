@@ -29,7 +29,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef,
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';

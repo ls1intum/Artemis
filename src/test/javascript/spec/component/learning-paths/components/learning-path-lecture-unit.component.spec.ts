@@ -1,4 +1,4 @@
-import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
+import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
@@ -20,7 +20,7 @@ import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { MockComponent, MockInstance } from 'ng-mocks';
-import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
+import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';

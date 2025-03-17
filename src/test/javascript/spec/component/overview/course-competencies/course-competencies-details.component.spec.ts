@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
+import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
-import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
+import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
@@ -31,7 +31,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

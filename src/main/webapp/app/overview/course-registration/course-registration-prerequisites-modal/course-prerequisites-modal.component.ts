@@ -2,10 +2,10 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
+import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 
 @Component({
     selector: 'jhi-course-prerequisites-modal',

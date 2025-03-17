@@ -25,7 +25,7 @@ import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
 import { Exercise } from 'app/entities/exercise.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 
 describe('PrerequisiteService', () => {

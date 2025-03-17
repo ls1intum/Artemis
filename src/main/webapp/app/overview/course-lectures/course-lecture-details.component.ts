@@ -30,7 +30,7 @@ import { AttachmentUnitComponent } from './attachment-unit/attachment-unit.compo
 import { VideoUnitComponent } from './video-unit/video-unit.component';
 import { TextUnitComponent } from './text-unit/text-unit.component';
 import { OnlineUnitComponent } from './online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
+import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

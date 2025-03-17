@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService extends BaseApiHttpService {

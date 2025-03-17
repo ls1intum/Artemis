@@ -24,7 +24,7 @@ import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-uni
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
-import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
+import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

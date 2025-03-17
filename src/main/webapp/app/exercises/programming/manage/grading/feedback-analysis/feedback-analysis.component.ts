@@ -7,7 +7,7 @@ import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';

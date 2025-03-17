@@ -226,7 +226,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'competency-management',
-                        loadComponent: () => import('app/course/competencies/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
+                        loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.competency.manage.title',
@@ -299,7 +299,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: 'create',
-                                loadComponent: () => import('app/course/competencies/create/create-competency.component').then((m) => m.CreateCompetencyComponent),
+                                loadComponent: () => import('app/atlas/manage/create/create-competency.component').then((m) => m.CreateCompetencyComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.create.title',
@@ -308,7 +308,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: ':competencyId/edit',
-                                loadComponent: () => import('app/course/competencies/edit/edit-competency.component').then((m) => m.EditCompetencyComponent),
+                                loadComponent: () => import('app/atlas/manage/edit/edit-competency.component').then((m) => m.EditCompetencyComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.editCompetency.title',
@@ -317,7 +317,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import',
-                                loadComponent: () => import('app/course/competencies/import/import-competencies.component').then((m) => m.ImportCompetenciesComponent),
+                                loadComponent: () => import('app/atlas/manage/import/import-competencies.component').then((m) => m.ImportCompetenciesComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.import.title',
@@ -328,7 +328,7 @@ export const courseManagementState: Routes = [
                             {
                                 path: 'import-standardized',
                                 loadComponent: () =>
-                                    import('app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component').then(
+                                    import('app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component').then(
                                         (m) => m.CourseImportStandardizedCompetenciesComponent,
                                     ),
                                 data: {
@@ -340,8 +340,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'generate',
-                                loadComponent: () =>
-                                    import('app/course/competencies/generate-competencies/generate-competencies.component').then((m) => m.GenerateCompetenciesComponent),
+                                loadComponent: () => import('app/atlas/manage/generate-competencies/generate-competencies.component').then((m) => m.GenerateCompetenciesComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.generate.title',
@@ -364,7 +363,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: 'create',
-                                loadComponent: () => import('app/course/competencies/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
+                                loadComponent: () => import('app/atlas/manage/create/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
@@ -373,7 +372,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: ':prerequisiteId/edit',
-                                loadComponent: () => import('app/course/competencies/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
+                                loadComponent: () => import('app/atlas/manage/edit/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
@@ -382,7 +381,7 @@ export const courseManagementState: Routes = [
                             },
                             {
                                 path: 'import',
-                                loadComponent: () => import('app/course/competencies/import/import-prerequisites.component').then((m) => m.ImportPrerequisitesComponent),
+                                loadComponent: () => import('app/atlas/manage/import/import-prerequisites.component').then((m) => m.ImportPrerequisitesComponent),
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.prerequisite.import.title',
@@ -393,7 +392,7 @@ export const courseManagementState: Routes = [
                             {
                                 path: 'import-standardized',
                                 loadComponent: () =>
-                                    import('app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component').then(
+                                    import('app/atlas/manage/import-standardized-competencies/course-import-standardized-prerequisites.component').then(
                                         (m) => m.CourseImportStandardizedPrerequisitesComponent,
                                     ),
                                 data: {
@@ -408,9 +407,7 @@ export const courseManagementState: Routes = [
                     {
                         path: 'learning-path-management',
                         loadComponent: () =>
-                            import('app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component').then(
-                                (m) => m.LearningPathInstructorPageComponent,
-                            ),
+                            import('app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component').then((m) => m.LearningPathInstructorPageComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',

@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
-import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
+import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,19 +16,19 @@ import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
+import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
-import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
+import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
+import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
-} from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+} from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

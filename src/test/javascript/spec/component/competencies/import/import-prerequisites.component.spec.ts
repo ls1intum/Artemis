@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
+import { ImportCompetenciesComponent } from 'app/atlas/manage/import/import-competencies.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ImportPrerequisitesComponent } from 'app/course/competencies/import/import-prerequisites.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { ImportPrerequisitesComponent } from 'app/atlas/manage/import/import-prerequisites.component';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';

@@ -16,13 +16,13 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
-import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
+import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
-import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
+import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 

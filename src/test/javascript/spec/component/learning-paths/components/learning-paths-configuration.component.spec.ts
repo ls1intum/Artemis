@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LearningPathsConfigurationComponent } from 'app/course/learning-paths/components/learning-paths-configuration/learning-paths-configuration.component';
-import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
+import { LearningPathsConfigurationComponent } from 'app/atlas/manage/learning-paths-configuration/learning-paths-configuration.component';
+import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

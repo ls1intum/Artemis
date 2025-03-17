@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
+import { CourseCompetenciesComponent } from 'app/atlas/overview/course-competencies/course-competencies.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,7 +16,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

@@ -4,7 +4,7 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Component({
     selector: 'jhi-feedback-collapse',
