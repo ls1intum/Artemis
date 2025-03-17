@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
 
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ModelingExerciseScheduleService implements IExerciseScheduleService<ModelingExercise> {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseScheduleService.class);
@@ -142,7 +142,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
 
         // For any course exercise that needsToBeScheduled (buildAndTestAfterDueDate and/or manual assessment)
         if (exercise.getDueDate() != null && ZonedDateTime.now().isBefore(exercise.getDueDate())) {
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, () -> buildModelingClusters(exercise).run());
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.DUE, () -> buildModelingClusters(exercise).run(), "build modeling clusters after due date");
             log.debug("Scheduled build modeling clusters after due date for Modeling Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
         }
         else {
@@ -160,7 +160,8 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDateWithGracePeriod(exam))) {
             var buildDate = endDate.plusMinutes(EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES);
             exercise.setClusterBuildDate(buildDate);
-            scheduleService.scheduleTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> buildModelingClusters(exercise).run());
+            scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.BUILD_COMPASS_CLUSTERS_AFTER_EXAM, () -> buildModelingClusters(exercise).run(),
+                    "build modeling clusters after exam");
         }
         log.debug("Scheduled Exam Modeling Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
     }

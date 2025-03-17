@@ -1,17 +1,17 @@
-@if (tutorialGroup.averageAttendance !== undefined && tutorialGroup.capacity !== undefined) {
+@if (tutorialGroup().averageAttendance !== undefined && tutorialGroup().capacity !== undefined) {
     <jhi-vertical-progress-bar
-        [fillLevelInPercent]="Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100)"
+        [fillLevelInPercent]="Math.round(((tutorialGroup()?.averageAttendance ?? 0) / (tutorialGroup()?.capacity ?? 1)) * 100)"
         [widthInPixels]="20"
         [heightInPixels]="50"
-        [tooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup.averageAttendance }"
+        [tooltip]="'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup()?.averageAttendance }"
     >
         >
     </jhi-vertical-progress-bar>
 } @else {
     <!-- We can at least show the average attendance even if capacity is not defined-->
     <span>{{
-        tutorialGroup.averageAttendance !== undefined
-            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup.averageAttendance })
+        tutorialGroup().averageAttendance
+            ? ('artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: tutorialGroup().averageAttendance ?? '' })
             : ''
     }}</span>
 }

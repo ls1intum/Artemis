@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys;
 
 @Profile(PROFILE_CORE)
@@ -135,7 +134,7 @@ public class AuxiliaryRepositoryService {
 
     private void validateAuxiliaryRepositoryCheckoutDirectoryValid(ProgrammingLanguage programmingLanguage, AuxiliaryRepository auxiliaryRepository) {
         Matcher ciCheckoutDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(auxiliaryRepository.getCheckoutDirectory());
-        String assignmentCheckoutPath = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        String assignmentCheckoutPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
         if (!ciCheckoutDirectoryMatcher.matches() || auxiliaryRepository.getCheckoutDirectory().equals(assignmentCheckoutPath)) {
             throw new BadRequestAlertException("The checkout directory '" + auxiliaryRepository.getCheckoutDirectory() + "' is invalid!", AUX_REPO_ENTITY_NAME,
                     ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_CHECKOUT_DIRECTORY);

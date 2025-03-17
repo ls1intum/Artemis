@@ -52,7 +52,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
 
         fixture = TestBed.createComponent(TutorialGroupsExportButtonComponent);
         component = fixture.componentInstance;
-        component.courseId = exampleCourseId;
+        fixture.componentRef.setInput('courseId', exampleCourseId);
         fixture.detectChanges();
     });
 

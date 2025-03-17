@@ -22,7 +22,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -94,9 +95,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
@@ -142,7 +143,6 @@ import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -155,11 +155,11 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepository
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + Gitlab
- * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
- * {@link de.tum.cit.aet.artemis.programming.icl.ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
+ * 1) Jenkins + LocalVc
+ * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseTestService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestService.class);
@@ -186,7 +186,7 @@ public class ProgrammingExerciseTestService {
     private CourseTestRepository courseRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examTestRepository;
 
     @Autowired
     private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
@@ -731,7 +731,7 @@ public class ProgrammingExerciseTestService {
 
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
-        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
+        final Exam loadedExam = examTestRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExam().getId()).orElseThrow();
         assertThat(loadedExam.getNumberOfExercisesInExam()).isEqualTo(1);
     }
 
@@ -1054,8 +1054,8 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        // setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        // setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         // Create request
@@ -1308,8 +1308,6 @@ public class ProgrammingExerciseTestService {
         }
 
         final User participant = userRepo.getUserByLoginElseThrow(userPrefix + STUDENT_LOGIN);
-
-        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
@@ -1950,7 +1948,7 @@ public class ProgrammingExerciseTestService {
 
         // register users
         Set<ExamUser> registeredExamUsers = new HashSet<>();
-        exam = examRepository.save(exam);
+        exam = examTestRepository.save(exam);
         for (var user : registeredStudents) {
             var registeredExamUser = new ExamUser();
             registeredExamUser.setUser(user);
@@ -1963,7 +1961,7 @@ public class ProgrammingExerciseTestService {
         exam.setNumberOfExercisesInExam(exam.getExerciseGroups().size());
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(2);
-        exam = examRepository.save(exam);
+        exam = examTestRepository.save(exam);
 
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
@@ -1981,7 +1979,7 @@ public class ProgrammingExerciseTestService {
             for (var examUser : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
-                setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
+                // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
         }
@@ -2080,26 +2078,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
-        persistProgrammingExercise();
-        User user = userRepo.findOneByLogin(userPrefix + STUDENT_LOGIN).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
-
-        final var participation = createUserParticipation();
-
-        // create a submission
-        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-
-        mockDelegate.resetMockProvider();
-        mockDelegate.mockRetrieveArtifacts(participation);
-
-        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/build-artifact", HttpStatus.OK, byte[].class);
-
-        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
-        assertThat(artifact).as("No build artifact available for this plan").isEmpty();
-    }
-
-    // TEST
     public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
         setupTeamExercise();
 
@@ -2149,9 +2127,6 @@ public class ProgrammingExerciseTestService {
         User firstStudent = students.iterator().next();
         team.removeStudents(firstStudent);
 
-        // Mock repository access removal call
-        mockDelegate.mockRemoveRepositoryAccess(exercise, team, firstStudent);
-
         // Start participation with original team
         participationService.startExercise(exercise, team, false);
 
@@ -2180,7 +2155,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), ltiUserExists);
 
         // Start participation with original team
-        assertThatExceptionOfType(GitLabException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
+        assertThatExceptionOfType(Exception.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
     }
 
     // TEST
@@ -2352,7 +2327,7 @@ public class ProgrammingExerciseTestService {
         examExercise = programmingExerciseRepository.save(examExercise);
         examExercise.getExerciseGroup().getExam().setStartDate(startDate);
         examExercise.getExerciseGroup().getExam().setEndDate(endDate);
-        examRepository.save(examExercise.getExerciseGroup().getExam());
+        examTestRepository.save(examExercise.getExerciseGroup().getExam());
 
         var createdExercise = programmingExerciseRepository.findById(exercise.getId());
         assertThat(createdExercise).isPresent();
@@ -2570,13 +2545,13 @@ public class ProgrammingExerciseTestService {
 
         // Test example solution publication date not set.
         exam.setExampleSolutionPublicationDate(null);
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
 
         // Test example solution publication date in the past.
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         String zip = exportStudentRequestedRepository(HttpStatus.OK, false);
         assertThat(zip).isNotNull();
@@ -2594,7 +2569,7 @@ public class ProgrammingExerciseTestService {
 
         // Test example solution publication date in the future.
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
-        examRepository.save(exam);
+        examTestRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
     }

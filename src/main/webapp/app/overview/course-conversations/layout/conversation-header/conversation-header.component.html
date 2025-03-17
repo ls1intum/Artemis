@@ -22,7 +22,7 @@
                             [authorId]="otherUser.id"
                             [authorName]="otherUser.name"
                             class="me-2"
-                            [imageUrl]="otherUser.imageUrl"
+                            [imageUrl]="addPublicFilePrefix(otherUser.imageUrl)"
                             [isEditable]="false"
                         />
                     }
