@@ -349,14 +349,12 @@ public class ProgrammingExerciseService {
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        // Step 12: Webhooks and scheduling
-        // Step 12a: Create web hooks for version control
-        versionControl.addWebHooksForExercise(savedProgrammingExercise);
-        // Step 12b: Schedule operations
+        // Step 12: Scheduling
+        // Step 12a: Schedule operations
         scheduleOperations(savedProgrammingExercise.getId());
-        // Step 12c: Check notifications for new exercise
+        // Step 12b: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
-        // Step 12d: Update student competency progress
+        // Step 12c: Update student competency progress
         ProgrammingExercise finalSavedProgrammingExercise = savedProgrammingExercise;
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalSavedProgrammingExercise));
 
