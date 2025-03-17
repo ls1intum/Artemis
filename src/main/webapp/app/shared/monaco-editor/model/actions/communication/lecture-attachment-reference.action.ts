@@ -3,7 +3,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/lecture.service';
 import { ReferenceType } from 'app/shared/metis/metis.util';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -16,14 +16,14 @@ import { addPublicFilePrefix } from 'app/app.constants';
 interface LectureWithDetails {
     id: number;
     title: string;
-    attachmentUnits?: AttachmentUnit[];
+    attachmentUnits?: AttachmentVideoUnit[];
     attachments?: Attachment[];
 }
 
 interface LectureAttachmentReferenceActionArgs {
     reference: ReferenceType;
     lecture: LectureWithDetails;
-    attachmentUnit?: AttachmentUnit;
+    attachmentUnit?: AttachmentVideoUnit;
     slide?: Slide;
     attachment?: Attachment;
 }
@@ -136,7 +136,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentVideoUnit, slide: Slide): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Remove the trailing slash and the file name.
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
@@ -146,7 +146,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         );
     }
 
-    insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
+    insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentVideoUnit): void {
         const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
         this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
     }

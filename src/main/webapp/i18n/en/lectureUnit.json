@@ -111,11 +111,11 @@
                 "buttonText": "Delete"
             }
         },
-        "attachmentUnit": {
+        "attachmentVideoUnit": {
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
-            "createAttachmentUnits": {
+            "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
                     "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
@@ -158,7 +158,7 @@
                 },
                 "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
             },
-            "createAttachmentUnit": {
+            "createAttachmentVideoUnit": {
                 "title": "Create Attachment Unit",
                 "name": "Name",
                 "namePlaceHolder": "Give the attachment a name",

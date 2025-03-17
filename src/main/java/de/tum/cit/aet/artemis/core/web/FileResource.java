@@ -72,7 +72,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -474,7 +474,7 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
+        List<AttachmentVideoUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
@@ -501,11 +501,11 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
-        Attachment attachment = attachmentUnit.getAttachment();
-        Course course = attachmentUnit.getLecture().getCourse();
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
@@ -524,10 +524,10 @@ public class FileResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the file for attachment unit {} for editors", attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Attachment attachment = attachmentUnit.getAttachment();
-        checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        checkAttachmentUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -562,14 +562,14 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
         log.debug("REST request to get the slide : {}", slideNumber);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
-        Attachment attachment = attachmentUnit.getAttachment();
-        Course course = attachmentUnit.getLecture().getCourse();
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        Slide slide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
         String directoryPath = slide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
@@ -579,7 +579,7 @@ public class FileResource {
         if (matcher.matches()) {
             String fileName = matcher.group(1);
             return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
+                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
                     true);
         }
         else {
@@ -725,11 +725,11 @@ public class FileResource {
     /**
      * Checks if the attachment exists in the mentioned course
      *
-     * @param course         the course to check if the attachment is part of it
-     * @param attachmentUnit the attachment unit for which the existence should be checked
+     * @param course              the course to check if the attachment is part of it
+     * @param attachmentVideoUnit the attachment unit for which the existence should be checked
      */
-    private void checkAttachmentUnitExistsInCourseOrThrow(Course course, AttachmentUnit attachmentUnit) {
-        if (!attachmentUnit.getLecture().getCourse().equals(course)) {
+    private void checkAttachmentUnitExistsInCourseOrThrow(Course course, AttachmentVideoUnit attachmentVideoUnit) {
+        if (!attachmentVideoUnit.getLecture().getCourse().equals(course)) {
             throw new EntityNotFoundException("This attachment unit does not exist in this course.");
         }
     }

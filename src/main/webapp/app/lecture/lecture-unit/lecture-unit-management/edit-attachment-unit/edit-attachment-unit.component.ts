@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
@@ -26,7 +26,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentUnitFormComponent;
 
     isLoading = false;
-    attachmentUnit: AttachmentUnit;
+    attachmentUnit: AttachmentVideoUnit;
     attachment: Attachment;
     formData: AttachmentUnitFormData;
     lectureId: number;
@@ -48,12 +48,12 @@ export class EditAttachmentUnitComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: (attachmentUnitResponse: HttpResponse<AttachmentUnit>) => {
+                next: (attachmentUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
                     this.attachmentUnit = attachmentUnitResponse.body!;
                     this.attachment = this.attachmentUnit.attachment!;
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     this.attachmentUnit.attachment = undefined;
-                    this.attachment.attachmentUnit = undefined;
+                    this.attachment.attachmentVideoUnit = undefined;
 
                     this.formData = {
                         formProperties: {

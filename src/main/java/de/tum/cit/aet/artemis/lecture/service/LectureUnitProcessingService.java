@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
@@ -74,16 +74,16 @@ public class LectureUnitProcessingService {
      * @param lecture                        The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
-    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
+    public List<AttachmentVideoUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
-            List<AttachmentUnit> units = new ArrayList<>();
+            List<AttachmentVideoUnit> units = new ArrayList<>();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitInformationDTO.units()) {
                 // make sure output stream doesn't contain old data
                 outputStream.reset();
 
-                AttachmentUnit attachmentUnit = new AttachmentUnit();
+                AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
                 Splitter pdfSplitter = new Splitter();
@@ -101,17 +101,17 @@ public class LectureUnitProcessingService {
                 documentUnits.getFirst().save(outputStream);
 
                 // setup attachmentUnit and attachment
-                attachmentUnit.setDescription("");
+                attachmentVideoUnit.setDescription("");
                 attachment.setName(lectureUnit.unitName());
                 attachment.setAttachmentType(AttachmentType.FILE);
                 attachment.setReleaseDate(lectureUnit.releaseDate());
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentUnit, multipartFile.getOriginalFilename());
+                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.createAttachmentUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
-                units.add(savedAttachmentUnit);
+                units.add(savedAttachmentVideoUnit);
             }
             lectureRepository.save(lecture);
             document.close();

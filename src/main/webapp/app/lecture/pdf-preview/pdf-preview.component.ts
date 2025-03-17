@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, vie
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -38,7 +38,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Signals
     course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
-    attachmentUnit = signal<AttachmentUnit | undefined>(undefined);
+    attachmentUnit = signal<AttachmentVideoUnit | undefined>(undefined);
     isPdfLoading = signal<boolean>(false);
     attachmentToBeEdited = signal<Attachment | undefined>(undefined);
     currentPdfBlob = signal<Blob | undefined>(undefined);

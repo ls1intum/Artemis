@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { objectToJsonBlob } from 'app/utils/blob-util';
@@ -15,7 +15,7 @@ import { LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit
 describe('AttachmentUnitService', () => {
     let service: AttachmentUnitService;
     let httpMock: HttpTestingController;
-    let elemDefault: AttachmentUnit;
+    let elemDefault: AttachmentVideoUnit;
     let expectedResult: any;
 
     beforeEach(() => {
@@ -30,7 +30,7 @@ describe('AttachmentUnitService', () => {
                 }),
             ],
         });
-        expectedResult = {} as HttpResponse<AttachmentUnit>;
+        expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
         service = TestBed.inject(AttachmentUnitService);
         httpMock = TestBed.inject(HttpTestingController);
 
@@ -43,7 +43,7 @@ describe('AttachmentUnitService', () => {
         attachment.name = 'test';
         attachment.link = '/path/to/file/test.pdf';
 
-        elemDefault = new AttachmentUnit();
+        elemDefault = new AttachmentVideoUnit();
         elemDefault.id = 0;
         elemDefault.description = 'lorem ipsum';
         elemDefault.attachment = attachment;

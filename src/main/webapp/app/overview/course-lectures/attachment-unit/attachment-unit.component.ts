@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
 
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -27,7 +27,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective],
     templateUrl: './attachment-unit.component.html',
 })
-export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit> {
+export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);

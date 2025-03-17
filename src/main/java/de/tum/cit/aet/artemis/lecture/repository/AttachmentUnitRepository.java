@@ -15,14 +15,14 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface AttachmentUnitRepository extends ArtemisJpaRepository<AttachmentUnit, Long> {
+public interface AttachmentUnitRepository extends ArtemisJpaRepository<AttachmentVideoUnit, Long> {
 
     @Query("""
             SELECT lectureUnit
@@ -30,12 +30,12 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
                 LEFT JOIN lecture.lectureUnits lectureUnit
                 LEFT JOIN FETCH lectureUnit.attachment attachment
             WHERE lecture.id = :lectureId
-                AND TYPE (lectureUnit) = AttachmentUnit
+                AND TYPE (lectureUnit) = AttachmentVideoUnit
                 AND attachment.attachmentType = :attachmentType
             ORDER BY INDEX(lectureUnit)
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
-    List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
+    List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
     /**
      * Find all attachment units by lecture id and attachment type or throw if ist is empty.
@@ -47,25 +47,25 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
      * @throws EntityNotFoundException if no results are found
      */
     @NotNull
-    default List<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
-        List<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
-        if (attachmentUnits.isEmpty()) {
+    default List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
+        List<AttachmentVideoUnit> attachmentVideoUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
+        if (attachmentVideoUnits.isEmpty()) {
             throw new EntityNotFoundException("AttachmentUnit");
         }
-        return attachmentUnits;
+        return attachmentVideoUnits;
     }
 
     @Query("""
-            SELECT attachmentUnit
-            FROM AttachmentUnit attachmentUnit
-                LEFT JOIN FETCH attachmentUnit.slides slides
-                LEFT JOIN FETCH attachmentUnit.competencyLinks cl
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.slides slides
+                LEFT JOIN FETCH attachmentVideoUnit.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
-            WHERE attachmentUnit.id = :attachmentUnitId
+            WHERE attachmentVideoUnit.id = :attachmentUnitId
             """)
-    Optional<AttachmentUnit> findWithSlidesAndCompetenciesById(@Param("attachmentUnitId") long attachmentUnitId);
+    Optional<AttachmentVideoUnit> findWithSlidesAndCompetenciesById(@Param("attachmentUnitId") long attachmentUnitId);
 
-    default AttachmentUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentUnitId) {
+    default AttachmentVideoUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentUnitId) {
         return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentUnitId), attachmentUnitId);
     }
 }

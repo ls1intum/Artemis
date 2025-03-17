@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -164,14 +164,14 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
-            if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
-                List<Slide> slides = attachmentUnit.getSlides();
+        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentVideoUnit.getAttachment().getLink()))), 5);
+            if (attachmentVideoUnit.getSlides() != null && !attachmentVideoUnit.getSlides().isEmpty()) {
+                List<Slide> slides = attachmentVideoUnit.getSlides();
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
-                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
+                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentVideoUnit)));
                 slideRepository.deleteAll(slides);
             }
         }
@@ -242,14 +242,14 @@ public class LectureUnitService {
      * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
      */
     public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (!(lectureUnit instanceof AttachmentUnit)) {
+        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         if (pyrisWebhookService.isEmpty()) {
             log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
-        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
+        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
         return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 

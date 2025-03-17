@@ -10,7 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -256,7 +256,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit!.type) {
             case LectureUnitType.ATTACHMENT: {
-                const attachmentUnit = <AttachmentUnit>lectureUnit;
+                const attachmentUnit = <AttachmentVideoUnit>lectureUnit;
                 return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
             }
             default:
@@ -283,7 +283,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.releaseDate || undefined;
+                return (<AttachmentVideoUnit>lectureUnit)?.attachment?.releaseDate || undefined;
             case LectureUnitType.EXERCISE:
                 return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
             default:
@@ -294,7 +294,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
             case LectureUnitType.ATTACHMENT:
-                return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
+                return (<AttachmentVideoUnit>lectureUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
         }
@@ -312,7 +312,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         if (lectureUnit.id) {
                             const ingestionState = ingestionStatesMap[lectureUnit.id];
                             if (ingestionState !== undefined) {
-                                (<AttachmentUnit>lectureUnit).pyrisIngestionState = ingestionState;
+                                (<AttachmentVideoUnit>lectureUnit).pyrisIngestionState = ingestionState;
                             }
                         }
                     });
@@ -327,7 +327,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     onIngestButtonClicked(lectureUnitId: number) {
         const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
         if (unitIndex > -1) {
-            const unit: AttachmentUnit = this.lectureUnits[unitIndex];
+            const unit: AttachmentVideoUnit = this.lectureUnits[unitIndex];
             unit.pyrisIngestionState = IngestionState.IN_PROGRESS;
             this.lectureUnits[unitIndex] = unit;
         }
@@ -345,7 +345,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
+    getIcon(attachmentUnit: AttachmentVideoUnit): IconDefinition {
         switch (attachmentUnit.pyrisIngestionState) {
             case IngestionState.NOT_STARTED:
                 return this.faFileExport;

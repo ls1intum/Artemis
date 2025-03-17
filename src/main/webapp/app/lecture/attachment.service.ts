@@ -26,9 +26,9 @@ export class AttachmentService {
     create(attachment: Attachment, file: File): Observable<EntityResponseType> {
         const copy = this.convertAttachmentDatesFromClient(attachment);
         // avoid potential issues when sending the attachment to the server
-        if (copy.attachmentUnit) {
-            copy.attachmentUnit.lecture = undefined;
-            copy.attachmentUnit.competencyLinks = undefined;
+        if (copy.attachmentVideoUnit) {
+            copy.attachmentVideoUnit.lecture = undefined;
+            copy.attachmentVideoUnit.competencyLinks = undefined;
         }
         if (copy.lecture) {
             copy.lecture.lectureUnits = undefined;

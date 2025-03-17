@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -65,7 +65,7 @@ describe('LectureUnitManagementComponent', () => {
     let getProfileInfo: jest.SpyInstance;
     let getCombinedCourseSettings: jest.SpyInstance;
 
-    let attachmentUnit: AttachmentUnit;
+    let attachmentUnit: AttachmentVideoUnit;
     let exerciseUnit: ExerciseUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
@@ -135,7 +135,7 @@ describe('LectureUnitManagementComponent', () => {
                 videoUnit.id = 1;
                 exerciseUnit = new ExerciseUnit();
                 exerciseUnit.id = 2;
-                attachmentUnit = new AttachmentUnit();
+                attachmentUnit = new AttachmentVideoUnit();
                 attachmentUnit.id = 3;
                 course = new Course();
                 course.id = 99;
@@ -189,7 +189,7 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct delete question translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toBe('artemisApp.textUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.question');
@@ -205,7 +205,7 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
@@ -221,7 +221,7 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct action type', () => {
-        expect(lectureUnitManagementComponent.getActionType(new AttachmentUnit())).toEqual(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new AttachmentVideoUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new ExerciseUnit())).toEqual(ActionType.Unlink);
         expect(lectureUnitManagementComponent.getActionType(new TextUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).toEqual(ActionType.Delete);

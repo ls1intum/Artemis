@@ -18,7 +18,7 @@ public class Slide extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "attachment_unit_id")
-    private AttachmentUnit attachmentUnit;
+    private AttachmentVideoUnit attachmentVideoUnit;
 
     @Size(max = 150)
     @Column(name = "slide_image_path", length = 150)
@@ -27,12 +27,12 @@ public class Slide extends DomainObject {
     @Column(name = "slide_number")
     private int slideNumber;
 
-    public AttachmentUnit getAttachmentUnit() {
-        return attachmentUnit;
+    public AttachmentVideoUnit getAttachmentVideoUnit() {
+        return attachmentVideoUnit;
     }
 
-    public void setAttachmentUnit(AttachmentUnit attachmentUnit) {
-        this.attachmentUnit = attachmentUnit;
+    public void setAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit) {
+        this.attachmentVideoUnit = attachmentVideoUnit;
     }
 
     public String getSlideImagePath() {

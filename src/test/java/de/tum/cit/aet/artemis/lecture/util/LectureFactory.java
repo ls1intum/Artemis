@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
@@ -47,14 +47,14 @@ public class LectureFactory {
      *
      * @return The generated AttachmentUnit
      */
-    public static AttachmentUnit generateAttachmentUnit() {
+    public static AttachmentVideoUnit generateAttachmentUnit() {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         Attachment attachmentOfAttachmentUnit = generateAttachment(started);
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
-        attachmentUnit.setDescription("Lorem Ipsum");
-        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
-        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
-        return attachmentUnit;
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentVideoUnit;
     }
 
     /**

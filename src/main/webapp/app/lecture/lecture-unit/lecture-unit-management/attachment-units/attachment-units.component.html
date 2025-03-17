@@ -1,19 +1,19 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading">
     <div class="col-4">
         <h2 id="page-heading">
-            <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unit"></span>
+            <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.split.unit"></span>
         </h2>
     </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unitName"></span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.split.unitName"></span></th>
                     <th>
-                        <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.releaseDate"></span>
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.split.releaseDate"></span>
                     </th>
-                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.startPage"></span></th>
-                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.endPage"></span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.split.startPage"></span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.split.endPage"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -71,20 +71,20 @@
                     </tr>
                 }
                 <button (click)="addRow()" class="btn btn-success mt-2">
-                    <fa-icon [icon]="faPlus" />{{ 'artemisApp.attachmentUnit.createAttachmentUnits.addUnit' | artemisTranslate }}
+                    <fa-icon [icon]="faPlus" />{{ 'artemisApp.attachmentVideoUnit.createAttachmentUnits.addUnit' | artemisTranslate }}
                 </button>
             </tbody>
         </table>
     </div>
     <div class="mt-3 mb-3">
-        <span class="px-1" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.removeSlides"></span>
+        <span class="px-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.removeSlides"></span>
         <div>
             <div class="alert alert-warning mt-3 ml-3">
                 <ul>
-                    <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.firstLine"></li>
-                    <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.secondLine"></li>
+                    <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.removeSlidesInfo.firstLine"></li>
+                    <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.removeSlidesInfo.secondLine"></li>
                     <li>
-                        {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.thirdLine' | artemisTranslate }}
+                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentUnits.removeSlidesInfo.thirdLine' | artemisTranslate }}
                         {{ removedSlidesNumbers.length > 0 ? removedSlidesNumbers : '-' }}
                     </li>
                 </ul>
@@ -93,7 +93,7 @@
                 type="text"
                 class="form-control"
                 id="removeSlidesCommaSeparatedKeyPhrases"
-                placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesPlaceholder' | artemisTranslate }}"
+                placeholder="{{ 'artemisApp.attachmentVideoUnit.createAttachmentUnits.removeSlidesPlaceholder' | artemisTranslate }}"
                 autocomplete="off"
                 [(ngModel)]="searchTerm"
             />
@@ -102,11 +102,11 @@
     @if (units.length < 1) {
         <div class="alert alert-danger mt-3">
             <fa-icon [icon]="faExclamationTriangle" />
-            {{ 'artemisApp.attachmentUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}
+            {{ 'artemisApp.attachmentVideoUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}
         </div>
     }
     <button
-        [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.processTimeInfo' | artemisTranslate"
+        [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentUnits.processTimeInfo' | artemisTranslate"
         type="button"
         (click)="createAttachmentUnits()"
         [disabled]="units.length < 1"

@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -129,16 +129,16 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
         // create unreleased attachment unit
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
-        attachmentUnit.setLecture(lecture);
-        Attachment attachment = attachmentUnit.getAttachment();
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(true);
+        attachmentVideoUnit.setLecture(lecture);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
-        attachmentUnit = attachmentUnitRepo.save(attachmentUnit);
+        attachmentVideoUnit = attachmentUnitRepo.save(attachmentVideoUnit);
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentUnit.getAttachment().getLink());
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnit.getAttachment().getLink());
         request.get(requestUrl, HttpStatus.OK, String.class);
     }
 
@@ -227,7 +227,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void adjustReleaseDateToFuture(Lecture lecture) {
-        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentUnit) lectureUnit).getAttachment())
+        var attachment = lecture.getLectureUnits().stream().sorted(Comparator.comparing(LectureUnit::getId)).map(lectureUnit -> ((AttachmentVideoUnit) lectureUnit).getAttachment())
                 .findFirst().orElseThrow();
         attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
         attachmentRepo.save(attachment);
@@ -314,15 +314,15 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return lecture;
     }
 
-    private AttachmentUnit uploadAttachmentUnit(Lecture lecture, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
-        AttachmentUnit attachmentUnit = LectureFactory.generateAttachmentUnit();
-        Attachment attachment = attachmentUnit.getAttachment();
-        attachmentUnit.setAttachment(null);
-        attachment.setAttachmentUnit(null);
+    private AttachmentVideoUnit uploadAttachmentUnit(Lecture lecture, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = LectureFactory.generateAttachmentUnit();
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        attachmentVideoUnit.setAttachment(null);
+        attachment.setAttachmentVideoUnit(null);
         MockMultipartFile attachmentFile = new MockMultipartFile("attachment", "", "application/json", objectMapper.writeValueAsBytes(attachment));
 
-        return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
-                AttachmentUnit.class, expectedStatus);
+        return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-units", attachmentVideoUnit, "attachmentUnit",
+                List.of(attachmentFile, file), AttachmentVideoUnit.class, expectedStatus);
     }
 
     @Test
@@ -348,16 +348,16 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAttachmentUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
-        attachmentUnit.setLecture(lecture);
-        Attachment attachment = attachmentUnit.getAttachment();
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(true);
+        attachmentVideoUnit.setLecture(lecture);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
-        attachmentUnitRepo.save(attachmentUnit);
+        attachmentUnitRepo.save(attachmentVideoUnit);
 
         Long courseId = lecture.getCourse().getId();
-        Long attachmentUnitId = attachmentUnit.getId();
+        Long attachmentUnitId = attachmentVideoUnit.getId();
 
         request.get("/api/core/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
     }
@@ -373,18 +373,18 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         lectureRepo.save(lecture);
 
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
-        attachmentUnit.setLecture(lecture);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(true);
+        attachmentVideoUnit.setLecture(lecture);
 
         String unsanitizedName = "test–file"; // contains en-dash
-        Attachment attachment = attachmentUnit.getAttachment();
+        Attachment attachment = attachmentVideoUnit.getAttachment();
         attachment.setName(unsanitizedName);
         attachment.setLink(tempFile.toUri().toString());
         attachmentRepo.save(attachment);
-        attachmentUnitRepo.save(attachmentUnit);
+        attachmentUnitRepo.save(attachmentVideoUnit);
 
         String unsanitizedFilename = unsanitizedName + ".pdf";
-        String url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
+        String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
             filePathServiceMock.when(() -> FilePathService.actualPathForPublicPathOrThrow(Mockito.any(URI.class))).thenReturn(tempFile);

@@ -18,18 +18,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue("A")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AttachmentUnit extends LectureUnit {
+public class AttachmentVideoUnit extends LectureUnit {
 
     // Note: Name and Release Date will always be taken from associated attachment
     @Column(name = "description")
     private String description;
 
-    @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
+    @Column(name = "source")
+    private String videoSource;
+
+    @OneToOne(mappedBy = "attachmentVideoUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "attachmentVideoUnit", allowSetters = true)
     private Attachment attachment;
 
-    @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("attachmentUnit")
+    @OneToMany(mappedBy = "attachmentVideoUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("attachmentVideoUnit")
     private List<Slide> slides = new ArrayList<>();
 
     @Override
@@ -48,6 +51,14 @@ public class AttachmentUnit extends LectureUnit {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getVideoSource() {
+        return videoSource;
+    }
+
+    public void setVideoSource(String videoSource) {
+        this.videoSource = videoSource;
     }
 
     public Attachment getAttachment() {

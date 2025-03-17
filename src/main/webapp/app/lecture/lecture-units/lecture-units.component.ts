@@ -3,7 +3,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
@@ -74,7 +74,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedVideoUnit: VideoUnit;
     currentlyProcessedOnlineUnit: OnlineUnit;
-    currentlyProcessedAttachmentUnit: AttachmentUnit;
+    currentlyProcessedAttachmentUnit: AttachmentVideoUnit;
     textUnitFormData: TextUnitFormData;
     videoUnitFormData: VideoUnitFormData;
     onlineUnitFormData: OnlineUnitFormData;
@@ -208,13 +208,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
-        this.currentlyProcessedAttachmentUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit : new AttachmentUnit();
+        this.currentlyProcessedAttachmentUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit : new AttachmentVideoUnit();
         const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit.attachment! : new Attachment();
 
         if (this.isEditingLectureUnit) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
             this.currentlyProcessedAttachmentUnit.attachment = undefined;
-            attachmentToCreateOrEdit.attachmentUnit = undefined;
+            attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
         }
 
         let notificationText: string | undefined;
@@ -279,7 +279,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.currentlyProcessedTextUnit = lectureUnit as TextUnit;
         this.currentlyProcessedVideoUnit = lectureUnit as VideoUnit;
         this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
-        this.currentlyProcessedAttachmentUnit = lectureUnit as AttachmentUnit;
+        this.currentlyProcessedAttachmentUnit = lectureUnit as AttachmentVideoUnit;
 
         this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
         this.isVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.VIDEO);

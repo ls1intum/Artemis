@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -159,9 +159,9 @@ public class LectureUtilService {
                 TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
                 VideoUnit videoUnit = createVideoUnit();
                 TextUnit textUnit = createTextUnit();
-                AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
+                AttachmentVideoUnit attachmentVideoUnit = createAttachmentUnit(withFiles);
                 ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentVideoUnit, exerciseUnit)));
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
@@ -231,17 +231,17 @@ public class LectureUtilService {
      * @param withFile True, if the Attachment should link to a file
      * @return The created AttachmentUnit
      */
-    public AttachmentUnit createAttachmentUnit(Boolean withFile) {
+    public AttachmentVideoUnit createAttachmentUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
-        attachmentUnit.setDescription("Lorem Ipsum");
-        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true)
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
+        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true)
                 : LectureFactory.generateAttachment(started);
-        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
-        return attachmentUnitRepository.save(attachmentUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
@@ -252,16 +252,16 @@ public class LectureUtilService {
      * @param shouldBePdf    if true file will be pdf, else image
      * @return The created AttachmentUnit
      */
-    public AttachmentUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
+    public AttachmentVideoUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
-        attachmentUnit.setDescription("Lorem Ipsum");
-        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        Attachment attachmentOfAttachmentUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentUnit.getId(), true)
-                : LectureFactory.generateAttachmentWithFile(started, attachmentUnit.getId(), true);
-        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
+        Attachment attachmentOfAttachmentUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
+                : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
+        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
@@ -273,10 +273,10 @@ public class LectureUtilService {
                 fail("Failed while copying test attachment files", ex);
             }
             slide.setSlideImagePath("temp/" + testFileName);
-            slide.setAttachmentUnit(attachmentUnit);
+            slide.setAttachmentVideoUnit(attachmentVideoUnit);
             slideRepository.save(slide);
         }
-        return attachmentUnitRepository.save(attachmentUnit);
+        return attachmentUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
@@ -285,15 +285,15 @@ public class LectureUtilService {
      * @param numberOfSlides The number of Slides to create
      * @return The created AttachmentUnit
      */
-    public AttachmentUnit createAttachmentUnitWithSlides(int numberOfSlides) {
+    public AttachmentVideoUnit createAttachmentUnitWithSlides(int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         Attachment attachmentOfAttachmentUnit = LectureFactory.generateAttachment(started);
-        AttachmentUnit attachmentUnit = new AttachmentUnit();
-        attachmentUnit.setDescription("Lorem Ipsum");
-        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
+        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
@@ -305,10 +305,10 @@ public class LectureUtilService {
                 fail("Failed while copying test attachment files", ex);
             }
             slide.setSlideImagePath("temp/" + testFileName);
-            slide.setAttachmentUnit(attachmentUnit);
+            slide.setAttachmentVideoUnit(attachmentVideoUnit);
             slideRepository.save(slide);
         }
-        return attachmentUnitRepository.save(attachmentUnit);
+        return attachmentUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
