@@ -104,13 +104,13 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     get routerLinkForRepositoryView(): (string | number)[] {
         if (this.isInCourseManagement) {
-            return ['..', 'programming-exercises', this.exercise.id!, 'repository', 'USER', this.participation.id!];
+            return ['..', 'programming-exercises', this.exercise().id!, 'repository', 'USER', this.participation().id!];
         }
         if (this.routerLink.includes('test-exam')) {
             const parts = this.routerLink.split('/');
             const examLink = parts.slice(0, parts.length - 2).join('/');
-            return [examLink, 'exercises', this.exercise.id!, 'repository', this.participation.id!];
+            return [examLink, 'exercises', this.exercise().id!, 'repository', this.participation().id!];
         }
-        return [this.routerLink, 'exercises', this.exercise.id!, 'repository', this.participation.id!];
+        return [this.routerLink, 'exercises', this.exercise().id!, 'repository', this.participation().id!];
     }
 }
