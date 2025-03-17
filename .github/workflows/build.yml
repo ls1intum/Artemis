@@ -120,7 +120,3 @@ jobs:
       docker-file: ./docker/artemis/Dockerfile
       tags: |
         type=ref,event=tag
-
-    # TODO: Push to Docker Hub (develop + tag)
-
-    # TODO: Push to Chair Harbour (??)
