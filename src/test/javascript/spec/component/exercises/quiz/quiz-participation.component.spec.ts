@@ -10,8 +10,8 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
 import { Result } from 'app/entities/result.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizParticipationComponent } from 'app/quiz/overview/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import dayjs from 'dayjs/esm';
@@ -27,7 +27,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
+import { QuizParticipationService } from 'app/quiz/overview/quiz-participation.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';

@@ -3,9 +3,9 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
-import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { MatchPercentageInfoModalComponent } from 'app/exercises/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
+import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
+import { QuizScoringInfoModalComponent } from 'app/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
+import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
@@ -13,7 +13,7 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';

@@ -272,7 +272,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute),
+                        loadChildren: () => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute),
                     },
                     {
                         path: '',

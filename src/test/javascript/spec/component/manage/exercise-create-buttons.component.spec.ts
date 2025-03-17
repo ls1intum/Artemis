@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
+import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';

@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';

@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
@@ -8,7 +8,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
+import { ApollonDiagramListComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

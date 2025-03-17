@@ -9,7 +9,7 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
-import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
+import { QuizExercisePagingService } from 'app/quiz/manage/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { PagingService } from 'app/exercise/manage/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/text-exercise-paging.service';

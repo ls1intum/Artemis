@@ -13,9 +13,9 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';

@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

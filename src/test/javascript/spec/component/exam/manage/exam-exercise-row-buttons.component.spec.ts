@@ -6,7 +6,7 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exerc
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';

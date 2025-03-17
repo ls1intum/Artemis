@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { FileUploadExerciseComponent } from 'app/file-upload/manage/file-upload-exercise.component';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
-import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
+import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

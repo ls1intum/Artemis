@@ -14,9 +14,9 @@ import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
+import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { captureException } from '@sentry/angular';
 
 @Component({
