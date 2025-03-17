@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -78,7 +78,7 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected ComplaintRepository complaintRepo;
 
     @Autowired
-    protected ExamRepository examRepository;
+    protected ExamTestRepository examRepository;
 
     @Autowired
     protected ExerciseTestRepository exerciseRepository;

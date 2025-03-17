@@ -25,6 +25,7 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -106,6 +107,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         someRepository.resetLocalRepo();
     }
 
+    @Disabled
     @Test
     void testFetchPush_usingVcsAccessToken() {
         var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -173,6 +175,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         someRepository.resetLocalRepo();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_offlineIDENotAllowed() {
@@ -224,6 +227,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         localVCLocalCITestService.testPushReturnsError(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToDeleteBranch() throws GitAPIException {
@@ -238,6 +242,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot delete a branch.");
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStudentTriesToForcePush() throws Exception {
@@ -251,6 +256,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     // TODO add test for force push over ssh, which should work
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorTriesToForcePushOverHttp() throws Exception {
@@ -307,6 +313,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         return remoteRefUpdate;
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {

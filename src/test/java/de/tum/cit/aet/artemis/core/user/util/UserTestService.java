@@ -60,13 +60,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + Gitlab
+ * 1) Jenkins + LocalVc
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
@@ -89,9 +88,6 @@ public class UserTestService {
 
     @Autowired
     protected RequestUtilService request;
-
-    @Autowired
-    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
@@ -812,12 +808,11 @@ public class UserTestService {
         final User user = userTestRepository.save(repoUser);
 
         if (mock) {
-            // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
+            // Mock user creation and update calls to prevent issues in Jenkins tests
             mockDelegate.mockCreateUserInUserManagement(user, false);
             mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, null, new HashSet<>());
         }
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
