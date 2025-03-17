@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
-import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from './quiz-exercise.service';
@@ -47,6 +46,7 @@ import { CompetencySelectionComponent } from 'app/shared/competency-selection/co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',

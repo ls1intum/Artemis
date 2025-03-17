@@ -5,7 +5,7 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     let component: ProgrammingExerciseInstructorRepoDownloadComponent;

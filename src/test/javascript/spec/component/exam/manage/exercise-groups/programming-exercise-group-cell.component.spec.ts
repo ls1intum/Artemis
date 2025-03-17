@@ -12,7 +12,7 @@ import { PROFILE_THEIA } from 'app/app.constants';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { RepositoryType } from '../../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 

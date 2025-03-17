@@ -8,17 +8,16 @@ import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { DomainChange, DomainType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Course } from 'app/entities/course.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 /**
  * Enumeration specifying the loading state
  */

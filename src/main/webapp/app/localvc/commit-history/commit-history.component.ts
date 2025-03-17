@@ -12,7 +12,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { CommitsInfoComponent } from '../../programming/shared/commits-info/commits-info.component';
-import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-commit-history',

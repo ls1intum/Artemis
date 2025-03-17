@@ -31,7 +31,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -61,6 +60,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

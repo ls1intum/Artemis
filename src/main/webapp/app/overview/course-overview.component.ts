@@ -47,7 +47,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -77,6 +76,7 @@ import { TranslateDirective } from '../shared/language/translate.directive';
 import { SecuredImageComponent } from '../shared/image/secured-image.component';
 import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
 import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 interface CourseActionItem {
     title: string;

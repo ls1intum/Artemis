@@ -33,9 +33,9 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
-import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -47,7 +47,7 @@ import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.servi
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { EntityResponseType } from 'app/exercise/result/result.service';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import dayjs from 'dayjs/esm';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';

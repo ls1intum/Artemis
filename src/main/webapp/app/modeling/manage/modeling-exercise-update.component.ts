@@ -2,7 +2,6 @@ import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, O
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -27,7 +26,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { Subscription } from 'rxjs';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
@@ -47,6 +45,8 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

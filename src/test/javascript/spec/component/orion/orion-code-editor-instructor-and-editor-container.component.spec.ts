@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,7 +21,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorInstructorAndEditorOrionContainerComponent', () => {
     let comp: CodeEditorInstructorAndEditorOrionContainerComponent;

@@ -18,7 +18,7 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';

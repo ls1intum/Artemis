@@ -8,7 +8,6 @@ import { PROFILE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 
 import { isExamExercise } from 'app/shared/util/utils';
@@ -23,6 +22,7 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-request-feedback-button',

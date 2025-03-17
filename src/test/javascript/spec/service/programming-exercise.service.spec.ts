@@ -20,7 +20,7 @@ import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/en
 import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
-import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;

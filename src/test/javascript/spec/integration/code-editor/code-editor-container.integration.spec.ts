@@ -15,7 +15,7 @@ import {
     FileBadgeType,
     FileType,
     GitConflictState,
-} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+} from 'app/programming/shared/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
@@ -27,17 +27,13 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
-import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import {
-    CodeEditorBuildLogService,
-    CodeEditorRepositoryFileService,
-    CodeEditorRepositoryService,
-} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
@@ -53,7 +49,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

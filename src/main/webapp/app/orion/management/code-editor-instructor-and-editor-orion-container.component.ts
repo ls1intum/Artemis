@@ -15,7 +15,7 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/progr
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from '../../programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',

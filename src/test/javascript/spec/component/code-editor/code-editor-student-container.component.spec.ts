@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';

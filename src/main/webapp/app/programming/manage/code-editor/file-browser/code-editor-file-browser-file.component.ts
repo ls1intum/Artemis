@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { faEdit, faFile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-node.component';
-import { FileBadge } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { FileBadge } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { CodeEditorFileBrowserBadgeComponent } from './code-editor-file-browser-badge.component';

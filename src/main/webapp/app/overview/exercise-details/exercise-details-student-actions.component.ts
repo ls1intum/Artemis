@@ -12,7 +12,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
 import { faDesktop, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -31,6 +30,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 @Component({
     imports: [

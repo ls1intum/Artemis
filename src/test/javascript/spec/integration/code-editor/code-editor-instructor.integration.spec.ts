@@ -8,7 +8,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { DomainType, FileType, RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
@@ -16,13 +16,9 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import {
-    CodeEditorBuildLogService,
-    CodeEditorRepositoryFileService,
-    CodeEditorRepositoryService,
-} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/entities/result.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -48,12 +44,12 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result.com
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid.component';
+import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -62,7 +58,7 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programmi
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
