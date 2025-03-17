@@ -11,8 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -34,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
 
 class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -43,6 +43,9 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
     protected IQueue<BuildJobQueueItem> queuedJobs;
 
     protected IMap<Long, BuildJobQueueItem> processingJobs;
+
+    @Autowired
+    private RepositoryCheckoutService repositoryCheckoutService;
 
     @BeforeEach
     void setUp() {
@@ -143,10 +146,6 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null);
         assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
-        assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isEmpty();
-        ResponseEntity<byte[]> latestArtifactResponse = continuousIntegrationService.retrieveLatestArtifact(null);
-        assertThat(latestArtifactResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        assertThat(latestArtifactResponse.getBody()).hasSize(0);
     }
 
     @Nested
@@ -154,7 +153,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
         @Test
         void getCheckoutDirectoriesForJava() {
-            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.JAVA, true);
+            CheckoutDirectoriesDTO checkoutDirectories = repositoryCheckoutService.getCheckoutDirectories(ProgrammingLanguage.JAVA, true);
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
@@ -169,7 +168,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
         @Test
         void getCheckoutDirectoriesForOcaml() {
-            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML, true);
+            CheckoutDirectoriesDTO checkoutDirectories = repositoryCheckoutService.getCheckoutDirectories(ProgrammingLanguage.OCAML, true);
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
@@ -184,7 +183,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
         @Test
         void getCheckoutDirectoriesForOcamlWithoutCheckingOutSolution() {
-            CheckoutDirectoriesDTO checkoutDirectories = continuousIntegrationService.getCheckoutDirectories(ProgrammingLanguage.OCAML, false);
+            CheckoutDirectoriesDTO checkoutDirectories = repositoryCheckoutService.getCheckoutDirectories(ProgrammingLanguage.OCAML, false);
 
             // Verify submission build plan checkout directories
             assertThat(checkoutDirectories.submissionBuildPlanCheckoutDirectories().exerciseCheckoutDirectory()).isEqualTo("/assignment");
