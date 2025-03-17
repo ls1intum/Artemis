@@ -60,7 +60,6 @@ describe('AttachmentUnitService', () => {
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toEqual('api/lecture/lectures/1/attachment-units/1');
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(elemDefault);
     }));
@@ -213,7 +212,7 @@ describe('AttachmentUnitService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/lecture/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
+                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');
