@@ -31,6 +31,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { TheiaRedirectProps } from 'app/shared/theia/theia-redirect.model';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -243,15 +244,16 @@ export class CodeButtonComponent implements OnInit {
      * Add the credentials to the http url, if a token should be used.
      *
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     * @param alwaysUsetoken if true, the token authentication method is always used, even if the user has not selected to use it
      */
-    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
+    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysUsetoken = false): string {
         if (this.useSsh && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri());
         }
         const url = this.getRepositoryUri();
-        const token = insertPlaceholder ? '**********' : this.getUsedToken();
+        const token = insertPlaceholder ? '**********' : this.getUsedToken(alwaysUsetoken);
 
-        const credentials = `://${this.user.login}${this.useToken ? `:${token}` : ''}@`;
+        const credentials = `://${this.user.login}${this.useToken || alwaysUsetoken ? `:${token}` : ''}@`;
 
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
@@ -312,8 +314,8 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
-    private getUsedToken(): string | undefined {
-        if (this.useToken) {
+    private getUsedToken(alwaysUseToken = false): string | undefined {
+        if (this.useToken || alwaysUseToken) {
             if (this.isInCourseManagement) {
                 return this.user.vcsAccessToken;
             } else {
@@ -459,8 +461,10 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async startOnlineIDE() {
+        // Retrieve the Artemis authentication token for SCORPIO
         const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
 
+        // Build the Artemis URL based on the current window location (protocol + host)
         let artemisUrl: string = '';
         if (window.location.protocol) {
             artemisUrl += window.location.protocol + '//';
@@ -469,20 +473,17 @@ export class CodeButtonComponent implements OnInit {
             artemisUrl += window.location.host;
         }
 
-        const prevAuthMech = this.selectedAuthenticationMechanism;
-        this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Token;
-
-        const data = {
+        // Prepare the data object with necessary properties for Theia IDE launch
+        const data: TheiaRedirectProps = {
             appDef: this.exercise()?.buildConfig?.theiaImage ?? '',
-            gitUri: this.getHttpOrSshRepositoryUri(false),
+            gitUri: this.getHttpOrSshRepositoryUri(false, true),
             gitUser: this.user.name,
             gitMail: this.user.email,
-            artemisToken: artemisToken,
-            artemisUrl: artemisUrl,
+            artemisToken,
+            artemisUrl,
         };
 
-        this.selectedAuthenticationMechanism = prevAuthMech;
-
+        // Open a new blank browser tab/window for the IDE
         const newWindow = window.open('', '_blank');
         if (!newWindow) {
             return;
@@ -490,24 +491,23 @@ export class CodeButtonComponent implements OnInit {
 
         newWindow.name = 'Theia-IDE';
 
+        // Create a form element to submit the data via GET to the Theia portal
         const form = document.createElement('form');
         form.method = 'GET';
         form.action = this.theiaPortalURL;
 
         form.target = newWindow.name;
 
-        // Loop over data element and create input fields
-        for (const key in data) {
-            if (Object.hasOwn(data, key)) {
-                const hiddenField = document.createElement('input');
-                hiddenField.type = 'hidden';
-                hiddenField.name = key;
-                const descriptor = Object.getOwnPropertyDescriptor(data, key);
-                hiddenField.value = descriptor ? descriptor.value : '';
-                form.appendChild(hiddenField);
-            }
-        }
+        // Iterate over each key-value pair in data and create hidden input fields for form submission
+        Object.entries(data).forEach(([key, value]) => {
+            const hiddenField = document.createElement('input');
+            hiddenField.type = 'hidden';
+            hiddenField.name = key;
+            hiddenField.value = value;
+            form.appendChild(hiddenField);
+        });
 
+        // Submit the form
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
