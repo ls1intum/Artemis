@@ -191,7 +191,7 @@ const routes: Routes = [
     },
     {
         path: 'lti',
-        loadChildren: () => import('./lti/lti.route').then((m) => m.ltiLaunchRoutes),
+        loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },
     {
         path: 'about-iris',

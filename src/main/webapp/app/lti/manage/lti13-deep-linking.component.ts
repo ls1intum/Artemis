@@ -10,7 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
-import { TranslateDirective } from '../shared/language/translate.directive';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';

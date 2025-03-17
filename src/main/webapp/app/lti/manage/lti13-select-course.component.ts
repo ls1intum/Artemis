@@ -1,10 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CourseManagementService } from '../course/manage/course-management.service';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LtiCourseCardComponent } from './lti-course-card.component';
-import { TranslateDirective } from '../shared/language/translate.directive';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-lti-courses-overview',

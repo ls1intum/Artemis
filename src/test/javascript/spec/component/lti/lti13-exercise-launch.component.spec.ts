@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
+import { Lti13ExerciseLaunchComponent } from 'app/lti/overview/lti13-exercise-launch.component';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

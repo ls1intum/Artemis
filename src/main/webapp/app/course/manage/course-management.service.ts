@@ -26,7 +26,7 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
 import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
 

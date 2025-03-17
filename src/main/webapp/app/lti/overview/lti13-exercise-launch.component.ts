@@ -7,7 +7,7 @@ import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
 import { LtiService } from 'app/shared/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { TranslateDirective } from '../shared/language/translate.directive';
+import { TranslateDirective } from '../../shared/language/translate.directive';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
