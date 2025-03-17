@@ -59,7 +59,7 @@ import { Observable, Subject, Subscription, catchError, firstValueFrom, map, of,
 import { facSidebar } from 'app/icons/icons';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
-import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
+import { CourseLecturesComponent } from '../lecture/shared/course-lectures.component';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';

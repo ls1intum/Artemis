@@ -69,7 +69,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/lectures',
-                loadChildren: () => import('app/lecture/lecture.route').then((m) => m.lectureRoute),
+                loadChildren: () => import('app/lecture/manage/lecture.route').then((m) => m.lectureRoute),
             },
             {
                 path: ':courseId/tutorial-groups',

@@ -18,7 +18,7 @@ import {
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { MetisService } from 'app/communication/metis.service';

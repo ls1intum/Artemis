@@ -148,7 +148,7 @@ const routes: Routes = [
     {
         path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
         pathMatch: 'full',
-        loadComponent: () => import('./lecture/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
+        loadComponent: () => import('./lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
     },
     // ===== GRADING SYSTEM =====
     {

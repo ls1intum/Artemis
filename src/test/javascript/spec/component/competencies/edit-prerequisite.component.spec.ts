@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';

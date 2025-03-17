@@ -7,7 +7,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';

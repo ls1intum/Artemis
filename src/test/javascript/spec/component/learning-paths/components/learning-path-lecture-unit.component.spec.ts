@@ -1,10 +1,10 @@
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
-import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
-import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
-import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
+import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
+import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
+import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,14 +15,14 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { MockComponent, MockInstance } from 'ng-mocks';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';
 
 describe('LearningPathLectureUnitComponent', () => {

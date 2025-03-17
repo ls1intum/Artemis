@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/communication/metis.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

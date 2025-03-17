@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { AttachmentUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
+import { AttachmentUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockAttachmentUnitsService } from '../../../helpers/mocks/service/mock-attachment-units.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

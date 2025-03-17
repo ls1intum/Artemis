@@ -152,7 +152,7 @@ export const routes: Routes = [
 
             {
                 path: CourseOverviewRoutePath.LECTURES,
-                loadComponent: () => import('app/overview/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
+                loadComponent: () => import('app/lecture/shared/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
@@ -170,7 +170,7 @@ export const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadComponent: () => import('app/overview/course-lectures/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                        loadComponent: () => import('app/lecture/overview/course-lectures/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
                     },
                 ],
             },
@@ -313,7 +313,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.FAQ,
-                loadComponent: () => import('../overview/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
+                loadComponent: () => import('app/communication/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.faq',

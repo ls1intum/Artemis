@@ -4,7 +4,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';

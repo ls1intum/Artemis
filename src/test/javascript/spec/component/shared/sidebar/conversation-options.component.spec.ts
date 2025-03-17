@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../overview/course-conversations/helpers/conversationExampleModels';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

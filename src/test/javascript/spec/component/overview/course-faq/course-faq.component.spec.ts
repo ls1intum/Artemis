@@ -8,13 +8,13 @@ import { of, throwError } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component';
+import { CourseFaqComponent } from 'app/communication/course-faq/course-faq.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
-import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
+import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';

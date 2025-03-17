@@ -19,7 +19,7 @@ import monaco from 'monaco-editor';
 import { ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/metis.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { isCommunicationEnabled, isFaqEnabled } from 'app/entities/course.model';
