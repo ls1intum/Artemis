@@ -17,6 +17,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CreateOnlineUnitComponent', () => {
     let createOnlineUnitComponentFixture: ComponentFixture<CreateOnlineUnitComponent>;
@@ -28,6 +30,7 @@ describe('CreateOnlineUnitComponent', () => {
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

@@ -50,7 +50,6 @@ import { ExamParticipationCoverComponent } from './exam-cover/exam-participation
 import { AsyncPipe, NgClass } from '@angular/common';
 import { ExamBarComponent } from './exam-bar/exam-bar.component';
 import { ExamNavigationSidebarComponent } from './exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { ExamExerciseOverviewPageComponent } from './exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { QuizExamSubmissionComponent } from './exercises/quiz/quiz-exam-submission.component';
 import { FileUploadExamSubmissionComponent } from './exercises/file-upload/file-upload-exam-submission.component';
 import { TextExamSubmissionComponent } from './exercises/text/text-exam-submission.component';
@@ -61,6 +60,7 @@ import { JhiConnectionStatusComponent } from 'app/shared/connection-status/conne
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from './summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExamExerciseOverviewPageComponent } from './exercises/exercise-overview-page/exam-exercise-overview-page.component';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -74,7 +74,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         NgClass,
         ExamBarComponent,
         ExamNavigationSidebarComponent,
-        ExamExerciseOverviewPageComponent,
         QuizExamSubmissionComponent,
         FileUploadExamSubmissionComponent,
         TextExamSubmissionComponent,
@@ -87,6 +86,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         RouterLink,
         AsyncPipe,
         ArtemisTranslatePipe,
+        ExamExerciseOverviewPageComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -220,12 +220,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
-            if (params['studentExamId']) {
-                // If a new StudentExam should be created, the keyword start is used (and no StudentExam exists)
+            const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
+            if (studentExamId) {
                 this.testExam = true;
-                if (params['studentExamId'] !== 'start') {
-                    this.studentExamId = parseInt(params['studentExamId'], 10);
-                }
+                this.studentExamId = parseInt(studentExamId, 10);
             }
             this.loadingExam = true;
             if (this.testRunId) {
@@ -239,6 +237,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
+                });
+            } else if (this.testExam && this.studentExamId) {
+                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExamId).subscribe({
+                    next: (studentExam) => {
+                        this.handleStudentExam(studentExam);
+                    },
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
                 });
             } else {
                 this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
@@ -427,10 +434,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: () => {
-                    if (this.testExam) {
-                        // If we have a test exam, we reload the summary from the server right away
-                        this.loadAndDisplaySummary();
-                    }
                     this.submitInProgress = false;
 
                     // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
@@ -447,6 +450,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     if (this.testExam) {
                         this.examParticipationService.resetExamLayout();
+                        this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {

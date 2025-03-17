@@ -159,6 +159,24 @@ describe('ExamStartInformationComponent', () => {
         expect(component.startDate).toStrictEqual(examStartDate);
     });
 
+    it('should initialize start date of the test exam correctly', () => {
+        const examStartDate = dayjs('2022-02-06 02:00:00');
+        exam.testExam = true;
+        component.exam = exam;
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(component.startDate).toStrictEqual(examStartDate);
+    });
+
+    it('should initialize end date of the test exam correctly', () => {
+        const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
+        exam.testExam = true;
+        component.exam = exam;
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(component.endDate).toStrictEqual(examEndDate);
+    });
+
     it('should create all information boxes if all information of the exam are set', () => {
         const exam1 = {
             id: 1,

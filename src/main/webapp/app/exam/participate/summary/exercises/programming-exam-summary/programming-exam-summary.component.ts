@@ -66,7 +66,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     commitHash: string | undefined;
 
     routerLink: string;
-    localVCEnabled = false;
+    localVCEnabled = true;
     isInCourseManagement = false;
 
     ngOnInit() {
@@ -100,5 +100,17 @@ export class ProgrammingExamSummaryComponent implements OnInit {
             this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise().projectKey, this.participation(), this.submission());
             this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
         });
+    }
+
+    get routerLinkForRepositoryView(): (string | number)[] {
+        if (this.isInCourseManagement) {
+            return ['..', 'programming-exercises', this.exercise.id!, 'repository', 'USER', this.participation.id!];
+        }
+        if (this.routerLink.includes('test-exam')) {
+            const parts = this.routerLink.split('/');
+            const examLink = parts.slice(0, parts.length - 2).join('/');
+            return [examLink, 'exercises', this.exercise.id!, 'repository', this.participation.id!];
+        }
+        return [this.routerLink, 'exercises', this.exercise.id!, 'repository', this.participation.id!];
     }
 }

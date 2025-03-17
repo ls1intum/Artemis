@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * REST controller for managing Teams.
@@ -223,11 +222,6 @@ public class TeamResource {
             teamRepository.saveAll(teamInstances);
         }
 
-        // For programming exercise teams with existing participation, the repository access needs to be updated according to the new team member set
-        if (exercise instanceof ProgrammingExercise) {
-            teamService.updateRepositoryMembersIfNeeded(exerciseId, existingTeam.get(), savedTeam);
-        }
-
         savedTeam.filterSensitiveInformation();
         savedTeam.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
         var participationsOfSavedTeam = studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(exercise.getId(),
@@ -302,7 +296,7 @@ public class TeamResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
-        participationService.deleteAllByTeamId(teamId, false, false);
+        participationService.deleteAllByTeamId(teamId);
         // delete all team scores associated with the team
         teamScoreRepository.deleteAllByTeamId(team.getId());
 

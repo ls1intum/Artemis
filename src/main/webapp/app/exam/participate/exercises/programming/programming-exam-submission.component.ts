@@ -126,7 +126,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      */
     setSubmissionCountAndLockIfNeeded() {
         this.submissionCount = this.studentParticipation().submissionCount ?? this.submissionCount;
-        this.repositoryIsLocked = this.studentParticipation().locked ?? this.repositoryIsLocked;
+        // TODO: update repositoryIsLocked with the actual value from the server
     }
 
     /**
