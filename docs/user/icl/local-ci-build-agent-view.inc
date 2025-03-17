@@ -4,6 +4,8 @@ The build agent view consists of two parts: the *Build Agent Summary View* and t
 
 The **Build Agent Summary View** shows a list of all build agents in the system, along with their status (idle and running), maximum number of concurrent builds, and running builds.
 The running builds can be canceled individually by clicking the red cancellation button next to the build. An Administrator can also cancel all running builds on a build agent by clicking the '*Cancel All*' button.
+Administrators also have the option to pause all build agents, which will prevent all build agents from accepting new build jobs. All build agents can also be resume with a button.
+They can also clear distributed data, this includes the build job queue, the results queue, the processing jobs distributed map, and the build agent information map. More information can be found :ref:`here <hazelcast_data>`.
 
 .. figure:: local-ci/build-agent-summary.png
    :alt: Build Agent Summary View

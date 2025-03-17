@@ -173,6 +173,8 @@ The ephemeral nature of Docker containers allows the ``BuildJobExecutionService`
 Finally, when the build ran through successfully, the ``SharedQueueProcessingService`` puts the build result into the result queue so it can then be processed by the CI Management.
 If there were any errors, the ``BuildJobManagementService`` stops the Docker container and ``SharedQueueProcessingService`` relays the exception message to the CI Management via the result queue.
 
+.. _hazelcast_data:
+
 Hazelcast Distributed Data Structures
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
