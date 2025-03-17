@@ -6,7 +6,6 @@ import jakarta.annotation.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
-import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -43,15 +42,6 @@ public interface VersionControlService {
      * @return whether the repository is valid
      */
     Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri);
-
-    /**
-     * Get the last commit details that are included in the given requestBody that notifies about a push
-     *
-     * @param requestBody The request Body received from the VCS.
-     * @return the last commit details that are included in the given requestBody
-     * @throws VersionControlException if the Body could not be parsed
-     */
-    Commit getLastCommitDetails(Object requestBody) throws VersionControlException;
 
     /**
      * Retrieves the date at which the push event was received by the VCS instance.

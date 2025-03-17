@@ -12,7 +12,6 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -31,7 +30,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
-import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -256,14 +254,6 @@ public class LocalVCService extends AbstractVersionControlService {
         }
 
         return true;
-    }
-
-    @Override
-    @NotNull
-    public Commit getLastCommitDetails(Object requestBody) {
-        // The local VCS will create a Commit object straight away and hand that to the processNewProgrammingSubmission method in
-        // ProgrammingSubmissionService.
-        return (Commit) requestBody;
     }
 
     /**
