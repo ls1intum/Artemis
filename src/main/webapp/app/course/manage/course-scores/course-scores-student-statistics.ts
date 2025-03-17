@@ -2,7 +2,7 @@ import { User } from 'app/core/user/user.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
 
 export class CourseScoresStudentStatistics {
     user: User;

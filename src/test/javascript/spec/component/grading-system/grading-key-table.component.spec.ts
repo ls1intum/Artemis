@@ -18,7 +18,7 @@ import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { CourseScores, StudentScores } from 'app/course/course-scores/course-scores';
+import { CourseScores, StudentScores } from 'app/course/manage/course-scores/course-scores';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
 
 describe('GradingKeyTableComponent', () => {

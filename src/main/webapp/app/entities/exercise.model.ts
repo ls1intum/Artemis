@@ -17,7 +17,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
-import { CourseScores } from 'app/course/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 export enum DifficultyLevel {
     EASY = 'EASY',

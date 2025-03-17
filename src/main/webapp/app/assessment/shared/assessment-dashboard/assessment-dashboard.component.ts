@@ -1,6 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,13 +17,11 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
-import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/course/dashboards/assessment-dashboard/tutor-issue';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { FormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -37,6 +34,9 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
+import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

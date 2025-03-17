@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
-import { CourseScoresComponent, HighlightType } from 'app/course/course-scores/course-scores.component';
+import { CourseScoresComponent, HighlightType } from 'app/course/manage/course-scores/course-scores.component';
 import {
     COURSE_OVERALL_POINTS_KEY,
     COURSE_OVERALL_SCORE_KEY,
@@ -36,7 +36,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
+import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/course-scores';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';

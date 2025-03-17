@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { CourseScores } from 'app/course/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 /**
  * This service is used to store course scores and participation results (the relevant result used for the score calculation for each participation) for the currently logged-in user.

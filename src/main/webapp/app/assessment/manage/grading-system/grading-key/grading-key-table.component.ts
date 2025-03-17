@@ -7,7 +7,6 @@ import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
 import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-helper';
@@ -16,6 +15,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 
 @Component({
     selector: 'jhi-grade-key-table',

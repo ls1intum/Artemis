@@ -21,7 +21,7 @@ import { convertDateFromClient } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';

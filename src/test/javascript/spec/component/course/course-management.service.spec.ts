@@ -22,7 +22,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CourseScores } from 'app/course/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';

@@ -229,7 +229,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/assess',
-        loadComponent: () => import('app/course/dashboards/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
+        loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',
@@ -733,7 +733,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard',
-        loadComponent: () => import('app/course/dashboards/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
+        loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.examManagement.assessmentDashboard',

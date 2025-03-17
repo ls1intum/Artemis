@@ -8,13 +8,13 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
-import { CourseScores } from 'app/course/course-scores/course-scores';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseCardHeaderComponent } from './course-card-header/course-card-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 @Component({
     selector: 'jhi-overview-course-card',

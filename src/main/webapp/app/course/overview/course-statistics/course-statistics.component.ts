@@ -3,8 +3,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { CourseScores } from 'app/course/course-scores/course-scores';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
@@ -32,6 +30,8 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { ExerciseScoresChartComponent } from '../visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';

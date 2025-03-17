@@ -43,7 +43,6 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
-import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -72,6 +71,7 @@ import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manag
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;

@@ -7,7 +7,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -20,9 +19,7 @@ import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
-import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
 import { mean, median, standardDeviation } from 'simple-statistics';
-import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvExportOptions } from 'app/shared/export/export-modal.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import * as XLSX from 'xlsx';
@@ -56,6 +53,9 @@ import { ExportButtonComponent } from 'app/shared/export/export-button.component
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
+import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 export enum HighlightType {
     AVERAGE = 'average',

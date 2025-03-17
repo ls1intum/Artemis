@@ -89,7 +89,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/assessment-dashboard',
-                loadComponent: () => import('app/course/dashboards/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
+                loadComponent: () => import('app/assessment/shared/assessment-dashboard/assessment-dashboard.component').then((m) => m.AssessmentDashboardComponent),
                 resolve: {
                     course: CourseManagementResolve,
                 },
@@ -101,7 +101,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/scores',
-                loadComponent: () => import('app/course/course-scores/course-scores.component').then((m) => m.CourseScoresComponent),
+                loadComponent: () => import('app/course/manage/course-scores/course-scores.component').then((m) => m.CourseScoresComponent),
                 resolve: {
                     course: CourseManagementResolve,
                 },
