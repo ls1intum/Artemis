@@ -14,7 +14,6 @@
             "lastBuildDate": "Letztes Build Datum",
             "averageBuildDuration": "Durchschnittliche Build-Dauer (in Sekunden)",
             "gitRevision": "Git Revision",
-            "recentBuildJobs": "Letzte Build Jobs",
             "running": "Laufend",
             "idle": "Inaktiv",
             "paused": "Angehalten",

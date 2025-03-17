@@ -95,9 +95,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
-    // Used to make the repository links download the repositories instead of linking to GitLab.
-    localVCEnabled = false;
-    localCIEnabled = false;
+    localVCEnabled = true;
+    localCIEnabled = true;
     onlineIdeEnabled = false;
 
     // extension points, see shared/extension-point
