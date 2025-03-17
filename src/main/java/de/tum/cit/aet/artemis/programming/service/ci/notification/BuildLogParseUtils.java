@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 public class BuildLogParseUtils {
 
     /**
-     * Parses build logs from Jenkins or GitLab CI into BuildLogEntry objects. The function reads the list
+     * Parses build logs from Jenkins into BuildLogEntry objects. The function reads the list
      * of log strings and tries to parse lines of the following format:
      * <p>
      * [2021-05-10T15:19:49.741Z] [INFO] BUILD FAILURE

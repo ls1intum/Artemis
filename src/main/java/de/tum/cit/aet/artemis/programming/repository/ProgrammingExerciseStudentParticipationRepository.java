@@ -183,15 +183,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findWithTeamStudentsById(participationId), participationId);
     }
 
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.locked = :locked
-            WHERE p.id = :participationId
-            """)
-    void updateLockedById(@Param("participationId") long participationId, @Param("locked") boolean locked);
-
     /**
      * Remove the build plan id from all participations of the given exercise.
      * This is used when the build plan is changed for an exercise, and we want to remove the old build plan id from all participations.
