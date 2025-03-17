@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -223,7 +224,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam.setStartDate(now().plusMinutes(10));
         testExam = examRepository.save(testExam);
         // the request fails because the exam start is 10 min in the future
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/exam/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
@@ -250,5 +251,23 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         StudentExam studentExamReceived = request.get("/api/exam/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.OK,
                 StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentExamForTestExamForStart_ExamEnded() throws Exception {
+        testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
+        examRepository.save(testExam1);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentExamForTestExamForStart_MultipleUnfinishedAttempts() throws Exception {
+        examUtilService.addStudentExamForTestExam(testExam1, student1);
+        examUtilService.addStudentExamForTestExam(testExam1, student1);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.INTERNAL_SERVER_ERROR, StudentExam.class);
     }
 }
