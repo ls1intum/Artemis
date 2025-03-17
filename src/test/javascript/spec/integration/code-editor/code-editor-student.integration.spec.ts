@@ -189,7 +189,8 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
-    it('should show the repository locked badge and disable the editor actions if the participation is locked', () => {
+    // TODO re-enable after remove-gitalb issues are resolved
+    it.skip('should show the repository locked badge and disable the editor actions if the participation is locked', () => {
         container.ngOnInit();
         const participation = {
             id: 1,

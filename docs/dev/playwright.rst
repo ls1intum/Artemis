@@ -13,7 +13,7 @@ To accomplish this we need to be able to dynamically deploy multiple different i
 An ideal setup would be to deploy the whole Artemis system using Kubernetes.
 However, this setup is too complex at the moment.
 The main reason for the complexity is that it is very hard to automatically setup Docker containers for
-the external services (e.g. Gitlab, Jenkins) and connect them directly with Artemis.
+the external services (e.g. Jenkins) and connect them directly with Artemis.
 
 Therefore, the current setup only dynamically deploys the Artemis server and configures it to connect to
 the prelive system, which is already properly setup in the university data center.
