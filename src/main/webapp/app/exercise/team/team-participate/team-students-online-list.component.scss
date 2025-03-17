@@ -1,4 +1,4 @@
-@import 'content/scss/artemis-variables';
+@import '../../../../content/scss/artemis-variables';
 
 @mixin status-change-transition() {
     transition: 0.1s color ease-out;
