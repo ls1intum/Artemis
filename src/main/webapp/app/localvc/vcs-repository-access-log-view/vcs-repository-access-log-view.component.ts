@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Observable, lastValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { toSignal } from '@angular/core/rxjs-interop';

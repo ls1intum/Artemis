@@ -9,7 +9,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

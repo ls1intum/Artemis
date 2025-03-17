@@ -14,8 +14,8 @@ import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/Plagia
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
-import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
+import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
@@ -32,9 +32,8 @@ import { ExamResultOverviewComponent } from './result-overview/exam-result-overv
 import { CollapsibleCardComponent } from './collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from './exercises/header/exam-result-summary-exercise-card-header.component';
 import { NgClass } from '@angular/common';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 import { TextExamSummaryComponent } from './exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from './exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from './exercises/quiz-exam-summary/quiz-exam-summary.component';
@@ -42,6 +41,7 @@ import { FileUploadExamSummaryComponent } from './exercises/file-upload-exam-sum
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ProgrammingExamSummaryComponent } from './exercises/programming-exam-summary/programming-exam-summary.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;

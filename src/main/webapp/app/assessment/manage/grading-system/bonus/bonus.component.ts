@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';

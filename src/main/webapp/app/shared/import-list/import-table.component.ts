@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { PagingService } from 'app/exercises/shared/manage/paging.service';
+import { PagingService } from 'app/exercise/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';

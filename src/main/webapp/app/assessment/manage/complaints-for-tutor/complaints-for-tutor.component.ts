@@ -7,7 +7,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { finalize } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Router } from '@angular/router';
-import { assessmentNavigateBack } from 'app/exercises/shared/navigate-back.util';
+import { assessmentNavigateBack } from 'app/exercise/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/entities/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/assessment.service';

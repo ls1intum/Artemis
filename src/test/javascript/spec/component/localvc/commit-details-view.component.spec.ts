@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -10,12 +10,12 @@ import { Observable, of, throwError } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
+import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 

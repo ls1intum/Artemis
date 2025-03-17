@@ -45,7 +45,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'exercises/:exerciseId/example-solution',
-        loadComponent: () => import('app/exercises/shared/example-solution/example-solution.component').then((m) => m.ExampleSolutionComponent),
+        loadComponent: () => import('app/exercise/example-solution/example-solution.component').then((m) => m.ExampleSolutionComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',

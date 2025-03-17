@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
+import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 
 @Component({
     selector: 'jhi-text-exam-summary',

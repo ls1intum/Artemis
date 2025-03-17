@@ -3,9 +3,9 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 

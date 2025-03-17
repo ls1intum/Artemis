@@ -104,11 +104,11 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.textExercise',
                 },
-                loadChildren: () => import('../exercises/text/participate/text-editor.route').then((m) => m.textEditorRoute),
+                loadChildren: () => import('../text/overview/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
-                loadComponent: () => import('app/exercises/programming/participate/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
+                loadComponent: () => import('app/programming/overview/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.programmingExercise',
@@ -121,7 +121,7 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.repository',
                 },
-                loadChildren: () => import('../exercises/programming/participate/programming-repository.route').then((m) => m.routes),
+                loadChildren: () => import('../programming/overview/programming-repository.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/modeling-exercises/:exerciseId',
@@ -129,7 +129,7 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.modelingExercise',
                 },
-                loadChildren: () => import('../exercises/modeling/participate/modeling-participation.route').then((m) => m.routes),
+                loadChildren: () => import('../modeling/overview/modeling-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/quiz-exercises/:exerciseId',
@@ -141,7 +141,7 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
-                loadComponent: () => import('app/exercises/file-upload/participate/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
+                loadComponent: () => import('app/file-upload/overview/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',

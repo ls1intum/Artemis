@@ -9,7 +9,7 @@ import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-manag
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 
 describe('ExerciseUnitService', () => {
     let service: ExerciseUnitService;

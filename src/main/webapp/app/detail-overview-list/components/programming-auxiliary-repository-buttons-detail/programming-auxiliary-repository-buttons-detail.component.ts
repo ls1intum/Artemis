@@ -6,7 +6,7 @@ import { RepositoryType } from 'app/exercises/programming/shared/code-editor/mod
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

@@ -7,14 +7,14 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
-import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-submission-state.component';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { BuildRunState, ProgrammingBuildRunService } from 'app/exercises/programming/participate/programming-build-run.service';
+import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/overview/programming-build-run.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/programming-exercise-trigger-all-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';

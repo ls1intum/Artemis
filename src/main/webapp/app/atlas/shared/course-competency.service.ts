@@ -17,7 +17,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { HttpParams } from '@angular/common/http';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';

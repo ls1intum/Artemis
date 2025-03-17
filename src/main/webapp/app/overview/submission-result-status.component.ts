@@ -5,9 +5,9 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import dayjs from 'dayjs/esm';
-import { UpdatingResultComponent } from '../exercises/shared/result/updating-result.component';
+import { UpdatingResultComponent } from '../exercise/result/updating-result.component';
 import { TranslateDirective } from '../shared/language/translate.directive';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-submission-result-status',

@@ -1,5 +1,5 @@
 import { Component, ViewChild, inject } from '@angular/core';
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
+import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';

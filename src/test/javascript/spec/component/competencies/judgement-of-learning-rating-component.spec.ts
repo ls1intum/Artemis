@@ -9,7 +9,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
+import { StarRatingComponent } from 'app/exercise/rating/star-rating/star-rating.component';
 import { of, throwError } from 'rxjs';
 
 describe('JudgementOfLearningRatingComponent', () => {

@@ -27,7 +27,7 @@ import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exer
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { QuizConfiguration } from '../../../../../../../main/webapp/app/entities/quiz/quiz-configuration.model';
-import { IncludedInScoreBadgeComponent } from '../../../../../../../main/webapp/app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;

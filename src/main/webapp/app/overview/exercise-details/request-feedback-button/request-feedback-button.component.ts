@@ -12,9 +12,9 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { TranslateService } from '@ngx-translate/core';
 
 import { isExamExercise } from 'app/shared/util/utils';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/shared/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

@@ -8,11 +8,11 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { HttpResponse } from '@angular/common/http';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
-import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercises/shared/exercise-headers/header-exercise-page-with-details.component';
+import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/header-exercise-page-with-details.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

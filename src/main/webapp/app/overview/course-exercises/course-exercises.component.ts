@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-exercise-overview-tour';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';

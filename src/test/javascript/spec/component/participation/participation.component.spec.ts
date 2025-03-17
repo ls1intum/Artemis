@@ -1,8 +1,8 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -11,9 +11,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
-import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

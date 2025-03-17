@@ -3,7 +3,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';

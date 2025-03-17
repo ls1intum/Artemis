@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/entities/programming/build-job.model';

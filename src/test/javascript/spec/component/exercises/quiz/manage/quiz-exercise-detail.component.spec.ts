@@ -14,7 +14,7 @@ import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.s
 import { QuizExerciseDetailComponent } from 'app/exercises/quiz/manage/quiz-exercise-detail.component';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('QuizExercise Details Component', () => {

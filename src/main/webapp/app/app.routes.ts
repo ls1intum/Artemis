@@ -67,11 +67,11 @@ const routes: Routes = [
     // ===== TEAM ====
     {
         path: 'course-management/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercises/shared/team/team.route').then((m) => m.teamRoute),
+        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercises/shared/team/team.route').then((m) => m.teamRoute),
+        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
     },
     // ===== ACCOUNT ====
     {
@@ -138,7 +138,7 @@ const routes: Routes = [
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
+        loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
     },
 
     {
@@ -169,7 +169,7 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',
         pathMatch: 'full',
-        loadComponent: () => import('./exercises/shared/feedback/standalone-feedback/standalone-feedback.component').then((m) => m.StandaloneFeedbackComponent),
+        loadComponent: () => import('app/exercise/feedback/standalone-feedback/standalone-feedback.component').then((m) => m.StandaloneFeedbackComponent),
     },
 
     // ===== EXAM =====
@@ -183,7 +183,7 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
-        loadChildren: () => import('./exercises/programming/participate/programming-repository.route').then((m) => m.routes),
+        loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.routes),
     },
     {
         path: 'features',

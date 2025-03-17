@@ -8,8 +8,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { ExerciseCreateButtonsComponent } from 'app/exercises/shared/manage/exercise-create-buttons.component';
+import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ExerciseCreateButtonsComponent } from 'app/exercise/manage/exercise-create-buttons.component';
 
 describe('Exercise Create Buttons Component', () => {
     let comp: ExerciseCreateButtonsComponent;

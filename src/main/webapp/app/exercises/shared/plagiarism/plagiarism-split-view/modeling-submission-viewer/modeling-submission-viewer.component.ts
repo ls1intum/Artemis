@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';

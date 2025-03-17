@@ -14,7 +14,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { EntityArrayResponseType, SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -29,7 +29,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { signal } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';

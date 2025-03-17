@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { map } from 'rxjs/operators';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 
 type EntityResponseType = HttpResponse<ExerciseUnit>;
 type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;

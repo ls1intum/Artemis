@@ -10,7 +10,7 @@ import { Injectable, inject } from '@angular/core';
 import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;

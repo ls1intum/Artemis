@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { ModePickerComponent, ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
-import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
+import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
+import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/entities/result.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';

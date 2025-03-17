@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
+import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

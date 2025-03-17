@@ -7,7 +7,7 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
 
@@ -217,7 +217,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'ratings',
-                        loadComponent: () => import('app/exercises/shared/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
+                        loadComponent: () => import('app/exercise/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.ratingList.pageTitle',
@@ -264,11 +264,11 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
+                        loadChildren: () => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute),
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/programming/manage/programming-exercise-management.route').then((m) => m.routes),
+                        loadChildren: () => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes),
                     },
                     {
                         path: '',
@@ -276,19 +276,19 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/file-upload/manage/file-upload-exercise-management.route').then((m) => m.routes),
+                        loadChildren: () => import('app/file-upload/manage/file-upload-exercise-management.route').then((m) => m.routes),
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/modeling/manage/modeling-exercise.route').then((m) => m.routes),
+                        loadChildren: () => import('app/modeling/manage/modeling-exercise.route').then((m) => m.routes),
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/shared/exercise-scores/exercise-scores.route').then((m) => m.routes),
+                        loadChildren: () => import('app/exercise/exercise-scores/exercise-scores.route').then((m) => m.routes),
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/exercises/shared/participation/participation.route').then((m) => m.routes),
+                        loadChildren: () => import('app/exercise/participation/participation.route').then((m) => m.routes),
                     },
                     {
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered

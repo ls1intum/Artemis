@@ -1,6 +1,6 @@
 import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
 import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
-import { ProgrammingLanguageFeature } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { ProgrammingLanguageFeature } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 
 export class ProfileInfo {

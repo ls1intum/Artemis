@@ -10,7 +10,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

@@ -4,11 +4,11 @@ import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-c
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
-import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
+import { FileUploadExerciseComponent } from 'app/file-upload/manage/file-upload-exercise.component';
+import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
+import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
-import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
+import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';

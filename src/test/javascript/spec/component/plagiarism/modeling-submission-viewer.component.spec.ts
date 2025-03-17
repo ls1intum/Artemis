@@ -6,7 +6,7 @@ import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiari
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';

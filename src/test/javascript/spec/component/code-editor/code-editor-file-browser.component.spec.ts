@@ -7,10 +7,10 @@ import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState } fro
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-folder.component';
-import { CodeEditorFileBrowserCreateNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-create-node.component';
-import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
-import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-create-node.component';
+import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
@@ -18,7 +18,7 @@ import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
+import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;

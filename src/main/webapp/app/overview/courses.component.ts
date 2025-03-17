@@ -5,7 +5,7 @@ import { CourseManagementService } from '../course/manage/course-management.serv
 import { HttpResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
-import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamService } from 'app/exercise/team/team.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';

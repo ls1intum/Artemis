@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Result } from 'app/entities/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';

@@ -6,7 +6,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

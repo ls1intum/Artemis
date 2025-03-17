@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
 import { map } from 'rxjs/operators';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
 
 export type EntityResponseType = HttpResponse<QuizSubmission>;
 export type ResultResponseType = HttpResponse<Result>;

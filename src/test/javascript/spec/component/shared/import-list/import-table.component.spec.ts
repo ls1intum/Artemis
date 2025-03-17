@@ -1,7 +1,7 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Column, ImportTableComponent } from 'app/shared/import-list/import-table.component';
-import { PagingService } from 'app/exercises/shared/manage/paging.service';
+import { PagingService } from 'app/exercise/manage/paging.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';

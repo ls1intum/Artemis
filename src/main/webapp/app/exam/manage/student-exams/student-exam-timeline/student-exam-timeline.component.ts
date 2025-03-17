@@ -8,7 +8,7 @@ import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation
 import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
@@ -16,7 +16,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { Submission } from 'app/entities/submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
-import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';

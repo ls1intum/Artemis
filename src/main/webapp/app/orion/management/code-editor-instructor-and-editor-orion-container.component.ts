@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CodeEditorInstructorBaseContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { OrionState } from 'app/shared/orion/orion';
@@ -8,12 +8,12 @@ import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons'
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UpdatingResultComponent } from '../../exercises/shared/result/updating-result.component';
-import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
+import { UpdatingResultComponent } from '../../exercise/result/updating-result.component';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from '../../exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
-import { ProgrammingExerciseEditableInstructionComponent } from '../../exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { ProgrammingExerciseEditableInstructionComponent } from '../../programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 

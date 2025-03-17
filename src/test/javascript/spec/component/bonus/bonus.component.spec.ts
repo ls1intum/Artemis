@@ -6,7 +6,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';

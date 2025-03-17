@@ -4,10 +4,10 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
+import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

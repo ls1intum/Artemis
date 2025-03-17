@@ -48,7 +48,7 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamService } from 'app/exercise/team/team.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/communication/metis.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { AnswerPostService } from 'app/communication/answer-post.service';
 import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';

@@ -40,11 +40,11 @@ import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercis
 import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

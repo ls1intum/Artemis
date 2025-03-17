@@ -8,7 +8,7 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';

@@ -18,7 +18,7 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { TeamService } from 'app/exercises/shared/team/team.service';
+import { TeamService } from 'app/exercise/team/team.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

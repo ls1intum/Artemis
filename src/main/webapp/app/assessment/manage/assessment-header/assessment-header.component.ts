@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostListener, Input, Output, inject } from '@angular/core';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';

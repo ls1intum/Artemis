@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, InputSignal, OnInit, Output, inject, input } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
+import { FeedbackService } from 'app/exercise/feedback/feedback.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
@@ -15,7 +15,7 @@ import { AssessmentCorrectionRoundBadgeComponent } from './assessment-correction
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',

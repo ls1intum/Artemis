@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

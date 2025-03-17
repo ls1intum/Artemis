@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmissionComponent } from 'app/exercises/modeling/participate/modeling-submission.component';
+import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission.component';
 
 @Component({
     selector: 'jhi-modeling-exam-summary',

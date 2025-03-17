@@ -21,7 +21,7 @@ import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';

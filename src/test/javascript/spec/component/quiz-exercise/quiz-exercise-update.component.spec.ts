@@ -26,7 +26,7 @@ import { QuizExerciseUpdateComponent } from 'app/exercises/quiz/manage/quiz-exer
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { advanceTo } from 'jest-date-mock';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
