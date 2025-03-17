@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupSessionDTO } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 
 export const generateExampleTutorialGroupSession = ({

@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';

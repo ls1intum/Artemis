@@ -10,7 +10,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -18,7 +18,7 @@ import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExam
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupSessionRowStubComponent, TutorialGroupSessionsTableStubComponent } from '../../../stubs/tutorial-group-sessions-table-stub.component';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { CreateTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

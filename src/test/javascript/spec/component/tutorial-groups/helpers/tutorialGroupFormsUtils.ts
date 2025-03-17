@@ -4,11 +4,11 @@ import { ComponentFixture } from '@angular/core/testing';
 import {
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
-} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+} from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import {
     TutorialGroupSessionFormComponent,
     TutorialGroupSessionFormData,
-} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+} from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import {
     TutorialGroupFormComponent,
     TutorialGroupFormData,
