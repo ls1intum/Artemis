@@ -3394,6 +3394,8 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
+        // we have to set the semester of all existing courses to null to avoid them being selected by the archive logic
+        courseRepo.clearSemester();
         for (int i = 1; i <= 4; i++) {
             expectedOldCourses.add(courseUtilService.createCourse());
         }
@@ -3420,6 +3422,7 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
+        courseRepo.clearSemester();
         Course course1 = courseUtilService.createCourse();
         course1.setSemester("SS20");
         course1.setEndDate(ZonedDateTime.now().minusDays(10));
