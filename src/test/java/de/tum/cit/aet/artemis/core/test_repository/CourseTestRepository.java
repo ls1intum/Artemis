@@ -30,6 +30,6 @@ public interface CourseTestRepository extends CourseRepository {
 
     @Transactional
     @Modifying
-    @Query("UPDATE Course c SET c.semester = null WHERE c.semester IS NOT NULL")
+    @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
     void clearSemester();
 }
