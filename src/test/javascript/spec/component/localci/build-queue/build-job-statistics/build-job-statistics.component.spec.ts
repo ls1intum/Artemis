@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BuildJobStatisticsComponent } from '../../../../../../../main/webapp/app/localci/build-queue/build-job-statistics/build-job-statistics.component';
+import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJobStatistics, SpanType } from '../../../../../../../main/webapp/app/entities/programming/build-job.model';
-import { BuildQueueService } from '../../../../../../../main/webapp/app/localci/build-queue/build-queue.service';
+import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';

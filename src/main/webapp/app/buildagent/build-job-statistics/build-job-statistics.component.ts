@@ -6,7 +6,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
-import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { take } from 'rxjs/operators';

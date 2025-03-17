@@ -7,7 +7,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
 
-import { LocalCIGuard } from 'app/localci/localci-guard.service';
+import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-configuration.route';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
@@ -73,7 +73,7 @@ const routes: Routes = [
     },
     {
         path: 'build-queue',
-        loadComponent: () => import('app/localci/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
+        loadComponent: () => import('app/buildagent/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
         data: {
             pageTitle: 'artemisApp.buildQueue.title',
         },
@@ -81,7 +81,7 @@ const routes: Routes = [
     },
     {
         path: 'build-agents',
-        loadComponent: () => import('app/localci/build-agents/build-agent-summary/build-agent-summary.component').then((m) => m.BuildAgentSummaryComponent),
+        loadComponent: () => import('app/buildagent/build-agent-summary/build-agent-summary.component').then((m) => m.BuildAgentSummaryComponent),
         data: {
             pageTitle: 'artemisApp.buildAgents.title',
         },
@@ -89,7 +89,7 @@ const routes: Routes = [
     },
     {
         path: 'build-agents/details',
-        loadComponent: () => import('app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component').then((m) => m.BuildAgentDetailsComponent),
+        loadComponent: () => import('app/buildagent/build-agent-details/build-agent-details.component').then((m) => m.BuildAgentDetailsComponent),
         data: {
             pageTitle: 'artemisApp.buildAgents.title',
         },

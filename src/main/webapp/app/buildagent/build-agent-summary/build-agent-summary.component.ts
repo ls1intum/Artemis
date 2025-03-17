@@ -1,20 +1,20 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent-information.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
 import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { BuildAgentPauseAllModalComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
-import { BuildAgentClearDistributedDataComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
+import { BuildAgentPauseAllModalComponent } from 'app/buildagent/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
+import { BuildAgentClearDistributedDataComponent } from 'app/buildagent/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 @Component({
     selector: 'jhi-build-agents',

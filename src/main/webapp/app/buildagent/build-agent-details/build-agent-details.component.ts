@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
-import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -16,14 +15,14 @@ import { CommonModule } from '@angular/common';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { BuildJobStatisticsComponent } from 'app/localci/build-queue/build-job-statistics/build-job-statistics.component';
+import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -31,6 +30,7 @@ import { SortingOrder } from 'app/shared/table/pageable-table';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 @Component({
     selector: 'jhi-build-agent-details',

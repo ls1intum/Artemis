@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
+import { BuildAgentSummaryComponent } from 'app/buildagent/build-agent-summary/build-agent-summary.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of, throwError } from 'rxjs';

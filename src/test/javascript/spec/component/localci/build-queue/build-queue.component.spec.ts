@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
+import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import * as DownloadUtil from '../../../../../../main/webapp/app/shared/util/download.util';
-import { FinishedBuildJobFilter } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 
