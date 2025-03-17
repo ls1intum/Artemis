@@ -751,23 +751,6 @@ public class ParticipationResource {
     }
 
     /**
-     * Retrieves the latest build artifact of a given programming exercise participation
-     *
-     * @param participationId The participationId of the participation
-     * @return The latest build artifact (JAR/WAR) for the participation
-     */
-    @GetMapping("participations/{participationId}/build-artifact")
-    @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
-        log.debug("REST request to get Participation build artifact: {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionOwner(participation, user);
-
-        return continuousIntegrationService.orElseThrow().retrieveLatestArtifact(participation);
-    }
-
-    /**
      * GET /exercises/:exerciseId/participation: get the user's participation for a specific exercise. Please note: 'courseId' is only included in the call for
      * API consistency, it is not actually used
      *
