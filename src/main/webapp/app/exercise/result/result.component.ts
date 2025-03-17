@@ -1,33 +1,20 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
-import {
-    MissingResultInformation,
-    ResultTemplateStatus,
-    evaluateTemplateStatus,
-    getResultIconClass,
-    getTextColorClass,
-    isAthenaAIResult,
-} from 'app/exercises/shared/result/result.utils';
+
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import dayjs from 'dayjs/esm';
-import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
-import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
-import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
 import { ResultProgressBarComponent } from './result-progress-bar/result-progress-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -36,6 +23,13 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { Badge, ResultService } from 'app/exercise/result/result.service';
+import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
+import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 
 @Component({
     selector: 'jhi-result',
