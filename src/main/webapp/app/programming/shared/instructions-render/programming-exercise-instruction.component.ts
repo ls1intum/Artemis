@@ -21,7 +21,7 @@ import type { PluginSimple } from 'markdown-it';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';

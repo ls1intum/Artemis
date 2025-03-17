@@ -1,6 +1,6 @@
 import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';

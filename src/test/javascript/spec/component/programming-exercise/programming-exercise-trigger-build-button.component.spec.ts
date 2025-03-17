@@ -10,7 +10,7 @@ import { of, Subject } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';

@@ -14,7 +14,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';

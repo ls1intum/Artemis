@@ -22,7 +22,7 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';

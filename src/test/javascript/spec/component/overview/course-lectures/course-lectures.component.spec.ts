@@ -21,7 +21,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';

@@ -16,7 +16,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

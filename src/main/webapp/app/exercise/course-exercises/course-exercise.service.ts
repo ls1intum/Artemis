@@ -1,4 +1,4 @@
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';

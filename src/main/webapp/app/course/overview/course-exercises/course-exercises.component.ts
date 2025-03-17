@@ -8,11 +8,11 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
-import { CourseOverviewService } from '../course-overview.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';

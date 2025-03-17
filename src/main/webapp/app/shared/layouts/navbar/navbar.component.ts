@@ -7,7 +7,7 @@ import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalR
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';

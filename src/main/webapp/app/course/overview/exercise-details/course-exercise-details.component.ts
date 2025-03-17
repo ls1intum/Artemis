@@ -6,7 +6,7 @@ import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/core/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

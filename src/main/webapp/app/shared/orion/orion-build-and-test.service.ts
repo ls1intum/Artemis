@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/programming/service/build-log.service';

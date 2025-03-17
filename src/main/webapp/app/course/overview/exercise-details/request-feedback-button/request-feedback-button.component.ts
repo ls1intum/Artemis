@@ -18,7 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/shared/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

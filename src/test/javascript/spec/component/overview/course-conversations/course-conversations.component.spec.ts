@@ -27,7 +27,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
