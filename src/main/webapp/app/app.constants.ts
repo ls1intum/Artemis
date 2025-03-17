@@ -19,11 +19,23 @@ export const SCORE_PATTERN = '^[0-9]{1,2}$|^100$';
 export const ARTEMIS_DEFAULT_COLOR = '#3E8ACC';
 export const ARTEMIS_VERSION_HEADER = 'Content-Version';
 
+export const addPublicFilePrefix = (filePath?: string): string | undefined => {
+    if (!filePath) {
+        return undefined;
+    }
+    if (filePath.startsWith('blob')) {
+        // We don't need to add the prefix, it's locally stored
+        return filePath;
+    } else {
+        return filePath ? `${FILES_PATH_PREFIX}${filePath}` : undefined;
+    }
+};
+
+export const FILES_PATH_PREFIX = 'api/core/files/';
+
 export const PROFILE_LOCALVC = 'localvc';
 
 export const PROFILE_LOCALCI = 'localci';
-
-export const PROFILE_GITLAB = 'gitlab';
 
 export const PROFILE_AEOLUS = 'aeolus';
 

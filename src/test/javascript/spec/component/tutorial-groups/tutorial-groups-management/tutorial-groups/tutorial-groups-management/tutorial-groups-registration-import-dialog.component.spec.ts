@@ -269,7 +269,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         const exampleTwo = generateImportDTO('Tutorial Group 2');
         component.registrationsDisplayedInTable = [exampleOne, exampleTwo];
         component.isImportDone = false;
-        component.courseId = 1;
+        fixture.componentRef.setInput('courseId', 1);
 
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
 

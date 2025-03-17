@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "dragAndDropAssignment": {
+            "home": {
+                "title": "Drag-and-Drop-Zuweisungen",
+                "createLabel": "Erstelle eine neue Drag-and-Drop-Zuweisung"
+            },
+            "created": "Neue Drag-and-Drop-Zuweisung mit der Kennung {{ param }} erstellt",
+            "updated": "Drag-and-Drop-Zuweisung mit der Kennung {{ param }} aktualisiert",
+            "deleted": "Drag-and-Drop-Zuweisung mit der Kennung {{ param }} gelöscht",
+            "delete": {
+                "question": "Bist du sicher, dass du die Drag-and-Drop-Zuweisung {{ id }} löschen möchtest?"
+            },
+            "detail": {
+                "title": "Drag-and-Drop-Zuweisung"
+            },
+            "item": "Element",
+            "location": "Ort",
+            "submittedAnswer": "Eingereichte Antwort"
+        }
+    }
+}

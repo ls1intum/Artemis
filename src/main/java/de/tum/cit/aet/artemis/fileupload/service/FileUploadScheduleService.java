@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.fileupload.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadRepository;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class FileUploadScheduleService {
 
     public static final int DAYS_UNTIL_NULL_ENTITY_FILES_ARE_DELETED = 3;

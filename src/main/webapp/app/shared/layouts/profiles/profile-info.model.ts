@@ -62,7 +62,4 @@ export class ProfileInfo {
     public operatorAdminName?: string;
 }
 
-export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {
-    const cisWithEditableBuildPlan = ['gitlabci', 'jenkins'];
-    return profileInfo.activeProfiles.some((profile) => cisWithEditableBuildPlan.includes(profile));
-};
+export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => profileInfo.activeProfiles.includes('jenkins');

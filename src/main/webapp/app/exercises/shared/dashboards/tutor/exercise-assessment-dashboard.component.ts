@@ -148,7 +148,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isTestRun = false;
     isLoading = false;
 
-    localVCEnabled = false;
+    localVCEnabled = true;
 
     statsForDashboard = new StatsForDashboard();
 

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionReposito
  * Service responsible for initializing the database with specific testdata related to file upload exercises for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class FileUploadExerciseUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);

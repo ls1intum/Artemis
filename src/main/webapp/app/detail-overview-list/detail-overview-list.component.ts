@@ -10,7 +10,7 @@ import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../shared/components/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from '../exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -124,4 +124,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.profileSubscription?.unsubscribe();
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

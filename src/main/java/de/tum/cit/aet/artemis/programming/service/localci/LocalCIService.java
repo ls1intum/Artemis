@@ -181,7 +181,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformationWithoutRecentBuildJobs()));
+        return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformation()));
     }
 
     @Override
