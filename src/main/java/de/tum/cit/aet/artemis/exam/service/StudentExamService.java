@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -58,7 +59,6 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
@@ -72,9 +72,9 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 /**
  * Service Implementation for managing StudentExam.
@@ -95,8 +95,6 @@ public class StudentExamService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final SubmissionService submissionService;
 
     private final ExamQuizService examQuizService;
@@ -109,7 +107,7 @@ public class StudentExamService {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
-    private final TextSubmissionRepository textSubmissionRepository;
+    private final Optional<TextSubmissionApi> textSubmissionApi;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
@@ -126,9 +124,8 @@ public class StudentExamService {
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
-            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
+            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
+            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
             @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
@@ -137,10 +134,9 @@ public class StudentExamService {
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
-        this.textSubmissionRepository = textSubmissionRepository;
+        this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
@@ -157,11 +153,10 @@ public class StudentExamService {
      * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
-     * @param existingStudentExam   the existing student exam object in the database
      * @param studentExamFromClient the student exam object from the client which will be submitted (final submission)
      * @param currentUser           the current user
      */
-    public void submitStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
+    public void submitStudentExam(StudentExam studentExamFromClient, User currentUser) {
         log.debug("Submit student exam with id {}", studentExamFromClient.getId());
 
         long start = System.nanoTime();
@@ -180,22 +175,7 @@ public class StudentExamService {
         }
         log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
-        start = System.nanoTime();
-        // NOTE: only for real exams and test exams, the student repositories need to be locked
-        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
-        if (!studentExamFromClient.isTestRun()) {
-            try {
-                // lock the programming exercise repository access (important in case of early exam submissions), only when the student hands in early (asynchronously)
-                programmingExerciseParticipationService.lockStudentRepositories(currentUser, existingStudentExam);
-            }
-            catch (Exception e) {
-                log.error("lockStudentRepositories threw an exception", e);
-            }
-        }
-
-        log.debug("    Lock student repositories in {}", formatDurationFrom(start));
         // NOTE: from here on, we only handle test runs and test exams
-
         if (!studentExamFromClient.isTestRun() && !studentExamFromClient.isTestExam()) {
             return;
         }
@@ -314,7 +294,7 @@ public class StudentExamService {
                         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
                         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
                         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                            textSubmissionRepository.save(textSubmissionFromClient);
+                            textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).saveTextSubmission(textSubmissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }
@@ -686,17 +666,6 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock repository and participation only if the real exam starts within 5 minutes or if we have a test exam or test run
-                    if (participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation && exercise instanceof ProgrammingExercise programmingExercise) {
-                        if (studentExam.isTestRun() || studentExam.isTestExam()
-                                || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                            // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
-                            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
-                        }
-                        else {
-                            programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
-                        }
-                    }
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier());
                 }

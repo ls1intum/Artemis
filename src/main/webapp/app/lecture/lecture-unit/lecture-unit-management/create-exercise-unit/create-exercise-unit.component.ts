@@ -15,13 +15,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
     templateUrl: './create-exercise-unit.component.html',
     styleUrls: ['./create-exercise-unit.component.scss'],
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
 })
 export class CreateExerciseUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);

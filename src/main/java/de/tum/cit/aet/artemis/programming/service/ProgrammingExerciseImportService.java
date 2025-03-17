@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -124,14 +123,6 @@ public class ProgrammingExerciseImportService {
             auxiliaryRepositoryRepository.save(newAuxRepo);
         }
 
-        // Unprotect the default branch of the template exercise repo.
-        VcsRepositoryUri templateVcsRepositoryUri = newExercise.getVcsTemplateRepositoryUri();
-        String templateVcsRepositoryBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
-        versionControl.unprotectBranch(templateVcsRepositoryUri, templateVcsRepositoryBranch);
-
-        // Add the necessary hooks notifying Artemis about changes after commits have been pushed
-        versionControl.addWebHooksForExercise(newExercise);
-
         try {
             // Adjust placeholders that were replaced during creation of template exercise
             adjustProjectNames(templateExercise, newExercise);
@@ -215,7 +206,6 @@ public class ProgrammingExerciseImportService {
         continuousIntegration.copyBuildPlan(templateExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
         continuousIntegration.givePlanPermissions(newExercise, templatePlanName);
         continuousIntegration.givePlanPermissions(newExercise, solutionPlanName);
-        programmingExerciseService.giveCIProjectPermissions(newExercise);
         continuousIntegration.enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegration.enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
     }
@@ -263,7 +253,7 @@ public class ProgrammingExerciseImportService {
      * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
      */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
         final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
@@ -315,7 +305,7 @@ public class ProgrammingExerciseImportService {
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise, false);
+            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.

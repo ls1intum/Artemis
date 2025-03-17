@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config.migration;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.config.migration.entries.MigrationEntry202406
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
  */
 @Component
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class MigrationRegistry {
 
     // Using SortedMap to allow sorting. I'm using a map because with a list entries could accidentally be switched.

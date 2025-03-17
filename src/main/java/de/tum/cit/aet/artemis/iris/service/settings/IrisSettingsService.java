@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.COURSE;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.EXERCISE;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.GLOBAL;
@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -48,8 +49,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
  * Service for managing {@link IrisSettings}.
@@ -72,16 +73,16 @@ public class IrisSettingsService {
 
     private final ObjectMapper objectMapper;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, TextExerciseRepository textExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, Optional<TextRepositoryApi> textRepositoryApi) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.authCheckService = authCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.objectMapper = objectMapper;
-        this.textExerciseRepository = textExerciseRepository;
+        this.textRepositoryApi = textRepositoryApi;
     }
 
     /**
@@ -89,7 +90,7 @@ public class IrisSettingsService {
      *
      * @param ignoredEvent Unused event param used to specify when the method should be executed
      */
-    @Profile(PROFILE_SCHEDULING)
+    @Profile(PROFILE_CORE_AND_SCHEDULING)
     @EventListener
     public void execute(ApplicationReadyEvent ignoredEvent) throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
@@ -381,8 +382,8 @@ public class IrisSettingsService {
         var newEnabledForCategoriesTextExerciseChat = existingSettings.getIrisTextExerciseChatSettings() == null ? new TreeSet<String>()
                 : existingSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
         if (!Objects.equals(oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)) {
-            textExerciseRepository.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
-                    .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat));
+            textRepositoryApi.ifPresent(api -> api.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
+                    .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)));
         }
 
         return irisSettingsRepository.save(existingSettings);

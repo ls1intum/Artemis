@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service.jenkins;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -12,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,23 +23,20 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
-import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.ci.CIPermission;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 @Profile(PROFILE_JENKINS)
 @Service
-public class JenkinsService extends AbstractContinuousIntegrationService {
+public class JenkinsService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
@@ -54,8 +49,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsJobService jenkinsJobService;
 
-    private final JenkinsInternalUrlService jenkinsInternalUrlService;
-
     private final RestTemplate shortTimeoutRestTemplate;
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
@@ -65,11 +58,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public JenkinsService(@Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, JenkinsBuildPlanService jenkinsBuildPlanService,
-            JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService, Optional<AeolusTemplateService> aeolusTemplateService,
-            ProfileService profileService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            JenkinsJobService jenkinsJobService, Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
-        this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.aeolusTemplateService = aeolusTemplateService;
         this.profileService = profileService;
@@ -166,13 +158,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // TODO: use UriComponentsBuilder
-        var urlString = jenkinsServerUri + "/project/" + projectKey + "/" + buildPlanId;
-        return Optional.of(jenkinsInternalUrlService.toInternalCiUrl(urlString));
-    }
-
-    @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
         if (participation.getBuildPlanId() == null) {
             // The build plan does not exist, the build status cannot be retrieved
@@ -187,12 +172,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
         return jenkinsBuildPlanService.buildPlanExists(projectKey, buildPlanId);
-    }
-
-    @Override
-    public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // TODO, not necessary for the core functionality
-        return null;
     }
 
     @Override
@@ -220,16 +199,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
-        // Not needed since Jenkins doesn't support project permissions
-    }
-
-    @Override
-    public void removeAllDefaultProjectPermissions(String projectKey) {
-        // Not needed since Jenkins doesn't support project permissions
-    }
-
-    @Override
     public ConnectorHealth health() {
         Map<String, Object> additionalInfo = Map.of("url", jenkinsServerUri);
         try {
@@ -252,10 +221,5 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
         }
-    }
-
-    @Override
-    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
-        throw new UnsupportedOperationException("Method not implemented, consult the build plans in Jenkins for more information on the checkout directories.");
     }
 }

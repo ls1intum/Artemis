@@ -16,7 +16,7 @@
 artemis:
     push-notification-relay: https://hermes.artemis.cit.tum.de
     # Artemis sends the artemis version, the university name, the universities main admin contact, (email + name), the server url,
-    # and used profiles (gitlab, localVC, ...) to a telemetry collection service.
+    # and used profiles (localVC, ...) to a telemetry collection service.
     telemetry:
         enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
