@@ -31,7 +31,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { TheiaRedirectProps } from 'app/shared/theia/theia-redirect.model';
+import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -70,6 +70,7 @@ export class CodeButtonComponent implements OnInit {
     private ideSettingsService = inject(IdeSettingsService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
+    private theiaService = inject(TheiaService);
     private router = inject(Router);
 
     protected readonly FeatureToggle = FeatureToggle;
@@ -461,55 +462,11 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async startOnlineIDE() {
-        // Retrieve the Artemis authentication token for SCORPIO
-        const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
+        const theiaImage = this.exercise()?.buildConfig?.theiaImage ?? '';
+        const repositoryUri = this.getHttpOrSshRepositoryUri(false, true);
+        const userName = this.user.name;
+        const userEmail = this.user.email;
 
-        // Build the Artemis URL based on the current window location (protocol + host)
-        let artemisUrl: string = '';
-        if (window.location.protocol) {
-            artemisUrl += window.location.protocol + '//';
-        }
-        if (window.location.host) {
-            artemisUrl += window.location.host;
-        }
-
-        // Prepare the data object with necessary properties for Theia IDE launch
-        const data: TheiaRedirectProps = {
-            appDef: this.exercise()?.buildConfig?.theiaImage ?? '',
-            gitUri: this.getHttpOrSshRepositoryUri(false, true),
-            gitUser: this.user.name,
-            gitMail: this.user.email,
-            artemisToken,
-            artemisUrl,
-        };
-
-        // Open a new blank browser tab/window for the IDE
-        const newWindow = window.open('', '_blank');
-        if (!newWindow) {
-            return;
-        }
-
-        newWindow.name = 'Theia-IDE';
-
-        // Create a form element to submit the data via GET to the Theia portal
-        const form = document.createElement('form');
-        form.method = 'GET';
-        form.action = this.theiaPortalURL;
-
-        form.target = newWindow.name;
-
-        // Iterate over each key-value pair in data and create hidden input fields for form submission
-        Object.entries(data).forEach(([key, value]) => {
-            const hiddenField = document.createElement('input');
-            hiddenField.type = 'hidden';
-            hiddenField.name = key;
-            hiddenField.value = value;
-            form.appendChild(hiddenField);
-        });
-
-        // Submit the form
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
+        await this.theiaService.startOnlineIDE(this.theiaPortalURL, theiaImage, repositoryUri, userName, userEmail);
     }
 }
