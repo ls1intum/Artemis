@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -11,18 +10,16 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
     templateUrl: './redirect-to-iris-button.component.html',
-    imports: [IrisLogoComponent, NgClass],
+    imports: [IrisLogoComponent, NgClass, FaIconComponent],
 })
 export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
-    buttonIcon = input<IconProp>();
-    buttonLabel = input<string>();
     buttonLoading = input<boolean>(false);
     disabled = input<boolean>(false);
-    hideLabelMobile = input<boolean>(true);
     question = input<string>();
     course = input<Course>();
     extraClass = input<any>();
