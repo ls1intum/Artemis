@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -87,7 +88,7 @@ public class PyrisWebhookService {
      * @param lectureUnit   The lecture unit of the transcriptions
      * @return jobToken if the job was created else null
      */
-    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, LectureUnit lectureUnit) {
+    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, VideoUnit lectureUnit) {
         if (transcription == null) {
             throw new IllegalArgumentException("Transcriptions cannot be empty");
         }
@@ -104,7 +105,8 @@ public class PyrisWebhookService {
         }
 
         PyrisTranscriptionIngestionWebhookDTO pyrisTranscriptionIngestionWebhookDTO = new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(),
-                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId());
+                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId(), transcription.getLectureUnit().getName(),
+                lectureUnit.getSource());
 
         return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTO, course, lecture, lectureUnit);
     }
@@ -133,8 +135,12 @@ public class PyrisWebhookService {
     public String deleteLectureTranscription(LectureTranscription lectureTranscription) {
         Lecture lecture = lectureTranscription.getLectureUnit().getLecture();
         Course course = lecture.getCourse();
+        LectureUnit lectureUnit = lectureTranscription.getLectureUnit();
+        if (!(lectureUnit instanceof VideoUnit)) {
+            throw new IllegalArgumentException("Lecture Transcription must belong to a VideoUnit");
+        }
         return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
-                course.getTitle(), course.getDescription(), lectureTranscription.getLectureUnit().getId()));
+                course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), ((VideoUnit) lectureUnit).getSource()));
     }
 
     /**
