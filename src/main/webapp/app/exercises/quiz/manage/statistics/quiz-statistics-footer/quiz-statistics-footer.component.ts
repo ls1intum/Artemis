@@ -5,7 +5,7 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';

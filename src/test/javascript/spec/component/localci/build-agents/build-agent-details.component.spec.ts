@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
@@ -13,7 +13,7 @@ import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';

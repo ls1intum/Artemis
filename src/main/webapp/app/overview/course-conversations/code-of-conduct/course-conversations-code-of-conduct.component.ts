@@ -2,7 +2,7 @@ import { Component, OnInit, inject, input } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Course } from 'app/entities/course.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

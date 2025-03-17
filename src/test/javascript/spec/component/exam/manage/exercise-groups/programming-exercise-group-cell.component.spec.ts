@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

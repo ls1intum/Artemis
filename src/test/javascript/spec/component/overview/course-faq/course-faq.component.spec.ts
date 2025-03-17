@@ -9,7 +9,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/faq/faq.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 

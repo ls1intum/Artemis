@@ -11,7 +11,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

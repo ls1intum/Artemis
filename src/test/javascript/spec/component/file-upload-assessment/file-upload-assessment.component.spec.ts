@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash-es';
@@ -31,7 +31,7 @@ import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';

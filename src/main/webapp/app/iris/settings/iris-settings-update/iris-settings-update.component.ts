@@ -3,7 +3,7 @@ import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';

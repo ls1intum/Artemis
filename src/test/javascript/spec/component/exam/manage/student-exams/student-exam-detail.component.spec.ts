@@ -21,7 +21,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

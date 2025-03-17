@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';

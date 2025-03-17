@@ -4,8 +4,8 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Course } from 'app/entities/course.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';

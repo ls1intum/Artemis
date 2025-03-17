@@ -5,7 +5,7 @@ import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';

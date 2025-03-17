@@ -7,7 +7,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionState } from 'app/shared/orion/orion';

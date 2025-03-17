@@ -6,7 +6,7 @@ import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.se
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { OrionAssessmentInstructionsComponent } from 'app/orion/assessment/orion-assessment-instructions.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

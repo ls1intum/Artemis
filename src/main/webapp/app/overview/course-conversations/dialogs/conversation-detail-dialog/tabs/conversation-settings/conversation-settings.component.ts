@@ -8,7 +8,7 @@ import { GenericConfirmationDialogComponent } from 'app/overview/course-conversa
 import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faBoxArchive, faBoxOpen, faHashtag, faLock, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { canChangeChannelArchivalState, canChangeChannelPrivacyState, canDeleteChannel, canLeaveConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';

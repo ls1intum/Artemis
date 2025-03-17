@@ -40,7 +40,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';

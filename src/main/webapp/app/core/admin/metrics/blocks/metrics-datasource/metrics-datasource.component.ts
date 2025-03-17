@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Databases } from 'app/core/admin/metrics/metrics.model';
-import { filterNaN } from 'app/core/util/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DecimalPipe } from '@angular/common';
+import { filterNaN } from 'app/core/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-datasource',
@@ -21,5 +21,5 @@ export class MetricsDatasourceComponent {
      */
     updating = input<boolean>(false);
 
-    filterNaN = (input: number): number => filterNaN(input);
+    protected readonly filterNaN = filterNaN;
 }

@@ -16,7 +16,7 @@ import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';

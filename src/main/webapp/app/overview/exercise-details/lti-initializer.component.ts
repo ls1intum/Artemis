@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
-import { UserService } from 'app/core/user/user.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { UserService } from 'app/core/user/shared/user.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 

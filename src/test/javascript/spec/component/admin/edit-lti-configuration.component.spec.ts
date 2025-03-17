@@ -13,7 +13,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
 import { of, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('Edit LTI Configuration Component', () => {
     let comp: EditLtiConfigurationComponent;

@@ -14,7 +14,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/entities/lecture.model';

@@ -4,7 +4,7 @@ import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tuto
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';

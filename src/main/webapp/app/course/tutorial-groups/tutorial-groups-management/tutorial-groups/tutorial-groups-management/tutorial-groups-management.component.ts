@@ -6,7 +6,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, combineLatest, finalize } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';

@@ -17,7 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('CourseManagementComponent', () => {

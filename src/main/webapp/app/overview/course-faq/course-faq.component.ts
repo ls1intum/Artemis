@@ -9,7 +9,7 @@ import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';

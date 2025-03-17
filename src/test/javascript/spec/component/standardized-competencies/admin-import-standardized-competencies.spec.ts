@@ -6,7 +6,7 @@ import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.compo
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

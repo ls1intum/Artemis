@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation, inject 
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
 import { BuildPlan } from 'app/entities/programming/build-plan.model';
 import { ActivatedRoute } from '@angular/router';

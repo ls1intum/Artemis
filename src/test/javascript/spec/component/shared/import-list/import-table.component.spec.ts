@@ -7,7 +7,7 @@ import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('ImportTableComponent', () => {

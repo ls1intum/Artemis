@@ -22,7 +22,7 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { CourseCompetencyService } from '../../../../../main/webapp/app/course/competencies/course-competency.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('PrerequisiteFormComponent', () => {

@@ -6,7 +6,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';

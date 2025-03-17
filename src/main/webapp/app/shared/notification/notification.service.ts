@@ -6,7 +6,7 @@ import { filter, map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {

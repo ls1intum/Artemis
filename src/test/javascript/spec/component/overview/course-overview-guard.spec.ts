@@ -13,7 +13,7 @@ import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/overview
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;

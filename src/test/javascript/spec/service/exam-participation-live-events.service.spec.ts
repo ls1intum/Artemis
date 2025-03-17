@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject, firstValueFrom } from 'rxjs';
-import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { LocalStorageService } from 'ngx-webstorage';

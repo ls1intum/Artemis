@@ -3,7 +3,7 @@ import { NgbDropdownButtonItem, NgbDropdownItem, NgbModal, NgbModalRef } from '@
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, takeUntil } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 

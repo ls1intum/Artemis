@@ -6,7 +6,7 @@ import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';

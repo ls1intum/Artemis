@@ -3,7 +3,7 @@ import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawe
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';

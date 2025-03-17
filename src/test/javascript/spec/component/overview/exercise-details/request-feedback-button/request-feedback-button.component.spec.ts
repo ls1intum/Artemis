@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';

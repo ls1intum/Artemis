@@ -5,7 +5,7 @@ import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';

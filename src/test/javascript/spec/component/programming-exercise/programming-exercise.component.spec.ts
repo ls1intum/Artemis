@@ -16,11 +16,11 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';

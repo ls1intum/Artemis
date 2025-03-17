@@ -3,7 +3,7 @@ import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/progr
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { OrionAssessmentInstructionsComponent } from './orion-assessment-instructions.component';
 

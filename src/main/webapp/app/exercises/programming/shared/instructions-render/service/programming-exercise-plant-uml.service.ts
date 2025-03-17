@@ -3,7 +3,7 @@ import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http
 import { Cacheable } from 'ts-cacheable';
 import { Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
 const themeChangedSubject = new Subject<void>();
 

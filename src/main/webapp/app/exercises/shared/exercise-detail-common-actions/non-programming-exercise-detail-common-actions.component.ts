@@ -8,7 +8,7 @@ import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-
 import { Course } from 'app/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';

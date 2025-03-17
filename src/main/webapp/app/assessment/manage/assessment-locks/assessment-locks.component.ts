@@ -7,7 +7,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';

@@ -6,7 +6,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/utils/blob-util';

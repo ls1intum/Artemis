@@ -6,7 +6,7 @@ import { ProgrammingSubmissionService } from 'app/exercises/programming/particip
 import { Submission } from 'app/entities/submission.model';
 import { OrionState } from 'app/shared/orion/orion';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrionAssessmentService {

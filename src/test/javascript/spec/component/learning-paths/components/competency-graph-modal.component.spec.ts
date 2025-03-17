@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';

@@ -1,6 +1,6 @@
 import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
@@ -15,7 +15,7 @@ import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

@@ -8,7 +8,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { finalize } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';

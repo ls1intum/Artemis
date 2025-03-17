@@ -20,7 +20,7 @@ import { By } from '@angular/platform-browser';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

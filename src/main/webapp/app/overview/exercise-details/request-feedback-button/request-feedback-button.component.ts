@@ -7,7 +7,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -16,7 +16,7 @@ import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exerc
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

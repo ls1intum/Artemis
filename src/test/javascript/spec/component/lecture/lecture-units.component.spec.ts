@@ -2,7 +2,7 @@ import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-u
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';

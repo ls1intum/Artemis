@@ -14,7 +14,7 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Management Component', () => {

@@ -16,10 +16,10 @@ import {
 } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';

@@ -4,7 +4,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';

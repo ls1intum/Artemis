@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';

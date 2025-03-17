@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TeamService } from 'app/exercises/shared/team/team.service';

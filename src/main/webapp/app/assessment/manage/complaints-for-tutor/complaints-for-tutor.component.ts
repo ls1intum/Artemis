@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';

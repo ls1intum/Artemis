@@ -9,7 +9,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import '@angular/localize/init';
 import { MockDirective } from 'ng-mocks';

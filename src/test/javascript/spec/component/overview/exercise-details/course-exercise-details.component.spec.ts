@@ -58,7 +58,7 @@ import { SubmissionPolicyService } from 'app/exercises/programming/manage/servic
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';

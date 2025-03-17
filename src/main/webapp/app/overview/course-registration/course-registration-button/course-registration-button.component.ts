@@ -4,7 +4,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Course } from 'app/entities/course.model';
 import { matchesRegexFully } from 'app/utils/regex.util';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

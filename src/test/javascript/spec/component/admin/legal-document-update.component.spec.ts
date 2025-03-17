@@ -5,7 +5,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { UnsavedChangesWarningComponent } from 'app/core/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

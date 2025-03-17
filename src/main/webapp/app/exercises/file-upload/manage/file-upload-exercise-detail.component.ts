@@ -8,14 +8,14 @@ import { Subscription } from 'rxjs';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DetailOverviewSection } from 'app/detail-overview-list/detail-overview-list.component';
 import {

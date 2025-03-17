@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetencyRelationFormComponent, UnionFind } from 'app/course/competencies/components/course-competency-relation-form/course-competency-relation-form.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

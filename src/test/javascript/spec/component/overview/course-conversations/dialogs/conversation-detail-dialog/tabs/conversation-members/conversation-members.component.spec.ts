@@ -11,7 +11,7 @@ import { ConversationUserDTO } from 'app/entities/metis/conversation/conversatio
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';

@@ -3,7 +3,7 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from 
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FormsModule } from '@angular/forms';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';

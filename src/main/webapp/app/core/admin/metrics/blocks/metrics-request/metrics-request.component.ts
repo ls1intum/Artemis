@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HttpServerRequests } from 'app/core/admin/metrics/metrics.model';
-import { filterNaN } from 'app/core/util/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
+import { filterNaN } from 'app/core/admin/metrics/filterNaN-util';
 
 @Component({
     selector: 'jhi-metrics-request',
@@ -21,6 +21,5 @@ export class MetricsRequestComponent {
      * boolean field saying if the metrics are in the process of being updated
      */
     updating = input<boolean>(false);
-
-    filterNaN = (input: number): number => filterNaN(input);
+    protected readonly filterNaN = filterNaN;
 }

@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -44,7 +44,7 @@ import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 

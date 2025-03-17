@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

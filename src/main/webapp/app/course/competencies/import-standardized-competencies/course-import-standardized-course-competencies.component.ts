@@ -14,7 +14,7 @@ import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';

@@ -29,7 +29,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',

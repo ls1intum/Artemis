@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { User } from 'app/core/user/user.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -39,7 +39,7 @@ import { ExampleSubmissionService } from 'app/exercises/shared/example-submissio
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -9,7 +9,7 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';

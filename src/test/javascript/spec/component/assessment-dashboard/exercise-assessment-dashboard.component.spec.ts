@@ -59,7 +59,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';

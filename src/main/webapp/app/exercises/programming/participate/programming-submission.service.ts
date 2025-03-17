@@ -5,7 +5,7 @@ import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap }
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';

@@ -21,7 +21,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 const course1 = { id: 1, semester: 'WS21/22', title: 'iPraktikum' } as CourseForArchiveDTO;
 const course2 = { id: 2, semester: 'WS21/22' } as CourseForArchiveDTO;

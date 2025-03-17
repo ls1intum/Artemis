@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
 import { of } from 'rxjs';

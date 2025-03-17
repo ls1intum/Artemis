@@ -28,7 +28,7 @@ import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';

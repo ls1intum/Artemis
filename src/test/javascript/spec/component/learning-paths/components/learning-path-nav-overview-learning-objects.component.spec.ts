@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningObjectType, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathNavOverviewLearningObjectsComponent', () => {

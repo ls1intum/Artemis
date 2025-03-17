@@ -23,7 +23,7 @@ import {
     SortDirection,
 } from 'app/shared/metis/metis.util';
 import { Params } from '@angular/router';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';

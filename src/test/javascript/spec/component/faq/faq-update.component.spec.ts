@@ -12,7 +12,7 @@ import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqService } from 'app/faq/faq.service';
 import { Faq } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';

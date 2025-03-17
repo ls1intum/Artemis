@@ -17,8 +17,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { AlertService } from 'app/shared/service/alert.service';
+import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import {
     faBars,
     faBell,

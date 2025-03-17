@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/complaint.service';
 import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complaints/list-of-complaints.component';
 import { User } from 'app/core/user/user.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';

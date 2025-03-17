@@ -14,7 +14,7 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

@@ -6,7 +6,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { debounceTime, repeat, switchMap } from 'rxjs/operators';

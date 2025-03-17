@@ -3,7 +3,7 @@ import { Faq, FaqState } from 'app/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

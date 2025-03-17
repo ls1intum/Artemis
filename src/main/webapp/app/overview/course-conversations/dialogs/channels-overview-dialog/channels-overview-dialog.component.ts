@@ -3,7 +3,7 @@ import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map,
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';

@@ -1,4 +1,4 @@
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';

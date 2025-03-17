@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';

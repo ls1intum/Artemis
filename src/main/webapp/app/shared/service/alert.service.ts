@@ -2,7 +2,7 @@ import { Injectable, NgZone, SecurityContext, inject } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
-import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
+import { EventManager, EventWithContent } from 'app/shared/service/event-manager.service';
 import { AlertError } from 'app/core/alert/alert-error.model';
 import { Subscription } from 'rxjs';
 import { captureException } from '@sentry/angular';

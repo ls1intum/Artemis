@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, VERSION } from '@angular/core';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import dayjs from 'dayjs/esm';
 import { Subscription, of, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

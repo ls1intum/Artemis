@@ -8,7 +8,7 @@ import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mock
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';

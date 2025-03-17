@@ -14,7 +14,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';

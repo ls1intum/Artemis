@@ -7,7 +7,7 @@ import { Exercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.
 import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GroupedPlagiarismCases } from 'app/exercises/shared/plagiarism/types/GroupedPlagiarismCase';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -12,7 +12,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';

@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Result } from 'app/entities/result.model';
@@ -27,7 +27,7 @@ import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, fa
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';

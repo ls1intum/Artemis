@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, from } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';

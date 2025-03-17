@@ -12,7 +12,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';

@@ -4,7 +4,7 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';

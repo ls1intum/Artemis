@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
 import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';

@@ -8,7 +8,7 @@ import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-man
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { signal } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PDFDocument } from 'pdf-lib';

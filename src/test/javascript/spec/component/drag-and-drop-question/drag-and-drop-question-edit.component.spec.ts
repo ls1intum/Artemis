@@ -24,7 +24,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('DragAndDropQuestionEditComponent', () => {

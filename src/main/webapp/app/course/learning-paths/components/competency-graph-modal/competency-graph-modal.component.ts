@@ -4,7 +4,7 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

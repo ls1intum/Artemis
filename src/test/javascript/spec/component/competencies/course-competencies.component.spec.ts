@@ -5,7 +5,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
 import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';

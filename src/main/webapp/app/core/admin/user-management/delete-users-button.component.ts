@@ -3,8 +3,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
-import { AdminUserService } from 'app/core/user/admin-user.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AdminUserService } from 'app/core/user/shared/admin-user.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';

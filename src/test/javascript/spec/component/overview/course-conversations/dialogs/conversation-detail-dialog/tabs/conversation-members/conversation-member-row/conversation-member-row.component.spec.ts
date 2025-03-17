@@ -8,7 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';

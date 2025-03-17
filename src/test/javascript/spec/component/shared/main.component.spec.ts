@@ -5,7 +5,7 @@ import { AppComponent } from '../../../../../main/webapp/app/app.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { of } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';

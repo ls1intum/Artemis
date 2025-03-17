@@ -29,7 +29,7 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { advanceTo } from 'jest-date-mock';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';

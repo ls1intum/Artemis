@@ -17,7 +17,7 @@ import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/e
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';

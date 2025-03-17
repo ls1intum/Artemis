@@ -1,6 +1,6 @@
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, catchError, map, of } from 'rxjs';
 import { FaqService } from 'app/faq/faq.service';
 import { FaqCategory } from 'app/entities/faq-category.model';

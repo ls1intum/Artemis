@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';

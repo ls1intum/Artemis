@@ -4,7 +4,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';

@@ -3,7 +3,7 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';

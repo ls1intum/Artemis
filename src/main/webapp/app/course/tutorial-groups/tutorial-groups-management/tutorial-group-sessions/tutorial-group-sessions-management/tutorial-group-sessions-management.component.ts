@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { EMPTY, Subject, from } from 'rxjs';
 import { catchError, finalize, map, takeUntil } from 'rxjs/operators';

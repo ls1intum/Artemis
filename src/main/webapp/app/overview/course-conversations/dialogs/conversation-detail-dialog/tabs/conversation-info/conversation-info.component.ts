@@ -13,7 +13,7 @@ import {
 import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatDTO, getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';

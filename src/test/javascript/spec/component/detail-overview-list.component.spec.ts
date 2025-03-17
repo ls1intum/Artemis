@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';

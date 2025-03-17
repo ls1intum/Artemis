@@ -6,7 +6,7 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statisti
 import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -21,7 +21,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';

@@ -15,7 +15,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
 @Injectable({ providedIn: 'root' })

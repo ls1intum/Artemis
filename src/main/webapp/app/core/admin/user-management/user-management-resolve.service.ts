@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Observable, of } from 'rxjs';
-import { AdminUserService } from 'app/core/user/admin-user.service';
+import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserManagementResolve implements Resolve<User> {

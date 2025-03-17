@@ -14,7 +14,7 @@ import {
     inject,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import type { PluginSimple } from 'markdown-it';

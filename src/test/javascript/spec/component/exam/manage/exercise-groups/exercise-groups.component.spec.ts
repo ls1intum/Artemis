@@ -3,8 +3,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { Course } from 'app/entities/course.model';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { Exam } from 'app/entities/exam/exam.model';

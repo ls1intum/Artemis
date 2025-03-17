@@ -8,7 +8,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';

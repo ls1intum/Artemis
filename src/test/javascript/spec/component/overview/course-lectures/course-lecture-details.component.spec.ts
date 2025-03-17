@@ -6,7 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -21,7 +21,7 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../../../helpers/mocks/service/mock-theme.service';
 
 describe('EditTutorialGroupComponent', () => {

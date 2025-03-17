@@ -10,7 +10,7 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';

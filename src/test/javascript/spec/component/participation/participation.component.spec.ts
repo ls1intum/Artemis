@@ -21,14 +21,14 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;

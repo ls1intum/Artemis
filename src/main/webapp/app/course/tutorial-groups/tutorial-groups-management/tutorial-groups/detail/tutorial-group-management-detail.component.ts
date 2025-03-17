@@ -4,7 +4,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';

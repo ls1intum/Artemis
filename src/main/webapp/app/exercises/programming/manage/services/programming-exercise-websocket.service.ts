@@ -2,7 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;

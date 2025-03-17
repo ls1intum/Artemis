@@ -1,6 +1,6 @@
 import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/entities/participation/participation.model';

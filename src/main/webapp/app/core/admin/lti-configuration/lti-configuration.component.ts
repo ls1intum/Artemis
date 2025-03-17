@@ -7,7 +7,7 @@ import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-co
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LTI_URLS } from 'app/core/admin/lti-configuration/lti-configuration.urls';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { combineLatest } from 'rxjs';

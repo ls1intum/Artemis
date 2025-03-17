@@ -33,7 +33,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';

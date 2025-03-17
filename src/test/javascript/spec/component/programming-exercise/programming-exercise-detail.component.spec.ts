@@ -15,7 +15,7 @@ import { ProgrammingExerciseGradingService } from 'app/exercises/programming/man
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

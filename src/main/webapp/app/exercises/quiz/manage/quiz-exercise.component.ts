@@ -7,7 +7,7 @@ import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.compon
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { SortDirective } from 'app/shared/sort/sort.directive';

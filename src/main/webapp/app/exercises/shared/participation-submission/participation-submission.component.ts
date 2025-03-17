@@ -24,7 +24,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

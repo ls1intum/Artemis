@@ -44,7 +44,7 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';

@@ -14,7 +14,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';

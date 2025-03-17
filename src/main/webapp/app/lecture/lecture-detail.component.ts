@@ -9,7 +9,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { Subscription } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { DetailOverviewListComponent } from '../detail-overview-list/detail-overview-list.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

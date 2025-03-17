@@ -4,7 +4,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseRowButtonsComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-row-buttons.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('TextExercise Row Buttons Component', () => {
     let comp: TextExerciseRowButtonsComponent;

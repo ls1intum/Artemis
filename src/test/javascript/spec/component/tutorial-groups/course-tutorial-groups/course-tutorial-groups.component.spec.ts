@@ -4,7 +4,7 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';

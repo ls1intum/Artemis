@@ -3,7 +3,7 @@ import { Observable, lastValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

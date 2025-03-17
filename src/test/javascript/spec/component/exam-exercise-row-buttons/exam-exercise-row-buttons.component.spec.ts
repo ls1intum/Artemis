@@ -23,7 +23,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('ExamExerciseRowButtonsComponent', () => {
     const course = { id: 3 } as Course;

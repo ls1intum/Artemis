@@ -8,7 +8,7 @@ import { GraphColors } from 'app/entities/statistics.model';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';

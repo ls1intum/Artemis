@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

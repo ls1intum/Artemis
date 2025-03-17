@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
 
 @Component({

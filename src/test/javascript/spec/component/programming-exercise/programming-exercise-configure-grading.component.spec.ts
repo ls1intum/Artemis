@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';

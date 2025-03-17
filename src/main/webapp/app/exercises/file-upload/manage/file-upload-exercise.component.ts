@@ -8,7 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faBook, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';

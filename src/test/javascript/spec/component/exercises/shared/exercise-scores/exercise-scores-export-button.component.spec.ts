@@ -22,7 +22,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 

@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, inject } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';

@@ -7,7 +7,7 @@ import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('LtiCoursesComponent', () => {
     let component: LtiCoursesComponent;

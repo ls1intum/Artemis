@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/entities/programming/programming-exercise.model';
 import JSZip from 'jszip';

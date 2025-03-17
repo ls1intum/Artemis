@@ -10,7 +10,7 @@ import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-sv
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

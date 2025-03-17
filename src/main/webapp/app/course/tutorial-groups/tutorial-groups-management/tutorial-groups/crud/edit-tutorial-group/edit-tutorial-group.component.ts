@@ -7,7 +7,7 @@ import { Subject, combineLatest } from 'rxjs';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';

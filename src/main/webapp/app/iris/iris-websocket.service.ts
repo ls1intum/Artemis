@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
 type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<any> };

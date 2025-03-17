@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview/grading-key-helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';

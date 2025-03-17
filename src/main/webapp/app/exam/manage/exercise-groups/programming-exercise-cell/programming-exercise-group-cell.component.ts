@@ -6,7 +6,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { RouterLink } from '@angular/router';

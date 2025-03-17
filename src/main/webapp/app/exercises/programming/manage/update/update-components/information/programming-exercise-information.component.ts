@@ -27,7 +27,7 @@ import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';

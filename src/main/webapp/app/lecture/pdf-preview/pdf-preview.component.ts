@@ -5,7 +5,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';

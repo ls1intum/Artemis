@@ -3,7 +3,7 @@ import { LearningObjectType, LearningPathDTO } from 'app/entities/competency/lea
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LearningPathNavComponent } from 'app/course/learning-paths/components/learning-path-student-nav/learning-path-student-nav.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { LearningPathExerciseComponent } from 'app/course/learning-paths/components/learning-path-exercise/learning-path-exercise.component';

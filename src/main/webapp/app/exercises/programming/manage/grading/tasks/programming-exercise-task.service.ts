@@ -10,7 +10,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { map, mergeMap } from 'rxjs/operators';
 
 @Injectable()

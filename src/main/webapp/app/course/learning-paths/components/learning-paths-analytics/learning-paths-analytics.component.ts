@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { CompetencyGraphDTO, CompetencyGraphNodeValueType } from 'app/entities/competency/learning-path.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

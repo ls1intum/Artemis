@@ -7,7 +7,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';

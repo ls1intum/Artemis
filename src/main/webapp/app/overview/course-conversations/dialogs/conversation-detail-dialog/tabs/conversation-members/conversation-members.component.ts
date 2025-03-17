@@ -4,7 +4,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';

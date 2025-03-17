@@ -5,7 +5,7 @@ import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-n
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Directive, Input } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';

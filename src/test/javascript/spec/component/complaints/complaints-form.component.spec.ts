@@ -6,7 +6,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

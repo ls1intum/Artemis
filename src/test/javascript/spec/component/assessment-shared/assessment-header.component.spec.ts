@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
 import { Result } from 'app/entities/result.model';

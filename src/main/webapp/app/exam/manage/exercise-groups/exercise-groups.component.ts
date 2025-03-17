@@ -14,8 +14,8 @@ import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import {
     faAngleDown,
     faAngleUp,

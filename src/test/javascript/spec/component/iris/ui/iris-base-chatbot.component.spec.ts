@@ -10,7 +10,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';

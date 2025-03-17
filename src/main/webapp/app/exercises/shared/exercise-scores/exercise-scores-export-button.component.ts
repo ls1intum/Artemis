@@ -1,6 +1,6 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Component, Input, OnInit, inject } from '@angular/core';

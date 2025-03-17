@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { of, Subject } from 'rxjs';

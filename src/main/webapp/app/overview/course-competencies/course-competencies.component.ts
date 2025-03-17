@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Competency, CompetencyJol, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/entities/competency.model';

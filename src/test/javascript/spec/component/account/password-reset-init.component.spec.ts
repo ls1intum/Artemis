@@ -5,7 +5,7 @@ import { PasswordResetInitComponent } from 'app/core/account/password-reset/init
 import { PasswordResetInitService } from 'app/core/account/password-reset/init/password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

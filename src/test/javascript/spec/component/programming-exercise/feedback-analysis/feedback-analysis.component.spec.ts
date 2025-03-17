@@ -11,7 +11,7 @@ import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage
 import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { Subject } from 'rxjs';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { provideHttpClient } from '@angular/common/http';
 

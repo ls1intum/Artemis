@@ -8,7 +8,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, Subject } from 'rxjs';
@@ -20,7 +20,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';

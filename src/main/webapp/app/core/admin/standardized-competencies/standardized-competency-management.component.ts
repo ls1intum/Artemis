@@ -11,7 +11,7 @@ import {
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';

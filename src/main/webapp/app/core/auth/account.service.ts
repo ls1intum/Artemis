@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

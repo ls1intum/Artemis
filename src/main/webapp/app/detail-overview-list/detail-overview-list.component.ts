@@ -4,7 +4,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ButtonSize } from 'app/shared/components/button.component';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';

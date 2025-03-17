@@ -7,7 +7,7 @@ import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programmi
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

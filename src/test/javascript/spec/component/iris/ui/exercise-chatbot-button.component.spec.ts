@@ -15,7 +15,7 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/iris-status.service';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';

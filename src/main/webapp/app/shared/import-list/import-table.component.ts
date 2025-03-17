@@ -3,7 +3,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { lastValueFrom } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';

@@ -6,7 +6,7 @@ import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, Subject, catchError, concat, finalize, forkJoin, map, merge, of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import {

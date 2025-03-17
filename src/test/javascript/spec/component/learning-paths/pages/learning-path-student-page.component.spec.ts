@@ -10,7 +10,7 @@ import { LearningPathExerciseComponent } from 'app/course/learning-paths/compone
 import { LearningPathLectureUnitComponent } from 'app/course/learning-paths/components/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { LearningPathDTO } from 'app/entities/competency/learning-path.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

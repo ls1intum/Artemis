@@ -9,7 +9,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

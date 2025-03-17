@@ -11,7 +11,7 @@ import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

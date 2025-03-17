@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/modal/feedback-modal.component';

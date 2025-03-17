@@ -27,7 +27,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

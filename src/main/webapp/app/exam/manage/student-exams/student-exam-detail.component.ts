@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';

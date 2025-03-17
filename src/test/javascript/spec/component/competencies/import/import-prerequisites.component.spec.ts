@@ -9,7 +9,7 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import/imp
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

@@ -7,7 +7,7 @@ import {
     TutorialGroupFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
@@ -28,7 +28,7 @@ import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../../../helpers/mocks/service/mock-theme.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })

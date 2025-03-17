@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
@@ -38,7 +38,7 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';

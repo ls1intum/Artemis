@@ -1,4 +1,4 @@
-import { Alert } from 'app/core/util/alert.service';
+import { Alert } from 'app/shared/service/alert.service';
 
 export class MockAlertService {
     success = (message: string) => ({}) as Alert;

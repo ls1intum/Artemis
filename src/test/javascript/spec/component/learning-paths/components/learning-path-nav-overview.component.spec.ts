@@ -8,7 +8,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathNavOverviewComponent', () => {

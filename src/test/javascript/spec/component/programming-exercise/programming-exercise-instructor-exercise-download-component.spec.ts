@@ -7,7 +7,7 @@ import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('ProgrammingExerciseInstructorExerciseDownloadComponent', () => {
     let component: ProgrammingExerciseInstructorExerciseDownloadComponent;

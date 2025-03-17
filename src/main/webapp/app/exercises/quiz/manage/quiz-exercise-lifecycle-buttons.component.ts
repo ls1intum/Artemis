@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

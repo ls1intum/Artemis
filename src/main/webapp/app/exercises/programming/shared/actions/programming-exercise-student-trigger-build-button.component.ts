@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';

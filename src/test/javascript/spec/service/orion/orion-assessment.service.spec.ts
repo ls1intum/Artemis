@@ -8,7 +8,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { OrionState } from 'app/shared/orion/orion';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('OrionAssessmentService', () => {
     let orionAssessmentService: OrionAssessmentService;

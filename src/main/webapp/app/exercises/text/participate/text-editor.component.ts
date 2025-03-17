@@ -1,7 +1,7 @@
 import { Component, HostListener, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';

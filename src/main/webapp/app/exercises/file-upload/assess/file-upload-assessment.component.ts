@@ -8,7 +8,7 @@ import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.serv
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';

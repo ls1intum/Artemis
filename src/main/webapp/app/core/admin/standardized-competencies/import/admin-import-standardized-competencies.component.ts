@@ -9,7 +9,7 @@ import {
     sourceToString,
 } from 'app/entities/competency/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';

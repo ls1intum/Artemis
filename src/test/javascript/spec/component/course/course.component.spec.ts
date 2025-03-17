@@ -26,7 +26,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';

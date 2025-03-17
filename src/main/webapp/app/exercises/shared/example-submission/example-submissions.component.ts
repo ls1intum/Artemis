@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

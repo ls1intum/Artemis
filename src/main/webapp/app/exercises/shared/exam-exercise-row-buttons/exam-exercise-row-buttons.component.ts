@@ -11,7 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';

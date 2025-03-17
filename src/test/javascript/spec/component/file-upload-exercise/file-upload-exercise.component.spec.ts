@@ -14,7 +14,7 @@ import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('FileUploadExercise Management Component', () => {

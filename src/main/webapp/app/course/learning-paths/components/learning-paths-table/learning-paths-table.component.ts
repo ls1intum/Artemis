@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';

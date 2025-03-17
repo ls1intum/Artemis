@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';

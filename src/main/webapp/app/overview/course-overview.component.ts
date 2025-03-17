@@ -40,8 +40,8 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';

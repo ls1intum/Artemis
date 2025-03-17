@@ -14,7 +14,7 @@ import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { TranslateService } from '@ngx-translate/core';

@@ -12,8 +12,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 

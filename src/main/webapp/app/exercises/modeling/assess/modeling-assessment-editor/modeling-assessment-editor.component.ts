@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';

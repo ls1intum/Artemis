@@ -19,7 +19,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';

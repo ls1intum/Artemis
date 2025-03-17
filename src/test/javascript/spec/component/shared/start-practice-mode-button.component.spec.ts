@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

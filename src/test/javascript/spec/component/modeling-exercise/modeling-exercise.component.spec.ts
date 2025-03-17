@@ -9,14 +9,14 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { Course } from 'app/entities/course.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

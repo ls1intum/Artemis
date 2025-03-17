@@ -1,7 +1,7 @@
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { distinctUntilChanged } from 'rxjs/operators';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { DomainType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { DomainDependentService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain-dependent.service';
 

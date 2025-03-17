@@ -13,7 +13,7 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { NotificationService } from 'app/shared/notification/notification.service';

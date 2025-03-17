@@ -29,7 +29,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';

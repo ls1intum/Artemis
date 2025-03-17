@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Duration } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';

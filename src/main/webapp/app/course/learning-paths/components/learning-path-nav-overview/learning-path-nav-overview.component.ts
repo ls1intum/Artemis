@@ -3,7 +3,7 @@ import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal 
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';

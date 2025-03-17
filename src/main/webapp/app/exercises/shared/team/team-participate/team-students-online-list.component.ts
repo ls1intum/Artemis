@@ -6,7 +6,7 @@ import { orderBy } from 'lodash-es';
 import { Observable } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';

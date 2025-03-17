@@ -3,7 +3,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { BehaviorSubject, Subscription, catchError, combineLatest, forkJoin, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';

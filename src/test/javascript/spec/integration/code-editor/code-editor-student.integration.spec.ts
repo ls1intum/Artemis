@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
@@ -14,7 +14,7 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { getElement } from '../../helpers/utils/general.utils';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';

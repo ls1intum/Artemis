@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/entities/competency/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';

@@ -40,7 +40,7 @@ import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-typ
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';

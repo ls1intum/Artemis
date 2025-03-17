@@ -9,7 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject, Subscription } from 'rxjs';

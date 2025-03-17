@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';

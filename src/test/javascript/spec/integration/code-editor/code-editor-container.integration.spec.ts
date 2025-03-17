@@ -23,7 +23,7 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSu
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { GuidedTourMapping } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour-setting.model';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
@@ -51,7 +51,7 @@ import { omit } from 'lodash-es';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';

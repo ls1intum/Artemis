@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

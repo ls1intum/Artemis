@@ -2,7 +2,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
@@ -25,7 +25,7 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';

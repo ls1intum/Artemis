@@ -22,8 +22,8 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercises/shared/exercise/exercise.utils';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { Observable, Subscription } from 'rxjs';

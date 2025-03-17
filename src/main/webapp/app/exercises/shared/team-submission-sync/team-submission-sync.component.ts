@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { throttleTime } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { SubmissionSyncPayload, isSubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';

@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';

@@ -19,7 +19,7 @@ import { StandardizedCompetencyService } from 'app/shared/standardized-competenc
 import { StandardizedCompetencyEditComponent } from 'app/core/admin/standardized-competencies/standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

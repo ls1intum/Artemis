@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';

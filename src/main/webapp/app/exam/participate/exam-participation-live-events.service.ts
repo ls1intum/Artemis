@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService } from 'ngx-webstorage';

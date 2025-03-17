@@ -21,7 +21,7 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';

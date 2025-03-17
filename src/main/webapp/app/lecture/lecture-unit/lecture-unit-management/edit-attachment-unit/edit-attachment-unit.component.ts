@@ -5,7 +5,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { combineLatest } from 'rxjs';

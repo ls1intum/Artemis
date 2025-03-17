@@ -2,7 +2,7 @@ import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angula
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import dayjs from 'dayjs/esm';

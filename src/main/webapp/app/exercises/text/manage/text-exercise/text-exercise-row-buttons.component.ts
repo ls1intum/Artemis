@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { RouterLink } from '@angular/router';

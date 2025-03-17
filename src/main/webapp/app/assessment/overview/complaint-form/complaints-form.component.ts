@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';

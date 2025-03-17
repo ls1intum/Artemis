@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Alert, AlertService } from 'app/core/util/alert.service';
+import { Alert, AlertService } from 'app/shared/service/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

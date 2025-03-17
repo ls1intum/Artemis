@@ -3,7 +3,7 @@ import { Subject, tap } from 'rxjs';
 import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';

@@ -10,7 +10,7 @@ import { EditTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-man
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { Alert, AlertService } from 'app/core/util/alert.service';
+import { Alert, AlertService } from 'app/shared/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';

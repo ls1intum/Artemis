@@ -3,7 +3,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

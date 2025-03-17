@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';

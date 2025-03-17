@@ -21,7 +21,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { of, Subject, throwError } from 'rxjs';
 import {

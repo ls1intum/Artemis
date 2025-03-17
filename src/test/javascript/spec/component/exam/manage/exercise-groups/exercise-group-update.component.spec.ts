@@ -7,7 +7,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';

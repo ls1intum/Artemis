@@ -7,7 +7,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TeamUpdateButtonComponent } from './team-update-dialog/team-update-button.component';

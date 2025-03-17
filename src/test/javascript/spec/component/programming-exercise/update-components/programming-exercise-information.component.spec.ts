@@ -14,7 +14,7 @@ import { QueryList } from '@angular/core';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

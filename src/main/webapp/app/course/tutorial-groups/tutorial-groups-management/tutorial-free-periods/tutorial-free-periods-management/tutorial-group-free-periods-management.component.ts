@@ -5,7 +5,7 @@ import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from '
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';

@@ -11,7 +11,7 @@ import { of, throwError } from 'rxjs';
 import { Exercise } from '../../../../../main/webapp/app/entities/exercise.model';
 import { Team } from '../../../../../main/webapp/app/entities/team.model';
 import { mockExercise, mockTeam, mockTeams } from '../../helpers/mocks/service/mock-team.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

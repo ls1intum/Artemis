@@ -11,7 +11,7 @@ import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/exercises/modeling/manage/example-modeling/example-modeling-submission.component';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
@@ -32,7 +32,7 @@ import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('Example Modeling Submission Component', () => {

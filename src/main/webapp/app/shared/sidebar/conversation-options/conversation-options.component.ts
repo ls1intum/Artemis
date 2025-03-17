@@ -7,7 +7,7 @@ import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { catchError, mergeWith } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';

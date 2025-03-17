@@ -2,7 +2,7 @@ import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, convertToParamMap, RouterModule } from '@angular/router';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';

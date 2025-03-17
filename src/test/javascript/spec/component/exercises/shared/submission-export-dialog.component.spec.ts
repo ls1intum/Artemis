@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 import { SubmissionExportService } from 'app/exercises/shared/submission-export/submission-export.service';
 import { HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import { of } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

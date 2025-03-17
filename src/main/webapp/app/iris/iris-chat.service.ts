@@ -12,7 +12,7 @@ import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ChatServiceMode {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

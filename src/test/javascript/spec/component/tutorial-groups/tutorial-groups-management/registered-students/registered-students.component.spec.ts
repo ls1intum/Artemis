@@ -18,7 +18,7 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stub
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({ selector: 'jhi-course-group', template: '' })

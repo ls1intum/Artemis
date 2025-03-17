@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -21,7 +21,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { cloneDeep } from 'lodash-es';

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';

@@ -11,7 +11,7 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 
 export enum EditType {

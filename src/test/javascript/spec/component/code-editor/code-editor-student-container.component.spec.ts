@@ -8,7 +8,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';

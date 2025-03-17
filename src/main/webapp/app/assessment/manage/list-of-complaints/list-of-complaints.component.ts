@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';

@@ -1,4 +1,4 @@
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LectureUnit, LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';

@@ -6,7 +6,7 @@ import { Observable, Subject, Subscription, map, of } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import {
     faArrowUpRightFromSquare,
     faChartBar,
