@@ -10,7 +10,7 @@ const routes: Routes = [
     ...LAYOUT_ROUTES,
     {
         path: '',
-        loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+        loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',
         },

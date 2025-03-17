@@ -7,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Exercise } from 'app/entities/exercise.model';

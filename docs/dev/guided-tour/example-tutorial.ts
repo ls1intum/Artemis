@@ -1,7 +1,7 @@
-import { Orientation, UserInteractionEvent } from '../../src/main/webapp/app/guided-tour/guided-tour.constants';
-import { GuidedTour } from '../../src/main/webapp/app/guided-tour/guided-tour.model';
-import { ImageTourStep, ModelingTaskTourStep, TextTourStep, VideoTourStep } from '../../src/main/webapp/app/guided-tour/guided-tour-step.model';
-import { GuidedTourModelingTask, personUML } from '../../src/main/webapp/app/guided-tour/guided-tour-task.model';
+import { Orientation, UserInteractionEvent } from '../../src/main/webapp/app/core/guided-tour/tours/tutor-assessment-tourguided-tour.constants';
+import { GuidedTour } from '../../src/main/webapp/app/core/guided-tour/tours/tutor-assessment-tourguided-tour.model';
+import { ImageTourStep, ModelingTaskTourStep, TextTourStep, VideoTourStep } from '../../src/main/webapp/app/core/guided-tour/tours/tutor-assessment-tourguided-tour-step.model';
+import { GuidedTourModelingTask, personUML } from '../../src/main/webapp/app/core/guided-tour/tours/tutor-assessment-tourguided-tour-task.model';
 
 export const exampleTutorial: GuidedTour = {
     settingsKey: 'example_tutorial',

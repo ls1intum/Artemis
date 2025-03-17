@@ -1,5 +1,5 @@
-import { TourStep } from 'app/guided-tour/guided-tour-step.model';
-import { ResetParticipation } from 'app/guided-tour/guided-tour.constants';
+import { TourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { ResetParticipation } from 'app/core/guided-tour/guided-tour.constants';
 
 export interface GuidedTour {
     /** Identifier for tour */

@@ -1,4 +1,4 @@
-import { Orientation } from 'app/guided-tour/guided-tour.constants';
+import { Orientation } from 'app/core/guided-tour/guided-tour.constants';
 
 /**
  * Helper function that triggers a click event on the defined element

@@ -19,7 +19,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';

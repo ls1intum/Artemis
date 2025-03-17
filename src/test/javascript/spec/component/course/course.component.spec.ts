@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';

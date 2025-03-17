@@ -5,22 +5,22 @@ import { NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
-import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
-import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/guided-tour/guided-tour.utils';
-import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
+import { GuidedTourMapping, GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/core/guided-tour/guided-tour.utils';
+import { cancelTour, completedTour } from 'app/core/guided-tour/tours/general-tour';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 

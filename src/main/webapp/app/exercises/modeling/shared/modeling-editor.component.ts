@@ -1,8 +1,7 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
@@ -14,6 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from './modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
+import { associationUML, personUML, studentUML } from 'app/core/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-modeling-editor',

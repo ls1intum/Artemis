@@ -1,5 +1,5 @@
-import { Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourAssessmentTask, GuidedTourModelingTask } from 'app/guided-tour/guided-tour-task.model';
+import { Orientation, OrientationConfiguration, UserInteractionEvent } from 'app/core/guided-tour/guided-tour.constants';
+import { GuidedTourAssessmentTask, GuidedTourModelingTask } from 'app/core/guided-tour/guided-tour-task.model';
 
 export abstract class TourStep {
     /** Selector for element that will be highlighted */

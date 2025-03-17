@@ -1,8 +1,8 @@
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { AssessmentTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { AssessmentObject, GuidedTourAssessmentTask } from 'app/guided-tour/guided-tour-task.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/core/guided-tour/guided-tour.constants';
+import { AssessmentTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { AssessmentObject, GuidedTourAssessmentTask } from 'app/core/guided-tour/guided-tour-task.model';
 
 export const tutorAssessmentTour: GuidedTour = {
     settingsKey: 'tutor_assessment_tour',

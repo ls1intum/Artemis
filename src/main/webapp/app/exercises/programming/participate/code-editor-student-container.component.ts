@@ -4,8 +4,8 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { codeEditorTour } from 'app/core/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';

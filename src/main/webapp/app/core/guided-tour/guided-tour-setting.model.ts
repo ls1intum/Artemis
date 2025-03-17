@@ -1,4 +1,4 @@
-import { GuidedTourState } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourState } from 'app/core/guided-tour/guided-tour.constants';
 
 /**
  * Guided tour settings model which can dynamically handle the existing guided tours

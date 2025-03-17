@@ -9,12 +9,12 @@ import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollo
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
-import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
+import { associationUML, personUML, studentUML } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour-task.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -1,7 +1,7 @@
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { Orientation, ResetParticipation } from 'app/core/guided-tour/guided-tour.constants';
+import { TextTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { clickOnElement } from 'app/core/guided-tour/guided-tour.utils';
 
 export const cancelTour: GuidedTour = {
     settingsKey: 'cancel_tour',

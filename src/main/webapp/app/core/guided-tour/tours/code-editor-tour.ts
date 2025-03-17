@@ -1,7 +1,7 @@
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { clickOnElement } from 'app/guided-tour/guided-tour.utils';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { Orientation, ResetParticipation, UserInteractionEvent } from 'app/core/guided-tour/guided-tour.constants';
+import { TextTourStep, UserInterActionTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { clickOnElement } from 'app/core/guided-tour/guided-tour.utils';
 
 export const codeEditorTour: GuidedTour = {
     settingsKey: 'code_editor_tour',

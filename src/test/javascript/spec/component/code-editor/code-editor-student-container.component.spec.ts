@@ -6,7 +6,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';

@@ -4,9 +4,7 @@ import { take, tap } from 'rxjs/operators';
 import { Direction, Orientation, OverlayPosition, UserInteractionEvent } from './guided-tour.constants';
 import { GuidedTourService } from './guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { cancelTour, completedTour } from 'app/guided-tour/tours/general-tour';
-import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/guided-tour/guided-tour.utils';
+
 import {
     faArrowsAlt,
     faCheck,
@@ -22,10 +20,13 @@ import {
     faVideo,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgStyle } from '@angular/common';
-import { TranslateDirective } from '../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { cancelTour, completedTour } from './tours/general-tour';
+import { ImageTourStep, TextTourStep, VideoTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { calculateLeftOffset, calculateTopOffset, isElementInViewPortHorizontally } from 'app/core/guided-tour/guided-tour.utils';
 
 @Component({
     selector: 'jhi-guided-tour',

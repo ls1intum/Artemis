@@ -19,8 +19,7 @@ import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercises/shared/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercises/shared/team/team-participate/team-participate-info-box.component';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
@@ -58,6 +57,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
+import { modelingTour } from 'app/core/guided-tour/tours/modeling-tour';
 
 @Component({
     selector: 'jhi-modeling-submission',

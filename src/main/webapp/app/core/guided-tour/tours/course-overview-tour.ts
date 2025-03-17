@@ -1,7 +1,7 @@
-import { Orientation, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { ImageTourStep, TextTourStep } from 'app/guided-tour/guided-tour-step.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { Orientation, ResetParticipation } from 'app/core/guided-tour/guided-tour.constants';
+import { ImageTourStep, TextTourStep } from 'app/core/guided-tour/guided-tour-step.model';
 
 /**
  * This constant contains the guided tour configuration and steps for the course overview page

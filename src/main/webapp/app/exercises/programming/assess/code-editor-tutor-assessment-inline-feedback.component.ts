@@ -14,7 +14,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { FormsModule } from '@angular/forms';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';

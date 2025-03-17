@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
+import { GuidedTourComponent } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -33,7 +33,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { mockThemeSwitcherComponentViewChildren } from '../../helpers/mocks/mock-instance.helper';
 

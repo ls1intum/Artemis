@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
+import { TextTourStep } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour-step.model';
+import { GuidedTour } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.model';
+import { GuidedTourComponent } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.component';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { Orientation, OverlayPosition, ResetParticipation } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.constants';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
