@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -147,7 +147,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
@@ -192,6 +192,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
+
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
 
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
@@ -405,12 +407,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private void prepareMocksForProgrammingExercise(String userLogin, boolean practiceMode) throws Exception {
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos("studentRepo", "studentOriginRepo");
-        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, userLogin, repo, practiceMode);
         repo.resetLocalRepo();
     }
 
@@ -1210,8 +1210,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         final var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
-
         final var participationsToUpdate = new StudentParticipationList(participation, participation2);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
@@ -1220,8 +1218,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(response.getFirst().getIndividualDueDate()).isCloseTo(participation.getIndividualDueDate(), HalfSecond());
 
         verify(programmingExerciseScheduleService).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(participation2);
     }
 
     @Test
@@ -1239,7 +1235,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         assertThat(response).isEmpty();
         verify(programmingExerciseScheduleService, never()).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(participation);
     }
 
     @Test
@@ -1259,7 +1254,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         assertThat(response).isEmpty(); // individual due date should remain null
         verify(programmingExerciseScheduleService, never()).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(participation);
     }
 
     @Test
@@ -1276,8 +1270,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
-
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
@@ -1285,7 +1277,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(response).hasSize(1);
         verify(programmingExerciseScheduleService).updateScheduling(exercise);
         // make sure the student repo is unlocked as the due date is in the future
-        verify(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(participation);
     }
 
     @Test
@@ -1302,16 +1293,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
 
-        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(exercise, participation);
-
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
         assertThat(response).hasSize(1);
         verify(programmingExerciseScheduleService).updateScheduling(exercise);
-        // student repo should be locked as due date is in the past
-        verify(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     /**
@@ -1458,9 +1445,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
-        participation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
-        assertThat(participation).isNotNull();
-        assertThat(participation.getId()).isEqualTo(participation.getId());
+        var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
+        assertThat(dbParticipation).isNotNull();
+        assertThat(dbParticipation.getId()).isEqualTo(participation.getId());
     }
 
     @Test
@@ -1492,7 +1479,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
-        participationService.deleteAllByTeamId(team.getId(), false, false);
+        participationService.deleteAllByTeamId(team.getId());
 
         var participations = participationRepo.findByTeamId(team.getId());
         assertThat(participations).isEmpty();
@@ -1615,7 +1602,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(actualSubmittedAnswer.getQuizQuestion()).isEqualTo(saQuestion);
         assertThat(actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().isPresent()).isTrue();
 
-        var actualSubmittedAnswerText = (ShortAnswerSubmittedText) actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
+        var actualSubmittedAnswerText = actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
         assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
     }
