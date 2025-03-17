@@ -57,6 +57,6 @@ info.saml2:
     # Use the URL query parameter '?showLoginForm' to display the login form nevertheless.
     password-login-disabled: false
     # Sends an e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-    # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
+    # external services (e.g. Jenkins). This allows the users to use password-based Git workflows.
     # Enables the password reset function in Artemis.
     enable-password: true

@@ -85,7 +85,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
-    localVCEnabled = false;
+    localVCEnabled = true;
 
     exercisePreparationStatus?: ExamExerciseStartPreparationStatus;
     exercisePreparationRunning = false;
@@ -246,64 +246,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
 
             this.exercisePreparationEta = (h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : '');
         }
-    }
-
-    /**
-     * Unlock all repositories immediately. Asks for confirmation.
-     */
-    handleUnlockAllRepositories() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.studentExams.unlockAllRepositories';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.unlockAllRepositoriesModalText');
-        modalRef.result.then(() => {
-            this.unlockAllRepositories();
-        });
-    }
-
-    /**
-     * Unlocks all programming exercises that belong to the exam
-     */
-    private unlockAllRepositories() {
-        this.isLoading = true;
-        this.examManagementService.unlockAllRepositories(this.courseId, this.examId).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.unlockAllRepositoriesSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.unlockAllRepositoriesFailure', err);
-                this.isLoading = false;
-            },
-        });
-    }
-
-    /**
-     * Lock all repositories immediately. Asks for confirmation.
-     */
-    handleLockAllRepositories() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.studentExams.lockAllRepositories';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.lockAllRepositoriesModalText');
-        modalRef.result.then(() => {
-            this.lockAllRepositories();
-        });
-    }
-
-    /**
-     * Locks all programming exercises that belong to the exam
-     */
-    private lockAllRepositories() {
-        this.isLoading = true;
-        this.examManagementService.lockAllRepositories(this.courseId, this.examId).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.lockAllRepositoriesSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.lockAllRepositoriesFailure', err);
-                this.isLoading = false;
-            },
-        });
     }
 
     /**

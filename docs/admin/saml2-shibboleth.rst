@@ -79,14 +79,16 @@ You can see the structure of the saml2 configuration in the following:
     # String used for the SAML2 login button. E.g. 'Shibboleth Login'
     info:
         saml2:
-            button-label: 'SAML2 Login' # Name of the button to login with SAML2
-            identity-provider-name: 'Shibboleth Account' # Name of the identity provider (e.g., University X Account). Only used for the text at login page
-            password-login-disabled: false # Hide the password login form. If true, the password login form is hidden and only the SAML2 login button is shown.
+            # Name of the button to login with SAML2
+            button-label: 'SAML2 Login'
+            # Name of the identity provider (e.g., University X Account). Only used for the text at login page
+            identity-provider-name: 'Shibboleth Account'
+            # Hide the password login form. If true, the password login form is hidden and only the SAML2 login button is shown.
+            password-login-disabled: false
             # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-            # services such as GitLab and Jenkins. This allows the users to use password-based Git workflows.
-            # Enabled the password reset function in Artemis.
+            # services such as Jenkins. It also allows the users to use password-based Git workflow.
+            # It also enables the password reset function in Artemis.
             enable-password: true
-
 
 Example configuration
 ^^^^^^^^^^^^^^^^^^^^^
