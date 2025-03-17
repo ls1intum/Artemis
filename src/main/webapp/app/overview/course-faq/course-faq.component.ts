@@ -7,11 +7,11 @@ import { ButtonType } from 'app/shared/components/button.component';
 
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
-import { FaqService } from 'app/faq/faq.service';
+import { FaqService } from 'app/communication/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
-import { loadCourseFaqCategories } from 'app/faq/faq.utils';
+import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';

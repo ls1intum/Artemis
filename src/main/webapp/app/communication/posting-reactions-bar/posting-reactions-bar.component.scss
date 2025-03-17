@@ -1,0 +1,51 @@
+@import '../metis.component';
+
+.emoji-container {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.reaction-button {
+    background: var(--reaction-button-default-color);
+    color: var(--metis-gray);
+    border: none;
+    border-radius: 1rem;
+    align-items: center;
+    height: 1.2rem;
+    display: inline-flex;
+
+    &.open-selector {
+        box-shadow: inset 0 0 0 1px var(--metis-gray);
+        background: var(--reaction-button-hover-color);
+    }
+
+    fa-icon {
+        display: inline-flex;
+        justify-content: center;
+    }
+
+    .emoji-count {
+        color: var(--reaction-button-emoji-count-color);
+        padding-left: 0.2em;
+
+        &.reaction-count--reacted {
+            font-weight: 600;
+            color: var(--reaction-button-reacted-accent-color);
+        }
+    }
+
+    &:not(.reaction-button--not-hoverable):hover {
+        box-shadow: inset 0 0 0 1px var(--metis-gray);
+        background: var(--reaction-button-hover-color);
+    }
+
+    &:active {
+        transform: scale(0.94);
+    }
+
+    &.reaction-button--reacted {
+        box-shadow: inset 0 0 0 1px var(--reaction-button-reacted-accent-color);
+        background: var(--reaction-button-reacted-color);
+    }
+}

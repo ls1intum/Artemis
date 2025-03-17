@@ -7,11 +7,11 @@ import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { FaqService } from 'app/faq/faq.service';
+import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq, FaqState } from 'app/entities/faq.model';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FaqComponent } from 'app/faq/faq.component';
+import { FaqComponent } from 'app/communication/faq/faq.component';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { AlertService } from 'app/shared/service/alert.service';

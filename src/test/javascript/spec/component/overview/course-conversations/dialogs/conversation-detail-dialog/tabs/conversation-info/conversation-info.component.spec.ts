@@ -13,11 +13,11 @@ import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channe
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { channelRegex } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { GenericUpdateTextPropertyDialogComponent } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

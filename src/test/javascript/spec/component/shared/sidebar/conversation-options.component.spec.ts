@@ -14,14 +14,14 @@ import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';

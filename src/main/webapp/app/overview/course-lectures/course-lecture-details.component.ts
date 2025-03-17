@@ -32,7 +32,7 @@ import { TextUnitComponent } from './text-unit/text-unit.component';
 import { OnlineUnitComponent } from './online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DiscussionSectionComponent } from '../discussion-section/discussion-section.component';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

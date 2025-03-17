@@ -6,7 +6,7 @@ import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutor
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
-import { FaqResolve } from 'app/faq/faq-resolve.service';
+import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
@@ -428,7 +428,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: '',
-                                loadComponent: () => import('app/faq/faq.component').then((m) => m.FaqComponent),
+                                loadComponent: () => import('app/communication/faq/faq.component').then((m) => m.FaqComponent),
                                 resolve: {
                                     course: CourseManagementResolve,
                                 },
@@ -447,7 +447,7 @@ export const courseManagementState: Routes = [
                                 children: [
                                     {
                                         path: 'new',
-                                        loadComponent: () => import('app/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
+                                        loadComponent: () => import('app/communication/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
                                         data: {
                                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                             pageTitle: 'global.generic.create',
@@ -462,7 +462,7 @@ export const courseManagementState: Routes = [
                                         children: [
                                             {
                                                 path: 'edit',
-                                                loadComponent: () => import('app/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
+                                                loadComponent: () => import('app/communication/faq/faq-update.component').then((m) => m.FaqUpdateComponent),
                                                 data: {
                                                     authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                                     pageTitle: 'global.generic.edit',

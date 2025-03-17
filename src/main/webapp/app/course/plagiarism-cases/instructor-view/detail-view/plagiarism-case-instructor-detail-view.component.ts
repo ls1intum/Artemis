@@ -8,8 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { PageType } from 'app/shared/metis/metis.util';
+import { MetisService } from 'app/communication/metis.service';
+import { PageType } from 'app/communication/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -34,11 +34,11 @@ import {
     NgbNavLinkBase,
     NgbNavOutlet,
 } from '@ng-bootstrap/ng-bootstrap';
-import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
-import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
+import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 

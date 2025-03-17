@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -19,7 +19,7 @@ import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { MetisPostAction } from 'app/shared/metis/metis.util';
+import { MetisPostAction } from 'app/communication/metis.util';
 import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';

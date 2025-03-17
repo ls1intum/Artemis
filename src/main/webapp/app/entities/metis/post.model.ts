@@ -1,6 +1,6 @@
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Posting } from 'app/entities/metis/posting.model';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { DisplayPriority } from 'app/communication/metis.util';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 export class Post extends Posting {

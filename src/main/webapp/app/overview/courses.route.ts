@@ -238,7 +238,7 @@ export const routes: Routes = [
             {
                 path: CourseOverviewRoutePath.COMMUNICATION,
                 pathMatch: 'full',
-                loadComponent: () => import('app/overview/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
+                loadComponent: () => import('app/communication/shared/course-conversations.component').then((m) => m.CourseConversationsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',

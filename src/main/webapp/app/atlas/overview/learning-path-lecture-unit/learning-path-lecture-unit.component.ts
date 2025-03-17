@@ -10,7 +10,7 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { isCommunicationEnabled } from 'app/entities/course.model';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
 

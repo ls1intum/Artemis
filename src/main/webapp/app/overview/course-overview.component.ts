@@ -52,7 +52,7 @@ import { TeamService } from 'app/exercises/shared/team/team.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import dayjs from 'dayjs/esm';
@@ -64,7 +64,7 @@ import { CourseLecturesComponent } from './course-lectures/course-lectures.compo
 import { CourseExamsComponent } from './course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';

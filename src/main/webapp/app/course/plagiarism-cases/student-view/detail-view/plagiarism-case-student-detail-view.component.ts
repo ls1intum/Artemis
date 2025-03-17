@@ -7,18 +7,18 @@ import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
 import { Subscription, combineLatest } from 'rxjs';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { PageType } from 'app/shared/metis/metis.util';
+import { PageType } from 'app/communication/metis.util';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { PostComponent } from 'app/shared/metis/post/post.component';
 import { ButtonType } from 'app/shared/components/button.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PostComponent } from 'app/communication/post/post.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',

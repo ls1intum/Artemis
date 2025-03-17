@@ -45,7 +45,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ElementRef, signal } from '@angular/core';
 
 describe('CourseLectureDetailsComponent', () => {
