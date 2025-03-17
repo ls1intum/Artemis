@@ -150,6 +150,19 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
+     * Generates an 8-character secure session id using the browser's crypto API.
+     */
+    private generateSecureSessionId() {
+        const byteArray = window.crypto.getRandomValues(new Uint8Array(4));
+        const hexValues = Array.from(byteArray, (byte) => {
+            const hexString = byte.toString(16);
+            return hexString.padStart(2, '0');
+        });
+
+        return hexValues.join('');
+    }
+
+    /**
      * Set up the websocket connection.
      */
     connect() {
@@ -174,7 +187,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             headers,
             (frame?: Frame) => {
                 // check if a session id is part of the frame, otherwise use a random string
-                this.sessionId = frame?.headers['session'] || Math.random().toString(16).slice(2, 10);
+                this.sessionId = frame?.headers['session'] || this.generateSecureSessionId();
                 this.connecting = false;
                 if (!this.connectionStateInternal.getValue().connected) {
                     this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
