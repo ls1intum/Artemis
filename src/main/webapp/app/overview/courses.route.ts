@@ -248,7 +248,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
-                loadComponent: () => import('./course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
+                loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',

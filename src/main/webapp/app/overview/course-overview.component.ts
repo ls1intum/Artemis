@@ -61,7 +61,6 @@ import { CourseManagementService } from '../course/manage/course-management.serv
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from '../lecture/shared/course-lectures.component';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
-import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
@@ -77,6 +76,7 @@ import { SecuredImageComponent } from '../shared/image/secured-image.component';
 import { OrionFilterDirective } from '../shared/orion/orion-filter.directive';
 import { FeatureToggleHideDirective } from '../shared/feature-toggle/feature-toggle-hide.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
 
 interface CourseActionItem {
     title: string;
