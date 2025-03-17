@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
+import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/tutorial-group-management-resolve.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
@@ -76,7 +76,7 @@ export const courseManagementState: Routes = [
                 resolve: {
                     course: TutorialGroupManagementResolve,
                 },
-                loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
+                loadChildren: () => import('app/tutorialgroup/manage/tutorial-groups-management.route').then((m) => m.tutorialGroupManagementRoutes),
             },
             {
                 path: ':courseId/assessment-dashboard/:exerciseId',
@@ -126,9 +126,7 @@ export const courseManagementState: Routes = [
             {
                 path: ':courseId/tutorial-groups-checklist',
                 loadComponent: () =>
-                    import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component').then(
-                        (m) => m.TutorialGroupsChecklistComponent,
-                    ),
+                    import('app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component').then((m) => m.TutorialGroupsChecklistComponent),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.pages.checklist.title',
@@ -138,9 +136,9 @@ export const courseManagementState: Routes = [
             {
                 path: ':courseId/create-tutorial-groups-configuration',
                 loadComponent: () =>
-                    import(
-                        'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component'
-                    ).then((m) => m.CreateTutorialGroupsConfigurationComponent),
+                    import('app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component').then(
+                        (m) => m.CreateTutorialGroupsConfigurationComponent,
+                    ),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
