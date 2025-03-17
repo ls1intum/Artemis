@@ -1,4 +1,4 @@
-import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/management/code-editor-instructor-and-editor-orion-container.component';
+import { CodeEditorInstructorAndEditorOrionContainerComponent } from 'app/orion/manage/code-editor-instructor-and-editor-orion-container.component';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';

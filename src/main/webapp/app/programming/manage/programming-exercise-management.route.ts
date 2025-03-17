@@ -7,7 +7,7 @@ import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-e
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import { isOrion } from 'app/shared/orion/orion';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
-import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
 
 export const routes: Routes = [
     {

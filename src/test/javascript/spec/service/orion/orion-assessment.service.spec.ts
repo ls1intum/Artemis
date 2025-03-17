@@ -1,5 +1,5 @@
 import { BehaviorSubject, of } from 'rxjs';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionAssessmentService } from 'app/orion/manage/assessment/orion-assessment.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';

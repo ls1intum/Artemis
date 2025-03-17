@@ -14,8 +14,8 @@ import { exerciseTypes } from 'app/entities/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
-import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
+import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/file-upload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';

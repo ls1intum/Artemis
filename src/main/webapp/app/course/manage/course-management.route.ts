@@ -9,7 +9,7 @@ import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { isOrion } from 'app/shared/orion/orion';
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
 
 export const courseManagementState: Routes = [
     {
@@ -181,7 +181,7 @@ export const courseManagementState: Routes = [
                 children: [
                     {
                         path: 'exercises',
-                        loadComponent: () => import('app/orion/management/orion-course-management-exercises.component').then((m) => m.OrionCourseManagementExercisesComponent),
+                        loadComponent: () => import('app/orion/manage/orion-course-management-exercises.component').then((m) => m.OrionCourseManagementExercisesComponent),
                         data: {
                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.course.exercises',

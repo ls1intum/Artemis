@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
+import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/overview/orion-exercise-details-student-actions.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';

@@ -2,7 +2,7 @@ import { Component, ViewChild, inject } from '@angular/core';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionAssessmentService } from 'app/orion/manage/assessment/orion-assessment.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { OrionAssessmentInstructionsComponent } from './orion-assessment-instructions.component';
