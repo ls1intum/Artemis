@@ -4,7 +4,6 @@ import { userManagementRoute } from 'app/admin/user-management/user-management.r
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { upcomingExamsAndExercisesRoute } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.route';
 
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 
@@ -12,6 +11,7 @@ import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 
 const routes: Routes = [
     {
@@ -153,10 +153,24 @@ const routes: Routes = [
             pageTitle: 'cleanupService.title',
         },
     },
+    {
+        path: 'upcoming-exams-and-exercises',
+        component: UpcomingExamsAndExercisesComponent,
+        data: {
+            pageTitle: 'artemisApp.upcomingExamsAndExercises.upcomingExamsAndExercises',
+        },
+    },
+    {
+        path: 'lecture-transcription-ingestion',
+        loadComponent: () => import('app/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component').then((m) => m.LectureTranscriptionIngestionComponent),
+        data: {
+            authorities: [Authority.ADMIN],
+            pageTitle: 'global.menu.admin.lectureTranscription',
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
-    upcomingExamsAndExercisesRoute,
     ...ltiConfigurationRoute,
 ];
 

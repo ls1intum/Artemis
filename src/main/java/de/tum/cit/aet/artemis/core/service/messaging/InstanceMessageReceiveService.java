@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.Optional;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.athena.service.AthenaScheduleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.communication.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
  * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class InstanceMessageReceiveService {
 
     private static final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
@@ -49,7 +49,7 @@ public class InstanceMessageReceiveService {
 
     private final ParticipantScoreScheduleService participantScoreScheduleService;
 
-    private final Optional<AthenaScheduleService> athenaScheduleService;
+    private final Optional<AthenaApi> athenaApi;
 
     private final UserScheduleService userScheduleService;
 
@@ -67,12 +67,12 @@ public class InstanceMessageReceiveService {
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
-            Optional<AthenaScheduleService> athenaScheduleService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
+            Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
             UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
             QuizScheduleService quizScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
-        this.athenaScheduleService = athenaScheduleService;
+        this.athenaApi = athenaApi;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseScheduleService = modelingExerciseScheduleService;
         this.exerciseRepository = exerciseRepository;
@@ -231,12 +231,12 @@ public class InstanceMessageReceiveService {
     public void processSchedulePotentialAthenaExercise(Long exerciseId) {
         log.info("Received schedule update for potential Athena exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        athenaScheduleService.ifPresent(service -> service.scheduleExerciseForAthenaIfRequired(exercise));
+        athenaApi.ifPresent(api -> api.scheduleExerciseForAthenaIfRequired(exercise));
     }
 
     public void processPotentialAthenaExerciseScheduleCancel(Long exerciseId) {
         log.info("Received schedule cancel for potential Athena exercise {}", exerciseId);
-        athenaScheduleService.ifPresent(service -> service.cancelScheduledAthena(exerciseId));
+        athenaApi.ifPresent(api -> api.cancelScheduledAthena(exerciseId));
     }
 
     public void processUnlockAllRepositoriesAndParticipations(Long exerciseId) {

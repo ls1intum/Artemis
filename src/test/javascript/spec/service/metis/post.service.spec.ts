@@ -91,7 +91,7 @@ describe('Post Service', () => {
 
         it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', fakeAsync(() => {
             const plagiarismCaseId = 123;
-            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
+            const expectedUrl = `api/plagiarism/courses/${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
             const mockResponse: Post[] = [];
 
             service
@@ -106,7 +106,7 @@ describe('Post Service', () => {
 
         it('should use /messages endpoints if course-wide channel ids are provided', fakeAsync(() => {
             const courseWideChannelIds = [123];
-            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
+            const expectedUrl = `api/communication/courses/${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
             const mockResponse: Post[] = [];
 
             service

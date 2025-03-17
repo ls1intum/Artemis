@@ -1,21 +1,18 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { debounceTime, distinctUntilChanged, map, switchMap, take, tap } from 'rxjs/operators';
+import { debounceTime, switchMap, take, tap } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
-import { NgbModal, NgbPagination, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { LocalStorageService } from 'ngx-webstorage';
-import { Observable, OperatorFunction, Subject, Subscription, merge } from 'rxjs';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -27,96 +24,13 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-queue/build-job-statistics/build-job-statistics.component';
 import { downloadFile } from 'app/shared/util/download.util';
-
-export class FinishedBuildJobFilter {
-    status?: string = undefined;
-    buildAgentAddress?: string = undefined;
-    buildSubmissionDateFilterFrom?: dayjs.Dayjs = undefined;
-    buildSubmissionDateFilterTo?: dayjs.Dayjs = undefined;
-    buildDurationFilterLowerBound?: number = undefined;
-    buildDurationFilterUpperBound?: number = undefined;
-    numberOfAppliedFilters = 0;
-    appliedFilters = new Map<string, boolean>();
-    areDurationFiltersValid = true;
-    areDatesValid = true;
-
-    /**
-     * Adds the http param options
-     * @param options request options
-     */
-    addHttpParams(options: HttpParams): HttpParams {
-        if (this.status) {
-            options = options.append('buildStatus', this.status.toUpperCase());
-        }
-        if (this.buildAgentAddress) {
-            options = options.append('buildAgentAddress', this.buildAgentAddress);
-        }
-        if (this.buildSubmissionDateFilterFrom) {
-            options = options.append('startDate', this.buildSubmissionDateFilterFrom.toISOString());
-        }
-        if (this.buildSubmissionDateFilterTo) {
-            options = options.append('endDate', this.buildSubmissionDateFilterTo.toISOString());
-        }
-        if (this.buildDurationFilterLowerBound) {
-            options = options.append('buildDurationLower', this.buildDurationFilterLowerBound.toString());
-        }
-        if (this.buildDurationFilterUpperBound) {
-            options = options.append('buildDurationUpper', this.buildDurationFilterUpperBound.toString());
-        }
-
-        return options;
-    }
-
-    /**
-     * Method to add the filter to the filter map.
-     * This is used to avoid calling functions from the template.
-     * @param filterKey The key of the filter
-     */
-    addFilterToFilterMap(filterKey: string) {
-        if (!this.appliedFilters.get(filterKey)) {
-            this.appliedFilters.set(filterKey, true);
-            this.numberOfAppliedFilters++;
-        }
-    }
-
-    /**
-     * Method to remove the filter from the filter map.
-     * This is used to avoid calling functions from the template.
-     * @param filterKey The key of the filter
-     */
-    removeFilterFromFilterMap(filterKey: string) {
-        if (this.appliedFilters.get(filterKey)) {
-            this.appliedFilters.delete(filterKey);
-            this.numberOfAppliedFilters--;
-        }
-    }
-}
-
-enum BuildJobStatusFilter {
-    SUCCESSFUL = 'successful',
-    FAILED = 'failed',
-    ERROR = 'error',
-    CANCELLED = 'cancelled',
-    MISSING = 'missing',
-    BUILDING = 'building',
-    QUEUED = 'queued',
-    TIMEOUT = 'timeout',
-}
-
-export enum FinishedBuildJobFilterStorageKey {
-    status = 'artemis.buildQueue.finishedBuildJobFilterStatus',
-    buildAgentAddress = 'artemis.buildQueue.finishedBuildJobFilterBuildAgentAddress',
-    buildSubmissionDateFilterFrom = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterFrom',
-    buildSubmissionDateFilterTo = 'artemis.buildQueue.finishedBuildJobFilterBuildSubmissionDateFilterTo',
-    buildDurationFilterLowerBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterLowerBound',
-    buildDurationFilterUpperBound = 'artemis.buildQueue.finishedBuildJobFilterBuildDurationFilterUpperBound',
-}
+import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { Subject, Subscription } from 'rxjs';
+import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -136,10 +50,7 @@ export enum FinishedBuildJobFilterStorageKey {
         ResultComponent,
         ItemCountComponent,
         NgbPagination,
-        NgbTypeahead,
-        FormDateTimePickerComponent,
         ArtemisDatePipe,
-        ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
         BuildJobStatisticsComponent,
     ],
@@ -150,7 +61,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     private buildQueueService = inject(BuildQueueService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
-    private localStorage = inject(LocalStorageService);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
@@ -174,28 +84,21 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     ascending = false;
     buildDurationInterval: ReturnType<typeof setInterval>;
 
-    // Filter
-    @ViewChild('addressTypeahead', { static: true }) addressTypeahead: NgbTypeahead;
-    finishedBuildJobFilter = new FinishedBuildJobFilter();
-    buildStatusFilterValues?: string[];
-    faFilter = faFilter;
-    focus$ = new Subject<string>();
-    click$ = new Subject<string>();
-    isLoading = false;
-    search = new Subject<void>();
     searchSubscription: Subscription;
+    search = new Subject<void>();
+    isLoading = false;
     searchTerm?: string = undefined;
+    finishedBuildJobFilter: FinishedBuildJobFilter = new FinishedBuildJobFilter();
+    faFilter = faFilter;
 
     displayedBuildJobId?: string;
     rawBuildLogsString: string = '';
 
     ngOnInit() {
-        this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);
         this.loadQueue();
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
         }, 1000); // 1 second
-        this.loadFilterFromLocalStorage();
         this.loadFinishedBuildJobs();
         this.initWebsocketSubscription();
         this.searchSubscription = this.search
@@ -491,138 +394,16 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
         this.modalService.open(modal, { size, keyboard, scrollable, fullscreen });
     }
 
-    /**
-     * Get all build agents' addresses from the finished build jobs.
-     */
-    get buildAgentAddresses(): string[] {
-        return Array.from(new Set(this.finishedBuildJobs.map((buildJob) => buildJob.buildAgentAddress ?? '').filter((address) => address !== '')));
-    }
-
-    // Workaround for the NgbTypeahead issue: https://github.com/ng-bootstrap/ng-bootstrap/issues/2400
-    clickEvents($event: Event, typeaheadInstance: NgbTypeahead) {
-        if (typeaheadInstance.isPopupOpen()) {
-            this.click$.next(($event.target as HTMLInputElement).value);
-        }
-    }
-
-    /**
-     * Method to build the agent addresses for the typeahead search.
-     * @param text$
-     */
-    typeaheadSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
-        const buildAgentAddresses = this.buildAgentAddresses;
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.click$;
-        const inputFocus$ = this.focus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term === '' ? buildAgentAddresses : buildAgentAddresses.filter((v) => v.toLowerCase().indexOf(term.toLowerCase()) > -1)).slice(0, 10)),
-        );
-    };
-
-    /**
-     * Method to reset the filter.
-     */
-    applyFilter() {
-        this.loadFinishedBuildJobs();
-        this.modalService.dismissAll();
-    }
-
-    /**
-     * Method to load the filter values from the local storage if they exist.
-     */
-    loadFilterFromLocalStorage() {
-        this.finishedBuildJobFilter.numberOfAppliedFilters = 0;
-
-        // Iterate over all keys of the filter and load the values from the local storage if they exist.
-        const keys = Object.keys(FinishedBuildJobFilterStorageKey) as Array<keyof typeof FinishedBuildJobFilterStorageKey>;
-        for (const key of keys) {
-            const value = this.localStorage.retrieve(FinishedBuildJobFilterStorageKey[key]);
-            if (value) {
-                this.finishedBuildJobFilter[key] = key.includes('Date') ? dayjs(value) : value;
-                this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey[key]);
-            }
-        }
-    }
-
-    /**
-     * Method to add or remove a status filter and store the selected status filters in the local store if required.
-     */
-    toggleBuildStatusFilter(value?: string) {
-        if (value) {
-            this.finishedBuildJobFilter.status = value;
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.status, value);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.status);
-        } else {
-            this.finishedBuildJobFilter.status = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.status);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.status);
-        }
-    }
-
-    /**
-     * Method to remove the build agent address filter and store the selected build agent address in the local store if required.
-     */
-    filterBuildAgentAddressChanged() {
-        if (this.finishedBuildJobFilter.buildAgentAddress) {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildAgentAddress, this.finishedBuildJobFilter.buildAgentAddress);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildAgentAddress);
-        } else {
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildAgentAddress);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildAgentAddress);
-        }
-    }
-
-    /**
-     * Method to remove the build start date filter and store the selected build start date in the local store if required.
-     */
-    filterDateChanged() {
-        if (!this.finishedBuildJobFilter.buildSubmissionDateFilterFrom?.isValid()) {
-            this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
-        } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom, this.finishedBuildJobFilter.buildSubmissionDateFilterFrom);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterFrom);
-        }
-        if (!this.finishedBuildJobFilter.buildSubmissionDateFilterTo?.isValid()) {
-            this.finishedBuildJobFilter.buildSubmissionDateFilterTo = undefined;
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
-        } else {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo, this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildSubmissionDateFilterTo);
-        }
-        if (this.finishedBuildJobFilter.buildSubmissionDateFilterFrom && this.finishedBuildJobFilter.buildSubmissionDateFilterTo) {
-            this.finishedBuildJobFilter.areDatesValid = this.finishedBuildJobFilter.buildSubmissionDateFilterFrom.isBefore(this.finishedBuildJobFilter.buildSubmissionDateFilterTo);
-        } else {
-            this.finishedBuildJobFilter.areDatesValid = true;
-        }
-    }
-
-    /**
-     * Method to remove the build duration filter and store the selected build duration in the local store if required.
-     */
-    filterDurationChanged() {
-        if (this.finishedBuildJobFilter.buildDurationFilterLowerBound) {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound, this.finishedBuildJobFilter.buildDurationFilterLowerBound);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
-        } else {
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterLowerBound);
-        }
-        if (this.finishedBuildJobFilter.buildDurationFilterUpperBound) {
-            this.localStorage.store(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound, this.finishedBuildJobFilter.buildDurationFilterUpperBound);
-            this.finishedBuildJobFilter.addFilterToFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
-        } else {
-            this.localStorage.clear(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
-            this.finishedBuildJobFilter.removeFilterFromFilterMap(FinishedBuildJobFilterStorageKey.buildDurationFilterUpperBound);
-        }
-        if (this.finishedBuildJobFilter.buildDurationFilterLowerBound && this.finishedBuildJobFilter.buildDurationFilterUpperBound) {
-            this.finishedBuildJobFilter.areDurationFiltersValid =
-                this.finishedBuildJobFilter.buildDurationFilterLowerBound <= this.finishedBuildJobFilter.buildDurationFilterUpperBound;
-        } else {
-            this.finishedBuildJobFilter.areDurationFiltersValid = true;
-        }
+    openFilterModal() {
+        const modalRef = this.modalService.open(FinishedBuildsFilterModalComponent as Component);
+        modalRef.componentInstance.finishedBuildJobFilter = this.finishedBuildJobFilter;
+        modalRef.componentInstance.buildAgentFilterable = true;
+        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs;
+        modalRef.result
+            .then((result: FinishedBuildJobFilter) => {
+                this.finishedBuildJobFilter = result;
+                this.loadFinishedBuildJobs();
+            })
+            .catch(() => {});
     }
 }

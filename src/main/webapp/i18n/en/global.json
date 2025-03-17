@@ -117,7 +117,8 @@
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
-                "cleanupService": "Cleanup Service"
+                "cleanupService": "Cleanup Service",
+                "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
             "settings": "Settings",
@@ -357,7 +358,8 @@
         "exams": "Exams",
         "communication": "Communication",
         "archive": "Course archive",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "plagiarismCases": "Plagiarism Cases"
     },
     "connectionStatus": {
         "connected": "Connected",

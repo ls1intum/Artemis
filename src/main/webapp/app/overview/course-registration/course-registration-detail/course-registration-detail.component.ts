@@ -25,7 +25,7 @@ export class CourseRegistrationDetailComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.loading = true;
-        this.paramSubscription = this.route.parent!.params.subscribe((params) => {
+        this.paramSubscription = this.route!.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId']);
             this.courseService.findOneForRegistration(this.courseId).subscribe((res) => {
                 this.course = res.body!;
