@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ComponentRef } from '@angular/core';
 import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
@@ -42,22 +40,6 @@ describe('RedirectToIrisButtonComponent', () => {
 
     it('should have default values', () => {
         expect(component.buttonLoading()).toBe(false);
-        expect(component.hideLabelMobile()).toBe(true);
-    });
-
-    it('should update the button label when input changes', () => {
-        componentRef.setInput('buttonLabel', 'Go to Iris');
-        fixture.detectChanges();
-
-        expect(component.buttonLabel()).toBe('Go to Iris');
-    });
-
-    it('should display the correct icon when set', () => {
-        const testIcon: IconProp = faUser;
-        componentRef.setInput('buttonIcon', testIcon);
-        fixture.detectChanges();
-
-        expect(component.buttonIcon()).toBe(testIcon);
     });
 
     it('should set the correct logo size to TEXT when using IrisLogoComponent', () => {
@@ -70,13 +52,6 @@ describe('RedirectToIrisButtonComponent', () => {
 
         expect(component.buttonLoading()).toBe(true);
         expect(component.faCircleNotch).toBe(faCircleNotch);
-    });
-
-    it('should hide label on mobile when hideLabelMobile is true', () => {
-        componentRef.setInput('hideLabelMobile', true);
-        fixture.detectChanges();
-
-        expect(component.hideLabelMobile()).toBe(true);
     });
 
     it('should be enabled for exercise chats if Iris is activated for the exercise', fakeAsync(() => {
