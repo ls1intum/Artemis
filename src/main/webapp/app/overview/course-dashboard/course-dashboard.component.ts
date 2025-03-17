@@ -12,12 +12,12 @@ import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/enti
 import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
-import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
+import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';

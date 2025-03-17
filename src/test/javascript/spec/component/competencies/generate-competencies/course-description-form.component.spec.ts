@@ -5,8 +5,8 @@ import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-compet
 import { ReactiveFormsModule } from '@angular/forms';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
-import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
+import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 describe('CourseDescriptionFormComponent', () => {
     let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionFormComponent>;

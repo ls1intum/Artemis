@@ -2,7 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, firstValueFrom } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Response } from 'app/iris/iris-chat-http.service';
+import { Response } from 'app/iris/overview/iris-chat-http.service';
 import { IrisStatusDTO } from 'app/entities/iris/iris-health.model';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 

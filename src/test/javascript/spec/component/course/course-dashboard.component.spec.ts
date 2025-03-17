@@ -11,7 +11,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
+import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { CourseExercisePerformanceComponent } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';

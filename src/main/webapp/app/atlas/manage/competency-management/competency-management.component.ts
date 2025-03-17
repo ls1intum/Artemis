@@ -7,7 +7,7 @@ import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, f
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import {

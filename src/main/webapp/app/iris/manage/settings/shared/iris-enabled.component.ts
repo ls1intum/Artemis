@@ -3,7 +3,7 @@ import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings
 import { Exercise } from 'app/entities/exercise.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { Course } from 'app/entities/course.model';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';

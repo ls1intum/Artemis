@@ -105,7 +105,7 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/iris-settings',
-        loadChildren: () => import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
+        loadChildren: () => import('app/iris/manage/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
     },
     {
         path: 'programming-exercises/:exerciseId/edit-build-plan',

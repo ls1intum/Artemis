@@ -7,7 +7,7 @@ import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/deta
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/lecture.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from '../shared/language/translate.directive';

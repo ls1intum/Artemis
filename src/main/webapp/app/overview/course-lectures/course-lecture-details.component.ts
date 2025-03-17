@@ -20,9 +20,9 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from './exercise-unit/exercise-unit.component';
@@ -36,7 +36,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;

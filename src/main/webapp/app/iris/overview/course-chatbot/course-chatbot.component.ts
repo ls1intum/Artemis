@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 
 @Component({

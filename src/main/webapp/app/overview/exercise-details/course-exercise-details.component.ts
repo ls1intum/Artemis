@@ -37,7 +37,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { ICER_PAPER_FLAG, PROFILE_IRIS } from 'app/app.constants';
-import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -54,7 +54,7 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/pro
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { LtiInitializerComponent } from './lti-initializer.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

@@ -15,7 +15,7 @@ import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject, Subscription } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { DocumentationButtonComponent } from '../shared/components/documentation-button/documentation-button.component';

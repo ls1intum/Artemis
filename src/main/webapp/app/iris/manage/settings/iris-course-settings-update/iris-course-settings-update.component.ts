@@ -1,32 +1,27 @@
 import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
-import { ActivatedRoute } from '@angular/router';
+import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
-    selector: 'jhi-iris-exercise-settings-update',
-    templateUrl: './iris-exercise-settings-update.component.html',
+    selector: 'jhi-iris-course-settings-update',
+    templateUrl: './iris-course-settings-update.component.html',
     imports: [TranslateDirective, IrisSettingsUpdateComponent],
 })
-export class IrisExerciseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
+export class IrisCourseSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
 
-    @ViewChild(IrisSettingsUpdateComponent)
-    settingsUpdateComponent?: IrisSettingsUpdateComponent;
+    @ViewChild(IrisSettingsUpdateComponent) settingsUpdateComponent?: IrisSettingsUpdateComponent;
 
-    @Input()
-    public courseId?: number;
-    @Input()
-    public exerciseId?: number;
+    @Input() courseId?: number;
 
-    EXERCISE = IrisSettingsType.EXERCISE;
+    COURSE = IrisSettingsType.COURSE;
 
     ngOnInit(): void {
-        this.route.parent?.params.subscribe((params) => {
+        this.route?.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.exerciseId = Number(params['exerciseId']);
         });
     }
 

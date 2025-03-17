@@ -196,7 +196,7 @@ const routes: Routes = [
     {
         path: 'about-iris',
         pathMatch: 'full',
-        loadComponent: () => import('./iris/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
+        loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
         data: {
             pageTitle: 'artemisApp.exerciseChatbot.title',
         },

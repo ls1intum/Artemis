@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { userManagementRoute } from 'app/core/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
-import { IrisGuard } from 'app/iris/iris-guard.service';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
@@ -139,7 +139,7 @@ const routes: Routes = [
     },
     {
         path: 'iris',
-        loadComponent: () => import('app/iris/settings/iris-global-settings-update/iris-global-settings-update.component').then((m) => m.IrisGlobalSettingsUpdateComponent),
+        loadComponent: () => import('app/iris/manage/settings/iris-global-settings-update/iris-global-settings-update.component').then((m) => m.IrisGlobalSettingsUpdateComponent),
         data: {
             authorities: [Authority.ADMIN],
             pageTitle: 'artemisApp.iris.settings.title.global',

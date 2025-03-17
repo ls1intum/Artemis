@@ -5,7 +5,7 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
-import { IrisGuard } from 'app/iris/iris-guard.service';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { isOrion } from 'app/shared/orion/orion';
@@ -58,7 +58,8 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/iris-settings',
-                loadComponent: () => import('app/iris/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
+                loadComponent: () =>
+                    import('app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component').then((m) => m.IrisCourseSettingsUpdateComponent),
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.iris.settings.title.course',

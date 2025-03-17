@@ -1,6 +1,6 @@
 import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
 import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
