@@ -2078,26 +2078,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
-        persistProgrammingExercise();
-        User user = userRepo.findOneByLogin(userPrefix + STUDENT_LOGIN).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
-
-        final var participation = createUserParticipation();
-
-        // create a submission
-        programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-
-        mockDelegate.resetMockProvider();
-        mockDelegate.mockRetrieveArtifacts(participation);
-
-        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/build-artifact", HttpStatus.OK, byte[].class);
-
-        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
-        assertThat(artifact).as("No build artifact available for this plan").isEmpty();
-    }
-
-    // TEST
     public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
         setupTeamExercise();
 
