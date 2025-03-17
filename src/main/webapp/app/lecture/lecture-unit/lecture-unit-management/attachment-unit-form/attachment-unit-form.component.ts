@@ -117,6 +117,8 @@ export class AttachmentUnitFormComponent implements OnChanges {
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         version: [{ value: 1, disabled: true }],
+        videoSource: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
+        urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
@@ -169,8 +171,8 @@ export class AttachmentUnitFormComponent implements OnChanges {
         return this.form.get('version');
     }
 
-    get sourceControl() {
-        return this.form.get('source');
+    get videoSourceControl() {
+        return this.form.get('videoSource');
     }
 
     get urlHelperControl() {
@@ -213,7 +215,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
 
     setEmbeddedVideoUrl(event: any) {
         event.stopPropagation();
-        this.sourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
+        this.videoSourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
     }
 
     extractEmbeddedUrl(videoUrl: string) {

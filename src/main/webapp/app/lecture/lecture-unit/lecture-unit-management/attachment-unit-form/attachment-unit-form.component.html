@@ -103,48 +103,59 @@
                 <label for="version" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.version"></label>
                 <input id="version" class="form-control disabled" type="text" readonly formControlName="version" />
             </div>
-            <div class="row">
-                <div class="col-4">
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="source"
-                        formControlName="source"
-                        [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | artemisTranslate"
-                    />
+            <div class="container" style="padding: 0">
+                <div class="row">
+                    <div class="col-4">
+                        <label class="required" for="videoSource">{{ 'artemisApp.videoUnit.createVideoUnit.source' | artemisTranslate }}*</label>
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-7">
+                        <label for="urlHelper" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlVideoHelper"></label>
+                    </div>
                 </div>
-                <div class="col-1 mx-auto text-center align-self-center">
-                    <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
-                        <fa-icon [icon]="faArrowLeft" />
-                    </button>
+                <div class="row">
+                    <div class="col-4">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="videoSource"
+                            formControlName="videoSource"
+                            [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | artemisTranslate"
+                        />
+                    </div>
+                    <div class="col-1 mx-auto text-center align-self-center">
+                        <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
+                            <fa-icon [icon]="faArrowLeft" />
+                        </button>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
+                    </div>
                 </div>
-                <div class="col-7">
-                    <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-4">
-                    @if (sourceControl?.invalid && (sourceControl?.dirty || sourceControl?.touched)) {
-                        <div class="alert alert-danger">
-                            @if (sourceControl?.errors?.required) {
-                                <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError"></div>
-                            }
-                            @if (sourceControl?.errors?.invalidVideoUrl) {
-                                <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceURLValidationError"></div>
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="col-1"></div>
-                <div class="col-7">
-                    <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder"></small>
-                    @if (urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)) {
-                        <div class="alert alert-danger">
-                            @if (urlHelperControl?.errors?.invalidVideoUrl) {
-                                <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperValidationError"></div>
-                            }
-                        </div>
-                    }
+                <div class="row">
+                    <div class="col-4">
+                        @if (videoSourceControl?.invalid && (videoSourceControl?.dirty || videoSourceControl?.touched)) {
+                            <div class="alert alert-danger">
+                                @if (videoSourceControl?.errors?.required) {
+                                    <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError"></div>
+                                }
+                                @if (videoSourceControl?.errors?.invalidVideoUrl) {
+                                    <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceURLValidationError"></div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-7">
+                        <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder"></small>
+                        @if (urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)) {
+                            <div class="alert alert-danger">
+                                @if (urlHelperControl?.errors?.invalidVideoUrl) {
+                                    <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperValidationError"></div>
+                                }
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
             <div class="row">
