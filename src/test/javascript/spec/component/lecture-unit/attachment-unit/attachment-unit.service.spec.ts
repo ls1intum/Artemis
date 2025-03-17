@@ -60,6 +60,7 @@ describe('AttachmentUnitService', () => {
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'GET' });
+        expect(req.request.url).toEqual('api/lecture/lectures/1/attachment-units/1');
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(elemDefault);
     }));
