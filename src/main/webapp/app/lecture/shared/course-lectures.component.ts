@@ -5,10 +5,10 @@ import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
-import { CourseOverviewService } from '../../overview/course-overview.service';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

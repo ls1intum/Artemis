@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../overview/course-conversations/helpers/conversationExampleModels';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -20,7 +20,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
-import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { ConversationDetailDialogComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

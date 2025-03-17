@@ -8,7 +8,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

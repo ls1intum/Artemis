@@ -1,15 +1,14 @@
 import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Router, RouterLink } from '@angular/router';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../shared/language/translate.directive';
-import { SecuredImageComponent } from '../shared/image/secured-image.component';
-import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 import { getContrastingTextColor } from 'app/utils/color.utils';
+import { TranslateDirective } from '@ngx-translate/core';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-header-course',

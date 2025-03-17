@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, OnChanges, inject } from '@angular/core';
-import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
+import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/course/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';

@@ -30,7 +30,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
-import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
+import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -45,7 +45,6 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTo
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseDetailsStudentActionsComponent } from './exercise-details-student-actions.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
-import { ResultHistoryComponent } from '../result-history/result-history.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';

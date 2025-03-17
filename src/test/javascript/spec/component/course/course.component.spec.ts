@@ -11,11 +11,11 @@ import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { CourseCardComponent } from 'app/overview/course-card.component';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CoursesComponent } from 'app/overview/courses.component';
+import { CourseCardComponent } from 'app/course/overview/course-card.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
+import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
+import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
+import { CoursesComponent } from 'app/course/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';

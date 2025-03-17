@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationSettingsComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
+import { ConversationSettingsComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../helpers/conversationExampleModels';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';

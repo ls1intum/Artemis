@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { OrionExerciseDetailsStudentActionsComponent } from './orion-exercise-details-student-actions.component';
 
 @Component({

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/cor
 import {
     AddUsersFormData,
     ConversationAddUsersFormComponent,
-} from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
+} from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';

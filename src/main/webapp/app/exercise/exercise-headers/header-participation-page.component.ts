@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, NgStyle } from '@angular/common';
 import { DifficultyBadgeComponent } from './difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from './included-in-score-badge.component';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';

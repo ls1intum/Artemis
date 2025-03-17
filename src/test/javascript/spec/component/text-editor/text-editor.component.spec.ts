@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

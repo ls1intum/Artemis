@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
-import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview-guard';
 
 export enum CourseOverviewRoutePath {
     DASHBOARD = 'dashboard',
@@ -25,7 +25,7 @@ export enum CourseOverviewRoutePath {
 export const routes: Routes = [
     {
         path: '',
-        loadComponent: () => import('app/overview/courses.component').then((m) => m.CoursesComponent),
+        loadComponent: () => import('app/course/overview/courses.component').then((m) => m.CoursesComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.title',
@@ -34,7 +34,7 @@ export const routes: Routes = [
     },
     {
         path: CourseOverviewRoutePath.ENROLL,
-        loadComponent: () => import('app/overview/course-registration/course-registration.component').then((m) => m.CourseRegistrationComponent),
+        loadComponent: () => import('app/course/overview/course-registration/course-registration.component').then((m) => m.CourseRegistrationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
@@ -56,7 +56,7 @@ export const routes: Routes = [
     {
         path: ':courseId/register',
         loadComponent: () =>
-            import('app/overview/course-registration/course-registration-detail/course-registration-detail.component').then((m) => m.CourseRegistrationDetailComponent),
+            import('app/course/overview/course-registration/course-registration-detail/course-registration-detail.component').then((m) => m.CourseRegistrationDetailComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
@@ -74,7 +74,7 @@ export const routes: Routes = [
         children: [
             {
                 path: CourseOverviewRoutePath.EXERCISES,
-                loadComponent: () => import('app/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
+                loadComponent: () => import('app/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.exercises',
@@ -104,7 +104,7 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.textExercise',
                 },
-                loadChildren: () => import('../text/overview/text-editor.route').then((m) => m.textEditorRoute),
+                loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
@@ -121,7 +121,7 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.repository',
                 },
-                loadChildren: () => import('../programming/overview/programming-repository.route').then((m) => m.routes),
+                loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/modeling-exercises/:exerciseId',
@@ -129,7 +129,7 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.modelingExercise',
                 },
-                loadChildren: () => import('../modeling/overview/modeling-participation.route').then((m) => m.routes),
+                loadChildren: () => import('app/modeling/overview/modeling-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/quiz-exercises/:exerciseId',
@@ -137,7 +137,7 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.quizExercise',
                 },
-                loadChildren: () => import('../quiz/overview/quiz-participation.route').then((m) => m.routes),
+                loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
@@ -218,7 +218,7 @@ export const routes: Routes = [
             {
                 path: CourseOverviewRoutePath.DASHBOARD,
                 pathMatch: 'full',
-                loadComponent: () => import('app/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
+                loadComponent: () => import('app/course/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
@@ -295,7 +295,7 @@ export const routes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                         canDeactivate: [PendingChangesGuard],
-                        loadChildren: () => import('../exam/overview/exam-participation.route').then((m) => m.examParticipationRoute),
+                        loadChildren: () => import('app/exam/overview/exam-participation.route').then((m) => m.examParticipationRoute),
                     },
                 ],
             },

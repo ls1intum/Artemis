@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
+import { CourseTutorialGroupsComponent } from 'app/course/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

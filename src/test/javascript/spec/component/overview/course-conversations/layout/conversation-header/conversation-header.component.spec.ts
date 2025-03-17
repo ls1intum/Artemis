@@ -11,15 +11,15 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { ConversationAddUsersDialogComponent } from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
-} from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+} from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';

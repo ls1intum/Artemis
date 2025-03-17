@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import '@angular/localize/init';
-import { ConversationMembersComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
+import { ConversationMembersComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { input, signal } from '@angular/core';
@@ -17,7 +17,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { ConversationAddUsersDialogComponent } from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { MockTranslateService } from '../../../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

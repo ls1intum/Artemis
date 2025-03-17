@@ -11,7 +11,6 @@ import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overvie
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -20,6 +19,7 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from './overview/course-management-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course',

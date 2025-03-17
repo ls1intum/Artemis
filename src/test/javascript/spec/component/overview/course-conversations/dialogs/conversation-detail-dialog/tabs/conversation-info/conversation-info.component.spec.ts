@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationInfoComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
+import { ConversationInfoComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';

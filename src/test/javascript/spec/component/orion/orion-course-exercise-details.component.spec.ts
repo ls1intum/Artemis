@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrionCourseExerciseDetailsComponent } from 'app/orion/overview/orion-course-exercise-details.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/overview/orion-exercise-details-student-actions.component';

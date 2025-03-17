@@ -4,7 +4,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercise/manage/paging.service';
-import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { Column } from 'app/shared/import/import.component';
 import { Course } from 'app/entities/course.model';
 import {
@@ -14,6 +13,7 @@ import {
 import { CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseForImportDTOPagingService } from 'app/course/shared/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
     {

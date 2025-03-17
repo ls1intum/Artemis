@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
@@ -11,17 +10,18 @@ import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Router, RouterLink } from '@angular/router';
 import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
-import { TranslateDirective } from '../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SearchFilterComponent } from '../shared/search-filter/search-filter.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { CourseCardComponent } from './course-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../shared/pipes/artemis-translate.pipe';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
 
 @Component({
     selector: 'jhi-overview',

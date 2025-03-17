@@ -4,7 +4,6 @@ import { Column, ImportComponent } from 'app/shared/import/import.component';
 
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -13,6 +12,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { CourseForImportDTOPagingService } from 'app/course/shared/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
     {

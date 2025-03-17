@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseTutorialGroupCardComponent } from 'app/overview/course-tutorial-groups/course-tutorial-group-card/course-tutorial-group-card.component';
+import { CourseTutorialGroupCardComponent } from 'app/course/overview/course-tutorial-groups/course-tutorial-group-card/course-tutorial-group-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';

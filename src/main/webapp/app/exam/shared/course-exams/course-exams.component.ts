@@ -10,12 +10,12 @@ import { ExamParticipationService } from 'app/exam/overview/exam-participation.s
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
-import { CourseOverviewService } from '../../../overview/course-overview.service';
 import { cloneDeep } from 'lodash-es';
 import { lastValueFrom } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },

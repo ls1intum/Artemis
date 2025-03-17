@@ -15,14 +15,14 @@ import { MockCourseService } from '../../../helpers/mocks/service/mock-course.se
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';

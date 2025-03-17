@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseCardComponent } from 'app/overview/course-card.component';
+import { CourseCardComponent } from 'app/course/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';

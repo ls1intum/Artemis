@@ -11,7 +11,7 @@ import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.mo
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/communication/metis.service';
-import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -9,7 +9,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { HeaderCourseComponent } from 'app/course/overview/header-course.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';

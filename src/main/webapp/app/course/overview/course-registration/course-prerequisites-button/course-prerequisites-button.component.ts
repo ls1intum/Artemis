@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
+import { CoursePrerequisitesModalComponent } from 'app/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

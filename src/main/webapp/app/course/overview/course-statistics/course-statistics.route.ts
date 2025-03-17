@@ -5,7 +5,7 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
     {
         path: '',
-        loadComponent: () => import('app/overview/course-statistics/course-statistics.component').then((m) => m.CourseStatisticsComponent),
+        loadComponent: () => import('app/course/overview/course-statistics/course-statistics.component').then((m) => m.CourseStatisticsComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.statistics',

@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/course/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
@@ -17,7 +17,7 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
+import { ChannelItemComponent } from 'app/course/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 const examples: ChannelDTO[] = [
     generateExampleChannelDTO({} as ChannelDTO),
