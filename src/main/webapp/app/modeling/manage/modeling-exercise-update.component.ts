@@ -30,7 +30,6 @@ import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.com
 import { Subscription } from 'rxjs';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { FormsModule, NgModel } from '@angular/forms';
-import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
@@ -47,6 +46,7 @@ import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

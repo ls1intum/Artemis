@@ -43,10 +43,10 @@ import {
     SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';

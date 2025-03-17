@@ -56,8 +56,8 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';

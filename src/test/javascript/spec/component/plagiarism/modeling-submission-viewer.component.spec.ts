@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { ModelingSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
+import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
+import { ModelingSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';

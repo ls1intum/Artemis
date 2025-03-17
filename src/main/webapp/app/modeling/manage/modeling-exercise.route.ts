@@ -65,7 +65,7 @@ export const routes: Routes = [
     },
     {
         path: 'modeling-exercises/:exerciseId/plagiarism',
-        loadComponent: () => import('app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
+        loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
         resolve: {
             exercise: ModelingExerciseResolver,
         },

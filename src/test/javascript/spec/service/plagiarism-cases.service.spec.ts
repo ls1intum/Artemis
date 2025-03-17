@@ -1,16 +1,16 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { take } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
+import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Plagiarism Cases Service', () => {

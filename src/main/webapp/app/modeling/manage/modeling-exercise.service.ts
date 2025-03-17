@@ -5,10 +5,10 @@ import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
-import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';
+import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
 import { downloadStream } from 'app/shared/util/download.util';
-import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { PlagiarismResultDTO } from 'app/plagiarism/shared/types/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;

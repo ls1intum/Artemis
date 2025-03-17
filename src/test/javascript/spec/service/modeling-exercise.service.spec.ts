@@ -9,8 +9,8 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import dayjs from 'dayjs/esm';
-import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';
+import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
 import * as helper from 'app/shared/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';

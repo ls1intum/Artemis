@@ -4,7 +4,6 @@ import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
-import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { median } from 'simple-statistics';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -14,6 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;

@@ -26,7 +26,7 @@ import { Params } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';

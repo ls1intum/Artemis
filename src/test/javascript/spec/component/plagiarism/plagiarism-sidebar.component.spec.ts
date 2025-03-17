@@ -5,7 +5,7 @@ import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plag
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { SimpleChange } from '@angular/core';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
 
 describe('Plagiarism Sidebar Component', () => {
     let comp: PlagiarismSidebarComponent;

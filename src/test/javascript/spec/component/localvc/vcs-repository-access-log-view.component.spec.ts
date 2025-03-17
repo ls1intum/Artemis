@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
+import { VcsRepositoryAccessLogViewComponent } from 'app/programming/manage/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';

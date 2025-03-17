@@ -9,7 +9,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Observable, of, throwError } from 'rxjs';
 import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
+import { CommitDetailsViewComponent } from 'app/programming/manage/commit-details-view/commit-details-view.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';

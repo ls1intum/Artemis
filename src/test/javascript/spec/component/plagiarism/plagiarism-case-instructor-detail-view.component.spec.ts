@@ -1,13 +1,13 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { PlagiarismCaseInstructorDetailViewComponent } from 'app/course/plagiarism-cases/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCaseInstructorDetailViewComponent } from 'app/plagiarism/manage/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { MetisService } from 'app/communication/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
