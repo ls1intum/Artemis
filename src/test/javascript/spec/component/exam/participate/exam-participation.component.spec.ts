@@ -43,7 +43,6 @@ import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-resul
 import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -62,6 +61,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;

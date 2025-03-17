@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

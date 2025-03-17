@@ -14,10 +14,10 @@ import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor.component';
-import { associationUML, personUML, studentUML } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour-task.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { associationUML, personUML, studentUML } from 'app/core/guided-tour/guided-tour-task.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

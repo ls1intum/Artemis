@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';

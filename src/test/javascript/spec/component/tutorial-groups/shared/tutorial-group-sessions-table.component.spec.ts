@@ -1,5 +1,4 @@
 import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
-import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
@@ -16,6 +15,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/shared/service/alert.service';
+import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {

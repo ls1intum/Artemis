@@ -4,7 +4,7 @@ import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading-syste
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';

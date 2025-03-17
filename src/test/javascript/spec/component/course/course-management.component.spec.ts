@@ -11,7 +11,6 @@ import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -19,6 +18,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ActivatedRoute } from '@angular/router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;

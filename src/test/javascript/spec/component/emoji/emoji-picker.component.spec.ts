@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { TranslateService } from '@ngx-translate/core';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 
 describe('EmojiPickerComponent', () => {
     let fixture: ComponentFixture<EmojiPickerComponent>;

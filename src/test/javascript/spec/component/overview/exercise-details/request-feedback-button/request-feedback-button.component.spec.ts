@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';

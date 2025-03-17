@@ -11,7 +11,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { metisPostExerciseUser1, metisPostLectureUser1, metisResolvingAnswerPostUser1, metisUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/communication/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

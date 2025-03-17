@@ -7,16 +7,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs';
-import { ConversationAddUsersDialogComponent } from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
-import {
-    ConversationDetailDialogComponent,
-    ConversationDetailTabs,
-} from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
@@ -32,6 +26,12 @@ import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-
 import { LocalStorageService } from 'ngx-webstorage';
 import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),

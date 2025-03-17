@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';

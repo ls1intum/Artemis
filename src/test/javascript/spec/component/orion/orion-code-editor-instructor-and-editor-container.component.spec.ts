@@ -16,7 +16,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

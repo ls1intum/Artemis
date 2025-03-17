@@ -1,4 +1,3 @@
-import { Orientation } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.constants';
 import {
     calculateLeftOffset,
     calculateTopOffset,
@@ -7,7 +6,8 @@ import {
     determineUrlMatching,
     getUrlParams,
     isElementInViewPortHorizontally,
-} from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.utils';
+} from 'app/core/guided-tour/guided-tour.utils';
+import { Orientation } from 'app/core/guided-tour/guided-tour.constants';
 
 describe('GuidedTourUtils', () => {
     describe('clickOnElement', () => {

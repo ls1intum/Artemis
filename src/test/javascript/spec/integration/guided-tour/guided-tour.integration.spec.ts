@@ -3,9 +3,7 @@ import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { GuidedTourComponent } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { courseOverviewTour } from 'app/core/guided-tour/tours/tutor-assessment-tourtours/course-overview-tour';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { User } from 'app/core/user/user.model';
 import { CourseCardComponent } from 'app/course/overview/course-card.component';
@@ -24,6 +22,8 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ActivatedRoute } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;

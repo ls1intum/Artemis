@@ -11,7 +11,7 @@ import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.s
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';

@@ -6,7 +6,7 @@ import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { input, runInInjectionContext, ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';

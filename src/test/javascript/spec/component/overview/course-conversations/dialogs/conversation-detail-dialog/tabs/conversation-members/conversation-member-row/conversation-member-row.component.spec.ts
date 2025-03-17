@@ -1,12 +1,11 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConversationMemberRowComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -25,6 +24,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { ConversationMemberRowComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 
 const memberTemplate = {
     id: 1,

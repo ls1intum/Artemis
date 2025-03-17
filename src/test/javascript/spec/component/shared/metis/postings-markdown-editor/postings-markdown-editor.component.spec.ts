@@ -10,7 +10,7 @@ import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helper
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { Subject, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';

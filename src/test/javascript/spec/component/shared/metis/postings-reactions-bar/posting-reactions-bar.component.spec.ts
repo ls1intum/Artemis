@@ -31,7 +31,7 @@ import {
     sortedAnswerArray,
     unApprovedAnswerPost1,
 } from '../../../../helpers/sample/metis-sample-data';
-import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';

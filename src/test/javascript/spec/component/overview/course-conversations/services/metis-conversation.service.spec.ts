@@ -1,14 +1,14 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Course } from 'app/entities/course.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Subject, forkJoin, of } from 'rxjs';

@@ -22,7 +22,6 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { GuidedTourMapping } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour-setting.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -57,6 +56,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;

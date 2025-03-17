@@ -16,11 +16,11 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;

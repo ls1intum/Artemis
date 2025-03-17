@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { EventManager } from 'app/shared/service/event-manager.service';

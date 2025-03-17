@@ -1,5 +1,5 @@
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
-import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
+import { EmojiUtils } from 'app/communication/emoji/emoji.utils';
 
 describe('EmojiUtils', () => {
     it('should return the correct emoji sheet url', () => {

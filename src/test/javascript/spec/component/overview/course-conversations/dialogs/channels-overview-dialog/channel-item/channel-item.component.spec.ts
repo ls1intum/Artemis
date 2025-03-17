@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ChannelItemComponent } from 'app/course/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO } from '../../../helpers/conversationExampleModels';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ChannelItemComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 describe('ChannelItemComponent', () => {
     let component: ChannelItemComponent;

@@ -1,7 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import '@angular/localize/init';
-import { ConversationMembersComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { input, signal } from '@angular/core';
@@ -10,14 +9,13 @@ import { Course } from 'app/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/conversation.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ConversationAddUsersDialogComponent } from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { MockTranslateService } from '../../../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,6 +23,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockSyncStorage } from '../../../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ConversationMembersComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
+import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

@@ -5,7 +5,6 @@ import dayjs from 'dayjs';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ForwardedMessageComponent } from 'app/shared/metis/forwarded-message/forwarded-message.component';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -14,6 +13,7 @@ import { PostingContentComponent } from 'app/communication/posting-content.compo
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
+import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 
 describe('ForwardedMessageComponent', () => {
     let component: ForwardedMessageComponent;

@@ -5,7 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
-import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -16,6 +15,7 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/programming/manage/u
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 
 describe('ProgrammingExerciseModeComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;

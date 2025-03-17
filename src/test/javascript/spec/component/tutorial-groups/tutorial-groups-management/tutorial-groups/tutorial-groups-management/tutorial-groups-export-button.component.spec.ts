@@ -4,7 +4,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Directive, Input } from '@angular/core';
 import { of, throwError } from 'rxjs';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockModule, MockProvider } from 'ng-mocks';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { of } from 'rxjs';

@@ -12,7 +12,7 @@ import {
     canLeaveConversation,
     canRemoveUsersFromConversation,
     canRevokeChannelModeratorRole,
-} from 'app/shared/metis/conversations/conversation-permissions.utils';
+} from 'app/communication/conversations/conversation-permissions.utils';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 

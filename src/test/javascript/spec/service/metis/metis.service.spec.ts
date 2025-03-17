@@ -43,7 +43,7 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/communication/saved-post.service';

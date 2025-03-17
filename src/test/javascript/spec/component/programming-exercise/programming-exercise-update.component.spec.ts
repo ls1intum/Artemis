@@ -23,8 +23,7 @@ import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -43,6 +42,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;

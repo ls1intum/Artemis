@@ -1,15 +1,13 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ConversationAddUsersDialogComponent } from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
-import { AddUsersFormData } from 'app/course/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
@@ -24,6 +22,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
+import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { AddUsersFormData } from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 

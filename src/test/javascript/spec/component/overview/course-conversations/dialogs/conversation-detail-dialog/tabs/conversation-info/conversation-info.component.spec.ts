@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationInfoComponent } from 'app/course/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
@@ -20,6 +19,7 @@ import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/cour
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ConversationInfoComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { PostComponent } from 'app/shared/metis/post/post.component';
+import { PostComponent } from 'app/communication/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
@@ -26,7 +26,7 @@ import {
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -48,7 +48,7 @@ import { MockAccountService } from '../../../../helpers/mocks/service/mock-accou
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { MockConversationService } from '../../../../helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
 

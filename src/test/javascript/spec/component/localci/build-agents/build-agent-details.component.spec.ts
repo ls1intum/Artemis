@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
@@ -21,6 +20,7 @@ import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.servic
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;

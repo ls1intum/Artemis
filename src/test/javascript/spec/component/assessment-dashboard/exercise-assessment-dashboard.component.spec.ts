@@ -7,7 +7,6 @@ import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { GuidedTourMapping } from 'app/core/guided-tour/tours/tutor-assessment-tourguided-tour-setting.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -66,6 +65,7 @@ import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;

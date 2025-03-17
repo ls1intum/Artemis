@@ -13,12 +13,12 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MockMetisConversationService } from '../helpers/mocks/service/mock-metis-conversation.service';
 import { of } from 'rxjs';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import * as courseModel from 'app/entities/course.model';
+import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 
 class MockOneToOneChatService {
     createWithId = jest.fn().mockReturnValue(of({ body: { id: 1 } }));

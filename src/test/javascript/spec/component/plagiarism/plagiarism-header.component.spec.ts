@@ -1,7 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject } from 'rxjs';
-import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
@@ -15,6 +14,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;

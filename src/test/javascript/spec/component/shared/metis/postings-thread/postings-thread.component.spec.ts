@@ -7,8 +7,8 @@ import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-an
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockComponent, MockInstance } from 'ng-mocks';
-import { PostComponent } from 'app/shared/metis/post/post.component';
-import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { PostComponent } from 'app/communication/post/post.component';
+import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';

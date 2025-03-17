@@ -20,15 +20,15 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
-import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { NgModel } from '@angular/forms';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;

@@ -33,7 +33,6 @@ import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/course/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
@@ -42,6 +41,7 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { ElementRef, signal } from '@angular/core';
+import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,

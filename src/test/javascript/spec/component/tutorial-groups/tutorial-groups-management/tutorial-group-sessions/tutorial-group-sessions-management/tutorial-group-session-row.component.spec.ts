@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 
-import { TutorialGroupSessionRowComponent } from 'app/course/tutorial-groups/shared/tutorial-group-sessions-table/tutorial-group-session-row/tutorial-group-session-row.component';
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -10,7 +9,7 @@ import { By } from '@angular/platform-browser';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
@@ -18,6 +17,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupSessionRowComponent } from 'app/tutorialgroup/shared/tutorial-group-sessions-table/tutorial-group-session-row/tutorial-group-session-row.component';
 
 describe('TutorialGroupSessionRowComponent', () => {
     let component: TutorialGroupSessionRowComponent;
