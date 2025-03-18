@@ -1,4 +1,5 @@
 name: Build
+# The name of this workflow (Build) should be in sync with the test-e2e.yml workflow's workflow_run listener.
 
 on:
   pull_request:
@@ -11,6 +12,7 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
+    - '!.github/workflows/test-e2e.yml'
     - '!.github/workflows/testserver-deployment.yml'
     - '!.github/workflows/staging-deployment.yml'
   push:
@@ -28,6 +30,7 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
+    - '!.github/workflows/test-e2e.yml'
   release:
     types:
     - created
