@@ -1,5 +1,4 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import {
     MissingResultInformation,
     ResultTemplateStatus,
@@ -15,8 +14,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { Result } from 'app/entities/result.model';
@@ -25,13 +23,11 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { faCircleNotch, faExclamationCircle, faExclamationTriangle, faFile } from '@fortawesome/free-solid-svg-icons';
-import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
-import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 import { ResultProgressBarComponent } from './result-progress-bar/result-progress-bar.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -64,13 +60,11 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
-    private participationService = inject(ParticipationService);
     private translateService = inject(TranslateService);
     private modalService = inject(NgbModal);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
     private resultService = inject(ResultService);
-    private csvDownloadService = inject(CsvDownloadService);
     private router = inject(Router);
 
     // make constants available to html
@@ -115,7 +109,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly faFile = faFile;
-    readonly farCircle = faCircle;
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 
@@ -344,29 +337,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
         if (feedbackComponentParameters.showMissingAutomaticFeedbackInformation) {
             modalComponentInstance.showMissingAutomaticFeedbackInformation = feedbackComponentParameters.showMissingAutomaticFeedbackInformation;
-        }
-    }
-
-    /**
-     * Checks whether a build artifact exists for a submission.
-     */
-    hasBuildArtifact() {
-        if (this.result && this.submission && this.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING) {
-            const submission = this.submission as ProgrammingSubmission;
-            return submission.buildArtifact;
-        }
-        return false;
-    }
-
-    /**
-     * Download the build results of a specific participation.
-     * @param participationId The identifier of the participation.
-     */
-    downloadBuildResult(participationId?: number) {
-        if (participationId) {
-            this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-                this.csvDownloadService.downloadArtifact(artifact.fileContent, artifact.fileName);
-            });
         }
     }
 }

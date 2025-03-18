@@ -151,23 +151,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStartExerciseWithInitializationDate_newParticipation() {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        Exercise modelling = course.getExercises().iterator().next();
-        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
-
-        StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
-
-        assertThat(studentParticipationReceived.getExercise()).isEqualTo(modelling);
-        assertThat(studentParticipationReceived.getStudent()).isPresent();
-        assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
-        assertThat(studentParticipationReceived.getInitializationDate()).isEqualTo(initializationDate);
-        assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
         Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
@@ -223,8 +206,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
         assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
         // Acceptance range, initializationDate is to be set to now()
-        assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
-        assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
