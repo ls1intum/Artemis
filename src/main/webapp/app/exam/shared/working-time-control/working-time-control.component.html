@@ -1,18 +1,18 @@
 <div class="d-flex flex-column gap-1 working-time-control">
     <div class="d-flex flex-column gap-1">
-        @if (durationLabelText) {
-            <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText"></label>
+        @if (durationLabelText()) {
+            <label for="workingTimeHours" class="me-4" [jhiTranslate]="durationLabelText()!"></label>
         }
         <div class="input-group">
             <input
                 [(ngModel)]="workingTime.hours"
                 (ngModelChange)="onDurationChanged()"
-                [disabled]="disabled"
+                [disabled]="disabled()"
                 id="workingTimeHours"
                 name="hours"
                 type="number"
                 class="text-center form-control form-number-input"
-                [min]="allowNegative ? null : 0"
+                [min]="allowNegative() ? null : 0"
                 step="1"
                 required
             />
@@ -20,12 +20,12 @@
             <input
                 [(ngModel)]="workingTime.minutes"
                 (ngModelChange)="onDurationChanged()"
-                [disabled]="disabled"
+                [disabled]="disabled()"
                 id="workingTimeMinutes"
                 name="minutes"
                 type="number"
                 class="text-center form-control form-number-input"
-                [min]="allowNegative ? -59 : 0"
+                [min]="allowNegative() ? -59 : 0"
                 max="59"
                 step="1"
                 required
@@ -34,12 +34,12 @@
             <input
                 [(ngModel)]="workingTime.seconds"
                 (ngModelChange)="onDurationChanged()"
-                [disabled]="disabled"
+                [disabled]="disabled()"
                 id="workingTimeSeconds"
                 name="seconds"
                 type="number"
                 class="text-center form-control form-number-input"
-                [min]="allowNegative ? -59 : 0"
+                [min]="allowNegative() ? -59 : 0"
                 max="59"
                 step="1"
                 required
@@ -47,21 +47,21 @@
             <label for="workingTimeSeconds" class="input-group-text">s</label>
         </div>
     </div>
-    @if (exam && relative) {
+    @if (exam() && relative()) {
         <div class="d-flex flex-column gap-1">
-            @if (relativeLabelText) {
-                <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText"></label>
+            @if (relativeLabelText()) {
+                <label for="workingTimePercent" class="me-4 flex-fill" [jhiTranslate]="relativeLabelText()!"></label>
             }
             <div class="input-group">
                 <input
                     [(ngModel)]="workingTime.percent"
                     (ngModelChange)="onPercentChanged()"
-                    [disabled]="disabled"
+                    [disabled]="disabled()"
                     id="workingTimePercent"
                     name="percent"
                     type="number"
                     class="text-center form-control form-number-input"
-                    [min]="allowNegative ? -100 : 0"
+                    [min]="allowNegative() ? -100 : 0"
                     step=".01"
                     required
                 />

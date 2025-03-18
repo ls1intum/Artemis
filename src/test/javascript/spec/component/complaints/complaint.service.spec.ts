@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';

@@ -1,4 +1,4 @@
-import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
+import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
 
 describe('WeekDays', () => {
     it('should return the correct translation key', () => {

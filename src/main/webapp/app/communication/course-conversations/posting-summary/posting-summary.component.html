@@ -1,0 +1,92 @@
+<div class="posting-summary rounded p-2" (click)="onTriggerNavigateToPost()">
+    @if (post() !== undefined) {
+        @if (isShowSummary) {
+            <div class="posting-summary-conversation fs-x-small text-secondary d-flex align-items-center mb-1">
+                <span class="d-inline-block">
+                    <fa-icon [icon]="post()!.conversation!.type! === ConversationType.CHANNEL ? faHashtag : faLock" />
+                </span>
+                <span class="d-inline-block ms-1">
+                    {{ post()!.conversation!.title! }}
+                    @if (isAnswerPost) {
+                        > <span jhiTranslate="artemisApp.metis.post.thread"></span>
+                    }
+                </span>
+            </div>
+        }
+        @if (isShowContent) {
+            <div class="posting-summary-wrap">
+                @if (isAnswerPost) {
+                    <div class="text-secondary">
+                        <fa-icon [icon]="faEllipsis" />
+                    </div>
+                }
+                <div class="posting-summary-content d-inline-flex align-items-start gap-2" [ngClass]="{ 'is-answer-post': isAnswerPost }">
+                    <jhi-profile-picture
+                        imageSizeInRem="2.25"
+                        fontSizeInRem="0.9"
+                        imageId="post-profile-picture"
+                        defaultPictureId="post-default-profile-picture"
+                        [authorId]="post()!.author!.id!"
+                        [authorName]="post()!.author!.name!"
+                        [imageUrl]="addPublicFilePrefix(post()!.author!.imageUrl!)"
+                    />
+                    <div class="posting-summary-author-content fs-small flex-column align-items-start">
+                        <div>
+                            <span class="fw-semibold d-inline-block me-1">{{ post()!.author!.name! }}</span>
+                            @if (post()!.creationDate !== undefined) {
+                                <span class="fs-small text-secondary" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ post()!.creationDate! | artemisDate: 'time' }}">
+                                    {{ postingIsOfToday ? (post()!.creationDate! | artemisDate: 'time') : (post()!.creationDate! | artemisDate: 'short-date') }}
+                                </span>
+                            }
+                        </div>
+                        <div>
+                            <jhi-posting-content
+                                [previewMode]="false"
+                                [content]="post()!.content!"
+                                [author]="post()!.author!"
+                                [isEdited]="!!post()!.updatedDate"
+                                [posting]="post()!"
+                                [isReply]="false"
+                                [isSubscribeToMetis]="false"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (isShowSavedPostOptions()) {
+            <div class="posting-summary-saved-post-options">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Saved options">
+                    <button
+                        [disabled]="post()!.savedPostStatus === SavedPostStatus.PROGRESS"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostProgress' | artemisTranslate }}"
+                        (click)="onStatusChangeClick(SavedPostStatus.PROGRESS)"
+                    >
+                        <fa-icon [icon]="faBookmark" />
+                    </button>
+                    <button
+                        [disabled]="post()!.savedPostStatus === SavedPostStatus.COMPLETED"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostComplete' | artemisTranslate }}"
+                        (click)="onStatusChangeClick(SavedPostStatus.COMPLETED)"
+                    >
+                        <fa-icon [icon]="faCheckSquare" />
+                    </button>
+                    <button
+                        [disabled]="post()!.savedPostStatus === SavedPostStatus.ARCHIVED"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostArchived' | artemisTranslate }}"
+                        (click)="onStatusChangeClick(SavedPostStatus.ARCHIVED)"
+                    >
+                        <fa-icon [icon]="faBoxArchive" />
+                    </button>
+                </div>
+            </div>
+        }
+    }
+</div>

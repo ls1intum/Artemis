@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -17,6 +18,7 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingUtilTestService {
 
     @Autowired

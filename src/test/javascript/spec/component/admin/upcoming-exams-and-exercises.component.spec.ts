@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { UpcomingExamsAndExercisesComponent } from 'app/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockExamManagementService } from '../../helpers/mocks/service/mock-exam-management.service';

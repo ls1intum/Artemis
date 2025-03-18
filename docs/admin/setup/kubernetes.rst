@@ -275,7 +275,7 @@ e.g. it will look like this:
 Configure Artemis Resources
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 To run Artemis, you need to configure the Artemis' User Management, Version Control and Continuous Integration.
-You can either run it with our Integrated Code Lifecycle Setup or Jenkins, GitLab.
+You can either run it with our Integrated Code Lifecycle Setup or Jenkins.
 Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration
 for User Management, Version Control and Continuous Integration.
 
@@ -348,7 +348,7 @@ ConfigMaps are used to store configuration data in key-value pairs.
 You can change the current Spring profiles used for running Artemis in the
 ``src/main/kubernetes/artemis/configmap/artemis-configmap.yml`` file by changing ``SPRING_PROFILES_ACTIVE``.
 The current ones are set to use our Integrated Code Lifecycle Setup.
-If you want to use Jenkins and GitLab please replace ``localci,localvc`` with ``jenkins,gitlab``.
+If you want to use Jenkins please replace ``localci,localvc`` with ``jenkins,localvc``.
 You can also change ``prod`` to ``dev`` if you want to run in development profile.
 
 
