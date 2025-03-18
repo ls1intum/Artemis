@@ -28,10 +28,8 @@
                         <input type="checkbox" id="directMessageCheckbox" [checked]="sendAsDirectMessage()" (change)="toggleSendAsDirectMessage()" />
                         <label for="directMessageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendAsDirectMessage"></label>
                     </div>
-                }
-
-                <div class="d-flex gap-2">
-                    @if (editType === EditType.UPDATE) {
+                } @else {
+                    <div class="d-flex gap-2">
                         <button
                             jhi-posting-button
                             [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
@@ -47,8 +45,8 @@
                             id="save"
                             type="submit"
                         ></button>
-                    }
-                </div>
+                    </div>
+                }
             </div>
         </div>
     </div>

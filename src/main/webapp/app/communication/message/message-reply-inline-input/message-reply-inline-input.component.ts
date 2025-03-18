@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject, input, signal } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,7 +25,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
     readonly activeConversation = input<ConversationDTO>();
 
-    @Output() valueChange = new EventEmitter<void>();
+    valueChange = output<void>();
 
     sendAsDirectMessage = signal<boolean>(false);
 

@@ -113,7 +113,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     canPin = false;
     channels: ChannelDTO[] = [];
     users: UserPublicInfoDTO[] = [];
-    originalAnswerId: number | undefined;
+    originalAnswerId?: number;
     posting = input<T>();
     isThreadSidebar = input<boolean>();
     isEmojiCount = input<boolean>(false);
