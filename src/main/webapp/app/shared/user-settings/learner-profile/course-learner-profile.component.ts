@@ -140,7 +140,7 @@ export class CourseLearnerProfileComponent implements OnInit {
 
     loadCourses() {
         this.courses = [];
-        //iterat eover each course ID in courseLearnerProfiles map to retrieve course title
+        //iterate over each course ID in courseLearnerProfiles map to retrieve course title
         Object.keys(this.courseLearnerProfiles).forEach((course) => {
             // course is guaranteed to be int, as this.courseLearnerProfiles has type Record<number, ... >
             this.courseManagementService.find(parseInt(course)).subscribe({

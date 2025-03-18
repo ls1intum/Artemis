@@ -8,7 +8,7 @@ export class LearnerProfileApiService extends BaseApiHttpService {
         return await this.get<Record<number, CourseLearnerProfileDTO>>('atlas/course-learner-profiles');
     }
 
-    async putUpdatedCourseLearnerProfile(courseLearnerProfile: CourseLearnerProfileDTO): Promise<CourseLearnerProfileDTO> {
+    putUpdatedCourseLearnerProfile(courseLearnerProfile: CourseLearnerProfileDTO): Promise<CourseLearnerProfileDTO> {
         return this.put<CourseLearnerProfileDTO>(`atlas/course-learner-profiles/${courseLearnerProfile.id}`, courseLearnerProfile);
     }
 }

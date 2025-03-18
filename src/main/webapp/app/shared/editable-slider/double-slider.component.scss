@@ -17,12 +17,15 @@
     pointer-events: all;
     cursor: pointer;
 }
+
 input[type='range']#currentSlider::-webkit-slider-thumb {
     background-color: var(--primary);
 }
+
 input[type='range']#currentSlider::-moz-range-thumb {
     background-color: var(--primary);
 }
+
 input[type='range']#currentSlider::-ms-thumb {
     background-color: var(--primary);
 }
@@ -30,6 +33,7 @@ input[type='range']#currentSlider::-ms-thumb {
 input[type='number']::-webkit-inner-spin-button {
     opacity: 1;
 }
+
 input[type='number']::-webkit-outer-spin-button {
     opacity: 1;
 }
