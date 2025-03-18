@@ -6,8 +6,8 @@ import { NgClass, NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NotReleasedTagComponent } from '../components/not-released-tag.component';
 import { TranslateDirective } from '../language/translate.directive';
-import { IncludedInScoreBadgeComponent } from '../../exercises/shared/exercise-headers/included-in-score-badge.component';
-import { DifficultyBadgeComponent } from '../../exercises/shared/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from '../../exercise/exercise-headers/included-in-score-badge.component';
+import { DifficultyBadgeComponent } from '../../exercise/exercise-headers/difficulty-badge.component';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 
 interface ShowTagsConfig {

@@ -5,10 +5,10 @@ import { Router } from '@angular/router';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
-import { AlertService } from 'app/core/util/alert.service';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * Return the global native browser window object with any type to prevent type errors

@@ -4,11 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,19 +49,21 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
+import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
@@ -79,6 +81,9 @@ class Lti13ServiceTest {
 
     @Mock
     private ExerciseTestRepository exerciseRepository;
+
+    @Mock
+    private LectureRepository lectureRepository;
 
     @Mock
     private CourseTestRepository courseRepository;
@@ -120,7 +125,7 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
-        lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
+        lti13Service = new Lti13Service(userRepository, exerciseRepository, lectureRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
                 onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -149,7 +154,7 @@ class Lti13ServiceTest {
         ObjectNode jsonObject = new ObjectMapper().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
-        prepareForPerformLaunch(result.courseId(), result.exerciseId());
+        prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
@@ -160,7 +165,7 @@ class Lti13ServiceTest {
     @Test
     void performLaunch_invalidToken() {
         MockExercise exercise = this.getMockExercise(true);
-        prepareForPerformLaunch(exercise.courseId, exercise.exerciseId);
+        prepareForPerformExerciseLaunch(exercise.courseId, exercise.exerciseId, true);
 
         assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -209,21 +214,19 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_courseNotFound() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-        Course course = new Course();
-        course.setId(1000L);
-        exercise.setCourse(course);
+        long courseId = 1000L;
+        long exerciseId = 123L;
+        prepareForPerformExerciseLaunch(courseId, exerciseId, true);
 
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(any());
-        doThrow(EntityNotFoundException.class).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(1000L);
+        when(courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId))
+                .thenThrow(new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound"));
+        when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
-        OidcIdToken oidcIdToken = mock(OidcIdToken.class);
-        String target = "https://some-artemis-domain.org/courses/12/exercises/123";
-        doReturn(target).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId)).withMessage("Course not found")
+                .satisfies(exception -> {
+                    assertThat(exception.getEntityName()).isEqualTo("LTI");
+                    assertThat(exception.getErrorKey()).isEqualTo("ltiCourseNotFound");
+                });
     }
 
     @Test
@@ -233,6 +236,36 @@ class Lti13ServiceTest {
         doReturn("https://some-artemis-domain.org/courses/" + exercise.courseId + "/exercises/" + exercise.exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+    }
+
+    @Test
+    void performLaunch_hasTargetLinkWithoutExerciseCalled() {
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        prepareForPerformCompetencyLaunch(1L, true);
+
+        lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
+
+        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("https://otherDomain.com", "1", "1", "resourceLinkUrl");
+        verify(launchRepository).save(any());
+    }
+
+    @Test
+    void performLaunch_onlineCourseConfigurationNull() {
+        when(oidcIdToken.getClaim("sub")).thenReturn("1");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
+        when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
+        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        jsonObject.put("id", "resourceLinkUrl");
+        when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
+        prepareForPerformCompetencyLaunch(1L, false);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId))
+                .withMessageContaining("LTI is not configured for this course");
     }
 
     @Test
@@ -498,6 +531,176 @@ class Lti13ServiceTest {
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
     }
 
+    @Test
+    void getCourseFromTargetLink_validCoursePath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123";
+        Course mockCourse = new Course();
+        mockCourse.setId(123L);
+
+        when(courseRepository.findById(123L)).thenReturn(Optional.of(mockCourse));
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isPresent();
+        assertThat(course.get().getId()).isEqualTo(123L);
+        verify(courseRepository).findById(123L);
+    }
+
+    @Test
+    void getCourseFromTargetLink_malformedUrl() {
+        String targetLinkUrl = "invalid-url";
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isEmpty();
+        verifyNoInteractions(courseRepository);
+    }
+
+    @Test
+    void getCourseFromTargetLink_missingCourseId() {
+        String targetLinkUrl = "https://some-artemis-domain.org/with/invalid/path";
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isEmpty();
+        verifyNoInteractions(courseRepository);
+    }
+
+    @Test
+    void getCourseFromTargetLink_noMatchingPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/lectures/567";
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isEmpty();
+        verifyNoInteractions(courseRepository);
+    }
+
+    @Test
+    void getCourseFromTargetLink_validCompetencyPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/456/competencies";
+        Course mockCourse = new Course();
+        mockCourse.setId(456L);
+
+        when(courseRepository.findById(456L)).thenReturn(Optional.of(mockCourse));
+
+        Optional<Course> course = lti13Service.getCourseFromTargetLink(targetLinkUrl);
+
+        assertThat(course).isPresent();
+        assertThat(course.get().getId()).isEqualTo(456L);
+        verify(courseRepository).findById(456L);
+    }
+
+    @Test
+    void getTargetLinkType_competencyPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/competencies";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.COMPETENCY);
+    }
+
+    @Test
+    void getTargetLinkType_irisPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.IRIS);
+    }
+
+    @Test
+    void getTargetLinkType_learningPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/learning-path";
+
+        DeepLinkingType linkType = lti13Service.getTargetLinkType(targetLinkUrl);
+
+        assertThat(linkType).isEqualTo(DeepLinkingType.LEARNING_PATH);
+    }
+
+    @Test
+    void getTargetLinkType_unknownPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/invalid-path";
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.getTargetLinkType(targetLinkUrl)).withMessage("Content type not found");
+    }
+
+    @Test
+    void getLectureFromTargetLink_validLecturePath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/lectures/456";
+        Lecture mockLecture = new Lecture();
+        mockLecture.setId(456L);
+
+        when(lectureRepository.findById(456L)).thenReturn(Optional.of(mockLecture));
+
+        Optional<Lecture> lecture = lti13Service.getLectureFromTargetLink(targetLinkUrl);
+
+        assertThat(lecture).isPresent();
+        assertThat(lecture.get().getId()).isEqualTo(456L);
+        verify(lectureRepository).findById(456L);
+    }
+
+    @Test
+    void buildLtiEmailInUseResponse_emailInUse() {
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        OidcIdToken ltiIdToken = mock(OidcIdToken.class);
+        String email = "testuser@email.com";
+        String username = "testuser";
+
+        when(ltiIdToken.getEmail()).thenReturn(email);
+        when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.of(username));
+
+        lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+
+        verify(response).addHeader("ltiSuccessLoginRequired", username);
+        verify(ltiService).prepareLogoutCookie(response);
+    }
+
+    @Test
+    void buildLtiEmailInUseResponse_emailNotInUse() {
+        HttpServletResponse response = mock(HttpServletResponse.class);
+        OidcIdToken ltiIdToken = mock(OidcIdToken.class);
+        String email = "testuser@email.com";
+
+        when(ltiIdToken.getEmail()).thenReturn(email);
+        when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.empty());
+
+        lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+
+        verify(response, never()).addHeader(eq("ltiSuccessLoginRequired"), anyString());
+        verify(ltiService).prepareLogoutCookie(response);
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_competencyPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/competencies";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_learningPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/learning-path";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void hasTargetLinkWithoutExercise_irisPath() {
+        String targetLinkUrl = "https://some-artemis-domain.org/courses/123/dashboard";
+        Optional<Lecture> targetLecture = Optional.empty();
+
+        boolean result = lti13Service.hasTargetLinkWithoutExercise(targetLinkUrl, targetLecture);
+
+        assertThat(result).isTrue();
+    }
+
     private State getValidStateForNewResult(Result result) {
         User user = new User();
         user.setLogin("someone");
@@ -550,15 +753,44 @@ class Lti13ServiceTest {
         return new MockExercise(exerciseId, courseId);
     }
 
+    private Course getMockCourse(long courseId) {
+        Course course = new Course();
+        course.setId(courseId);
+        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+
+        return course;
+    }
+
     private record MockExercise(long exerciseId, long courseId) {
     }
 
-    private void prepareForPerformLaunch(long courseId, long exerciseId) {
+    private void prepareForPerformExerciseLaunch(long courseId, long exerciseId, boolean isOnlineCourse) {
+        this.prepareForPerformLaunch(courseId, "https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId, isOnlineCourse);
+    }
+
+    private void prepareForPerformCompetencyLaunch(long courseId, boolean isOnlineCourse) {
+        this.prepareForPerformLaunch(courseId, "https://some-artemis-domain.org/courses/" + courseId + "/competencies", isOnlineCourse);
+    }
+
+    private void prepareForPerformLaunch(long courseId, String targetLinkUri, boolean isOnlineCourse) {
         when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn(targetLinkUri);
 
         Optional<User> user = Optional.of(new User());
         doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+
+        if (isOnlineCourse) {
+            doReturn(Optional.of(getMockCourse(courseId))).when(courseRepository).findById(courseId);
+            doReturn(getMockCourse(courseId)).when(courseRepository).findWithEagerOnlineCourseConfigurationById(courseId);
+        }
+        else {
+            Course course = getMockCourse(courseId);
+            course.setOnlineCourseConfiguration(null);
+            doReturn(Optional.of(course)).when(courseRepository).findById(courseId);
+            doReturn(course).when(courseRepository).findWithEagerOnlineCourseConfigurationById(courseId);
+        }
+
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
     }

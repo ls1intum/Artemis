@@ -5,7 +5,7 @@ import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { examWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';

@@ -6,7 +6,6 @@ import jakarta.annotation.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
-import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -43,15 +42,6 @@ public interface VersionControlService {
      * @return whether the repository is valid
      */
     Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri);
-
-    /**
-     * Get the last commit details that are included in the given requestBody that notifies about a push
-     *
-     * @param requestBody The request Body received from the VCS.
-     * @return the last commit details that are included in the given requestBody
-     * @throws VersionControlException if the Body could not be parsed
-     */
-    Commit getLastCommitDetails(Object requestBody) throws VersionControlException;
 
     /**
      * Retrieves the date at which the push event was received by the VCS instance.
@@ -97,11 +87,12 @@ public interface VersionControlService {
      * @param sourceBranch         The default branch of the source repository
      * @param targetProjectKey     The key of the target project to which to copy the new repository to
      * @param targetRepositoryName The desired name of the target repository
+     * @param attempt              The attempt number
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
-            throws VersionControlException;
+    VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
+            Integer attempt) throws VersionControlException;
 
     /**
      * Get the default branch of the repository

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CompetencyNodeComponent } from 'app/course/learning-paths/components/competency-node/competency-node.component';
+import { CompetencyNodeComponent } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
 
 describe('CompetencyNodeComponent', () => {

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

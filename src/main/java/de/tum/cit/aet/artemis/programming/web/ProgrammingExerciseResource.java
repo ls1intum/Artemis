@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.io.IOException;
@@ -91,6 +92,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryS
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -161,6 +163,8 @@ public class ProgrammingExerciseResource {
 
     private final Environment environment;
 
+    private final RepositoryCheckoutService repositoryCheckoutService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -170,7 +174,8 @@ public class ProgrammingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Environment environment) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Environment environment,
+            RepositoryCheckoutService repositoryCheckoutService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -196,6 +201,7 @@ public class ProgrammingExerciseResource {
         this.channelRepository = channelRepository;
         this.athenaApi = athenaApi;
         this.environment = environment;
+        this.repositoryCheckoutService = repositoryCheckoutService;
     }
 
     /**
@@ -903,6 +909,7 @@ public class ProgrammingExerciseResource {
      * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
      *         for the requested programming language for the submission and solution build.
      */
+    @Profile(PROFILE_LOCALCI)
     @GetMapping("programming-exercises/repository-checkout-directories")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -910,7 +917,8 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
-        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage, checkoutSolution);
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = repositoryCheckoutService.getCheckoutDirectories(programmingLanguage, checkoutSolution);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
     }
+
 }

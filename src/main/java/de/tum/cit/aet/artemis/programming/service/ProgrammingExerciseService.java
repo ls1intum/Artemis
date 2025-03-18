@@ -30,7 +30,6 @@ import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +84,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.CIPermission;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
@@ -510,7 +508,6 @@ public class ProgrammingExerciseService {
      *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
         var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
@@ -522,11 +519,6 @@ public class ProgrammingExerciseService {
         continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
         // solution build plan
         continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
-
-        // Give appropriate permissions for CI projects
-        continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
-
-        giveCIProjectPermissions(programmingExercise);
 
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
@@ -944,31 +936,6 @@ public class ProgrammingExerciseService {
     private SearchResultPageDTO<ProgrammingExercise> getAllOnPageForSpecification(PageRequest pageable, Specification<ProgrammingExercise> specification) {
         Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
-    }
-
-    /**
-     * add project permissions to project of the build plans of the given exercise
-     *
-     * @param exercise the exercise whose build plans projects should be configured with permissions
-     */
-    public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-
-        final var editorGroup = course.getEditorGroupName();
-        final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
-
-        List<String> adminGroups = new ArrayList<>();
-        adminGroups.add(course.getInstructorGroupName());
-        if (StringUtils.isNotEmpty(editorGroup)) {
-            adminGroups.add(editorGroup);
-        }
-
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-        continuousIntegration.giveProjectPermissions(exercise.getProjectKey(), adminGroups,
-                List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.CREATEREPOSITORY, CIPermission.ADMIN));
-        if (teachingAssistantGroup != null) {
-            continuousIntegration.giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
-        }
     }
 
     /**

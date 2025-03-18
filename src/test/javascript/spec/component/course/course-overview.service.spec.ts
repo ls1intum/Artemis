@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';

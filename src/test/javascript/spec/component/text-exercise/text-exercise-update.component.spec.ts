@@ -2,29 +2,29 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 
-import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/text-exercise-update.component';
+import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
+import * as Utils from 'app/exercise/course-exercises/course-utils';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { NgModel } from '@angular/forms';
-import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
