@@ -74,7 +74,7 @@ public class BuildJobGitService extends AbstractGitService {
     @PostConstruct
     public void init() {
         if (useSsh()) {
-            log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories");
+            log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories.");
             if (sshUrlTemplate.isEmpty()) {
                 throw new RuntimeException("No SSH url template was set but should use SSH for build agent authentication.");
             }
