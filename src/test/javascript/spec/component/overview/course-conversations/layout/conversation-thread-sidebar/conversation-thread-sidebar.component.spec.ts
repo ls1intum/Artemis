@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { PostComponent } from 'app/shared/metis/post/post.component';
-import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
+import { PostComponent } from 'app/communication/post/post.component';
+import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/entities/metis/post.model';
 import { post } from '../../../../../helpers/sample/metis-sample-data';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';

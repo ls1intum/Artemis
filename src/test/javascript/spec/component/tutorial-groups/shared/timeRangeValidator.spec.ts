@@ -1,5 +1,5 @@
 import { FormControl, FormGroup } from '@angular/forms';
-import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
+import { validTimeRange } from 'app/tutorialgroup/shared/timeRangeValidator';
 
 describe('TimeRangeValidator', () => {
     it('should mark time range as invalid if start time is after end time', () => {

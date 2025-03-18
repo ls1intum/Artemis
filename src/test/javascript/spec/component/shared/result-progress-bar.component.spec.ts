@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { ResultProgressBarComponent } from '../../../../../main/webapp/app/exercises/shared/result/result-progress-bar/result-progress-bar.component';
+import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
