@@ -95,6 +95,8 @@ jobs:
 
       # Once the tests are finished, we need to parse the test results to get
       # the total number of tests, the number of tests that passed, failed or were skipped.
+      # We need this info to display it to the Developers in the Workflow section below each pull request
+      # The next step in this workflow uses this info to update the status.
       - name: Parse test results
         if: always()
         id: parse-results
