@@ -3,8 +3,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
-import { FileUploadExerciseUpdateComponent } from 'app/file-upload/manage/file-upload-exercise-update.component';
-import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExerciseUpdateComponent } from 'app/fileupload/manage/file-upload-exercise-update.component';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
