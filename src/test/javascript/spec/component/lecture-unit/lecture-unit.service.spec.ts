@@ -5,7 +5,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -19,7 +19,7 @@ describe('LectureUnitService', () => {
     let service: LectureUnitService;
     let httpMock: HttpTestingController;
     let exerciseUnit: ExerciseUnit;
-    let attachmentUnit: AttachmentUnit;
+    let attachmentUnit: AttachmentVideoUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
     let lecture: Lecture;
@@ -43,7 +43,7 @@ describe('LectureUnitService', () => {
         attachment.name = 'Example attachment';
         attachment.link = '/path/to/file/test.pdf';
 
-        attachmentUnit = new AttachmentUnit();
+        attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.id = 37;
         attachmentUnit.description = 'Lorem Ipsum Attachment';
         attachmentUnit.attachment = attachment;

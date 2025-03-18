@@ -22,7 +22,7 @@ import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
@@ -504,7 +504,7 @@ describe('LectureUpdateUnitsComponent', () => {
         attachment.name = attachmentUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentUnit();
+        const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.description = attachmentUnitFormData.formProperties.description;
         attachmentUnit.attachment = attachment;
 
@@ -513,7 +513,7 @@ describe('LectureUpdateUnitsComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
-        const attachmentUnitResponse: HttpResponse<AttachmentUnit> = new HttpResponse({
+        const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
             body: attachmentUnit,
             status: 201,
         });
@@ -570,7 +570,7 @@ describe('LectureUpdateUnitsComponent', () => {
         attachment.name = attachmentUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentUnit();
+        const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.description = attachmentUnitFormData.formProperties.description;
         attachmentUnit.attachment = attachment;
 
@@ -579,7 +579,7 @@ describe('LectureUpdateUnitsComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
-        const attachmentUnitResponse: HttpResponse<AttachmentUnit> = new HttpResponse({
+        const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
             body: attachmentUnit,
             status: 201,
         });
@@ -593,7 +593,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isEditingLectureUnit = true;
-        wizardUnitComponent.currentlyProcessedAttachmentUnit = new AttachmentUnit();
+        wizardUnitComponent.currentlyProcessedAttachmentUnit = new AttachmentVideoUnit();
         wizardUnitComponent.currentlyProcessedAttachmentUnit.attachment = new Attachment();
         wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
@@ -636,7 +636,7 @@ describe('LectureUpdateUnitsComponent', () => {
         attachment.name = attachmentUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentUnit();
+        const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.description = attachmentUnitFormData.formProperties.description;
         attachmentUnit.attachment = attachment;
 
@@ -690,7 +690,7 @@ describe('LectureUpdateUnitsComponent', () => {
         attachment.name = attachmentUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentUnit();
+        const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.description = attachmentUnitFormData.formProperties.description;
         attachmentUnit.attachment = attachment;
 
@@ -799,7 +799,7 @@ describe('LectureUpdateUnitsComponent', () => {
         attachment.name = 'test';
         attachment.link = '/path/to/file';
 
-        const attachmentUnit = new AttachmentUnit();
+        const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.attachment = attachment;
 
         wizardUnitComponent.startEditLectureUnit(attachmentUnit);

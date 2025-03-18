@@ -2,7 +2,7 @@
     [lectureUnit]="lectureUnit()"
     [icon]="getAttachmentIcon()"
     [showViewIsolatedButton]="true"
-    [viewIsolatedButtonLabel]="'artemisApp.attachmentUnit.download'"
+    [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"
     (onCompletion)="toggleCompletion($event)"
@@ -11,22 +11,29 @@
 >
     @if (lectureUnit().attachment?.uploadDate) {
         <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentUnit.uploadDate">: </span>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
             {{ lectureUnit().attachment?.uploadDate | artemisDate }}
         </div>
     }
     @if (lectureUnit().attachment?.version) {
         <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentUnit.version">: </span>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
             {{ lectureUnit().attachment?.version }}
         </div>
     }
     @if (lectureUnit().attachment?.link) {
         <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentUnit.FileName">: </span>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
             {{ getFileName() }}
         </div>
     }
+
+    <div class="video-player-container">
+        <div class="ratio ratio-16x9">
+            <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+        </div>
+    </div>
+
     @if (lectureUnit()?.description) {
         <div>
             <hr />

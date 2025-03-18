@@ -59,7 +59,7 @@ public class Attachment extends DomainObject implements Serializable {
 
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
-    private AttachmentUnit attachmentUnit;
+    private AttachmentVideoUnit attachmentVideoUnit;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -127,12 +127,12 @@ public class Attachment extends DomainObject implements Serializable {
         this.lecture = lecture;
     }
 
-    public AttachmentUnit getAttachmentUnit() {
-        return attachmentUnit;
+    public AttachmentVideoUnit getAttachmentVideoUnit() {
+        return attachmentVideoUnit;
     }
 
-    public void setAttachmentUnit(AttachmentUnit attachmentUnit) {
-        this.attachmentUnit = attachmentUnit;
+    public void setAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit) {
+        this.attachmentVideoUnit = attachmentVideoUnit;
     }
 
     public Boolean isVisibleToStudents() {

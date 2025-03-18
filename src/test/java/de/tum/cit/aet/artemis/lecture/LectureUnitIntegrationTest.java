@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -74,13 +74,13 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         this.textUnit = lectureUtilService.createTextUnit();
         this.textUnit2 = lectureUtilService.createTextUnit();
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(false);
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
         // textUnit3 is not one of the lecture units connected to the lecture
         this.textUnit3 = lectureUtilService.createTextUnit();
 
         lectureUtilService.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().orElseThrow(), List.of(textUnit2));
-        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentUnit));
+        this.lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(this.textUnit, onlineUnit, attachmentVideoUnit));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).orElseThrow();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).orElseThrow();

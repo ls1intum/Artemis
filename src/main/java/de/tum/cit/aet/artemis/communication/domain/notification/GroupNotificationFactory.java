@@ -65,8 +65,8 @@ public class GroupNotificationFactory {
 
         Lecture lecture;
         // we get the lecture either from the directly connected lecture or from the attachment unit
-        if (attachment.getAttachmentUnit() != null) {
-            lecture = attachment.getAttachmentUnit().getLecture();
+        if (attachment.getAttachmentVideoUnit() != null) {
+            lecture = attachment.getAttachmentVideoUnit().getLecture();
         }
         else {
             lecture = attachment.getLecture();

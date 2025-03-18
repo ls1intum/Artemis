@@ -10,7 +10,7 @@ import { CreateAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -105,7 +105,7 @@ describe('CreateAttachmentUnitComponent', () => {
         attachment.name = attachmentUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentUnit();
+        const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.description = attachmentUnitFormData.formProperties.description;
         attachmentUnit.attachment = attachment;
 
@@ -114,7 +114,7 @@ describe('CreateAttachmentUnitComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
-        const attachmentUnitResponse: HttpResponse<AttachmentUnit> = new HttpResponse({
+        const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
             body: attachmentUnit,
             status: 201,
         });

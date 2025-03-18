@@ -1,12 +1,12 @@
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
 
-type EntityResponseType = HttpResponse<AttachmentUnit>;
+type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 
 @Injectable({
     providedIn: 'root',
@@ -19,7 +19,7 @@ export class AttachmentUnitService {
 
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient
-            .get<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
+            .get<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
@@ -28,7 +28,7 @@ export class AttachmentUnitService {
          * See: https://issues.chromium.org/issues/374550348
          **/
         return this.httpClient
-            .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, {
+            .post<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, {
                 headers: { 'ngsw-bypass': 'true' },
                 observe: 'response',
             })
@@ -40,7 +40,7 @@ export class AttachmentUnitService {
          * See: https://issues.chromium.org/issues/374550348
          **/
         return this.httpClient
-            .put<AttachmentUnit>(
+            .put<AttachmentVideoUnit>(
                 `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,

@@ -119,7 +119,7 @@ public class AttachmentResource {
 
         // Make sure that the original references are preserved.
         Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
-        attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
+        attachment.setAttachmentVideoUnit(originalAttachment.getAttachmentVideoUnit());
 
         if (file != null) {
             Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(originalAttachment.getLecture().getId().toString());

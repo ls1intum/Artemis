@@ -9,7 +9,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -143,7 +143,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
                             this.hasPdfLectureUnit =
-                                (<AttachmentUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }

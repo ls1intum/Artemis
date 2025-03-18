@@ -9,7 +9,7 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { EditAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/utils/blob-util';
@@ -30,7 +30,7 @@ describe('EditAttachmentUnitComponent', () => {
     let navigateSpy: jest.SpyInstance;
     let updateAttachmentUnitSpy: jest.SpyInstance;
     let attachment: Attachment;
-    let attachmentUnit: AttachmentUnit;
+    let attachmentUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
     let fakeFile: File;
 
@@ -90,7 +90,7 @@ describe('EditAttachmentUnitComponent', () => {
         attachment.name = 'test';
         attachment.link = '/path/to/file';
 
-        attachmentUnit = new AttachmentUnit();
+        attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.id = 1;
         attachmentUnit.description = 'lorem ipsum';
         attachmentUnit.attachment = attachment;

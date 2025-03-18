@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -25,7 +25,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
 
     @ViewChild('attachmentUnitForm')
     attachmentUnitForm: AttachmentUnitFormComponent;
-    attachmentUnitToCreate: AttachmentUnit = new AttachmentUnit();
+    attachmentVideoUnitToCreate: AttachmentVideoUnit = new AttachmentVideoUnit();
     attachmentToCreate: Attachment = new Attachment();
 
     isLoading: boolean;
@@ -38,7 +38,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
             this.lectureId = Number(params.get('lectureId'));
             this.courseId = Number(parentParams.get('courseId'));
         });
-        this.attachmentUnitToCreate = new AttachmentUnit();
+        this.attachmentVideoUnitToCreate = new AttachmentVideoUnit();
         this.attachmentToCreate = new Attachment();
     }
 
@@ -46,7 +46,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
-        const { description, name, releaseDate, competencyLinks } = attachmentUnitFormData.formProperties;
+        const { description, name, videoSource, releaseDate, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // === Setting attachment ===
@@ -57,15 +57,17 @@ export class CreateAttachmentUnitComponent implements OnInit {
         this.attachmentToCreate.uploadDate = dayjs();
 
         // === Setting attachmentUnit ===
-        this.attachmentUnitToCreate.description = description;
-        this.attachmentUnitToCreate.competencyLinks = competencyLinks || [];
+        this.attachmentVideoUnitToCreate.name = name;
+        this.attachmentVideoUnitToCreate.description = description;
+        this.attachmentVideoUnitToCreate.videoSource = videoSource;
+        this.attachmentVideoUnitToCreate.competencyLinks = competencyLinks || [];
 
         this.isLoading = true;
 
         const formData = new FormData();
         formData.append('file', file, fileName);
         formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
-        formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnitToCreate));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
         this.attachmentUnitService
             .create(formData, this.lectureId)

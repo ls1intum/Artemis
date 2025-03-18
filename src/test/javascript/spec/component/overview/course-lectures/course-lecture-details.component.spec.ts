@@ -20,7 +20,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -53,8 +53,8 @@ describe('CourseLectureDetailsComponent', () => {
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
     let course: Course;
-    let lectureUnit1: AttachmentUnit;
-    let lectureUnit2: AttachmentUnit;
+    let lectureUnit1: AttachmentVideoUnit;
+    let lectureUnit2: AttachmentVideoUnit;
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
     let profileService: ProfileService;
@@ -331,7 +331,7 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
 
-    const attachmentUnit = new AttachmentUnit();
+    const attachmentUnit = new AttachmentVideoUnit();
     attachmentUnit.id = id;
     attachmentUnit.name = 'Unit 1';
     attachmentUnit.releaseDate = attachment.releaseDate;

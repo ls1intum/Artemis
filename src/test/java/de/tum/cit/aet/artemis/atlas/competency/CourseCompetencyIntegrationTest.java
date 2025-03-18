@@ -320,7 +320,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(22);
             assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(0.75);
 
-            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(attachmentUnitOfLectureOne.getId()).orElseThrow(), student1, true);
+            lectureUnitService.setLectureUnitCompletion(attachmentUnitRepository.findById(attachmentVideoUnitOfLectureOne.getId()).orElseThrow(), student1, true);
 
             CompetencyProgress studentCompetencyProgress2 = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/student-progress?refresh=false", HttpStatus.OK,

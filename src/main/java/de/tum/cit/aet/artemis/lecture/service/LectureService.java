@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -95,8 +95,8 @@ public class LectureService {
 
         List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
         for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
-            if (unit instanceof AttachmentUnit && (((AttachmentUnit) unit).getAttachment().getReleaseDate() == null
-                    || ((AttachmentUnit) unit).getAttachment().getReleaseDate().isBefore(ZonedDateTime.now()))) {
+            if (unit instanceof AttachmentVideoUnit && (((AttachmentVideoUnit) unit).getAttachment().getReleaseDate() == null
+                    || ((AttachmentVideoUnit) unit).getAttachment().getReleaseDate().isBefore(ZonedDateTime.now()))) {
                 filteredAttachmentUnits.add(unit);
             }
         }
@@ -154,10 +154,10 @@ public class LectureService {
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         if (pyrisWebhookService.isPresent()) {
             Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentUnit> attachmentUnitList = lectureWithAttachmentUnits.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
-                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).toList();
-            if (!attachmentUnitList.isEmpty()) {
-                pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentUnitList);
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentUnits.getLectureUnits().stream()
+                    .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+            if (!attachmentVideoUnitList.isEmpty()) {
+                pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
             }
         }
 
@@ -182,10 +182,10 @@ public class LectureService {
      */
     public void ingestLecturesInPyris(Set<Lecture> lectures) {
         if (pyrisWebhookService.isPresent()) {
-            List<AttachmentUnit> attachmentUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentUnit)
-                    .map(unit -> (AttachmentUnit) unit).toList();
-            for (AttachmentUnit attachmentUnit : attachmentUnitList) {
-                pyrisWebhookService.get().addLectureUnitToPyrisDB(attachmentUnit);
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
+                    .map(unit -> (AttachmentVideoUnit) unit).toList();
+            for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
+                pyrisWebhookService.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
             }
         }
     }

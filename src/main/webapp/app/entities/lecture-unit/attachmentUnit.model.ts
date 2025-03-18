@@ -2,10 +2,11 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 
-export class AttachmentUnit extends LectureUnit {
+export class AttachmentVideoUnit extends LectureUnit {
     public description?: string;
     public attachment?: Attachment;
     public slides?: Slide[];
+    public videoSource?: string;
     public pyrisIngestionState?: IngestionState;
 
     constructor() {

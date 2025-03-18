@@ -15,6 +15,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
-    Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
+    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(Long attachmentVideoUnitId, Integer slideNumber);
 
 }

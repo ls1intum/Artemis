@@ -2,48 +2,48 @@
     <div class="col-12">
         <form [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
-                <label for="name">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.name' | artemisTranslate }} *</label>
+                <label for="name">{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.name' | artemisTranslate }} *</label>
                 <input
                     type="text"
                     class="form-control"
                     id="name"
                     formControlName="name"
-                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.namePlaceHolder' | artemisTranslate"
+                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.namePlaceHolder' | artemisTranslate"
                 />
                 @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (nameControl?.errors?.required) {
-                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError"></div>
+                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.nameRequiredValidationError"></div>
                         }
                         @if (nameControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.nameMaxLengthValidationError"></div>
+                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.nameMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
-                <label for="description" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.description"></label>
+                <label for="description" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.description"></label>
                 <textarea
                     class="form-control"
                     id="description"
                     rows="3"
                     formControlName="description"
-                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.descriptionPlaceHolder' | artemisTranslate"
+                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionPlaceHolder' | artemisTranslate"
                 ></textarea>
                 @if (descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (descriptionControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.descriptionMaxLengthValidationError"></div>
+                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.descriptionMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
-                <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation"></small>
+                <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
+                <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
                 <fa-icon
                     [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 />
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
@@ -55,19 +55,19 @@
                             [accept]="acceptedFileExtensionsFileBrowser"
                             (change)="onFileChange($event)"
                             aria-describedby="fileHelp"
-                            [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.chooseFile' | artemisTranslate"
+                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
                             (click)="fileInputTouched = true"
                         />
                     </div>
                 </div>
                 @if (isFileTooBig()) {
                     <div class="alert alert-danger">
-                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileTooBig' | artemisTranslate }}
-                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }}
+                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileTooBig' | artemisTranslate }}
+                        {{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation' | artemisTranslate }}
                     </div>
                 }
                 @if (!fileName() && fileInputTouched) {
-                    <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError"></div>
+                    <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
                 }
             </div>
             <div class="form-group">
@@ -82,26 +82,81 @@
                 />
             </div>
             <div class="form-group" [hidden]="!isEditMode()">
-                <label for="updateNotificationText" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationText"></label>
+                <label for="updateNotificationText" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationText"></label>
                 <textarea
                     class="form-control"
                     id="updateNotificationText"
                     rows="3"
                     formControlName="updateNotificationText"
-                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationTextPlaceholder' | artemisTranslate"
+                    [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextPlaceholder' | artemisTranslate"
                     maxlength="255"
                 ></textarea>
                 @if (updateNotificationTextControl?.invalid && (updateNotificationTextControl?.dirty || updateNotificationTextControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (updateNotificationTextControl?.errors?.maxlength) {
-                            <div jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationTextMaxLengthValidationError"></div>
+                            <div jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.updateNotificationTextMaxLengthValidationError"></div>
                         }
                     </div>
                 }
             </div>
             <div class="form-group">
-                <label for="version" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.version"></label>
+                <label for="version" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.version"></label>
                 <input id="version" class="form-control disabled" type="text" readonly formControlName="version" />
+            </div>
+            <div class="container" style="padding: 0">
+                <div class="row">
+                    <div class="col-4">
+                        <label for="videoSource">{{ 'artemisApp.videoUnit.createVideoUnit.source' | artemisTranslate }}</label>
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-7">
+                        <label for="urlHelper" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlVideoHelper"></label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="videoSource"
+                            formControlName="videoSource"
+                            [placeholder]="'artemisApp.videoUnit.createVideoUnit.sourcePlaceHolder' | artemisTranslate"
+                        />
+                    </div>
+                    <div class="col-1 mx-auto text-center align-self-center">
+                        <button id="transformButton" type="button" class="btn btn-sm btn-primary" [disabled]="!isTransformable" (click)="setEmbeddedVideoUrl($event)">
+                            <fa-icon [icon]="faArrowLeft" />
+                        </button>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" class="form-control" id="urlHelper" formControlName="urlHelper" aria-describedby="urlHelperExplanation" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        @if (videoSourceControl?.invalid && (videoSourceControl?.dirty || videoSourceControl?.touched)) {
+                            <div class="alert alert-danger">
+                                @if (videoSourceControl?.errors?.required) {
+                                    <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceRequiredValidationError"></div>
+                                }
+                                @if (videoSourceControl?.errors?.invalidVideoUrl) {
+                                    <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.sourceURLValidationError"></div>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="col-1"></div>
+                    <div class="col-7">
+                        <small id="urlHelperExplanation" class="form-text text-body-secondary" jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperPlaceholder"></small>
+                        @if (urlHelperControl?.invalid && (urlHelperControl?.dirty || urlHelperControl?.touched)) {
+                            <div class="alert alert-danger">
+                                @if (urlHelperControl?.errors?.invalidVideoUrl) {
+                                    <div jhiTranslate="artemisApp.videoUnit.createVideoUnit.urlHelperValidationError"></div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
             <div class="row">
                 <div class="col-12">

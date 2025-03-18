@@ -111,11 +111,11 @@
                 "buttonText": "Löschen"
             }
         },
-        "attachmentUnit": {
+        "attachmentVideoUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
-            "createAttachmentUnits": {
+            "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
                     "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
@@ -158,7 +158,7 @@
                 "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungseinheiten zu aktivieren.",
                 "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Habe bitte etwas Geduld."
             },
-            "createAttachmentUnit": {
+            "createAttachmentVideoUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",
                 "namePlaceHolder": "Gib der Datei einen Namen",
