@@ -30,7 +30,6 @@ import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
-import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -86,7 +84,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepo
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.CIPermission;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
@@ -132,6 +129,9 @@ public class ProgrammingExerciseService {
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_GO = Pattern.compile(PACKAGE_NAME_REGEX_FOR_GO);
 
     private static final Pattern PACKAGE_NAME_PATTERN_FOR_DART = Pattern.compile(PACKAGE_NAME_REGEX_FOR_DART);
+
+    // The minimum memory that a Docker container can be assigned is 6MB. This is a Docker limitation.
+    private static final int MIN_DOCKER_MEMORY_MB = 6;
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
@@ -270,12 +270,11 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
@@ -342,20 +341,18 @@ public class ProgrammingExerciseService {
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         // Step 10: Setup build plans for template and solution participation
-        setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
+        setupBuildPlansForNewExercise(savedProgrammingExercise);
         savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
 
         // Step 11: Update task from problem statement
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        // Step 12: Webhooks and scheduling
-        // Step 12a: Create web hooks for version control
-        versionControl.addWebHooksForExercise(savedProgrammingExercise);
-        // Step 12b: Schedule operations
+        // Step 12: Scheduling
+        // Step 12a: Schedule operations
         scheduleOperations(savedProgrammingExercise.getId());
-        // Step 12c: Check notifications for new exercise
+        // Step 12b: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
-        // Step 12d: Update student competency progress
+        // Step 12c: Update student competency progress
         ProgrammingExercise finalSavedProgrammingExercise = savedProgrammingExercise;
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalSavedProgrammingExercise));
 
@@ -509,11 +506,8 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                                exercise should contain a fully initialized template and solution participation.
-     * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
-     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws JsonProcessingException {
-        String projectKey = programmingExercise.getProjectKey();
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) throws JsonProcessingException {
         // Get URLs for repos
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
         var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
@@ -526,11 +520,6 @@ public class ProgrammingExerciseService {
         // solution build plan
         continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
 
-        // Give appropriate permissions for CI projects
-        continuousIntegration.removeAllDefaultProjectPermissions(projectKey);
-
-        giveCIProjectPermissions(programmingExercise);
-
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
@@ -539,13 +528,9 @@ public class ProgrammingExerciseService {
             programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
 
-        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
-        // we do not trigger them here
-        if (!isImportedFromFile) {
-            // trigger BASE and SOLUTION build plans once here
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
-        }
+        // trigger BASE and SOLUTION build plans once here
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
     }
 
     /**
@@ -954,31 +939,6 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * add project permissions to project of the build plans of the given exercise
-     *
-     * @param exercise the exercise whose build plans projects should be configured with permissions
-     */
-    public void giveCIProjectPermissions(ProgrammingExercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-
-        final var editorGroup = course.getEditorGroupName();
-        final var teachingAssistantGroup = course.getTeachingAssistantGroupName();
-
-        List<String> adminGroups = new ArrayList<>();
-        adminGroups.add(course.getInstructorGroupName());
-        if (StringUtils.isNotEmpty(editorGroup)) {
-            adminGroups.add(editorGroup);
-        }
-
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-        continuousIntegration.giveProjectPermissions(exercise.getProjectKey(), adminGroups,
-                List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.CREATEREPOSITORY, CIPermission.ADMIN));
-        if (teachingAssistantGroup != null) {
-            continuousIntegration.giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
-        }
-    }
-
-    /**
      * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
      * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
      * This prevents errors then the actual projects will be generated later on.
@@ -1114,10 +1074,16 @@ public class ProgrammingExerciseService {
             }
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.createDockerRunConfig(dockerFlagsDTO.network(), dockerFlagsDTO.env());
+        if (dockerFlagsDTO.memory() < MIN_DOCKER_MEMORY_MB) {
+            throw new BadRequestAlertException("The memory limit is invalid. The minimum memory limit is " + MIN_DOCKER_MEMORY_MB + "MB", "Exercise", "memoryLimitInvalid");
+        }
 
-        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
-            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        if (dockerFlagsDTO.cpuCount() <= 0) {
+            throw new BadRequestAlertException("The cpu count is invalid. The minimum cpu count is 1", "Exercise", "cpuCountInvalid");
+        }
+
+        if (dockerFlagsDTO.memorySwap() < 0) {
+            throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
         }
     }
 }

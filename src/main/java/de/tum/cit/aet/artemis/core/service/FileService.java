@@ -96,13 +96,13 @@ public class FileService implements DisposableBean {
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
-    public static final String MARKDOWN_FILE_SUBPATH = "/api/core/files/markdown/";
+    private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
 
-    public static final String DEFAULT_FILE_SUBPATH = "/api/core/files/temp/";
+    public static final String DEFAULT_FILE_SUBPATH = "temp/";
 
-    public static final String BACKGROUND_FILE_SUBPATH = "/api/core/files/drag-and-drop/backgrounds/";
+    public static final String BACKGROUND_FILE_SUBPATH = "drag-and-drop/backgrounds/";
 
-    public static final String PICTURE_FILE_SUBPATH = "/api/core/files/drag-and-drop/drag-items/";
+    public static final String PICTURE_FILE_SUBPATH = "drag-and-drop/drag-items/";
 
     /**
      * These directories get falsely marked as files and should be ignored during copying.
@@ -161,7 +161,7 @@ public class FileService implements DisposableBean {
      * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
      * @param keepFilename specifies if original file name should be kept
      * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
-     * @return The API path of the file
+     * @return The public path of the file
      */
     @NotNull
     public URI handleSaveFile(MultipartFile file, boolean keepFilename, boolean markdown) {
@@ -205,8 +205,7 @@ public class FileService implements DisposableBean {
         copyFile(file, filePath);
 
         String currentFilename = filePath.getFileName().toString();
-        return new FilePathInformation(filePath, URI.create("/api/core/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename),
-                sanitizedOriginalFilename);
+        return new FilePathInformation(filePath, URI.create("courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename), sanitizedOriginalFilename);
     }
 
     /**

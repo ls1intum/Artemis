@@ -1,28 +1,28 @@
 <td class="align-middle">
-    {{ exercise?.id }}
+    {{ exercise()?.id }}
 </td>
 <td class="align-middle" style="font-size: 1.35rem">
-    @if (exercise && exercise.type) {
-        <fa-icon [icon]="getIcon(exercise.type)" />
+    @if (exercise() && exercise().type) {
+        <fa-icon [icon]="getIcon(exercise().type)" />
     }
 </td>
 <td class="align-middle">
-    {{ exercise?.title }}
+    {{ exercise()?.title }}
 </td>
 <td class="align-middle">
-    @if (exercise && achievedPointsPerExercise?.[exercise.id!] !== undefined) {
+    @if (exercise() && achievedPointsPerExercise()?.[exercise().id!] !== undefined) {
         <ng-container class="score">
-            {{ achievedPointsPerExercise?.[exercise.id!] }}
+            {{ achievedPointsPerExercise()?.[exercise().id!] }}
         </ng-container>
     } @else {
         {{ 'N/A' }}
     }
 </td>
 <td class="align-middle">
-    {{ getMaxPoints(exercise) }}
+    {{ getMaxPoints(exercise()) }}
 </td>
 <td class="align-middle">
-    {{ getBonusPoints(exercise) }}
+    {{ getBonusPoints(exercise()) }}
 </td>
 <td class="align-middle">
     @if (result?.assessor) {
@@ -37,15 +37,15 @@
     }
 </td>
 <td>
-    @if (course?.isAtLeastInstructor && exercise.type !== ExerciseType.QUIZ && studentExam.submitted) {
+    @if (course()?.isAtLeastInstructor && exercise().type !== ExerciseType.QUIZ && studentExam().submitted) {
         <div>
-            @if (result && exercise.type !== ExerciseType.PROGRAMMING) {
+            @if (result && exercise().type !== ExerciseType.PROGRAMMING) {
                 <div>
                     <!-- in case of existing result-->
                     <a
-                        [class.disabled]="busy"
+                        [class.disabled]="busy()"
                         [queryParams]="{ testRun: this.isTestRun }"
-                        [routerLink]="getAssessmentLink(exercise, submission, result.id)"
+                        [routerLink]="getAssessmentLink(exercise(), submission, result.id)"
                         class="btn btn-primary btn-sm mb-1"
                     >
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
@@ -53,13 +53,13 @@
                     </a>
                 </div>
             }
-            @if (submission && result === undefined && exercise.type !== ExerciseType.PROGRAMMING) {
+            @if (submission && result === undefined && exercise().type !== ExerciseType.PROGRAMMING) {
                 <div>
                     <!-- in case of new result-->
                     <a
-                        [class.disabled]="busy"
+                        [class.disabled]="busy()"
                         [queryParams]="{ testRun: this.isTestRun }"
-                        [routerLink]="getAssessmentLink(exercise, submission)"
+                        [routerLink]="getAssessmentLink(exercise(), submission)"
                         class="btn btn-primary btn-sm mb-1"
                     >
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
@@ -67,9 +67,14 @@
                     </a>
                 </div>
             }
-            @if (exercise.type === ExerciseType.PROGRAMMING) {
+            @if (
+                submission &&
+                exercise().type === ExerciseType.PROGRAMMING &&
+                (exercise().assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                    (exercise().assessmentType === AssessmentType.AUTOMATIC && exercise().allowComplaintsForAutomaticAssessments === true))
+            ) {
                 <div>
-                    <a [class.disabled]="busy" [routerLink]="getAssessmentLink(exercise)" class="btn btn-primary btn-sm mb-1">
+                    <a [class.disabled]="busy()" [routerLink]="getAssessmentLink(exercise(), submission)" class="btn btn-primary btn-sm mb-1">
                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen" />
                         {{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}
                     </a>

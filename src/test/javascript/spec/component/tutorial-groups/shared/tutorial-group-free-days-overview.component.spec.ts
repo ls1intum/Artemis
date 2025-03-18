@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TutorialGroupFreeDaysOverviewComponent } from 'app/course/tutorial-groups/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent, FaStackComponent } from '@fortawesome/angular-fontawesome';
@@ -12,6 +11,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {
@@ -56,8 +56,8 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
         component = fixture.componentInstance;
 
-        component.tutorialGroupFreeDays = [{ ...firstOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }];
-        component.timeZone = 'Europe/Berlin';
+        fixture.componentRef.setInput('tutorialGroupFreeDays', [{ ...firstOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }]);
+        fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
         jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
         fixture.detectChanges();
     });
@@ -68,6 +68,6 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
     it('should sort the free days by start date', () => {
         component.ngDoCheck();
-        expect(component.tutorialGroupFreeDays).toEqual([thirdOfJanuaryPeriod, firstOfJanuaryPeriod]);
+        expect(component.tutorialGroupFreeDays()).toEqual([thirdOfJanuaryPeriod, firstOfJanuaryPeriod]);
     });
 });

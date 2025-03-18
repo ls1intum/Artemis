@@ -1,5 +1,5 @@
-import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
-import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
+import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { TestBed } from '@angular/core/testing';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 
 describe('FeedbackUtils', () => {
     let exerciseService: ExerciseService;

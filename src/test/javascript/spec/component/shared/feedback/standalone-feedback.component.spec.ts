@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
-import { StandaloneFeedbackComponent } from 'app/exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { StandaloneFeedbackComponent } from 'app/exercise/feedback/standalone-feedback/standalone-feedback.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

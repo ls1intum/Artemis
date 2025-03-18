@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
+import { ForwardMessageDialogComponent } from 'app/communication/course-conversations/forward-message-dialog/forward-message-dialog.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../../../helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -13,7 +13,7 @@ import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-re
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content.components';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

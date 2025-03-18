@@ -479,7 +479,7 @@ public class QuizExerciseFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        var dragItem5 = new DragItem().pictureFilePath("/api/core/files/drag-and-drop/drag-items/10/drag_item.jpg");
+        var dragItem5 = new DragItem().pictureFilePath("drag-and-drop/drag-items/10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);

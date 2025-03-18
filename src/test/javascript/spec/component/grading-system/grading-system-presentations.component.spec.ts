@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { GradingSystemPresentationsComponent, PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
+import { GradingSystemPresentationsComponent, PresentationType } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { Course } from 'app/entities/course.model';
 
 describe('Grading System Presentations Component', () => {

@@ -6,7 +6,7 @@ import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/
 import { first, switchMap } from 'rxjs/operators';
 import { from, lastValueFrom, of } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
