@@ -35,10 +35,10 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.WindfileMetadata;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -118,8 +118,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
                 new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
-        var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
-        var testDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(language);
+        var assignmentDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
+        var testDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(language);
         assertThat(map).containsKey(TEST_REPO_NAME);
         assertThat(map).containsKey(ASSIGNMENT_REPO_NAME);
         AeolusRepository testRepo = map.get(TEST_REPO_NAME);
@@ -146,9 +146,9 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
                 new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
-        var assignmentDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
-        var solutionDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(language);
-        var testDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(language);
+        var assignmentDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
+        var solutionDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(language);
+        var testDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(language);
         assertThat(map).containsKey(TEST_REPO_NAME);
         assertThat(map).containsKey(ASSIGNMENT_REPO_NAME);
         AeolusRepository testRepo = map.get(TEST_REPO_NAME);

@@ -143,7 +143,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     afterDueDate = false;
 
-    localVCEnabled = false;
+    localVCEnabled = true;
 
     // Icons
     faDownload = faDownload;

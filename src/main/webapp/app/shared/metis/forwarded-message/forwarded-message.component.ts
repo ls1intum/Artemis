@@ -13,6 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-forwarded-message',
@@ -121,4 +122,6 @@ export class ForwardedMessageComponent implements AfterViewInit {
             this.sourceName = this.isAnswerPost ? 'a thread in a group message ' : 'a group message ';
         }
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

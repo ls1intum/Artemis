@@ -6,7 +6,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_ATLAS, PROFILE_LTI } from 'app/app.constants';
@@ -42,6 +42,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -68,6 +69,7 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         KeyValuePipe,
         ArtemisTranslatePipe,
         RemoveKeysPipe,
+        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],
@@ -147,6 +149,7 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                this.croppedImage = course.courseIconPath;
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
                 });
@@ -266,11 +269,10 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
-                courseIcon: new FormControl(this.course.courseIcon),
+                courseIcon: new FormControl(this.course.courseIconPath),
             },
             { validators: CourseValidator },
         );
-        this.croppedImage = this.course.courseIcon;
 
         this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.TutorialGroups)
@@ -664,7 +666,7 @@ export class CourseUpdateComponent implements OnInit {
      * Deletes the course icon
      */
     deleteCourseIcon() {
-        this.course.courseIcon = undefined;
+        unsetCourseIcon(this.course);
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
