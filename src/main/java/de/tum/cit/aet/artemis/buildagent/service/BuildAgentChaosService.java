@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.buildagent.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CHAOS;
 
+import java.io.IOException;
+
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
@@ -47,7 +49,16 @@ public class BuildAgentChaosService {
      */
     private void killBuildAgent() {
         log.info("Killing build agent");
-        System.exit(-1);
+        try {
+            long pid = ProcessHandle.current().pid();
+            String[] command = { "kill", "-9", pid + "" };
+            Runtime.getRuntime().exec(command);
+        }
+        catch (IOException e) {
+            log.error("Failed to kill build agent", e);
+            System.exit(-1);
+        }
+
     }
 
 }
