@@ -1,7 +1,7 @@
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Subject } from 'rxjs';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('Exercise Update Plagiarism Component', () => {
     let comp: ExerciseUpdatePlagiarismComponent;

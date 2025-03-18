@@ -1,5 +1,5 @@
 import { Participation } from 'app/entities/participation/participation.model';
-import { EntityArrayResponseType } from 'app/exercises/shared/participation/participation.service';
+import { EntityArrayResponseType } from 'app/exercise/participation/participation.service';
 import { EMPTY, Observable, of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 

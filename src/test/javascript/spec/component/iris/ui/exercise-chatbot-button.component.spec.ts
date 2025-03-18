@@ -9,13 +9,13 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from '../../../helpers/sample/iris-sample-data';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
-import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
-import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
-import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
-import { IrisStatusService } from 'app/iris/iris-status.service';
-import { UserService } from 'app/core/user/user.service';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
+import { IrisStatusService } from 'app/iris/overview/iris-status.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -180,4 +180,26 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(unreadIndicatorElement).toBeNull();
         flush();
     }));
+
+    it('should open chatbot if irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.chatOpen).toBe(true);
+    });
+
+    it('should not open the chatbot if no irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.chatOpen).toBe(false);
+    });
 });

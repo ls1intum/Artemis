@@ -1,8 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
-import { IrisStatusService } from 'app/iris/iris-status.service';
+import { IrisStatusService } from 'app/iris/overview/iris-status.service';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
 

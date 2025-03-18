@@ -5,7 +5,7 @@ import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from '../../language/translate.directive';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

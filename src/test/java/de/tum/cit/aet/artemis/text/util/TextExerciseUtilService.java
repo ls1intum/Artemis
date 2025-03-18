@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.text.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -9,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -54,6 +56,7 @@ import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
  * Service responsible for initializing the database with specific testdata related to text exercises for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class TextExerciseUtilService {
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);

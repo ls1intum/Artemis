@@ -1,10 +1,10 @@
-import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
+import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
-import { SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
+import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 
 describe('CompetencyGraphComponent', () => {
     let component: CompetencyGraphComponent;
