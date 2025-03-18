@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Observable } from 'rxjs';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

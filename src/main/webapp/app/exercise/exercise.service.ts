@@ -7,7 +7,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';

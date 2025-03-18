@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MatFormField } from '@angular/material/form-field';

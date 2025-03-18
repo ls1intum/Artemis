@@ -9,8 +9,8 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
-import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
+import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -21,7 +21,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';

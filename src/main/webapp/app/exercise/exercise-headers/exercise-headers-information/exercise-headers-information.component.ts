@@ -19,7 +19,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { CommonModule } from '@angular/common';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',

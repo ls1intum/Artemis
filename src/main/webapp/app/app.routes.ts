@@ -134,7 +134,7 @@ const routes: Routes = [
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
-        loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementState),
+        loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementState),
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
@@ -143,7 +143,7 @@ const routes: Routes = [
 
     {
         path: 'courses',
-        loadChildren: () => import('app/course/overview/courses.route').then((m) => m.routes),
+        loadChildren: () => import('app/core/course/overview/courses.route').then((m) => m.routes),
     },
     {
         path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
@@ -159,12 +159,12 @@ const routes: Routes = [
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',
-        loadComponent: () => import('app/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         pathMatch: 'full',
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-        loadComponent: () => import('app/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',

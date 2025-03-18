@@ -4,7 +4,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForImport } from 'app/entities/quiz/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';

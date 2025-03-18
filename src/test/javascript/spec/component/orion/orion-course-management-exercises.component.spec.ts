@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/manage/orion-course-management-exercises.component';
-import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
+import { CourseManagementExercisesComponent } from 'app/core/course/manage/course-management-exercises.component';
 
 describe('OrionCourseManagementExercisesComponent', () => {
     let fixture: ComponentFixture<OrionCourseManagementExercisesComponent>;

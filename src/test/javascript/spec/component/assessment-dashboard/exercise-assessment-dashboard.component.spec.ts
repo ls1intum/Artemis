@@ -18,7 +18,7 @@ import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submis
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';

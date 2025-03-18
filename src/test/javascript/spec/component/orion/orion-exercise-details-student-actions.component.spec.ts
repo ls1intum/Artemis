@@ -7,7 +7,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
-import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';

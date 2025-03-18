@@ -7,7 +7,7 @@ import { PresentationScoreComponent } from 'app/exercise/presentation-score/pres
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

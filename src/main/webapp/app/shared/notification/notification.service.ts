@@ -41,7 +41,7 @@ import {
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/communication/metis.service';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';

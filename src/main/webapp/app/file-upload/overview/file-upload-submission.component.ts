@@ -11,7 +11,7 @@ import { FileUploadSubmissionService } from 'app/file-upload/overview/file-uploa
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/file-upload/manage/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';

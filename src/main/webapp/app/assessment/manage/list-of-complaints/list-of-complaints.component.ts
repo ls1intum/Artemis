@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
