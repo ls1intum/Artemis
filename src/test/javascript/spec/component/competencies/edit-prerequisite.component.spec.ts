@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
+import { EditPrerequisiteComponent } from 'app/atlas/manage/edit/edit-prerequisite.component';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 

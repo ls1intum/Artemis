@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 
-import { OrganizationManagementUpdateComponent } from 'app/admin/organization-management/organization-management-update.component';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementUpdateComponent } from 'app/core/admin/organization-management/organization-management-update.component';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

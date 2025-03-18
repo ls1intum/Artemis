@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
+import { CourseLectureRowComponent } from 'app/lecture/overview/course-lectures/course-lecture-row.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -6,15 +6,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider, MockInstance } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { BehaviorSubject, of } from 'rxjs';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
-import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
-import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
-import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
+import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
+import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
+import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -25,28 +24,28 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { FileService } from 'app/shared/http/file.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import * as DownloadUtils from 'app/shared/util/download.util';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
+import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ElementRef, signal } from '@angular/core';
 
 describe('CourseLectureDetailsComponent', () => {
@@ -108,7 +107,6 @@ describe('CourseLectureDetailsComponent', () => {
                 MockComponent(VideoUnitComponent),
                 MockComponent(OnlineUnitComponent),
                 CompetenciesPopoverComponent,
-                AlertOverlayComponent,
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,

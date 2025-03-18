@@ -8,7 +8,7 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
-} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+} from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
