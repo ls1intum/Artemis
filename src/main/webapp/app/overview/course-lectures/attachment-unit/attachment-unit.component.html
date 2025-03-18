@@ -27,6 +27,11 @@
             {{ getFileName() }}
         </div>
     }
+
+    <div class="ratio ratio-16x9">
+        <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+    </div>
+
     @if (lectureUnit()?.description) {
         <div>
             <hr />

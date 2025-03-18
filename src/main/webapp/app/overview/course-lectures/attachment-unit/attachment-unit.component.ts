@@ -1,8 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
-
+import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
     faDownload,
@@ -21,16 +21,22 @@ import {
 import { FileService } from 'app/shared/http/file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 @Component({
     selector: 'jhi-attachment-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
     templateUrl: './attachment-unit.component.html',
 })
 export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);
+
+    private readonly videoUrlAllowList = [
+        // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
+        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
+    ];
 
     /**
      * Returns the name of the attachment file (including its file extension)
@@ -43,6 +49,19 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentVide
         }
         return '';
     }
+
+    /**
+     * Return the URL of the video source
+     */
+    readonly videoUrl = computed(() => {
+        if (this.lectureUnit().videoSource) {
+            const source = this.lectureUnit().videoSource!;
+            if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
+                return source;
+            }
+        }
+        return undefined;
+    });
 
     /**
      * Downloads the file

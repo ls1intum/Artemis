@@ -325,6 +325,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     onIngestButtonClicked(lectureUnitId: number) {
+        //TODO: ingest transcription as well
         const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
         if (unitIndex > -1) {
             const unit: AttachmentVideoUnit = this.lectureUnits[unitIndex];
