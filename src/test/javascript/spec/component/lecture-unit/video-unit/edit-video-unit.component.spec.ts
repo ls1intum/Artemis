@@ -1,21 +1,23 @@
 import dayjs from 'dayjs/esm';
-import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
+import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-video-unit/edit-video-unit.component';
+import { EditVideoUnitComponent } from 'app/lecture/manage/lecture-units/edit-video-unit/edit-video-unit.component';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { VideoUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { VideoUnitFormComponent } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditVideoUnitComponent>;
@@ -57,6 +59,7 @@ describe('EditVideoUnitComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
             ],
             schemas: [],

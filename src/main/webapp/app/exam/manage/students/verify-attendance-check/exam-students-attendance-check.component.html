@@ -67,7 +67,7 @@
                                 </span>
                             </td>
                             <td class="d-md-table-cell">
-                                <img class="img-fluid" width="60" [src]="examUser.studentImagePath ? examUser.studentImagePath : MISSING_IMAGE" />
+                                <img class="img-fluid" width="60" [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : MISSING_IMAGE" />
                             </td>
                             <td class="d-md-table-cell">
                                 <span>
@@ -81,7 +81,7 @@
                             </td>
                             <td class="d-md-table-cell">
                                 @if (allExamUsersAttendanceCheck.length === 0 && examUser?.signingImagePath) {
-                                    <img class="img-fluid" width="60" [src]="examUser.signingImagePath" />
+                                    <img class="img-fluid" width="60" [src]="addPublicFilePrefix(examUser.signingImagePath)" />
                                 } @else {
                                     <h3>
                                         <span class="m-2">

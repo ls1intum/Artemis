@@ -1,4 +1,4 @@
-import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
+import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';

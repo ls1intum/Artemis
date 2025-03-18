@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
+import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IrisLogoButtonComponent } from 'app/iris/iris-logo-button/iris-logo-button.component';
-import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
+import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 describe('CourseDescriptionFormComponent', () => {
     let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionFormComponent>;

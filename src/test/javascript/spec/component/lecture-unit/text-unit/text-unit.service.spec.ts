@@ -1,9 +1,9 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
