@@ -1,0 +1,129 @@
+@import '../../../../content/scss/artemis-mixins';
+
+.edit-sa-question {
+    .short-answer-question-display {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 100%;
+
+        &__element {
+            display: inline-flex;
+        }
+
+        .short-answer-question-container {
+            display: inline-block;
+            position: relative;
+
+            &__input {
+                border: 1px solid var(--sa-question-container-input-border);
+                line-height: 35px;
+                margin-bottom: 10px;
+            }
+
+            &__div-input {
+                background-color: var(--sa-question-container-input-background);
+                border: 1px solid var(--sa-question-container-input-border);
+                padding: 2px 3px;
+                width: 170px;
+                height: 40px;
+            }
+        }
+    }
+
+    .match-percentage-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 60%;
+        border: 1px solid var(--sa-question-container-input-border);
+
+        .slider-container {
+            display: flex;
+            justify-content: center;
+            width: 45%;
+
+            .slider-with-label {
+                width: 80%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-width: 50px;
+
+                input[type='range'] {
+                    cursor: pointer;
+                    margin: auto;
+                    width: 70%;
+                }
+
+                p {
+                    margin: 0 10px;
+                    min-width: 40px;
+                }
+            }
+        }
+    }
+
+    .question-card-header {
+        width: 100%;
+        padding: 15px 5px 5px 5px;
+
+        .row {
+            width: 100%;
+        }
+
+        .question-collapse {
+            width: 3.25rem;
+        }
+    }
+
+    .question-card-header-reevaluation {
+        width: 100%;
+        padding: 0;
+
+        .row {
+            width: 100%;
+        }
+
+        .question-collapse {
+            width: 3.25rem;
+        }
+    }
+
+    .card-body {
+        .question-options-reevaluation {
+            .form-group {
+                display: flex;
+                align-items: center;
+                margin: 0 5px 15px;
+            }
+
+            .form-control:disabled {
+                background-color: var(--gray-200);
+            }
+
+            .form-group > * {
+                margin: 0 4px;
+            }
+
+            .form-check {
+                display: block;
+                align-items: center;
+                padding-left: 0;
+            }
+        }
+
+        .invalid-button {
+            width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        .delete-button {
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            color: var(--red);
+        }
+    }
+}

@@ -4,7 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { Subscription } from 'rxjs';
 import { capitalize } from 'lodash-es';
 import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';

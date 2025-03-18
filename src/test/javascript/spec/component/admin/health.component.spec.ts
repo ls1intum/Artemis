@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
-import { HealthComponent } from 'app/admin/health/health.component';
-import { HealthService } from 'app/admin/health/health.service';
-import { Health } from 'app/admin/health/health.model';
+import { HealthComponent } from 'app/core/admin/health/health.component';
+import { HealthService } from 'app/core/admin/health/health.service';
+import { Health } from 'app/core/admin/health/health.model';
 import { By } from '@angular/platform-browser';
-import { HealthModalComponent } from 'app/admin/health/health-modal.component';
+import { HealthModalComponent } from 'app/core/admin/health/health-modal.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';

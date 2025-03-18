@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { RatingService } from 'app/exercises/shared/rating/rating.service';
+import { RatingService } from 'app/exercise/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
 import { provideHttpClient } from '@angular/common/http';

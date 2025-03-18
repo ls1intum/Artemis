@@ -1,4 +1,4 @@
-import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
+import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/ngbTimeStringAdapter';
 
 describe('NgbTimeStringAdapter', () => {
     const adapter = new NgbTimeStringAdapter();

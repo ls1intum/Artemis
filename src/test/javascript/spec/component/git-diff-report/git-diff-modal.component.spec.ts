@@ -1,10 +1,10 @@
-import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
+import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report.component';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GitDiffReportModalComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report-modal.component';
-import { ProgrammingExerciseService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise.service';
+import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal.component';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { of, throwError } from 'rxjs';
-import { ProgrammingExerciseParticipationService } from '../../../../../main/webapp/app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
