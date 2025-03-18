@@ -27,6 +27,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
     selector: 'jhi-attachment-unit',
     imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
     templateUrl: './attachment-unit.component.html',
+    styleUrl: './attachment-unit.component.scss',
 })
 export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
