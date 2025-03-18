@@ -1,16 +1,16 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { IrisLogoComponent, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IrisCourseSettings, IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { Subscription, catchError, of } from 'rxjs';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { MetisService } from 'app/communication/metis.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',

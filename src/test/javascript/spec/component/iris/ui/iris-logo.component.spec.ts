@@ -1,6 +1,6 @@
-import { IrisLogoComponent, IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
+import { IrisLogoComponent, IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 describe('IrisLogoComponent', () => {
     let component: IrisLogoComponent;

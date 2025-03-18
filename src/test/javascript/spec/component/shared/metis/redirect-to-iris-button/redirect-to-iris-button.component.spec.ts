@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ComponentRef } from '@angular/core';
 import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -8,12 +7,13 @@ import { ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { mockSettings } from '../../../iris/settings/mock-settings';
 import { of, throwError } from 'rxjs';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { MockProvider } from 'ng-mocks';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { MetisService } from 'app/communication/metis.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 describe('RedirectToIrisButtonComponent', () => {
     let component: RedirectToIrisButtonComponent;
