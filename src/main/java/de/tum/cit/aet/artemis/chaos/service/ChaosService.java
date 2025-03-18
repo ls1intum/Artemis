@@ -29,6 +29,7 @@ public class ChaosService {
     @PostConstruct
     public void init() {
         killBuildAgentTopic = redissonClient.getTopic("killBuildAgent");
+        log.info("Chaos service initialized. Do not enable this in production");
     }
 
     public void triggerKillBuildAgent(String agentName) {

@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.chaos.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CHAOS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import jakarta.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,10 +26,17 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @RequestMapping("api/chaos/")
 public class BuildAgentChaosResource {
 
+    private final Logger log = LoggerFactory.getLogger(BuildAgentChaosResource.class);
+
     private final ChaosService chaosService;
 
     public BuildAgentChaosResource(ChaosService chaosService) {
         this.chaosService = chaosService;
+    }
+
+    @PostConstruct
+    public void init() {
+        log.info("Chaos REST controller initialized. Do not enable this in production");
     }
 
     /**
