@@ -318,6 +318,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         description: this.currentlyProcessedAttachmentUnit.description,
                         releaseDate: this.currentlyProcessedAttachmentUnit.attachment!.releaseDate,
                         version: this.currentlyProcessedAttachmentUnit.attachment!.version,
+                        videoSource: this.currentlyProcessedAttachmentUnit.videoSource,
                     },
                     fileProperties: {
                         fileName: this.currentlyProcessedAttachmentUnit.attachment!.link,
