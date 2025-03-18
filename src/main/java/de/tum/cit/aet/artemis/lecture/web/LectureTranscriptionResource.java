@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -84,7 +86,7 @@ public class LectureTranscriptionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
-    @EnforceAtLeastInstructor
+    @EnforceAdmin
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long lectureId,
             @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
@@ -138,6 +140,7 @@ public class LectureTranscriptionResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         Course course = lecture.getCourse();
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return ResponseEntity.badRequest()
