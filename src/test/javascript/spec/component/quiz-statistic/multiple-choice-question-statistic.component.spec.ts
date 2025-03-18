@@ -1,6 +1,6 @@
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,7 +11,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MultipleChoiceQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/multiple-choice-question-statistic/multiple-choice-question-statistic.component';
+import { MultipleChoiceQuestionStatisticComponent } from 'app/quiz/manage/statistics/multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { AnswerCounter } from 'app/entities/quiz/answer-counter.model';
@@ -19,7 +19,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
-import { greenColor, greyColor, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { greenColor, greyColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };

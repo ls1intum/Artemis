@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { MockComponent } from 'ng-mocks';
-import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
+import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { InputSignal, signal, WritableSignal } from '@angular/core';
 import { By } from '@angular/platform-browser';

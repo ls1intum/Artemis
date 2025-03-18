@@ -1,4 +1,4 @@
-import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';

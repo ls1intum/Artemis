@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BuildAgentClearDistributedDataComponent } from '../../../../../../main/webapp/app/localci/build-agents/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
+import { BuildAgentClearDistributedDataComponent } from 'app/buildagent/build-agent-summary/build-agent-clear-distributed-data/build-agent-clear-distributed-data.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

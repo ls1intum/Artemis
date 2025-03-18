@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
+import { CourseImportStandardizedCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component';
 import { StandardizedCompetencyFilterStubComponent } from './filter/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -8,7 +8,7 @@ import { StandardizedCompetencyDetailStubComponent } from './detail/standardized
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { Competency } from 'app/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';

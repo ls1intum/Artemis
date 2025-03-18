@@ -4,15 +4,15 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
+import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Result } from 'app/entities/result.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
-import { TextResultBlock } from 'app/exercises/text/participate/text-result/text-result-block';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { TextResultBlock } from 'app/text/overview/text-result/text-result-block';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 describe('TextResultComponent', () => {

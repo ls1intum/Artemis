@@ -10,7 +10,7 @@ import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsComponent', () => {

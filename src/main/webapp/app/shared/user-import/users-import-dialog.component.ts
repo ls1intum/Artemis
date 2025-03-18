@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
 import { cleanString } from 'app/shared/util/utils';
@@ -14,11 +14,11 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AdminUserService } from 'app/core/user/admin-user.service';
+import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../components/help-icon.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
