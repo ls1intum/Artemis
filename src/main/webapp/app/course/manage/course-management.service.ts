@@ -29,6 +29,7 @@ import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -45,6 +46,7 @@ export class CourseManagementService {
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
+    private courseNotificationService = inject(CourseNotificationService);
 
     private resourceUrl = 'api/core/courses';
 
@@ -172,6 +174,9 @@ export class CourseManagementService {
                 if (res.body) {
                     const courses: Course[] = [];
                     res.body.courses?.forEach((courseForDashboardDTO) => {
+                        if (courseForDashboardDTO.course.id) {
+                            this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                        }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
                     });
@@ -197,6 +202,9 @@ export class CourseManagementService {
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
                     const courseForDashboardDTO: CourseForDashboardDTO = res.body;
+                    if (courseForDashboardDTO.course.id) {
+                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                    }
                     this.saveScoresInStorage(courseForDashboardDTO);
 
                     // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
@@ -696,7 +704,7 @@ export class CourseManagementService {
         return res;
     }
 
-    private findAllForNotifications(): Observable<EntityArrayResponseType> {
+    public findAllForNotifications(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
         return this.http.get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),

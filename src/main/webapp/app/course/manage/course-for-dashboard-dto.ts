@@ -13,6 +13,8 @@ export class CourseForDashboardDTO {
     quizScores: CourseScores;
 
     participationResults: ParticipationResultDTO[];
+
+    courseNotificationCount: number;
 }
 
 export class ParticipationResultDTO {

@@ -186,6 +186,70 @@
                 "newMessageGroupChat": "Neue Nachricht im Gruppenchat im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
                 "newMessageDirect": "Neue Direktnachricht im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
+        },
+        "courseNotification": {
+            "newPostNotification": {
+                "settingsTitle": "Neue Nachricht",
+                "title": "Neue Nachricht",
+                "content": "{{authorName}} hat eine neue Nachricht in {{courseName}} geschrieben."
+            },
+            "temporal": {
+                "now": "Jetzt",
+                "oneHourAgo": "Vor 1 Stunde.",
+                "hoursAgo": "Vor {{hours}} Stunden.",
+                "today": "{{hour}}:{{minute}}",
+                "yesterday": "Gestern, {{hour}}:{{minute}}",
+                "thisWeek": "{{day}}, {{hour}}:{{minute}}",
+                "date": "{{date}}"
+            },
+            "weekdays": {
+                "monday": "Montag",
+                "tuesday": "Dienstag",
+                "wednesday": "Mittwoch",
+                "thursday": "Donnerstag",
+                "friday": "Freitag",
+                "saturday": "Samstag",
+                "sunday": "Sonntag"
+            },
+            "overview": {
+                "title": "Benachrichtigungen",
+                "emptyTitle": "Alles erledigt!",
+                "emptyMessage": "Momentan gibt es keine Benachrichtigungen in dieser Kategorie."
+            },
+            "category": {
+                "general": "Allgemein",
+                "communication": "Kommunikation"
+            },
+            "setting": {
+                "headline": "Benachrichtigungen"
+            },
+            "channel": {
+                "email": "E-Mail",
+                "webapp": "Webapp",
+                "push": "Push"
+            },
+            "popup": {
+                "collapseToggle": "Einklappen"
+            },
+            "preset": {
+                "dropdown": "Aktiv",
+                "defaultUserCourseNotificationSettingPreset": {
+                    "title": "Standard",
+                    "description": "Erhalte die essenziellen Benachrichtigungen für diesen Kurs."
+                },
+                "ignoreUserCourseNotificationSettingPreset": {
+                    "title": "Ignorieren",
+                    "description": "Erhalte keine Benachrichtigungen für diesen Kurs."
+                },
+                "allActivityUserCourseNotificationSettingPreset": {
+                    "title": "Jede Aktivität",
+                    "description": "Erhalte den Großteil der Benachrichtigungen für diesen Kurs um immer auf dem neuesten Stand zu bleiben."
+                },
+                "customUserCourseNotificationSettingPreset": {
+                    "title": "Angepasst",
+                    "description": "Bestimme selbst welche Benachrichtigungen du erhälst. Du kannst diese Einstellung jederzeit ändern."
+                }
+            }
         }
     }
 }

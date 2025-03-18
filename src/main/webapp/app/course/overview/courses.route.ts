@@ -20,6 +20,7 @@ export enum CourseOverviewRoutePath {
     ARCHIVE = 'archive',
     STATISTICS = 'statistics',
     COMMUNICATION = 'communication',
+    SETTINGS = 'settings',
 }
 
 export const routes: Routes = [
@@ -243,6 +244,17 @@ export const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',
                     hasSidebar: true,
+                    showRefreshButton: true,
+                },
+            },
+            {
+                path: CourseOverviewRoutePath.SETTINGS,
+                pathMatch: 'full',
+                loadComponent: () => import('app/course/overview/course-settings/course-settings.component').then((m) => m.CourseSettingsComponent),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.settings',
+                    hasSidebar: false,
                     showRefreshButton: true,
                 },
             },

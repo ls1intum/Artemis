@@ -78,6 +78,8 @@ public class CourseNotificationService {
 
         var courseNotificationEntityId = createCourseNotification(courseNotification);
 
+        courseNotification.notificationId = courseNotificationEntityId;
+
         for (var supportedChannel : supportedChannels) {
             var service = serviceMap.get(supportedChannel);
             if (service == null) {

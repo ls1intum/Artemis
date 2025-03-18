@@ -59,6 +59,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { LtiService } from 'app/shared/service/lti.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
+import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
 
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
@@ -78,6 +79,7 @@ import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -97,6 +99,8 @@ import { CourseSidebarService } from 'app/course/overview/course-sidebar.service
         FaIconComponent,
         TranslateDirective,
         CourseSidebarComponent,
+        CourseNotificationOverviewComponent,
+        FeatureToggleHideDirective,
     ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -123,7 +127,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private toggleSidebarEventSubscription: Subscription;
 
     // course id of the course that is currently displayed
-    private courseId: number;
+    protected courseId: number;
     private subscription: Subscription;
     dashboardSubscription: Subscription;
     // currently displayed course

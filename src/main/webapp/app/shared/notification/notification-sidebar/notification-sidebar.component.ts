@@ -18,6 +18,7 @@ import { DocumentationButtonComponent } from '../../components/documentation-but
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
 const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE];
@@ -35,6 +36,7 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
     private changeDetector = inject(ChangeDetectorRef);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private featureToggleService = inject(FeatureToggleService);
 
     // HTML template related
     showSidebar = false;
@@ -48,6 +50,7 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
     error?: string;
     loading = false;
     totalNotifications = 0;
+    isCourseSpecificNotificationsEnabled = false;
 
     readonly documentationType: DocumentationType = 'Notifications';
 
@@ -93,6 +96,10 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
             } else {
                 this.sessionStorageService.clear(LAST_READ_STORAGE_KEY);
             }
+        });
+
+        this.featureToggleService.getFeatureToggleActive(FeatureToggle.CourseSpecificNotifications).subscribe((active) => {
+            this.isCourseSpecificNotificationsEnabled = active;
         });
     }
 

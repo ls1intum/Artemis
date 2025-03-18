@@ -1,16 +1,18 @@
-<div class="pointer">
-    <button class="guided-tour-notification notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
-        <fa-icon [icon]="faBell" />
-        @if (recentNotificationCount > 0) {
-            <span class="badge bg-danger rounded-pill">
-                {{ recentNotificationCount }}
-                @if (recentNotificationCount >= sortedNotifications.length) {
-                    <span>+</span>
-                }
-            </span>
-        }
-    </button>
-</div>
+@if (!isCourseSpecificNotificationsEnabled) {
+    <div class="pointer">
+        <button class="guided-tour-notification notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
+            <fa-icon [icon]="faBell" />
+            @if (recentNotificationCount > 0) {
+                <span class="badge bg-danger rounded-pill">
+                    {{ recentNotificationCount }}
+                    @if (recentNotificationCount >= sortedNotifications.length) {
+                        <span>+</span>
+                    }
+                </span>
+            }
+        </button>
+    </div>
+}
 <div class="notification-overlay" (click)="toggleSidebar()" [ngClass]="showSidebar ? 'show' : 'hide'"></div>
 <div class="notification-sidebar" [ngClass]="showSidebar ? 'show' : 'hide'" id="notification-sidebar">
     <div class="d-flex flex-column">

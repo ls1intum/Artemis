@@ -1,0 +1,7 @@
+<div [ngClass]="isSmall() ? 'small' : ''" class="course-notification-bubble">
+    @if (totalAmount() > 0) {
+        <div class="course-notification-bubble-indicator">
+            {{ totalAmount() }}
+        </div>
+    }
+</div>

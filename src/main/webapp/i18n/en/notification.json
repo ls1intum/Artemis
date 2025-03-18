@@ -186,6 +186,70 @@
                 "newMessageGroupChat": "New message in group chat in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
                 "newMessageDirect": "New direct message in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
+        },
+        "courseNotification": {
+            "newPostNotification": {
+                "title": "New Message",
+                "content": "{{authorName}} wrote a new message in {{courseName}}.",
+                "settingsTitle": "New Message"
+            },
+            "temporal": {
+                "now": "Now",
+                "oneHourAgo": "1 hour ago.",
+                "hoursAgo": "{{hours}} hours ago.",
+                "today": "{{hour}}:{{minute}}",
+                "yesterday": "Yesterday, {{hour}}:{{minute}}",
+                "thisWeek": "{{day}}, {{hour}}:{{minute}}",
+                "date": "{{date}}"
+            },
+            "weekdays": {
+                "monday": "Monday",
+                "tuesday": "Tuesday",
+                "wednesday": "Wednesday",
+                "thursday": "Thursday",
+                "friday": "Friday",
+                "saturday": "Saturday",
+                "sunday": "Sunday"
+            },
+            "overview": {
+                "title": "Notifications",
+                "emptyTitle": "All done!",
+                "emptyMessage": "Currently there are no notifications for this category."
+            },
+            "category": {
+                "general": "General",
+                "communication": "Communication"
+            },
+            "setting": {
+                "headline": "Notifications"
+            },
+            "channel": {
+                "email": "E-Mail",
+                "webapp": "Webapp",
+                "push": "Push"
+            },
+            "popup": {
+                "collapseToggle": "Collapse"
+            },
+            "preset": {
+                "dropdown": "Setting",
+                "defaultUserCourseNotificationSettingPreset": {
+                    "title": "Default",
+                    "description": "Receive only essential notifications about the course."
+                },
+                "ignoreUserCourseNotificationSettingPreset": {
+                    "title": "Ignore all",
+                    "description": "Receive no notifications for the course."
+                },
+                "allActivityUserCourseNotificationSettingPreset": {
+                    "title": "All activity",
+                    "description": "Receive all notifications to stay on track at all times."
+                },
+                "customUserCourseNotificationSettingPreset": {
+                    "title": "Custom",
+                    "description": "Set the settings to your specific needs. You may always change this."
+                }
+            }
         }
     }
 }

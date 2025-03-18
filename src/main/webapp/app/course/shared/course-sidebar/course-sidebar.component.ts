@@ -1,6 +1,6 @@
 import { Component, HostListener, OnInit, ViewChild, input, output, signal } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { IconDefinition, faChevronRight, faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
@@ -81,6 +81,7 @@ export class CourseSidebarComponent implements OnInit {
     // Icons
     faChevronRight = faChevronRight;
     faEllipsis = faEllipsis;
+    protected readonly faCog = faCog;
 
     ngOnInit() {
         this.updateVisibleNavbarItems(window.innerHeight);
@@ -130,4 +131,6 @@ export class CourseSidebarComponent implements OnInit {
         }
         return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
+
+    protected readonly FeatureToggle = FeatureToggle;
 }

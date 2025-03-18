@@ -1,0 +1,63 @@
+<span class="course-notification-overview d-inline-block">
+    <button (click)="toggleOverlay()" class="btn btn-outline-secondary btn-sm">
+        <fa-icon [icon]="faBell" />
+
+        <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount" [isSmall]="true" />
+    </button>
+
+    <div [ngClass]="isShown ? 'is-shown' : ''" class="course-notification-overview-overlay">
+        <div class="course-notification-overview-triangle"></div>
+
+        <div class="course-notification-overview-headline-button-wrap mb-2">
+            <h4 class="course-notification-overview-overlay-headline mb-0" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
+
+            <div>
+                <button class="btn btn-outline-secondary btn-sm" (click)="archiveClicked()">
+                    <fa-icon [icon]="faArchive" />
+                </button>
+            </div>
+        </div>
+
+        <div class="course-notification-overview-category-wrap pb-1">
+            @for (category of courseCategories; track category) {
+                <div (click)="selectCategory(category)" [ngClass]="isCategorySelected(category) ? 'is-selected' : ''" class="course-notification-overview-category">
+                    <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
+                </div>
+            }
+        </div>
+
+        <div #scrollContainer class="course-notification-overview-notification-container">
+            @if (!isLoading) {
+                @if (notificationsForSelectedCategory.length > 0) {
+                    <div @fadeAnimation>
+                        @for (notification of notificationsForSelectedCategory; track notification) {
+                            <div class="course-notification-overview-notification-wrap" @notificationWrapAnimation>
+                                <jhi-course-notification
+                                    [courseNotification]="notification"
+                                    [isUnseen]="notification.status === CourseNotificationViewingStatus.UNSEEN"
+                                    [isShowClose]="true"
+                                    (onCloseClicked)="closeClicked(notification)"
+                                />
+                            </div>
+                        }
+                        <div class="py-1"></div>
+                    </div>
+                } @else {
+                    <div class="course-notification-overview-notification-empty-prompt" @fadeAnimation>
+                        <fa-icon class="course-notification-overview-notification-empty-prompt-icon" [icon]="faEnvelopeOpen" />
+                        <div class="mt-3 text-secondary">
+                            <strong jhiTranslate="artemisApp.courseNotification.overview.emptyTitle"></strong>
+                        </div>
+                        <div class="text-secondary text-center">
+                            <span jhiTranslate="artemisApp.courseNotification.overview.emptyMessage"></span>
+                        </div>
+                    </div>
+                }
+            } @else {
+                <div class="course-notification-overview-notification-loading">
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                </div>
+            }
+        </div>
+    </div>
+</span>

@@ -14,12 +14,28 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { PageRibbonComponent } from './shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from './shared/notification/notification-popup/notification-popup.component';
 import { FooterComponent } from './shared/layouts/footer/footer.component';
+import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
 @Component({
     selector: 'jhi-app',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, NotificationPopupComponent, FooterComponent],
+    imports: [
+        AlertOverlayComponent,
+        CdkScrollable,
+        NgClass,
+        NgStyle,
+        PageRibbonComponent,
+        RouterOutlet,
+        NotificationPopupComponent,
+        FooterComponent,
+        CourseNotificationPopupOverlayComponent,
+        FeatureToggleDirective,
+        FeatureToggleHideDirective,
+    ],
 })
 export class AppComponent implements OnInit, OnDestroy {
     private jhiLanguageHelper = inject(JhiLanguageHelper);
@@ -143,4 +159,6 @@ export class AppComponent implements OnInit, OnDestroy {
         this.courseOverviewSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
+
+    protected readonly FeatureToggle = FeatureToggle;
 }

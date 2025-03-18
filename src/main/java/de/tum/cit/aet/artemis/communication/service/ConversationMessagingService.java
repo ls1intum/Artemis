@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
@@ -58,6 +59,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
@@ -79,13 +82,18 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
+    private final CourseNotificationService courseNotificationService;
+
     private final PostRepository postRepository;
+
+    private final FeatureToggleService featureToggleService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository, PostRepository postRepository) {
+            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
+            CourseNotificationService courseNotificationService, PostRepository postRepository, FeatureToggleService featureToggleService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.conversationService = conversationService;
@@ -94,7 +102,9 @@ public class ConversationMessagingService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
+        this.courseNotificationService = courseNotificationService;
         this.postRepository = postRepository;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -191,6 +201,25 @@ public class ConversationMessagingService extends PostingService {
             broadcastForPost(postDTO, course.getId(), recipientSummaries, createdConversationMessage.mentionedUsers());
 
             log.debug("      broadcastForPost DONE");
+        }
+
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var post = createdConversationMessage.messageWithHiddenDetails();
+            var author = post.getAuthor();
+            String channelType = switch (conversation) {
+                case OneToOneChat ignored -> "oneToOneChat";
+                case GroupChat ignored -> "groupChat";
+                default -> "channel";
+            };
+
+            courseNotificationService.sendCourseNotification(
+                    new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
+                            conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId()),
+                    recipientSummaries.stream().map((summary) -> {
+                        var user = new User(summary.userId());
+                        user.setLogin(summary.userLogin());
+                        return user;
+                    }).toList());
         }
 
         sendAndSaveNotifications(notification, createdConversationMessage, recipientSummaries);
