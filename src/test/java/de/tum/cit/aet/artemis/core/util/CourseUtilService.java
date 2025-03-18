@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestR
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -246,6 +247,29 @@ public class CourseUtilService {
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise, lecture, and competency with default values.
+     *
+     * @return The created course.
+     */
+    public Course createCourseWithExercisesAndLecturesAndCompetencies() {
+        Course course = createCourse();
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        course.addExercises(programmingExercise);
+
+        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        course.addLectures(lecture);
+
+        Competency competency = competencyUtilService.createCompetency(course);
+        course.setCompetencies(Set.of(competency));
+
+        lectureRepo.save(lecture);
+        exerciseRepository.save(programmingExercise);
+
         return courseRepo.save(course);
     }
 
