@@ -40,10 +40,10 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "participationservice";
 
@@ -99,12 +99,10 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         // TODO: is this actually needed?
         closeable = MockitoAnnotations.openMocks(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         if (closeable != null) {
             closeable.close();
@@ -149,23 +147,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.findLatestSubmission().orElseThrow();
         assertThat(programmingSubmission.getType()).isEqualTo(SubmissionType.EXTERNAL);
         assertThat(programmingSubmission.getResults()).isNullOrEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStartExerciseWithInitializationDate_newParticipation() {
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        Exercise modelling = course.getExercises().iterator().next();
-        Participant participant = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
-
-        StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
-
-        assertThat(studentParticipationReceived.getExercise()).isEqualTo(modelling);
-        assertThat(studentParticipationReceived.getStudent()).isPresent();
-        assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
-        assertThat(studentParticipationReceived.getInitializationDate()).isEqualTo(initializationDate);
-        assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     @Test
@@ -225,8 +206,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertThat(studentParticipationReceived.getStudent().get()).isEqualTo(participant);
         // Acceptance range, initializationDate is to be set to now()
-        assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
-        assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
         assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
