@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
-import { ConfigurationComponent } from 'app/admin/configuration/configuration.component';
-import { ConfigurationService } from 'app/admin/configuration/configuration.service';
-import { Bean, PropertySource } from 'app/admin/configuration/configuration.model';
+import { ConfigurationComponent } from 'app/core/admin/configuration/configuration.component';
+import { ConfigurationService } from 'app/core/admin/configuration/configuration.service';
+import { Bean, PropertySource } from 'app/core/admin/configuration/configuration.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Component Tests', () => {

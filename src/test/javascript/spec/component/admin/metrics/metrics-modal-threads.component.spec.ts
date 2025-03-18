@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
-import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
+import { MetricsModalThreadsComponent } from 'app/core/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
+import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
 

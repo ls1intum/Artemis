@@ -10,7 +10,7 @@ import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-sv
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -18,7 +18,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';

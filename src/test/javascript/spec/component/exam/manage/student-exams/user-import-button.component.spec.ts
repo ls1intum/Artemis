@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { By } from '@angular/platform-browser';

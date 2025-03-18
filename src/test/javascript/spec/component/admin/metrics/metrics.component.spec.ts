@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JvmMemoryComponent } from 'app/admin/metrics/blocks/jvm-memory/jvm-memory.component';
-import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
-import { MetricsCacheComponent } from 'app/admin/metrics/blocks/metrics-cache/metrics-cache.component';
-import { MetricsDatasourceComponent } from 'app/admin/metrics/blocks/metrics-datasource/metrics-datasource.component';
-import { MetricsEndpointsRequestsComponent } from 'app/admin/metrics/blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
-import { MetricsGarbageCollectorComponent } from 'app/admin/metrics/blocks/metrics-garbagecollector/metrics-garbagecollector.component';
-import { MetricsRequestComponent } from 'app/admin/metrics/blocks/metrics-request/metrics-request.component';
-import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
+import { JvmMemoryComponent } from 'app/core/admin/metrics/blocks/jvm-memory/jvm-memory.component';
+import { JvmThreadsComponent } from 'app/core/admin/metrics/blocks/jvm-threads/jvm-threads.component';
+import { MetricsCacheComponent } from 'app/core/admin/metrics/blocks/metrics-cache/metrics-cache.component';
+import { MetricsDatasourceComponent } from 'app/core/admin/metrics/blocks/metrics-datasource/metrics-datasource.component';
+import { MetricsEndpointsRequestsComponent } from 'app/core/admin/metrics/blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
+import { MetricsGarbageCollectorComponent } from 'app/core/admin/metrics/blocks/metrics-garbagecollector/metrics-garbagecollector.component';
+import { MetricsRequestComponent } from 'app/core/admin/metrics/blocks/metrics-request/metrics-request.component';
+import { MetricsSystemComponent } from 'app/core/admin/metrics/blocks/metrics-system/metrics-system.component';
 import { of } from 'rxjs';
 
-import { MetricsComponent } from 'app/admin/metrics/metrics.component';
-import { MetricsService } from 'app/admin/metrics/metrics.service';
-import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
+import { MetricsComponent } from 'app/core/admin/metrics/metrics.component';
+import { MetricsService } from 'app/core/admin/metrics/metrics.service';
+import { Metrics, ThreadDump } from 'app/core/admin/metrics/metrics.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
