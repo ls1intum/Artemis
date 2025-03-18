@@ -466,7 +466,8 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUri("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(
+                String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), programmingExercise.getProjectKey() + "tests"));
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }

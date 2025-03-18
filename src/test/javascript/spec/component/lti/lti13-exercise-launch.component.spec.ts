@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
+import { Lti13ExerciseLaunchComponent } from 'app/lti/overview/lti13-exercise-launch.component';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -12,7 +12,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import 'jest-extended';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
@@ -91,7 +91,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
 
         expect(comp.isLaunching).toBeFalse();
     });
@@ -106,7 +106,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
     });
 
     it('onInit launch fails on error', () => {
@@ -115,7 +115,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
 
         expect(comp.isLaunching).toBeFalse();
     });
@@ -130,7 +130,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.ngOnInit();
         tick(1000);
 
-        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalled();
-        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(navigateSpy).not.toHaveBeenCalled();
         expect(comp.redirectUserToTargetLink).toHaveBeenCalled();
     }));
@@ -174,7 +174,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(identitySpy).toHaveBeenCalled();
         expect(authStateSpy).toHaveBeenCalled();
         expect(httpStub).toHaveBeenCalled();
-        expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
         expect(navigateSpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
     }));

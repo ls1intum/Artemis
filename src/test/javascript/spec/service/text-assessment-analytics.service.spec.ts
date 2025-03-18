@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Params, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { throwError } from 'rxjs';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';

@@ -2,12 +2,12 @@ import dayjs from 'dayjs/esm';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { EditAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-attachment-unit/edit-attachment-unit.component';
+import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { EditAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -19,6 +19,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditAttachmentUnitComponent', () => {
     let fixture: ComponentFixture<EditAttachmentUnitComponent>;
@@ -39,6 +41,7 @@ describe('EditAttachmentUnitComponent', () => {
                 MockProvider(AttachmentUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

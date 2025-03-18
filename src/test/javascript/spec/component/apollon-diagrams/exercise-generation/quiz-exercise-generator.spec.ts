@@ -12,9 +12,9 @@ import {
     computeDropLocation,
     generateDragAndDropItemForElement,
     generateDragAndDropQuizExercise,
-} from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import * as SVGRendererAPI from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+} from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -66,7 +66,7 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise for Class Diagram', async () => {
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
+        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
         jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());

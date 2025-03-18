@@ -1,6 +1,6 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
+import { QuizPoolMappingQuestionListComponent } from 'app/quiz/manage/quiz-pool-mapping-question-list.component';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 // Mock before import to prevent errors
 jest.mock('@angular/cdk/drag-drop', () => {
