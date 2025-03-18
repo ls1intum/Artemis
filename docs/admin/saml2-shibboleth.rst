@@ -46,6 +46,7 @@ You can see the structure of the saml2 configuration in the following:
           relyingparty:
             registration:
               REGISTRATION_ID_HERE:
+                entityId: artemis # optional: by default the entityId is https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
                 signing.credentials: &my-metadata
                   - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem
                     certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt
@@ -116,6 +117,7 @@ The SAML2 configuration of Artemis could look like this:
           relyingparty:
             registration:
               scc:
+                # entityId: e.g., artemis ; default: https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
                 signing.credentials: &scc-metadata
                   - private-key-location: file:/config/shibboleth-sp-key.pem
                     certificate-location: file:/config/shibboleth-sp-cert.crt
