@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
 
 import { Exam } from 'app/entities/exam/exam.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

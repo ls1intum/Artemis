@@ -1,10 +1,10 @@
-import { ExternalSubmissionService } from 'app/exercises/shared/external-submission/external-submission.service';
+import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { User } from 'app/core/user/user.model';
-import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
+import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';

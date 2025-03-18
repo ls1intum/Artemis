@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 
 describe('CachedRepositoryFilesServiceService', () => {
     let service: CachedRepositoryFilesService;

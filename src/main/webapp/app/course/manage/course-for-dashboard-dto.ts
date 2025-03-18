@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { CourseScores } from 'app/course/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 export class CourseForDashboardDTO {
     course: Course;

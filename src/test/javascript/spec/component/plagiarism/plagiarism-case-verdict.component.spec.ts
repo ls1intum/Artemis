@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
+import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
+import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe } from 'ng-mocks';
