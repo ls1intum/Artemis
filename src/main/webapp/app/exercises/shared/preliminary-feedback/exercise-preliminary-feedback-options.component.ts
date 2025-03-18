@@ -2,13 +2,13 @@ import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, input }
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
-import { AthenaService } from 'app/assessment/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AthenaService } from 'app/assessment/shared/athena.service';
 
 @Component({
     selector: 'jhi-exercise-preliminary-feedback-options',

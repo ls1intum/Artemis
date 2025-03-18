@@ -68,6 +68,7 @@ import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/share
         CustomMinDirective,
         CustomMaxDirective,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExercisePreliminaryFeedbackOptionsComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
