@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-line-stat.component';
-import { GitDiffReportComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';
+import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report.component';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
-import { GitDiffFilePanelComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel.component';
+import { GitDiffFilePanelComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

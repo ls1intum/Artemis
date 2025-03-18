@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
-import { CoursePrerequisitesButtonComponent } from 'app/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
+import { CoursePrerequisitesModalComponent } from 'app/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
+import { CoursePrerequisitesButtonComponent } from 'app/course/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 
 describe('CoursePrerequisitesButtonComponent', () => {
     let fixture: ComponentFixture<CoursePrerequisitesButtonComponent>;

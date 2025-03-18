@@ -4,8 +4,8 @@ import { BrowserModule, By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { slice } from 'lodash-es';
 
-import { TreeViewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/tree-view-item.component';
-import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
+import { TreeViewItemComponent } from 'app/programming/shared/code-editor/treeview/components/treeview-item/tree-view-item.component';
+import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { createGenericTestComponent } from './common';
 import { CommonModule } from '@angular/common';
 

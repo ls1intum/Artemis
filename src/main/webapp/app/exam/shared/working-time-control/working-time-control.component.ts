@@ -4,7 +4,7 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/f
 import { Exam } from 'app/entities/exam/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
+import { getRelativeWorkingTimeExtension } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

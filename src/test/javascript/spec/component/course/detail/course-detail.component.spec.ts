@@ -16,7 +16,7 @@ import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/cou
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

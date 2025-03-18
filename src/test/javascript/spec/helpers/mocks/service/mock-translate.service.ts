@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { LangChangeEvent } from '@ngx-translate/core';
 import { BehaviorSubject, Observable, of, Subject } from 'rxjs';
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { ActivatedRouteSnapshot } from '@angular/router';
 
 export const TRANSLATED_STRING = '';

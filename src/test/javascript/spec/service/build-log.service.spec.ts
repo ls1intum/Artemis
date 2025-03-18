@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
+import { BuildLogService } from 'app/programming/service/build-log.service';
 import { BuildLogEntry, BuildLogType } from 'app/entities/programming/build-log.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

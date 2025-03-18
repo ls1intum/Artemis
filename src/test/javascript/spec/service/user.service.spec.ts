@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { AdminUserService } from 'app/core/user/admin-user.service';
+import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('User Service', () => {

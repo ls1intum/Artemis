@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { NavigationEnd, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
