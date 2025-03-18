@@ -78,6 +78,9 @@ public class BuildJobGitService extends AbstractGitService {
             if (sshUrlTemplate.isEmpty()) {
                 throw new RuntimeException("No SSH url template was set but should use SSH for build agent authentication.");
             }
+            if (gitSshPrivateKeyPath.isEmpty()) {
+                throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
+            }
             configureSsh();
         }
     }
