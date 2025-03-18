@@ -1,4 +1,4 @@
-import { ActivateService } from 'app/account/activate/activate.service';
+import { ActivateService } from 'app/core/account/activate/activate.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';

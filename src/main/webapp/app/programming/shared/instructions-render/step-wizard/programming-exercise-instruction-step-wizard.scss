@@ -1,0 +1,104 @@
+@import '../../../../../../../../node_modules/bootstrap/scss/functions';
+@import '../../../../../../../../node_modules/bootstrap/scss/variables';
+@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
+
+$step-font-size: 0.6rem;
+$step-button-size: 21px; // Make sure to keep it uneven so that centering works
+
+.card-second-header {
+    padding: 1rem 1rem 0 1rem;
+}
+
+.stepwizard {
+    display: table;
+    width: 100%;
+    position: relative;
+}
+
+.stepwizard-title {
+    display: table-cell;
+    width: 1%;
+}
+
+.stepwizard-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.stepwizard-step {
+    display: table-cell;
+    text-align: center;
+    position: relative;
+
+    .fa {
+        vertical-align: initial;
+    }
+
+    p {
+        margin-top: 10px;
+    }
+
+    button[disabled] {
+        opacity: 1 !important;
+        filter: alpha(opacity=100) !important;
+        cursor: default;
+    }
+
+    .btn {
+        cursor: default;
+        background-color: var(--bs-card-bg);
+        width: $step-button-size;
+        height: $step-button-size;
+        text-align: center;
+        padding: 0;
+        font-size: $step-font-size;
+        line-height: 1;
+        border-radius: 15px;
+        border-width: 2px;
+        border-color: $gray-600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &--no-result.btn {
+        cursor: default;
+    }
+
+    & &--failed.btn {
+        cursor: pointer;
+        color: $danger;
+        border-color: $danger;
+    }
+
+    & &--success.btn {
+        cursor: pointer;
+        color: $success;
+        border-color: $success;
+    }
+
+    & &--no-result.btn,
+    .btn.not-done,
+    & &--not-executed.btn {
+        color: $gray-600;
+        font-size: 0.4rem;
+    }
+}
+
+.test-passing {
+    cursor: default !important;
+}
+
+.test-passing:hover {
+    background-color: var(--programming-exercise-instruction-step-wizard-test-passing-hover-color);
+}
+
+.stepwizard-row-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-top: 3px solid $gray-500;
+}

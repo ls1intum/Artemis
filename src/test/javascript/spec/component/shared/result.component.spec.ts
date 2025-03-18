@@ -1,6 +1,6 @@
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { SimpleChange } from '@angular/core';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -14,12 +14,12 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import * as utils from 'app/exercises/shared/feedback/feedback.utils';
-import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import * as utils from 'app/exercise/feedback/feedback.utils';
+import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { By } from '@angular/platform-browser';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
