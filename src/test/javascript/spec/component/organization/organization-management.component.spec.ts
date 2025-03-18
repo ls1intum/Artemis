@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
-import { OrganizationManagementComponent } from 'app/admin/organization-management/organization-management.component';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementComponent } from 'app/core/admin/organization-management/organization-management.component';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
-import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
+import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('OrganizationManagementComponent', () => {

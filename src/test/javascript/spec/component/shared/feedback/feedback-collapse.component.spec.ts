@@ -1,5 +1,5 @@
-import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackCollapseComponent } from 'app/exercise/feedback/collapse/feedback-collapse.component';
+import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 
 describe('FeedbackCollapseComponent', () => {
     /*

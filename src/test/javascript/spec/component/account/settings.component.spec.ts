@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { SettingsComponent } from 'app/account/settings/settings.component';
+import { SettingsComponent } from 'app/core/account/settings/settings.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

@@ -10,7 +10,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
@@ -20,7 +20,7 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;

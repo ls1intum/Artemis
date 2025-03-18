@@ -5,8 +5,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { lastValueFrom } from 'rxjs';
-import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;
