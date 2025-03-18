@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/submission-export-button.component';

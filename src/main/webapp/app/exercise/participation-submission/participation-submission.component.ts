@@ -18,7 +18,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Result } from 'app/entities/result.model';
-import { FileUploadAssessmentService } from 'app/file-upload/manage/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
