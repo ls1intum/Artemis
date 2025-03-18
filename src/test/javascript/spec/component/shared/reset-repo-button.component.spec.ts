@@ -12,8 +12,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Subject } from 'rxjs';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';

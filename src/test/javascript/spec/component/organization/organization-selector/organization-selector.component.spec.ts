@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Organization } from 'app/entities/organization.model';
 import { MockProvider } from 'ng-mocks';

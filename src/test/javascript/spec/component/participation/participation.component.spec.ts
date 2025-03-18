@@ -1,8 +1,8 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -11,9 +11,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { Team } from 'app/entities/team.model';
-import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -21,14 +21,14 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;

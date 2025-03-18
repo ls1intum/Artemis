@@ -3,7 +3,7 @@ import { FormDateTimePickerComponent } from '../../../../../main/webapp/app/shar
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Lecture } from '../../../../../main/webapp/app/entities/lecture.model';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
-import { LectureUpdatePeriodComponent } from '../../../../../main/webapp/app/lecture/lecture-period/lecture-period.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
