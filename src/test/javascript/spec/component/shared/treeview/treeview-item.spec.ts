@@ -1,4 +1,4 @@
-import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
+import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('TreeviewItem', () => {
     it('should throw error if TreeItem param is null of undefined', () => {

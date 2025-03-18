@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router, RouterModule } from '@angular/router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { CourseTutorialGroupsComponent } from 'app/overview/course-tutorial-groups/course-tutorial-groups.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -18,7 +17,7 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
@@ -26,6 +25,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { TranslateService } from '@ngx-translate/core';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
 
 describe('CourseTutorialGroupsComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;

@@ -6,9 +6,9 @@ import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { extend, reduce } from 'lodash-es';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -87,6 +87,10 @@ export class ProfileService {
                         profileInfo.buildTimeoutMin = data.buildTimeoutMin;
                         profileInfo.buildTimeoutMax = data.buildTimeoutMax;
                         profileInfo.buildTimeoutDefault = data.buildTimeoutDefault;
+
+                        profileInfo.defaultContainerCpuCount = data.defaultContainerCpuCount;
+                        profileInfo.defaultContainerMemoryLimitInMB = data.defaultContainerMemoryLimitInMB;
+                        profileInfo.defaultContainerMemorySwapLimitInMB = data.defaultContainerMemorySwapLimitInMB;
 
                         return profileInfo;
                     }),

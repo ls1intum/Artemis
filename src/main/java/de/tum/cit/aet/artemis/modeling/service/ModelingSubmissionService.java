@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -68,7 +68,7 @@ public class ModelingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
             ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelElementRepository modelElementRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
-            Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
+            Optional<AthenaApi> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;

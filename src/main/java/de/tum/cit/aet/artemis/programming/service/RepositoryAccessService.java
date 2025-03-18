@@ -11,9 +11,11 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -29,10 +31,14 @@ public class RepositoryAccessService {
 
     private final ExerciseDateService exerciseDateService;
 
-    public RepositoryAccessService(PlagiarismService plagiarismService, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService) {
+    private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
+
+    public RepositoryAccessService(PlagiarismService plagiarismService, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
+            ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
         this.plagiarismService = plagiarismService;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseDateService = exerciseDateService;
+        this.participationAuthorizationCheckService = participationAuthorizationCheckService;
     }
 
     /**
@@ -58,10 +64,10 @@ public class RepositoryAccessService {
 
         // The user has to be at least a student in the course to access the repository.
         // We also check if the user is the owner of the participation and if it's a student participation.
-        if (atLeastStudent && programmingParticipation instanceof StudentParticipation studentParticipation) {
-            boolean ownerOfParticipation = authorizationCheckService.isOwnerOfParticipation(studentParticipation, user);
+        if (atLeastStudent && programmingParticipation instanceof ProgrammingExerciseStudentParticipation programmingStudentParticipation) {
+            boolean ownerOfParticipation = authorizationCheckService.isOwnerOfParticipation(programmingStudentParticipation, user);
             if (ownerOfParticipation) {
-                if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, studentParticipation, isTeachingAssistant, programmingParticipation.isLocked())) {
+                if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, programmingStudentParticipation, isTeachingAssistant)) {
                     return;
                 }
             }
@@ -77,11 +83,10 @@ public class RepositoryAccessService {
      * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
      * @param studentParticipation The student participation.
      * @param isTeachingAssistant  True if the user is a teaching assistant, false otherwise.
-     * @param isLocked             True if the participation is locked, false otherwise.
      * @return True if the user has access to the repository, false otherwise.
      */
     private boolean hasAccessToOwnStudentParticipation(ProgrammingExercise programmingExercise, RepositoryActionType repositoryActionType,
-            StudentParticipation studentParticipation, boolean isTeachingAssistant, boolean isLocked) {
+            ProgrammingExerciseStudentParticipation studentParticipation, boolean isTeachingAssistant) {
         boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
 
         if (!hasStarted) {
@@ -89,22 +94,12 @@ public class RepositoryAccessService {
             return isTeachingAssistant;
         }
 
-        return hasAccessAfterExerciseStart(studentParticipation, repositoryActionType, isLocked);
-    }
-
-    /**
-     * Checks if the student or teaching assistant has access to the repository of the given participation after the exercise has started.
-     *
-     * @param studentParticipation The student participation.
-     * @param repositoryActionType The type of action that the user wants to perform on the repository (i.e. WRITE, READ or RESET).
-     * @return True if the user has access to the repository, false otherwise.
-     */
-    private boolean hasAccessAfterExerciseStart(StudentParticipation studentParticipation, RepositoryActionType repositoryActionType, boolean isLocked) {
         // The user always has read permissions after the exercise has started.
         if (repositoryActionType == RepositoryActionType.READ) {
             return true;
         }
-        if (isLocked) {
+
+        if (participationAuthorizationCheckService.isLocked(studentParticipation, programmingExercise)) {
             // The user does not have write or reset permissions if the participation is locked.
             return false;
         }

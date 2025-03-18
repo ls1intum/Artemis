@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IrisSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-settings-update.component';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
+import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockEmptySettings, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
@@ -21,8 +21,8 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisCourseSettingsUpdateComponent>;
     let irisSettingsService: IrisSettingsService;
-    const routeParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
-    const route = { parent: { params: routeParamsSubject.asObservable() } } as ActivatedRoute;
+    const routeParamsSubject = new BehaviorSubject<Params>({ courseId: '1' });
+    const route = { params: routeParamsSubject.asObservable() } as ActivatedRoute;
     let paramsSpy: jest.SpyInstance;
     let getSettingsSpy: jest.SpyInstance;
     let getParentSettingsSpy: jest.SpyInstance;
@@ -45,7 +45,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
                 // Setup
                 routeParamsSubject.next({ courseId: 1 });
-                paramsSpy = jest.spyOn(route.parent!.params, 'subscribe');
+                paramsSpy = jest.spyOn(route!.params, 'subscribe');
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));

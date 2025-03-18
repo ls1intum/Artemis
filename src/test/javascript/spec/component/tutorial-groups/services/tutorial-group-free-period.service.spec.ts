@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/services/tutorial-group-free-period.service';
 import { generateExampleTutorialGroupFreePeriod } from '../helpers/tutorialGroupFreePeriodExampleModel';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { provideHttpClient } from '@angular/common/http';

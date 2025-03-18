@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.util;
 
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -35,10 +37,10 @@ import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -76,6 +78,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * Service responsible for initializing the database with specific testdata related to exams for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ExamUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
@@ -95,7 +98,7 @@ public class ExamUtilService {
     private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepo;

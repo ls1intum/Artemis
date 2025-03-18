@@ -73,22 +73,4 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
         }
         return null;
     }
-
-    /**
-     * Check if the participation is locked.
-     * This is the case when the participation is a ProgrammingExerciseStudentParticipation,
-     * and the student can't make any changes to their repository anymore.
-     * While we can control this easily in the remote VCS, we need to check this manually
-     * for the local repository on the Artemis server.
-     *
-     * @return true if repository is locked, false if not.
-     */
-    @JsonIgnore
-    default boolean isLocked() {
-        if (!(this instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
-            return false;
-        }
-
-        return studentParticipation.isLocked();
-    }
 }

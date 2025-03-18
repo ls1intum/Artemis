@@ -3,7 +3,7 @@ import { CourseCompetencyType } from 'app/entities/competency.model';
 import { Node } from '@swimlane/ngx-graph';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseCompetencyRelationNodeComponent } from 'app/course/competencies/components/course-competency-relation-node/course-competency-relation-node.component';
+import { CourseCompetencyRelationNodeComponent } from 'app/atlas/manage/course-competency-relation-node/course-competency-relation-node.component';
 
 describe('CourseCompetencyRelationNodeComponent', () => {
     let component: CourseCompetencyRelationNodeComponent;

@@ -9,11 +9,12 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TranslateDirective } from '../../language/translate.directive';
 import { SecuredImageComponent } from '../../image/secured-image.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-account-information',
@@ -119,4 +120,5 @@ export class AccountInformationComponent implements OnInit {
     }
 
     protected readonly CachingStrategy = CachingStrategy;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

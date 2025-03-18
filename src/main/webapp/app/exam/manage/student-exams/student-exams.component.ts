@@ -2,15 +2,15 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
-import { TestExamWorkingTimeComponent } from 'app/exam/shared/testExam-workingTime/test-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
+import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
@@ -19,7 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -85,7 +85,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
-    localVCEnabled = false;
+    localVCEnabled = true;
 
     exercisePreparationStatus?: ExamExerciseStartPreparationStatus;
     exercisePreparationRunning = false;
@@ -246,64 +246,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
 
             this.exercisePreparationEta = (h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : '');
         }
-    }
-
-    /**
-     * Unlock all repositories immediately. Asks for confirmation.
-     */
-    handleUnlockAllRepositories() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.studentExams.unlockAllRepositories';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.unlockAllRepositoriesModalText');
-        modalRef.result.then(() => {
-            this.unlockAllRepositories();
-        });
-    }
-
-    /**
-     * Unlocks all programming exercises that belong to the exam
-     */
-    private unlockAllRepositories() {
-        this.isLoading = true;
-        this.examManagementService.unlockAllRepositories(this.courseId, this.examId).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.unlockAllRepositoriesSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.unlockAllRepositoriesFailure', err);
-                this.isLoading = false;
-            },
-        });
-    }
-
-    /**
-     * Lock all repositories immediately. Asks for confirmation.
-     */
-    handleLockAllRepositories() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
-        modalRef.componentInstance.title = 'artemisApp.studentExams.lockAllRepositories';
-        modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.studentExams.lockAllRepositoriesModalText');
-        modalRef.result.then(() => {
-            this.lockAllRepositories();
-        });
-    }
-
-    /**
-     * Locks all programming exercises that belong to the exam
-     */
-    private lockAllRepositories() {
-        this.isLoading = true;
-        this.examManagementService.lockAllRepositories(this.courseId, this.examId).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.lockAllRepositoriesSuccess', { number: res?.body });
-                this.isLoading = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.lockAllRepositoriesFailure', err);
-                this.isLoading = false;
-            },
-        });
     }
 
     /**
