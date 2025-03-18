@@ -24,7 +24,7 @@ import { MockClipboardItem } from '../../../helpers/mocks/service/mock-clipboard
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;

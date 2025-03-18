@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
-import { ChannelFormComponent, ChannelFormData } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

@@ -1,0 +1,29 @@
+:host {
+    display: contents;
+}
+
+.iris-logo {
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.24));
+
+    &.fluid {
+        flex: 0;
+        max-height: 100%;
+        aspect-ratio: 1 / 1;
+    }
+
+    &.text {
+        height: 1.3em;
+    }
+
+    &.small {
+        height: 35px;
+    }
+
+    &.medium {
+        height: 70px;
+    }
+
+    &.big {
+        max-height: 100px;
+    }
+}

@@ -4,7 +4,7 @@ import {
     IProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
-} from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+} from 'app/programming/manage/services/programming-exercise-grading.service';
 import { StaticCodeAnalysisCategory } from 'app/entities/programming/static-code-analysis-category.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 

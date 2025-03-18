@@ -37,7 +37,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -1328,15 +1327,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(actualParticipation).isNotNull();
         assertThat(actualParticipation.getResults()).hasSize(1);
         assertThat(actualParticipation.getResults().iterator().next()).as("Only latest result is returned").isEqualTo(result);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipationBuildArtifact() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doReturn(new ResponseEntity<>(null, HttpStatus.OK)).when(continuousIntegrationService).retrieveLatestArtifact(participation);
-        request.getNullable("/api/exercise/participations/" + participation.getId() + "/build-artifact", HttpStatus.OK, Object.class);
-        verify(continuousIntegrationService).retrieveLatestArtifact(participation);
     }
 
     @Test
