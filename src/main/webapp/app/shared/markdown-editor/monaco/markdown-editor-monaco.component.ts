@@ -74,6 +74,8 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { facArtemisIntelligence } from 'app/icons/icons';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
+import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
+import { Course } from 'app/entities/course.model';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -139,6 +141,7 @@ const BORDER_HEIGHT_OFFSET = 2;
         CdkDrag,
         MatButton,
         ArtemisTranslatePipe,
+        RedirectToIrisButtonComponent,
     ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
@@ -246,6 +249,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
     editType = input<PostingEditType>();
+    course = input<Course>();
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
