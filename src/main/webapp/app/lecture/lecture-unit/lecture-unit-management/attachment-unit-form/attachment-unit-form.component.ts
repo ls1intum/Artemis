@@ -27,6 +27,7 @@ export interface FormProperties {
     version?: number;
     updateNotificationText?: string;
     videoSource?: string;
+    urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
 }
 
@@ -37,7 +38,8 @@ export interface FileProperties {
 }
 
 function isTumLiveUrl(url: URL): boolean {
-    return url.host === 'live.rbg.tum.de';
+    const tumLiveUrls = ['live.rbg.tum.de', 'tum.live'];
+    return tumLiveUrls.includes(url.host);
 }
 
 function isVideoOnlyTumUrl(url: URL): boolean {
@@ -64,10 +66,11 @@ function videoSourceTransformUrlValidator(control: AbstractControl): ValidationE
 }
 
 function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | undefined {
-    let url;
-    if (control.value == '') {
+    const urlValue = control.value;
+    if (!urlValue) {
         return undefined;
     }
+    let url;
     try {
         url = new URL(control.value);
     } catch {
