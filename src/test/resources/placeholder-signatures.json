@@ -551,15 +551,6 @@
     "fieldType" : "java.lang.String"
   } ]
 }, {
-  "notificationType" : "PROGRAMMING_REPOSITORY_LOCKS",
-  "fieldDescriptions" : [ {
-    "fieldName" : "courseTitle",
-    "fieldType" : "java.lang.String"
-  }, {
-    "fieldName" : "exerciseTitle",
-    "fieldType" : "java.lang.String"
-  } ]
-}, {
   "notificationType" : "PROGRAMMING_TEST_CASES_CHANGED",
   "fieldDescriptions" : [ {
     "fieldName" : "courseTitle",

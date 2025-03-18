@@ -3,9 +3,9 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
-import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
-import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { CleanupServiceComponent } from 'app/core/admin/cleanup-service/cleanup-service.component';
+import { CleanupOperation } from 'app/core/admin/cleanup-service/cleanup-operation.model';
+import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/core/admin/cleanup-service/data-cleanup.service';
 import { signal } from '@angular/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

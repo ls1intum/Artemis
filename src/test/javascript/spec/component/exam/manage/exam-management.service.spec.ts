@@ -8,7 +8,7 @@ import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -556,41 +556,6 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/assess-unsubmitted-and-empty-student-exams`,
         });
 
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should unlock all repositories', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockRepoCount = 1;
-        const expected = 1;
-        // WHEN
-        service.unlockAllRepositories(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockRepoCount));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/unlock-all-repositories`,
-        });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should lock all repositories', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockRepoCount = 1;
-        const expected = 1;
-
-        // WHEN
-        service.lockAllRepositories(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockRepoCount));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/lock-all-repositories`,
-        });
         req.flush(expected);
         tick();
     }));

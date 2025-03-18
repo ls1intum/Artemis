@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ITeamService } from 'app/exercises/shared/team/team.service';
+import { ITeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/entities/team.model';
 import { StudentWithTeam } from 'app/entities/team.model';

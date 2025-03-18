@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisGuard } from 'app/iris/iris-guard.service';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { MockProvider } from 'ng-mocks';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 

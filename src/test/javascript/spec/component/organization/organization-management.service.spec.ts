@@ -1,4 +1,4 @@
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
-import { OrganizationCountDto } from 'app/admin/organization-management/organization-count-dto.model';
+import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Organization Service', () => {
