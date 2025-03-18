@@ -25,7 +25,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
@@ -33,7 +33,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -96,6 +96,7 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
         course.studentCourseAnalyticsDashboardEnabled = false;
@@ -207,7 +208,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentEnabled);
             expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
-            expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
+            expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIconPath);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
             expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
             flush();

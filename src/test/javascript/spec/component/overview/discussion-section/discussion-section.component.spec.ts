@@ -2,16 +2,16 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { MetisService } from 'app/communication/metis.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { AnswerPostService } from 'app/communication/answer-post.service';
 import { MockAnswerPostService } from '../../../helpers/mocks/service/mock-answer-post.service';
-import { PostService } from 'app/shared/metis/post.service';
+import { PostService } from 'app/communication/post.service';
 import { MockPostService } from '../../../helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -33,13 +33,13 @@ import {
     metisPostTechSupport,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { PostContextFilter, SortDirection } from 'app/shared/metis/metis.util';
+import { ChannelService } from 'app/communication/conversations/channel.service';
+import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';

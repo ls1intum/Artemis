@@ -1,4 +1,4 @@
-import { LectureUnitComponent } from 'app/overview/course-lectures/lecture-unit/lecture-unit.component';
+import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';

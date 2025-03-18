@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
  * @see ResultListener
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ParticipantScoreScheduleService {
 
     public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;

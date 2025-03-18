@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { PostService } from 'app/shared/metis/post.service';
+import { MetisService } from 'app/communication/metis.service';
+import { PostService } from 'app/communication/post.service';
 import { MockPostService } from '../../../../helpers/mocks/service/mock-post.service';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { AnswerPostService } from 'app/communication/answer-post.service';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
-import { PostComponent } from 'app/shared/metis/post/post.component';
-import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostComponent } from 'app/communication/post/post.component';
+import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
+import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from '../../../../helpers/sample/metis-sample-data';
@@ -17,7 +17,7 @@ import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { Injector, input, runInInjectionContext, signal } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
-import { PostingFooterComponent } from 'app/shared/metis/posting-footer/posting-footer.component';
+import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { Post } from 'app/entities/metis/post.model';
 
 interface PostGroup {
