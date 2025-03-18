@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
 import { CourseLearnerProfileDTO } from 'app/entities/learner-profile.model';
 import { EditStateTransition } from 'app/shared/editable-slider/edit-process.component';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
