@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { FileUploadAssessmentService } from 'app/file-upload/manage/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
