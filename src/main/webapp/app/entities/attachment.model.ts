@@ -13,6 +13,7 @@ export class Attachment implements BaseEntity {
     id?: number;
     name?: string;
     link?: string;
+    linkUrl?: string;
     releaseDate?: dayjs.Dayjs;
     version?: number;
     uploadDate?: dayjs.Dayjs;

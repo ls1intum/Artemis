@@ -14,37 +14,37 @@ The generated report is copied to the clipboard and pasted into a pull request o
 ### Installation
 
 1. Optionally, create and activate a virtual environment:
-```
-python3 -m venv venv
-```
-On Linux or macOS:
-```
-source venv/bin/activate
-```
-On Windows (CMD):
-```
-venv\Scripts\activate.bat
-```
-On Windows (PowerShell):
-```
-venv\Scripts\Activate.ps1
-```
+    ```shell
+    python3 -m venv venv
+    ```
+    On **macOS/Linux**:
+    ```shell
+    source venv/bin/activate
+    ```
+    On **Windows (CMD)**:
+    ```shell
+    venv\Scripts\activate.bat
+    ```
+    On **Windows (PowerShell)**:
+    ```shell
+    venv\Scripts\Activate.ps1
+    ```
 
 2. Install the required packages:
-```
-pip install -r requirements.txt
-```
+    ```shell
+    pip install -r requirements.txt
+    ```
 
 3. Configure environment variables by copying the `env.example` file to `.env` (use with caution, security risk!):
-```
-cp env.example .env
-```
-Fill out the following variables:
-```
-TOKEN=ab12cd
-```
+    ```shell
+    cp env.example .env
+    ```
+    Fill out the following variables:
+    ```
+    TOKEN=ab12cd
+    ```
+    Alternatively, you can use the command line argument `--token` to pass the credentials.
 
-Alternatively, you can use the command line argument `--token` to pass the credentials.
 ### Token
 The token you must provide is a [GitHub token](https://github.com/settings/tokens) with "Public Repository Access" checked.
 
@@ -59,7 +59,7 @@ You can also use remote branches, e.g. `origin/feature/xyz`.
 ### Generate Code Coverage Report for Current Branch (default)
 
 Run the script:
-```
+```shell
 python3 generate_code_cov_table.py
 ```
 For additional options, use `--help`.
@@ -67,7 +67,7 @@ For additional options, use `--help`.
 ### Generate Code Coverage Report for a Specific Branch
 
 Run the script with the --branch-name option:
-```
+```shell
 python3 generate_code_cov_table.py
 ```
 For additional options, use `--help`.
@@ -75,7 +75,7 @@ For additional options, use `--help`.
 ### Enable Verbose Logging
 
 Use the `--verbose` option for more detailed logging:
-```
+```shell
 python3 generate_code_cov_table.py --verbose
 ```
 With verbose logging, you will see which files are being skipped and processed, as well as the generated result.
@@ -105,12 +105,12 @@ If no option to insert text into the clipboard is found, the script falls back t
 ### Dependency management
 
 Find outdated dependencies using the following command:
-```
+```shell
 pip list --outdated
 ```
 
 Find unused dependencies using the following command:
-```
+```shell
 pip install deptry
 deptry .
 ```

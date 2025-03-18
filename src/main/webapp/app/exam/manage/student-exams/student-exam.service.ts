@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 type EntityResponseType = HttpResponse<StudentExam>;
 type EntityArrayResponseType = HttpResponse<StudentExam[]>;

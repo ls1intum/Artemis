@@ -2,7 +2,7 @@ import { DifficultyFilterOption, ExerciseCategoryFilterOption, ExerciseFilterOpt
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { roundToNextMultiple } from 'app/shared/util/utils';
 
 const POINTS_STEP = 1;

@@ -9,7 +9,7 @@ import {
     isProgrammingExerciseParticipation,
     isProgrammingExerciseStudentParticipation,
     isResultPreliminary,
-} from 'app/exercises/programming/shared/utils/programming-exercise.utils';
+} from 'app/programming/shared/utils/programming-exercise.utils';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';

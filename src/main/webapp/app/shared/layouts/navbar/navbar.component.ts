@@ -5,20 +5,20 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { LANGUAGES } from 'app/core/language/language.constants';
+import { AlertService } from 'app/shared/service/alert.service';
+import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import {
     faBars,
     faBell,
@@ -62,9 +62,10 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { JhiConnectionWarningComponent } from '../../connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from '../../notification/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from '../../notification/system-notification/system-notification.component';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -91,6 +92,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
         GuidedTourComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],

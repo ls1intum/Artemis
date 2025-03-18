@@ -376,7 +376,7 @@
                         </div>
                     }
                 </div>
-                @if (atlasEnabled) {
+                <jhi-feature-overlay [enabled]="atlasEnabled">
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.LearningPaths">
                         <div class="form-check">
                             <input
@@ -391,7 +391,7 @@
                             <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}" />
                         </div>
                     </div>
-                }
+                </jhi-feature-overlay>
                 @if (this.isAdmin) {
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">
                         <div class="form-check">

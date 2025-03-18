@@ -1,10 +1,10 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam/exam.model';
 import { round } from 'app/shared/util/utils';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
+import { getRelativeWorkingTimeExtension } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -25,29 +25,24 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
 
     // Control disabled state
-    @Input() disabled = false;
-    @Input() allowNegative = false;
+    disabled = input(false);
+    allowNegative = input(false);
 
     // Whether the percentage-based working time extension control should be shown
-    @Input() relative = false;
+    relative = input(false);
 
     // Labels for the working time duration inputs
-    @Input() durationLabelText?: string;
-    @Input() relativeLabelText?: string;
+    durationLabelText = input<string>();
+    relativeLabelText = input<string>();
 
-    @Input()
-    set exam(exam: Exam | undefined) {
-        this.currentExam = exam;
-        this.initWorkingTimeFromCurrentExam();
+    exam = input<Exam | undefined>();
+
+    constructor() {
+        // Set up an effect to respond whenever the input signal changes.
+        effect(() => {
+            this.initWorkingTimeFromCurrentExam();
+        });
     }
-
-    get exam(): Exam | undefined {
-        return this.currentExam;
-    }
-
-    // The exam for which the working time should be updated
-    // Used to calculate the relative working time extension
-    private currentExam?: Exam;
 
     workingTime = {
         hours: 0,
@@ -79,10 +74,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
         this.onTouched = onTouched;
     }
 
-    setDisabledState(disabled: boolean) {
-        this.disabled = disabled;
-    }
-
     private markAsTouched() {
         if (!this.touched) {
             this.onTouched();
@@ -111,7 +102,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * Updates the controls based on the working time of the student exam.
      */
     private initWorkingTimeFromCurrentExam() {
-        if (this.exam) {
+        if (this.exam()) {
             // this.setWorkingTimeDuration(examWorkingTime(this.exam)!);
             this.updateWorkingTimePercentFromDuration();
             this.emitWorkingTimeChange();
@@ -143,8 +134,9 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * @private
      */
     private updateWorkingTimePercentFromDuration() {
-        if (this.exam) {
-            this.workingTime.percent = getRelativeWorkingTimeExtension(this.exam, this.workingTimeSeconds);
+        const exam = this.exam();
+        if (exam) {
+            this.workingTime.percent = getRelativeWorkingTimeExtension(exam, this.workingTimeSeconds);
         }
     }
 
@@ -153,8 +145,9 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
      * @private
      */
     private updateWorkingTimeDurationFromPercent() {
-        if (this.exam) {
-            const regularWorkingTime = this.exam.workingTime!;
+        const exam = this.exam();
+        if (exam) {
+            const regularWorkingTime = exam.workingTime!;
             const absoluteWorkingTimeSeconds = round(regularWorkingTime * (1.0 + this.workingTime.percent / 100), 0);
             this.setWorkingTimeDuration(absoluteWorkingTimeSeconds);
         }

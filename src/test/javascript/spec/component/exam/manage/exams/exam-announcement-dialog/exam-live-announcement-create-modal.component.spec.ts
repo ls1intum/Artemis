@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { By } from '@angular/platform-browser';
-import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

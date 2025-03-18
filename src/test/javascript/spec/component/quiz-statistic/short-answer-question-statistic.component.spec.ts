@@ -1,6 +1,6 @@
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -12,7 +12,7 @@ import { of } from 'rxjs';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ShortAnswerQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/short-answer-question-statistic/short-answer-question-statistic.component';
+import { ShortAnswerQuestionStatisticComponent } from 'app/quiz/manage/statistics/short-answer-question-statistic/short-answer-question-statistic.component';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSpotCounter } from 'app/entities/quiz/short-answer-spot-counter.model';
