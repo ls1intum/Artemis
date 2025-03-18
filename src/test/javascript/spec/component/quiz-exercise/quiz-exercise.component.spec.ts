@@ -4,8 +4,8 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -14,7 +14,7 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Management Component', () => {

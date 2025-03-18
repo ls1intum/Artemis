@@ -2,7 +2,7 @@ import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GraphColors } from 'app/entities/statistics.model';

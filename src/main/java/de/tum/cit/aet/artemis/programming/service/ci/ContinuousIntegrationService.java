@@ -3,11 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.ci;
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.regex.Pattern;
-
-import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -15,9 +11,7 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.
@@ -44,6 +38,7 @@ public interface ContinuousIntegrationService {
      * @param testRepositoryUri     the URI of the test repository
      * @param solutionRepositoryUri the URI of the solution repository. Only used for HASKELL exercises with checkoutSolutionRepository=true. Otherwise, ignored.
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri);
 
@@ -52,6 +47,7 @@ public interface ContinuousIntegrationService {
      *
      * @param exercise for which the build plans should be recreated
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException;
 
     /**
@@ -65,6 +61,7 @@ public interface ContinuousIntegrationService {
      * @param targetProjectExists whether the target project already exists or not
      * @return The key of the new build plan
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists);
 
@@ -77,6 +74,7 @@ public interface ContinuousIntegrationService {
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      * @param branch        the default branch of the git repository that is used in the build plan
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch);
 
     /**
@@ -84,6 +82,7 @@ public interface ContinuousIntegrationService {
      *
      * @param projectKey unique identifier for the project on CI system
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void deleteProject(String projectKey);
 
     /**
@@ -92,6 +91,7 @@ public interface ContinuousIntegrationService {
      * @param projectKey  The key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void deleteBuildPlan(String projectKey, String buildPlanId);
 
     /**
@@ -102,6 +102,7 @@ public interface ContinuousIntegrationService {
      * @return the plan key of the build
      * @throws ContinuousIntegrationException if the Body could not be parsed
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
@@ -119,15 +120,8 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId unique identifier for build plan on CI system
      * @return true if build plan is valid otherwise false
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     boolean checkIfBuildPlanExists(String projectKey, String buildPlanId);
-
-    /**
-     * Get the build artifact (JAR/WAR), if any, of the latest build
-     *
-     * @param participation participation for which to get the build artifact
-     * @return the binary build artifact. Typically, a JAR/WAR ResponseEntity.
-     */
-    ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation);
 
     /**
      * Checks if the project with the given projectKey already exists
@@ -136,6 +130,7 @@ public interface ContinuousIntegrationService {
      * @param projectName to check if a project with the same name already exists
      * @return an error message if the project exists, null otherwise
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String checkIfProjectExists(String projectKey, String projectName);
 
     /**
@@ -144,6 +139,7 @@ public interface ContinuousIntegrationService {
      * @param projectKey The key of the project for which to enable the plan
      * @param planKey    to identify the plan in the CI service.
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void enablePlan(String projectKey, String planKey);
 
     /**
@@ -157,16 +153,8 @@ public interface ContinuousIntegrationService {
      * @param existingRepoUri The url of the existing repository (which should be replaced).
      * @param newBranch       The default branch for the new repository
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri, String newBranch);
-
-    /**
-     * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
-     *
-     * @param projectKey  The key of the project to grant permissions to
-     * @param groups      The role of the users that should have the permissions
-     * @param permissions The permissions to grant the users
-     */
-    void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions);
 
     /**
      * Set Build Plan Permissions for admins, instructors and teaching assistants.
@@ -174,15 +162,8 @@ public interface ContinuousIntegrationService {
      * @param programmingExercise a programming exercise with the required information to set the needed build plan permissions
      * @param planName            The name of the source plan
      */
+    // TODO: Move to a new ContinuousIntegrationPermissionService that is only implemented by the Jenkins subsystem
     void givePlanPermissions(ProgrammingExercise programmingExercise, String planName);
-
-    /**
-     * Some CI systems give projects default permissions.
-     * This method removes all of these unnecessary and potentially insecure permissions.
-     *
-     * @param projectKey The key of the build project which should get "cleaned"
-     */
-    void removeAllDefaultProjectPermissions(String projectKey);
 
     /**
      * Checks if the underlying CI server is up and running and gives some additional information about the running
@@ -197,79 +178,7 @@ public interface ContinuousIntegrationService {
      *
      * @param programmingExercise for which a project should be created
      */
+    // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException;
 
-    /**
-     * Get the webhook URL to call if one wants to trigger the build plan or notify the plan about an event that should
-     * trigger. E.g. a new push to the repository
-     *
-     * @param projectKey  The key of the project related to the build plan
-     * @param buildPlanId The ID of the build plan, that should get triggered/notified
-     * @return The URL as a String pointing to the to be triggered build plan in the CI system. If this is not needed/supported, an empty optional is returned.
-     */
-    Optional<String> getWebHookUrl(String projectKey, String buildPlanId);
-
-    /**
-     * Path a repository should get checked out in a build plan. E.g. the assignment repository should get checked out
-     * to a subdirectory called "assignment" for the Python programming language.
-     */
-    enum RepositoryCheckoutPath implements CustomizableCheckoutPath {
-        ASSIGNMENT {
-
-            @Override
-            public String forProgrammingLanguage(ProgrammingLanguage language) {
-                return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH, MATLAB, RUBY,
-                            DART ->
-                        "assignment";
-                    case SQL, POWERSHELL, ADA, PHP -> throw new UnsupportedOperationException("Unsupported programming language: " + language);
-                };
-            }
-        },
-        TEST {
-
-            @Override
-            public String forProgrammingLanguage(ProgrammingLanguage language) {
-                return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT -> "";
-                    case C, VHDL, ASSEMBLER, OCAML, C_SHARP, GO, BASH, MATLAB, RUBY, DART -> "tests";
-                    case SQL, POWERSHELL, ADA, PHP -> throw new UnsupportedOperationException("Unsupported programming language: " + language);
-                };
-            }
-        },
-        SOLUTION {
-
-            @Override
-            public String forProgrammingLanguage(ProgrammingLanguage language) {
-                return switch (language) {
-                    case HASKELL, OCAML -> "solution";
-                    case JAVA, PYTHON, KOTLIN, SWIFT, EMPTY, C, VHDL, ASSEMBLER, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL,
-                            ADA, DART, PHP ->
-                        throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
-                };
-            }
-        }
-    }
-
-    interface CustomizableCheckoutPath {
-
-        /**
-         * Path of the subdirectory to which a repository should get checked out to depending on the programming language.
-         * E.g. for the language {@link ProgrammingLanguage#C} always check the repo out to "tests"
-         *
-         * @param language The programming language for which there should be a custom checkout path
-         * @return The path to the subdirectory as a String to which some repository should get checked out to.
-         */
-        String forProgrammingLanguage(ProgrammingLanguage language);
-    }
-
-    /**
-     * Get the checkout directories for the template and submission build plan for a given programming language.
-     *
-     * @param programmingLanguage for which the checkout directories should be retrieved
-     * @param checkoutSolution    whether the checkout solution repository shall be checked out during the template and submission build plan
-     * @return the paths of the checkout directories for the default repositories (exercise, solution, tests) for the
-     *         template and submission build plan
-     */
-    CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution);
 }

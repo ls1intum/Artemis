@@ -18,7 +18,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { MockDirective } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

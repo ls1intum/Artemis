@@ -139,8 +139,8 @@ In general, **UtilServices** manage the communication with the database, and **F
 
 5. Test performance tips
 ========================
-Fast tests provide quick feedback, enabling developers to address issues and speed up the development process. We execute test groups (JenkinsGitlab, LocalCILocalVC, GitlabCIGitlabSaml, Unit Tests, Independent Tests) in parallel, trying to balance them out.
-When creating a new integration test, keep the test group balance in mind and consider adding the class to any other group, especially LocalCILocalVC, GitlabCIGitlabSaml, or Independent Tests.
+Fast tests provide quick feedback, enabling developers to address issues and speed up the development process. We execute test groups (JenkinsLocalVC, LocalCILocalVC, LocalVCSaml, Unit Tests, Independent Tests) in parallel, trying to balance them out.
+When creating a new integration test, keep the test group balance in mind and consider adding the class to any other group, especially LocalCILocalVC, LocalVCSaml, or Independent Tests.
 Additionally, consider the spring profiles the new test cases need when deciding on the test group.
 
 Follow these tips to write performant tests:

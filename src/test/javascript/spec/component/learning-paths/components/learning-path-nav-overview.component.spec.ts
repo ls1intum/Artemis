@@ -1,14 +1,14 @@
-import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
-import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
-import { CompetencyGraphComponent } from 'app/course/learning-paths/components/competency-graph/competency-graph.component';
+import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
+import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
+import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathNavOverviewComponent', () => {

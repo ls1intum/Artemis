@@ -19,8 +19,8 @@ import {
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { RouteComponents } from 'app/shared/metis/metis.util';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { RouteComponents } from 'app/communication/metis.util';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

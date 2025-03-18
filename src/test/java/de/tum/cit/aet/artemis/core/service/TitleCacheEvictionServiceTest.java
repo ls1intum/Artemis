@@ -13,21 +13,20 @@ import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.Pair;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
  * Test for {@link TitleCacheEvictionService} that should evict entity titles from the title caches if the titles are
  * updated, but leave them untouched if the titles don't change.
- *
+ * <p>
  * The service is not directly injected / used here as it listens to Hibernate events, so we just apply
  * CRUD operations on the entities it supports.
  */
@@ -46,7 +45,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     private ApollonDiagramRepository apollonDiagramRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -62,9 +61,6 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteCourse() {

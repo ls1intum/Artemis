@@ -8,7 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';

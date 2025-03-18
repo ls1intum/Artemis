@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent-summary/build-agent-summary.component';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
+import { BuildAgentSummaryComponent } from 'app/buildagent/build-agent-summary/build-agent-summary.component';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of, throwError } from 'rxjs';
 import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
@@ -11,11 +10,12 @@ import { BuildAgentInformation, BuildAgentStatus } from '../../../../../../main/
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
-import { AlertService, AlertType } from '../../../../../../main/webapp/app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;

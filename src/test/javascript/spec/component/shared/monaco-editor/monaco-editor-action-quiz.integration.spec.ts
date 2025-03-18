@@ -9,7 +9,7 @@ import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/qu
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorActionQuizIntegration', () => {

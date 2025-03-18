@@ -4,8 +4,8 @@ import { of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { AthenaService } from 'app/assessment/athena.service';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { AthenaService } from 'app/assessment/shared/athena.service';
+import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 
 describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
