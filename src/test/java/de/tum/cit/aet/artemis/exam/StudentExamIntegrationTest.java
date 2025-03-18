@@ -611,6 +611,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
 
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(2).getExercises().iterator().next();
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("instructorRepo", "instructorOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, instructor.getLogin(), repo);
+        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getLogin(), Set.of(instructor), true);
+
         assertThat(testRun.isTestRun()).isTrue();
 
         var response = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
