@@ -3,7 +3,7 @@ import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { Subject } from 'rxjs';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
+import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
+import { PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';

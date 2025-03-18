@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockModule, MockProvider } from 'ng-mocks';
-import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/exam-live-events-button.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/exam-participation-live-events.service';
 import { of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockExamParticipationLiveEventsService } from '../../../../helpers/mocks/service/mock-exam-participation-live-events.service';
-import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
+import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/exam-live-events-overlay.component';
 
 describe('ExamLiveEventsButtonComponent', () => {
     let component: ExamLiveEventsButtonComponent;

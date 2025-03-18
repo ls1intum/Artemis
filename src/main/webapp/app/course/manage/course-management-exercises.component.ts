@@ -8,14 +8,14 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { CourseManagementExercisesSearchComponent } from './course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from './course-exercise-card.component';
-import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
-import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
-import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
-import { ExerciseCreateButtonsComponent } from 'app/exercises/shared/manage/exercise-create-buttons.component';
-import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
-import { TextExerciseComponent } from 'app/exercises/text/manage/text-exercise/text-exercise.component';
-import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
+import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/programming-exercise-create-buttons.component';
+import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
+import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/quiz-exercise-create-buttons.component';
+import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
+import { ExerciseCreateButtonsComponent } from 'app/exercise/manage/exercise-create-buttons.component';
+import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
+import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
+import { FileUploadExerciseComponent } from 'app/file-upload/manage/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

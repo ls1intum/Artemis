@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { MetricsService } from 'app/admin/metrics/metrics.service';
-import { ThreadDump, ThreadState } from 'app/admin/metrics/metrics.model';
+import { MetricsService } from 'app/core/admin/metrics/metrics.service';
+import { ThreadDump, ThreadState } from 'app/core/admin/metrics/metrics.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Service Tests', () => {
