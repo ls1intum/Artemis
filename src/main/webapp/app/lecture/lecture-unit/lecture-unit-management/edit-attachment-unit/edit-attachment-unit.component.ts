@@ -62,6 +62,7 @@ export class EditAttachmentUnitComponent implements OnInit {
                             releaseDate: this.attachment.releaseDate,
                             version: this.attachment.version,
                             competencyLinks: this.attachmentUnit.competencyLinks,
+                            videoSource: this.attachmentUnit.videoSource,
                         },
                         fileProperties: {
                             fileName: this.attachment.link,
@@ -73,7 +74,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     }
 
     updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // optional update notification text for students
@@ -89,6 +90,8 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachmentUnit.description = description;
         this.attachmentUnit.competencyLinks = competencyLinks;
 
+        this.attachmentUnit.videoSource = videoSource;
+
         this.isLoading = true;
 
         const formData = new FormData();
@@ -96,7 +99,7 @@ export class EditAttachmentUnitComponent implements OnInit {
             formData.append('file', file, fileName);
         }
         formData.append('attachment', objectToJsonBlob(this.attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentUnit));
 
         this.attachmentUnitService
             .update(this.lectureId, this.attachmentUnit.id!, formData, this.notificationText)

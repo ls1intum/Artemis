@@ -118,6 +118,7 @@ public class AttachmentUnitService {
         existingAttachmentVideoUnit.setName(updateUnit.getName());
         existingAttachmentVideoUnit.setReleaseDate(updateUnit.getReleaseDate());
         existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
+        existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
 
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentUnitRepository::saveAndFlush);
 

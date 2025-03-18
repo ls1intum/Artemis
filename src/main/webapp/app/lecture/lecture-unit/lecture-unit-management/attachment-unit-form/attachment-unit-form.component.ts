@@ -65,6 +65,9 @@ function videoSourceTransformUrlValidator(control: AbstractControl): ValidationE
 
 function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | undefined {
     let url;
+    if (control.value == '') {
+        return undefined;
+    }
     try {
         url = new URL(control.value);
     } catch {
@@ -117,7 +120,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         version: [{ value: 1, disabled: true }],
-        videoSource: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
+        videoSource: [undefined as string | undefined, [this.videoSourceUrlValidator]],
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
