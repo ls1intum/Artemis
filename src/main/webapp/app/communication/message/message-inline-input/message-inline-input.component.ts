@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/entities/metis/post.model';
@@ -9,6 +9,7 @@ import { PostingCreateEditDirective } from 'app/communication/posting-create-edi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -19,6 +20,7 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     private localStorageService = inject(LocalStorageService);
+    course = input<Course>();
 
     warningDismissed = false;
 

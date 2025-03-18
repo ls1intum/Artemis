@@ -180,4 +180,26 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(unreadIndicatorElement).toBeNull();
         flush();
     }));
+
+    it('should open chatbot if irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.chatOpen).toBe(true);
+    });
+
+    it('should not open the chatbot if no irisQuestion is provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.chatOpen).toBe(false);
+    });
 });
