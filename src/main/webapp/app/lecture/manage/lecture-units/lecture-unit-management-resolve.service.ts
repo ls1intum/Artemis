@@ -5,7 +5,7 @@ import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentUnitResolve implements Resolve<AttachmentVideoUnit> {

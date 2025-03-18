@@ -8,10 +8,10 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
 import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { AttachmentService } from 'app/lecture/manage/attachment.service';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 

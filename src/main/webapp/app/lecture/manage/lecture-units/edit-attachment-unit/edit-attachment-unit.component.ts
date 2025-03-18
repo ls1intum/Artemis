@@ -2,7 +2,6 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -11,6 +10,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',

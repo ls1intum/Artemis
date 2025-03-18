@@ -1,8 +1,7 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
-import { LectureService } from 'app/lecture/lecture.service';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
@@ -12,6 +11,7 @@ import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 import { FileService } from 'app/shared/http/file.service';
 import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { ReferenceType } from 'app/communication/metis.util';
 
 interface LectureWithDetails {
     id: number;

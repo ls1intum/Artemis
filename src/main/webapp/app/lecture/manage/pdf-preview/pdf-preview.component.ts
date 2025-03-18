@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
@@ -22,6 +21,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
