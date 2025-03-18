@@ -30,7 +30,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     protected readonly RepositoryType = RepositoryType;
 
-    localVCEnabled = false;
+    localVCEnabled = true;
     onlineIdeEnabled = false;
 
     displayShortName = input(false);

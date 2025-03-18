@@ -224,7 +224,7 @@ public class ProgrammingExerciseGradingService {
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
             }
             if (StringUtils.isEmpty(participationDefaultBranch)) {
                 participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());

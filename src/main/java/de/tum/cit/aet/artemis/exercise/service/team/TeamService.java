@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -78,30 +77,6 @@ public class TeamService {
 
         // Annotate to which team the user is already assigned to for the given exercise (null if not assigned)
         return users.stream().map(user -> TeamSearchUserDTO.of(user, userIdToTeamIdMap.get(user.getId()))).toList();
-    }
-
-    /**
-     * Update the members of a team repository if a participation exists already. Users might need to be removed or added.
-     *
-     * @param exerciseId   Id of the exercise to which the team belongs
-     * @param existingTeam Old team before update
-     * @param updatedTeam  New team after update
-     */
-    public void updateRepositoryMembersIfNeeded(Long exerciseId, Team existingTeam, Team updatedTeam) {
-        var optionalParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, existingTeam.getId());
-
-        optionalParticipation.ifPresent(participation -> {
-            // Users in the existing team that are no longer in the updated team need to be removed
-            Set<User> usersToRemove = new HashSet<>(existingTeam.getStudents());
-            usersToRemove.removeAll(updatedTeam.getStudents());
-            usersToRemove.forEach(user -> versionControlService.orElseThrow().removeMemberFromRepository(participation.getVcsRepositoryUri(), user));
-
-            // Users in the updated team that were not yet part of the existing team need to be added
-            Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
-            usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(
-                    user -> versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUri(), user, VersionControlRepositoryPermission.REPO_WRITE));
-        });
     }
 
     /**
