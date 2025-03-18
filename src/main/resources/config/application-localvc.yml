@@ -6,7 +6,7 @@
 artemis:
     version-control:
         # A folder in which the local git repos are stored as bare repositories.
-        # Only required when using the profile 'localvc' to save repositories locally instead of on Bitbucket or Gitlab.
+        # Only required when using the profile 'localvc' to save repositories locally.
         # In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes.
         local-vcs-repo-path: ./local-vcs-repos
         url: http://localhost:8000

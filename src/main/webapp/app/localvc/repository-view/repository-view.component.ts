@@ -73,12 +73,11 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     repositoryUri: string;
     repositoryType: RepositoryType;
     enableVcsAccessLog = false;
-    isInCourseManagement = false;
     allowVcsAccessLog = false;
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
-    localVcEnabled = false;
+    localVcEnabled = true;
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;

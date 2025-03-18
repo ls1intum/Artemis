@@ -466,9 +466,9 @@ describe('CourseExerciseDetailsComponent', () => {
             ...exercise,
             course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
         };
-        getExerciseDetailsMock.mockReturnValue(of({ body: newExercise }));
+        getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: newExercise } }));
 
-        comp.handleNewExercise({ exercise });
+        fixture.detectChanges();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeFalsy();

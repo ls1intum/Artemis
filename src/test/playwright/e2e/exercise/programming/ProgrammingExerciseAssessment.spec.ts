@@ -48,7 +48,8 @@ test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
         }
     });
 
-    test('Assesses the programming exercise submission and verifies it', async ({
+    // TODO re-enable after locked editor is active again in front end. See: code-editor-student.integration.spec.ts
+    test.skip('Assesses the programming exercise submission and verifies it', async ({
         login,
         page,
         courseManagement,
