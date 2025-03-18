@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { StringCountService } from 'app/text/overview/string-count.service';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 
 @Component({

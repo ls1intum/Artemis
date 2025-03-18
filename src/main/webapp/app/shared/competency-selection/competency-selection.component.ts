@@ -14,7 +14,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription, finalize } from 'rxjs';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '../language/translate.directive';

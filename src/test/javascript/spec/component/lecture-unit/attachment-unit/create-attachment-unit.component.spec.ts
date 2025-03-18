@@ -1,13 +1,13 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
-import { CreateAttachmentUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-attachment-unit/create-attachment-unit.component';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { CreateAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';

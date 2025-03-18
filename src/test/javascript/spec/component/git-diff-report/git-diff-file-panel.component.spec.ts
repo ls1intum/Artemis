@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';
 import { ProgrammingExerciseGitDiffEntry } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
-import { GitDiffFilePanelComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel.component';
+import { GitDiffFilePanelComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel.component';
 import { NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
-import { GitDiffFileComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file.component';
-import { GitDiffFilePanelTitleComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-file-panel-title.component';
+import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file.component';
+import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title.component';
 import { MonacoDiffEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

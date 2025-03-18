@@ -1,27 +1,25 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.component';
+import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { Range } from 'app/shared/util/utils';
-import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';
+import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
+import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { PlagiarismResultDTO } from 'app/plagiarism/shared/types/PlagiarismResultDTO';
 import { generateCsv } from 'export-to-csv';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -29,6 +27,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component';
+import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),

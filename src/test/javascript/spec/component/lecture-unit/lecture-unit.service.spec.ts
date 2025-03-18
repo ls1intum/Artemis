@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';

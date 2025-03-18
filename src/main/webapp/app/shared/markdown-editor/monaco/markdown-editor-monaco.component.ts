@@ -44,7 +44,7 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
@@ -55,13 +55,13 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { PostingEditType, ReferenceType } from 'app/shared/metis/metis.util';
+import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { TranslateDirective } from '../../language/translate.directive';
@@ -72,8 +72,8 @@ import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { facArtemisIntelligence } from 'app/icons/icons';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
+import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,

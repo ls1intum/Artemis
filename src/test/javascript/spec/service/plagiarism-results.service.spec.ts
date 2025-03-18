@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
+import { PlagiarismResultsService } from 'app/plagiarism/shared/plagiarism-results.service';
 
 describe('Plagiarism Results Service', () => {
     let service: PlagiarismResultsService;

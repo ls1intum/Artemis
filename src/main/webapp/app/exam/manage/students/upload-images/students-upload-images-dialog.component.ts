@@ -1,7 +1,7 @@
 import { Component, OnDestroy, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
