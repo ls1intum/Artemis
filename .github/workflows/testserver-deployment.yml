@@ -93,7 +93,7 @@ jobs:
   conditional-build:
     if: ${{ needs.determine-build-context.outputs.pr_number == '' }}
     needs: determine-build-context
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@main
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.0
     with:
       ref: ${{ github.event.inputs.branch_name }}
       image-name: ls1intum/artemis
