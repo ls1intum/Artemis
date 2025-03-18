@@ -40,7 +40,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
-import { AnswerPostService } from 'app/shared/metis/answer-post.service';
+import { AnswerPostService } from 'app/communication/answer-post.service';
 
 @Component({
     selector: 'jhi-post',
