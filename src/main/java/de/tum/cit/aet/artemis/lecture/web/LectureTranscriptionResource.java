@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -83,8 +85,8 @@ public class LectureTranscriptionResource {
      * @return The ResponseEntity with status 201 (Created) and with body the new transcription, or with status 400 (Bad Request) if invalid lectureId or lectureUnitId are given
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "{lectureId}/lecture-unit/{lectureUnitId}/transcriptions")
-    @EnforceAtLeastInstructor
+    @PostMapping(value = "{lectureId}/lecture-unit/{lectureUnitId}/transcription")
+    @EnforceAdmin
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long lectureId,
             @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
@@ -131,13 +133,14 @@ public class LectureTranscriptionResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @Profile(PROFILE_IRIS)
-    @PutMapping("lectures/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription")
+    @PutMapping("{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
         Course course = lecture.getCourse();
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return ResponseEntity.badRequest()
@@ -158,23 +161,16 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * DELETE courses/:courseId/lecture/:lectureId/lecture-unit/:lectureUnitId : delete the "id" lecture transcription.
+     * DELETE /lecture/:lectureId/lecture-unit/:lectureUnitId : delete the "id" lecture transcription.
      *
-     * @param courseId      the id of the course containing the lecture transcription
      * @param lectureId     the id of the lecture containing the lecture transcription
      * @param lectureUnitId the id of the lecture unit containing the lecture transcription
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription")
+    @DeleteMapping("{lectureId}/lecture-unit/{lectureUnitId}/transcription")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long courseId, @PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
-        Course course = lecture.getCourse();
+    public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
-        if (!course.getId().equals(courseId)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureDoesNotMatchCourse")).body(null);
-        }
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);

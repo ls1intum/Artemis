@@ -1,8 +1,8 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
-import { LectureService } from 'app/lecture/lecture.service';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { LectureService } from 'app/lecture/manage/lecture.service';
+import { ReferenceType } from 'app/communication/metis.util';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';

@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
+import { ExamStartInformationComponent } from 'app/exam/overview/exam-start-information/exam-start-information.component';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -136,6 +136,24 @@ describe('ExamStartInformationComponent', () => {
         component.studentExam = studentExam;
         fixture.detectChanges();
         expect(component.startDate).toStrictEqual(examStartDate);
+    });
+
+    it('should initialize start date of the test exam correctly', () => {
+        const examStartDate = dayjs('2022-02-06 02:00:00');
+        exam.testExam = true;
+        component.exam = exam;
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(component.startDate).toStrictEqual(examStartDate);
+    });
+
+    it('should initialize end date of the test exam correctly', () => {
+        const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
+        exam.testExam = true;
+        component.exam = exam;
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(component.endDate).toStrictEqual(examEndDate);
     });
 
     it('should create all information boxes if all information of the exam are set', () => {

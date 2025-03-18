@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { FormBuilder } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

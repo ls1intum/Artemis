@@ -3,17 +3,17 @@ import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProgrammingExerciseInstructorStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-status.component';
+import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
@@ -30,7 +30,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     protected readonly RepositoryType = RepositoryType;
 
-    localVCEnabled = false;
+    localVCEnabled = true;
     onlineIdeEnabled = false;
 
     displayShortName = input(false);

@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Team } from 'app/entities/team.model';
-import { TeamService } from 'app/exercises/shared/team/team.service';
-import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
+import { TeamService } from 'app/exercise/team/team.service';
+import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-import-button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';

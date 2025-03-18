@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockBuilder } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';

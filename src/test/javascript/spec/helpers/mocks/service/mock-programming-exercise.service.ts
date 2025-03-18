@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { RepositoryType } from '../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
@@ -21,7 +21,6 @@ export class MockProgrammingExerciseService {
     combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
-    unlockAllRepositories = (exerciseId: number) => of({});
     getDiffReportForCommits = (exerciseId: number, participationId: number, olderCommitHash: string, newerCommitHash: string, repositoryType: string) => of({});
     getCheckoutDirectoriesForProgrammingLanguage = (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => of();
 }

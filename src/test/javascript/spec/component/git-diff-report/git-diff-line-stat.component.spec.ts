@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GitDiffLineStatComponent } from '../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-line-stat.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';
 import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 

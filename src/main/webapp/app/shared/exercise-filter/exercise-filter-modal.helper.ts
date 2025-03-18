@@ -2,7 +2,7 @@ import { SidebarCardElement } from 'app/types/sidebar';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { FilterDetails, RangeFilter } from 'app/types/exercise-filter';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 
 export function satisfiesDifficultyFilter(sidebarElement: SidebarCardElement, searchedDifficulties?: DifficultyLevel[]): boolean {
     if (!searchedDifficulties?.length) {

@@ -1,8 +1,8 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
-import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
+import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
