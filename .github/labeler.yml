@@ -102,7 +102,7 @@ iris:
       - any-glob-to-any-file:
           - src/main/java/de/tum/cit/aet/artemis/iris/**/*
           - src/test/java/de/tum/cit/aet/artemis/iris/**/*
-          - src/main/webapp/app/irit/**/*
+          - src/main/webapp/app/iris/**/*
 
 lecture:
   - changed-files:
