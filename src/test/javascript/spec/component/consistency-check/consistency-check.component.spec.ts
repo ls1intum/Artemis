@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { Course } from 'app/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';

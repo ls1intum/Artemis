@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';

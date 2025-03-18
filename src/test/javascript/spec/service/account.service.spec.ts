@@ -2,7 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { MockService } from 'ng-mocks';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { User } from 'app/core/user/user.model';
@@ -517,12 +517,12 @@ describe('AccountService', () => {
         });
 
         it('should return image url if authenticated', () => {
-            const expectedUrl = 'www.examp.le';
+            const expectedUrl = 'profiles-pictures/example.png';
             accountService.userIdentity = { imageUrl: expectedUrl } as User;
 
             url = accountService.getImageUrl();
 
-            expect(url).toBe(expectedUrl);
+            expect(url).toBe(`api/core/files/${expectedUrl}`);
         });
     });
 

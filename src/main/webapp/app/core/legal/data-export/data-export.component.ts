@@ -5,7 +5,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';

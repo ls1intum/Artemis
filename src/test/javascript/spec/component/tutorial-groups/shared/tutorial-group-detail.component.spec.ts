@@ -1,4 +1,3 @@
-import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -8,8 +7,6 @@ import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
-import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -22,6 +19,9 @@ import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
+import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
+import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {

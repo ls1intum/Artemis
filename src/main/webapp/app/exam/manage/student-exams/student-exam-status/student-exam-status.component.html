@@ -1,11 +1,11 @@
 <h5 class="d-flex mt-0 mb-0">
-    @if (isTestExam) {
+    @if (isTestExam()) {
         <div class="d-flex badge bg-info">
             <fa-icon class="me-1 text-white" [icon]="faInfoCircle" />
             <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
         </div>
     } @else {
-        @if (hasStudentsWithoutExam) {
+        @if (hasStudentsWithoutExam()) {
             <div class="d-flex badge bg-warning">
                 <fa-icon class="me-1 text-white" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate" />
                 <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>

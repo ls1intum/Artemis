@@ -5,7 +5,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Set;
 
-import org.gitlab4j.api.GitLabApiException;
 import org.springframework.http.HttpStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
@@ -40,9 +38,7 @@ public interface MockDelegate {
 
     void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs) throws IOException, URISyntaxException;
 
-    void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception;
-
-    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException, GitLabApiException;
+    void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException;
 
     void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception;
 
@@ -66,8 +62,6 @@ public interface MockDelegate {
 
     void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
-    void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException;
-
     void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception;
@@ -75,8 +69,6 @@ public interface MockDelegate {
     void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
     void resetMockProvider() throws Exception;
-
-    void verifyMocks();
 
     void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception;
 
@@ -111,8 +103,6 @@ public interface MockDelegate {
 
     void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception;
 
-    void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception;
-
     void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception;
 
     void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception;
@@ -125,11 +115,7 @@ public interface MockDelegate {
 
     void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
 
-    void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, String projectKey, Set<User> users) throws Exception;
-
-    void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception;
-
-    void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException, GitLabApiException;
+    void mockDefaultBranch(ProgrammingExercise programmingExercise) throws IOException;
 
     void mockUserExists(String username) throws Exception;
 

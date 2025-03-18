@@ -5,10 +5,10 @@ import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 import { MockCacheableImageService } from '../../helpers/mocks/service/mock-cacheable-image.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('SecuredImageComponent', () => {
