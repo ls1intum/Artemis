@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Thread, ThreadState } from 'app/admin/metrics/metrics.model';
-import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
-import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
+import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
+import { JvmThreadsComponent } from 'app/core/admin/metrics/blocks/jvm-threads/jvm-threads.component';
+import { MetricsModalThreadsComponent } from 'app/core/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { By } from '@angular/platform-browser';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';

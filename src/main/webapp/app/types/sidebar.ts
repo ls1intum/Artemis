@@ -7,7 +7,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';
 export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noDate';
-export type ExamGroupCategory = 'real' | 'test';
+export type ExamGroupCategory = 'real' | 'test' | 'attempt';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
 export type AccordionGroups = Record<
@@ -129,9 +129,29 @@ export interface SidebarCardElement {
      */
     attainablePoints?: number;
     /**
-     * Set for Exam, indetifies the current status of an exam exercise for exam sidebar
+     * Set for Exam, identifies the current status of an exam exercise for exam sidebar
      */
     rightIcon?: IconProp;
+    /**
+     * Set for Exam, identifies if it is a test exam attempt
+     */
+    isAttempt?: boolean;
+    /**
+     * Set For Exam, identifies the number of attempts for each test exam
+     */
+    attempts?: number;
+    /**
+     * Set For Exam, identifies if it is a test exam
+     */
+    testExam?: boolean;
+    /**
+     * Set For Exam, identifies the submission date for an attempt of a test exam
+     */
+    submissionDate?: dayjs.Dayjs;
+    /**
+     * Set For Exam, identifies used working time of a student for an attempt of a test exam
+     */
+    usedWorkingTime?: number;
     /**
      * Set for Conversation. Will be removed after refactoring
      */

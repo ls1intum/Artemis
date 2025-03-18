@@ -1,8 +1,8 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
-import { LectureService } from 'app/lecture/lecture.service';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { LectureService } from 'app/lecture/manage/lecture.service';
+import { ReferenceType } from 'app/communication/metis.util';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
@@ -11,6 +11,7 @@ import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 import { FileService } from 'app/shared/http/file.service';
 import { cloneDeep } from 'lodash-es';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 interface LectureWithDetails {
     id: number;
@@ -51,6 +52,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                         const attachmentsWithFileUrls = cloneDeep(lecture.attachments)?.map((attachment) => {
                             if (attachment.link && attachment.name) {
                                 attachment.link = this.fileService.createAttachmentFileUrl(attachment.link!, attachment.name!, false);
+                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
                             }
 
                             return attachment;

@@ -6,7 +6,7 @@ import { Observable, Subject, Subscription, map, of } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import {
     faArrowUpRightFromSquare,
     faChartBar,
@@ -32,17 +32,18 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { HeaderCourseComponent } from 'app/course/overview/header-course.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -59,6 +60,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
         CourseExamArchiveButtonComponent,
         DeleteButtonDirective,
         RouterOutlet,
+        FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],

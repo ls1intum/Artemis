@@ -1,5 +1,4 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { initializeDialog } from '../dialog-test-helpers';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
@@ -8,16 +7,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { generateExampleChannelDTO } from '../../helpers/conversationExampleModels';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ChannelItemComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
+import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelItemComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 const examples: ChannelDTO[] = [
     generateExampleChannelDTO({} as ChannelDTO),

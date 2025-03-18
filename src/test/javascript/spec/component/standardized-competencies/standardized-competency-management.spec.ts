@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
-import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
+import { StandardizedCompetencyManagementComponent } from 'app/core/admin/standardized-competencies/standardized-competency-management.component';
+import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import {
     convertToKnowledgeAreaForTree,
     KnowledgeAreaDTO,
@@ -16,10 +16,10 @@ import { By } from '@angular/platform-browser';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
-import { StandardizedCompetencyEditComponent } from '../../../../../main/webapp/app/admin/standardized-competencies/standardized-competency-edit.component';
-import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
+import { StandardizedCompetencyEditComponent } from 'app/core/admin/standardized-competencies/standardized-competency-edit.component';
+import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

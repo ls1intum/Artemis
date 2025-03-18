@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.dto.AeolusGenerationResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusRepository;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 
 /**
  * Service for publishing custom build plans using Aeolus
@@ -209,13 +209,13 @@ public class AeolusBuildPlanService {
             List<AuxiliaryRepository.AuxRepoNameWithUri> auxiliaryRepositories) {
         Map<String, AeolusRepository> repositoryMap = new HashMap<>();
         repositoryMap.put(ASSIGNMENT_REPO_NAME,
-                new AeolusRepository(getVCSUrl(repositoryUri), branch, ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
+                new AeolusRepository(getVCSUrl(repositoryUri), branch, RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
         if (checkoutSolutionRepository) {
             repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(getVCSUrl(solutionRepositoryUri), branch,
-                    ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
+                    RepositoryCheckoutService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
         }
         repositoryMap.put(TEST_REPO_NAME,
-                new AeolusRepository(getVCSUrl(testRepositoryUri), branch, ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
+                new AeolusRepository(getVCSUrl(testRepositoryUri), branch, RepositoryCheckoutService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
         for (var auxRepo : auxiliaryRepositories) {
             repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUri().toString(), branch, auxRepo.name()));
         }
