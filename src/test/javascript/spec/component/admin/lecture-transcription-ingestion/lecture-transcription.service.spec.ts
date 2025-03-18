@@ -27,7 +27,7 @@ describe('LectureTranscriptionService', () => {
         const lectureUnitId = 1;
         service.ingestTranscription(courseId, lectureId, lectureUnitId).subscribe(() => {});
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/lecture/lectures/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription` });
         req.flush({});
     });
 
@@ -37,7 +37,7 @@ describe('LectureTranscriptionService', () => {
         const lectureUnitId = 1;
         service.createTranscription(lectureId, lectureUnitId, transcription).subscribe(() => {});
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcription` });
 
         expect(req.request.body).toBe(transcription);
         req.flush({});
