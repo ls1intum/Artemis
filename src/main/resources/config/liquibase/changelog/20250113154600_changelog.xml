@@ -25,6 +25,8 @@
                                  baseTableName="lecture_transcription"
                                  constraintName="FK_LECTURE_TRANSCRIPTION_ON_LECTURE_UNIT"
                                  referencedColumnNames="id"
-                                 referencedTableName="lecture_unit"/>
+                                 referencedTableName="lecture_unit"
+                                 onDelete="CASCADE"
+        />
     </changeSet>
 </databaseChangeLog>
