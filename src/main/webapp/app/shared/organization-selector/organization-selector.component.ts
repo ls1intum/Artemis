@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Organization } from 'app/entities/organization.model';
 import { TranslateDirective } from '../language/translate.directive';

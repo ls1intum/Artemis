@@ -8,7 +8,7 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 @Component({
     selector: 'jhi-course-exercise-card',
     templateUrl: './course-exercise-card.component.html',
-    styleUrls: ['./course-exercise-card.component.scss', '../../exercises/quiz/shared/quiz.scss'],
+    styleUrls: ['./course-exercise-card.component.scss', '../../quiz/shared/quiz.scss'],
     imports: [TranslateDirective, FaIconComponent, NgbCollapse],
 })
 export class CourseExerciseCardComponent {

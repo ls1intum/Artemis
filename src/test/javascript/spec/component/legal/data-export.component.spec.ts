@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ButtonComponent } from 'app/shared/components/button.component';

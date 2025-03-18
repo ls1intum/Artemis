@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
-import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
+import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
 
 describe('StudentExamSummaryComponent', () => {
     let fixture: ComponentFixture<StudentExamSummaryComponent>;

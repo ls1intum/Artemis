@@ -1,4 +1,4 @@
-import { __DEBUG_INFO_ENABLED__, __VERSION__ } from 'app/environments/environment';
+import { __DEBUG_INFO_ENABLED__, __VERSION__ } from 'app/core/environments/environment';
 
 export const VERSION = __VERSION__;
 export const DEBUG_INFO_ENABLED = __DEBUG_INFO_ENABLED__;

@@ -1,12 +1,12 @@
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
-import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
+import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
+import { OrionProgrammingExerciseComponent } from 'app/orion/manage/orion-programming-exercise.component';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { BehaviorSubject } from 'rxjs';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 
 describe('OrionProgrammingExerciseComponent', () => {
