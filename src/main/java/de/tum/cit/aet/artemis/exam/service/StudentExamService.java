@@ -30,7 +30,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -59,7 +58,6 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
@@ -96,8 +94,6 @@ public class StudentExamService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final SubmissionService submissionService;
 
     private final ExamQuizService examQuizService;
@@ -128,8 +124,7 @@ public class StudentExamService {
 
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
+            ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
             @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
@@ -141,7 +136,6 @@ public class StudentExamService {
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.examQuizService = examQuizService;
         this.submissionService = submissionService;
@@ -158,11 +152,10 @@ public class StudentExamService {
      * Submit StudentExam and uses submissions as final submissions if studentExam is not yet submitted
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
-     * @param existingStudentExam   the existing student exam object in the database
      * @param studentExamFromClient the student exam object from the client which will be submitted (final submission)
      * @param currentUser           the current user
      */
-    public void submitStudentExam(StudentExam existingStudentExam, StudentExam studentExamFromClient, User currentUser) {
+    public void submitStudentExam(StudentExam studentExamFromClient, User currentUser) {
         log.debug("Submit student exam with id {}", studentExamFromClient.getId());
 
         long start = System.nanoTime();
@@ -181,22 +174,7 @@ public class StudentExamService {
         }
         log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
-        start = System.nanoTime();
-        // NOTE: only for real exams and test exams, the student repositories need to be locked
-        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
-        if (!studentExamFromClient.isTestRun()) {
-            try {
-                // lock the programming exercise repository access (important in case of early exam submissions), only when the student hands in early (asynchronously)
-                programmingExerciseParticipationService.lockStudentRepositories(currentUser, existingStudentExam);
-            }
-            catch (Exception e) {
-                log.error("lockStudentRepositories threw an exception", e);
-            }
-        }
-
-        log.debug("    Lock student repositories in {}", formatDurationFrom(start));
         // NOTE: from here on, we only handle test runs and test exams
-
         if (!studentExamFromClient.isTestRun() && !studentExamFromClient.isTestExam()) {
             return;
         }
@@ -639,25 +617,21 @@ public class StudentExamService {
      * Method to set up new participations for a StudentExam of a test exam.
      *
      * @param studentExam the studentExam for which the new participations should be set up
-     * @param startedDate the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
      */
-    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
+    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
+        setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
     /**
-     * Helper-Method for the Set up process of an StudentExam with a given startedDate. The method forces a new participation for every exercise,
-     * unlocks the Repository in case the StudentExam starts in less than 5mins and returns the generated participations
+     * Sets up the participations and submissions for all the exercises of the student exam.
      *
-     * @param studentExam             the studentExam for which the new participations should be set up
-     * @param generatedParticipations the list where the newly generated participations should be added
-     * @param startedDate             the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
+     * @param studentExam             The studentExam for which the participations and submissions should be created
+     * @param generatedParticipations List of generated participations to track how many participations have been generated
      */
-    private void setUpExerciseParticipationsAndSubmissionsWithInitializationDate(StudentExam studentExam, List<StudentParticipation> generatedParticipations,
-            ZonedDateTime startedDate) {
+    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
         User student = studentExam.getUser();
 
         for (Exercise exercise : studentExam.getExercises()) {
@@ -669,7 +643,7 @@ public class StudentExamService {
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
             var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+            if (studentExam.isTestExam() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
                     // Load lazy property
@@ -678,26 +652,9 @@ public class StudentExamService {
                         programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
                     }
                     // this will also create initial (empty) submissions for quiz, text, modeling and file upload
-                    // If the startedDate is provided, the InitializationDate is set to the startedDate
-                    StudentParticipation participation;
-                    if (startedDate != null) {
-                        participation = participationService.startExerciseWithInitializationDate(exercise, student, true, startedDate);
-                    }
-                    else {
-                        participation = participationService.startExercise(exercise, student, true);
-                    }
+                    StudentParticipation participation = participationService.startExercise(exercise, student, true);
+
                     generatedParticipations.add(participation);
-                    // Unlock repository and participation only if the real exam starts within 5 minutes or if we have a test exam or test run
-                    if (participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation && exercise instanceof ProgrammingExercise programmingExercise) {
-                        if (studentExam.isTestRun() || studentExam.isTestExam()
-                                || ExamDateService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                            // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
-                            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingParticipation);
-                        }
-                        else {
-                            programmingExerciseParticipationService.lockStudentParticipation(programmingParticipation);
-                        }
-                    }
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier());
                 }
@@ -706,6 +663,10 @@ public class StudentExamService {
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
+        }
+        if (!generatedParticipations.isEmpty()) {
+            studentExam.setStudentParticipations(generatedParticipations);
+            this.studentExamRepository.save(studentExam);
         }
     }
 
@@ -792,16 +753,6 @@ public class StudentExamService {
     }
 
     /**
-     * Sets up the participations and submissions for all the exercises of the student exam.
-     *
-     * @param studentExam             The studentExam for which the participations and submissions should be created
-     * @param generatedParticipations List of generated participations to track how many participations have been generated
-     */
-    public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
-        setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, null);
-    }
-
-    /**
      * Generates a new individual StudentExam for the specified student and stores it in the database.
      *
      * @param exam    The exam with eagerly loaded users, exercise groups, and exercises.
@@ -829,7 +780,6 @@ public class StudentExamService {
      * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    @Transactional // TODO: NOT OK --> remove @Transactional
     public List<StudentExam> generateStudentExams(final Exam exam) {
         final var existingStudentExams = studentExamRepository.findByExamId(exam.getId());
         // deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
@@ -850,7 +800,6 @@ public class StudentExamService {
      * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
      * @return the list of student exams with their corresponding users
      */
-    @Transactional // TODO: NOT OK --> remove @Transactional
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
 
         // Get all users who already have an individual exam

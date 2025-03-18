@@ -14,11 +14,8 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Set;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
-import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,12 +34,11 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
-class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationGitlabCIGitlabSamlTest {
+class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVcSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisescheduleservice";
 
@@ -61,7 +57,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @BeforeEach
     void init() throws Exception {
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
-        gitlabRequestMockProvider.enableMockingOfRequests();
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
@@ -78,49 +73,17 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @AfterEach
     void tearDown() throws Exception {
         scheduleService.clearAllTasks();
-        gitlabRequestMockProvider.reset();
         studentRepository.resetLocalRepo();
-    }
-
-    private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, long timeoutInMs) {
-        final Set<StudentParticipation> studentParticipations = programmingExercise.getStudentParticipations();
-        verifyLockStudentRepositoryAndParticipationOperation(wasCalled, studentParticipations, timeoutInMs);
-    }
-
-    private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, StudentParticipation participation, long timeoutInMs) {
-        verifyLockStudentRepositoryAndParticipationOperation(wasCalled, List.of(participation), timeoutInMs);
-    }
-
-    private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, Iterable<StudentParticipation> studentParticipations, long timeoutInMs) {
-        int callCount = wasCalled ? 1 : 0;
-        for (StudentParticipation studentParticipation : studentParticipations) {
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUri(),
-                    programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
-            verify(programmingExerciseParticipationService, timeout(timeoutInMs).times(callCount)).lockStudentParticipation(programmingExerciseStudentParticipation);
-        }
-    }
-
-    private void mockStudentRepoLocks() throws GitAPIException, GitLabApiException {
-        for (final var participation : programmingExercise.getStudentParticipations()) {
-            final VcsRepositoryUri repositoryUri = ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUri();
-            gitlabRequestMockProvider.setRepositoryPermissionsToReadOnly(repositoryUri, participation.getStudents());
-            doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService)
-                    .getOrCheckoutRepository((ProgrammingExerciseParticipation) participation);
-        }
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldExecuteScheduledBuildAndTestAfterDueDate() throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        // Lock student repository must be called once per participation.
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
         // Instructor build should have been triggered.
         verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
@@ -133,8 +96,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        // Lock student repository must not be called.
-        verifyLockStudentRepositoryAndParticipationOperation(false, TIMEOUT_MS);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -146,14 +107,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         verify(programmingTriggerService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         // Update all scores should not have been triggered.
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
-        // Lock student repository must not be called.
-        verifyLockStudentRepositoryAndParticipationOperation(false, 0);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotExecuteScheduledTwiceIfSameExercise() throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         // Setting it the first time.
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS));
@@ -165,8 +123,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        // Lock student repository must be called once per participation.
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
         verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -182,28 +138,24 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         verify(programmingTriggerService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
-        verifyLockStudentRepositoryAndParticipationOperation(false, 0);
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS * 2));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
         verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithManualAssessment() throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -213,14 +165,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         // but do not build all
         verify(programmingTriggerService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
-        // Only lock participations
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -231,7 +180,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         verify(programmingTriggerService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
         // has AFTER_DUE_DATE tests and no additional build after due date => update the scores to show those test cases in it
         verify(programmingExerciseGradingService, timeout(5000)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
         // make sure to trigger the update only for participants who do not have got an individual due date
@@ -241,7 +189,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotUpdateScoresIfHasTestsAfterDueDateAndBuildAfterDueDate() throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS * 2));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
@@ -253,7 +200,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         // has AFTER_DUE_DATE tests, but also buildAfterDueDate => do not update results, but use the results created on additional build run
         verify(programmingExerciseGradingService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).updateAllResults(programmingExercise);
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
         verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -261,7 +207,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotUpdateScoresIfHasNoTestsAfterDueDate(boolean hasBuildAndTestAfterDueDate) throws Exception {
-        mockStudentRepoLocks();
         programmingExercise.setDueDate(nowPlusMillis(DELAY_MS));
         if (hasBuildAndTestAfterDueDate) {
             programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(nowPlusMillis(DELAY_MS * 2));
@@ -278,7 +223,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         // no tests marked as AFTER_DUE_DATE => do not update scores on due date
         verify(programmingExerciseGradingService, after(SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).updateAllResults(programmingExercise);
-        verifyLockStudentRepositoryAndParticipationOperation(true, TIMEOUT_MS);
         if (hasBuildAndTestAfterDueDate) {
             verify(programmingTriggerService, timeout(TIMEOUT_MS)).triggerInstructorBuildForExercise(programmingExercise.getId());
         }
@@ -304,7 +248,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
@@ -320,19 +263,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         var studentParticipationIndividualDueDate = getParticipation(login);
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotNull();
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotEqualTo(programmingExercise.getDueDate());
-
-        // the repo-lock for the participation with a later due date should only have been called after that individual due date has passed
-        verifyLockStudentRepositoryAndParticipationOperation(true, studentParticipationsRegularDueDate, DELAY_MS * 2);
-        // first the operation should not be called
-        verifyLockStudentRepositoryAndParticipationOperation(false, participationIndividualDueDate, 0);
-        // after some time the operation should be called as well (verify waits up to 5s until this condition is fulfilled)
-        verifyLockStudentRepositoryAndParticipationOperation(true, participationIndividualDueDate, TIMEOUT_MS);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, 2 * SCHEDULER_TASK_TRIGGER_DELAY_MS);
@@ -348,10 +283,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
         // not yet locked on regular due date
         verify(programmingTriggerService, after(DELAY_MS * 2).never()).triggerInstructorBuildForExercise(programmingExercise.getId());
-        verifyLockStudentRepositoryAndParticipationOperation(false, participationIndividualDueDate, 0);
-
-        // locked after individual due date
-        verifyLockStudentRepositoryAndParticipationOperation(true, participationIndividualDueDate, 2 * DELAY_MS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         // after build and test date: no individual build and test actions are scheduled
         verify(programmingTriggerService, after(DELAY_MS + SCHEDULER_TASK_TRIGGER_DELAY_MS).never()).triggerBuildForParticipations(List.of(participationIndividualDueDate));
@@ -361,7 +292,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateAfterBuildAndTestDate() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, DELAY_MS);
@@ -381,7 +311,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         // no build and test date, but after_due_date tests ⇒ score update needed
@@ -405,7 +334,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
@@ -445,7 +373,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
@@ -473,7 +400,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateIndividualScheduleOnIndividualDueDateChange() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, DELAY_MS, null);
@@ -500,7 +426,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, 1000L, null);
@@ -534,7 +459,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, -DELAY_MS, null);
@@ -553,7 +477,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldCancelAllTasksIfSchedulingNoLongerNeeded() throws Exception {
-        mockStudentRepoLocks();
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, -DELAY_MS, null);
@@ -586,11 +509,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);
         studentExamRepository.saveAndFlush(studentExam);
-
-        instanceMessageReceiveService.processStudentExamIndividualWorkingTimeChangeDuringConduction(studentExam.getId());
-
-        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), examExercise.getProjectKey(),
-                participation.getStudents());
     }
 
     @Test
@@ -607,12 +525,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
         studentExam.setExercises(List.of(examExercise));
         studentExam.setWorkingTime(1);
         studentExamRepository.saveAndFlush(studentExam);
-
-        instanceMessageReceiveService.processRescheduleExamDuringConduction(exam.getId());
-
-        verify(versionControlService, timeout(TIMEOUT_MS)).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), examExercise.getProjectKey(),
-                participation.getStudents());
-        verify(programmingExerciseParticipationService, timeout(TIMEOUT_MS)).lockStudentRepositoryAndParticipation(examExercise, participation);
     }
 
     /**

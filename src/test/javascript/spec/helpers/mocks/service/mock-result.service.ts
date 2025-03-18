@@ -1,5 +1,5 @@
 import { EMPTY, Observable } from 'rxjs';
-import { IResultService, ResultsWithPointsArrayResponseType } from 'app/exercises/shared/result/result.service';
+import { IResultService, ResultsWithPointsArrayResponseType } from 'app/exercise/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { Exercise } from 'app/entities/exercise.model';
 

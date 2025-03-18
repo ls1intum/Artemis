@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
+import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/entities/exam/exam.model';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -25,14 +25,11 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import {
-    ProgrammingLanguageFeature,
-    ProgrammingLanguageFeatureService,
-} from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
+import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
-import { SubmissionPolicyService } from '../../../../../main/webapp/app/exercises/programming/manage/services/submission-policy.service';
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExerciseDetailComponent', () => {
@@ -51,7 +48,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
-    let modalService: NgbModal;
 
     const mockProgrammingExercise = {
         id: 1,
@@ -136,7 +132,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
         router = fixture.debugElement.injector.get(Router);
-        modalService = fixture.debugElement.injector.get(NgbModal);
 
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
@@ -269,11 +264,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         expect(sections).toBeDefined();
     });
 
-    it.each([
-        ['jenkins', true],
-        ['gitlabci', true],
-        ['gitlab', false],
-    ])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
+    it.each([['jenkins', true]])('should show the build plan edit button for profile %s: %s', (profile, editable) => {
         profileInfo.activeProfiles = [profile];
         const profileInfoStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
 
@@ -316,40 +307,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.isExamExercise = true;
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should handle unlock all repsitories', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        comp.programmingExercise = mockProgrammingExercise;
-
-        comp.handleUnlockAllRepositories();
-        expect(modalSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should unlock all repositories', () => {
-        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(of(new HttpResponse({ body: 2 })));
-        const successSpy = jest.spyOn(alertService, 'addAlert');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.unlockAllRepositories();
-        expect(unlockSpy).toHaveBeenCalledOnce();
-        expect(successSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should error on unlock all repositories', () => {
-        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(throwError(() => new HttpResponse({ body: 2 })));
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.unlockAllRepositories();
-        expect(unlockSpy).toHaveBeenCalledOnce();
-        expect(errorSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should handle lock all Repsitories', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        comp.programmingExercise = mockProgrammingExercise;
-
-        comp.handleLockAllRepositories();
-        expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should generate structure oracle', async () => {

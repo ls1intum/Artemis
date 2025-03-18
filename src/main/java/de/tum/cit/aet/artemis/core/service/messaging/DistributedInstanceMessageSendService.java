@@ -76,61 +76,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
-        log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentRepositories(Long exerciseId) {
-        log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
-        log.info("Sending unlock all repositories and participations with a start date in the past and a due date in the future for programming exercise {} to broker.",
-                exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
-        log.info("Sending unlock all student repositories with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
-        log.info("Sending unlock all student participations with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId) {
-        log.info("Sending lock all student repositories and participations for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentRepositories(Long exerciseId) {
-        log.info("Sending lock all student repositories for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES, exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId) {
-        log.info("Sending lock all student repositories and participations with past due date for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId) {
-        log.info("Sending lock all student participations with past due date for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
-    }
-
-    @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending remove non-activated user {} to broker.", userId);
         sendMessageDelayed(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS, userId);
@@ -152,18 +97,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
         log.info("Sending prepare assessed exercise submitted notification for exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE, exerciseId);
-    }
-
-    @Override
-    public void sendRescheduleAllStudentExams(Long examId) {
-        log.info("Sending message to reschedule exam {} to broker.", examId);
-        sendMessageDelayed(MessageTopic.EXAM_RESCHEDULE_DURING_CONDUCTION, examId);
-    }
-
-    @Override
-    public void sendStudentExamIndividualWorkingTimeChangeDuringConduction(Long studentExamId) {
-        log.info("Sending schedule to reschedule student exam {} to broker.", studentExamId);
-        sendMessageDelayed(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION, studentExamId);
     }
 
     @Override

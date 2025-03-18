@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/angular';
 import { AppComponent } from '../../../main/webapp/app/app.component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ProfileService } from '../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ArtemisTranslatePipe } from '../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../spec/helpers/mocks/service/mock-sync-storage.service';

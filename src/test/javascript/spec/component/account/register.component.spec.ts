@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/cor
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
-import { RegisterService } from 'app/account/register/register.service';
-import { RegisterComponent } from 'app/account/register/register.component';
+import { RegisterService } from 'app/core/account/register/register.service';
+import { RegisterComponent } from 'app/core/account/register/register.component';
 import { User } from 'app/core/user/user.model';
 import { ElementRef } from '@angular/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
