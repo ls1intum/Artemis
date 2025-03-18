@@ -26,8 +26,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         CourseManagementExercisesSearchComponent,
         TranslateDirective,
         CourseExerciseCardComponent,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
         ProgrammingExerciseCreateButtonsComponent,
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
@@ -56,12 +54,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredModelingExercisesCount = 0;
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
-
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
-    // @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
-    // @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
     private readonly route = inject(ActivatedRoute);
 
