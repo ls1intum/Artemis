@@ -3,17 +3,17 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '../../language/translate.directive';
 import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',

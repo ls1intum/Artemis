@@ -1,4 +1,4 @@
-import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { TestBed } from '@angular/core/testing';

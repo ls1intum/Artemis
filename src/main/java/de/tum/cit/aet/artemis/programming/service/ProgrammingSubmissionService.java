@@ -136,33 +136,22 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * This method gets called if a new commit was pushed to the VCS
      *
      * @param participation The Participation, where the push happened
-     * @param requestBody   the body of the post request by the VCS.
+     * @param commit        the commit that was pushed
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
      * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation).
      */
-    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Object requestBody)
+    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Commit commit)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
         var existingSubmissionCount = participation.getSubmissions().size();
         ZonedDateTime submissionDate = ZonedDateTime.now();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
-        // if the commit is made by the Artemis user and contains the commit message "Setup" (use a constant to determine this), we should ignore this
-        // and we should not create a new submission here
-        Commit commit;
-        try {
-            // we can find this out by looking into the requestBody
-            // if the branch is different from main, throw an IllegalArgumentException, but make sure the REST call still returns 200
-            commit = versionControl.getLastCommitDetails(requestBody);
-            log.info("NotifyPush invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(), commit.branch());
-        }
-        catch (Exception ex) {
-            log.error("Commit could not be parsed for submission from participation {}", participation, ex);
-            throw new IllegalArgumentException(ex);
-        }
+        log.info("processNewProgrammingSubmission invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(),
+                commit.branch());
 
         String branch = versionControl.getOrRetrieveBranchOfParticipation(participation);
         if (commit.branch() != null && !commit.branch().equalsIgnoreCase(branch)) {
@@ -221,13 +210,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // NOTE: this might an important information if a lock submission policy of the corresponding programming exercise is active
         programmingSubmission.getParticipation().setSubmissionCount(existingSubmissionCount + 1);
-
-        // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
-        if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
-                && submissionPolicy instanceof LockRepositoryPolicy) {
-            // we set the participation to locked when the new submission count is at least as high as the submission limit
-            programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
-        }
 
         // NOTE: we don't need to save the participation here, this might lead to concurrency problems when doing the empty commit during resume exercise!
         return programmingSubmission;
@@ -297,7 +279,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private boolean exceedsSubmissionPolicy(ProgrammingExerciseParticipation programmingExerciseParticipation, SubmissionPolicy submissionPolicy) {
         if (programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation && submissionPolicy != null && submissionPolicy.isActive()
                 && submissionPolicy instanceof LockRepositoryPolicy) {
-            return programmingExerciseParticipation.getSubmissions().size() > submissionPolicy.getSubmissionLimit();
+            return programmingExerciseParticipation.getSubmissions().size() >= submissionPolicy.getSubmissionLimit();
         }
         return false;
     }

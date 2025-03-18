@@ -11,40 +11,71 @@
                 </span>
             </div>
             <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                <div class="me-2 text-truncate">
+                <div class="me-2 text-truncate" [ngClass]="{ 'fw-bold': sidebarItem.isAttempt }">
                     {{ sidebarItem.subtitleLeft }}
                 </div>
             </div>
             <div class="d-flex flex-column align-items-baseline">
-                <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.start"></small>
+                <small
+                    class="me-2 text-truncate fw-semibold small-title-color"
+                    jhiTranslate="{{ sidebarItem.isAttempt ? 'artemisApp.courseOverview.sidebar.submissionDate' : 'artemisApp.courseOverview.sidebar.start' }}"
+                ></small>
                 <small class="me-2 text-truncate fw-semibold">
-                    @if (sidebarItem.startDateWithTime) {
-                        {{ sidebarItem.startDateWithTime | artemisDate: 'long-date' }}
+                    @if (sidebarItem.isAttempt) {
+                        {{ sidebarItem.submissionDate | artemisDate: 'long-date' }}
                         -
-                        {{ sidebarItem.startDateWithTime | artemisDate: 'time' }}
+                        {{ sidebarItem.submissionDate | artemisDate: 'time' }}
+                    } @else {
+                        @if (sidebarItem.startDateWithTime) {
+                            {{ sidebarItem.startDateWithTime | artemisDate: 'long-date' }}
+                            -
+                            {{ sidebarItem.startDateWithTime | artemisDate: 'time' }}
+                        }
                     }
                 </small>
             </div>
             <hr class="my-1 mx-0" />
-            <div class="d-flex flex-column align-items-baseline">
-                <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
-                <small class="me-2 text-truncate fw-semibold">
-                    @if (sidebarItem.studentExam) {
-                        <jhi-student-exam-working-time [studentExam]="sidebarItem.studentExam" />
-                    } @else if (sidebarItem.workingTime) {
-                        {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
-                    }
-                </small>
-            </div>
-            <hr class="my-1 mx-0" />
-            <div class="d-flex flex-column align-items-baseline">
-                <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
-                <small class="me-2 text-truncate fw-semibold">
-                    @if (sidebarItem.attainablePoints) {
-                        {{ sidebarItem.attainablePoints }}
-                    }
-                </small>
-            </div>
+            @if (sidebarItem.isAttempt) {
+                <div class="d-flex flex-column align-items-baseline">
+                    <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.usedWorkingTime"></small>
+                    <small class="me-2 fw-semibold">
+                        @if (sidebarItem.usedWorkingTime) {
+                            {{ sidebarItem.usedWorkingTime | artemisDurationFromSeconds }}
+                        } @else {
+                            {{ '-' }}
+                        }
+                    </small>
+                </div>
+            } @else {
+                <div class="d-flex flex-column align-items-baseline">
+                    <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.workingTime"></small>
+                    <small class="me-2 text-truncate fw-semibold">
+                        @if (sidebarItem.studentExam) {
+                            <jhi-student-exam-working-time [studentExam]="sidebarItem.studentExam" />
+                        } @else if (sidebarItem.workingTime) {
+                            {{ sidebarItem.workingTime | artemisDurationFromSeconds }}
+                        }
+                    </small>
+                </div>
+                <hr class="my-1 mx-0" />
+                @if (sidebarItem.testExam) {
+                    <div class="d-flex flex-column align-items-baseline">
+                        <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attempts"></small>
+                        <small class="me-2 text-truncate fw-semibold">
+                            {{ sidebarItem.attempts }}
+                        </small>
+                    </div>
+                } @else {
+                    <div class="d-flex flex-column align-items-baseline">
+                        <small class="me-2 text-truncate fw-semibold small-title-color" jhiTranslate="artemisApp.courseOverview.sidebar.attainablePoints"></small>
+                        <small class="me-2 text-truncate fw-semibold">
+                            @if (sidebarItem.attainablePoints) {
+                                {{ sidebarItem.attainablePoints }}
+                            }
+                        </small>
+                    </div>
+                }
+            }
         } @else {
             <div class="d-flex justify-content-between align-items-baseline">
                 <span
@@ -63,7 +94,7 @@
                             [isGray]="false"
                             [authorId]="otherUser.id"
                             [authorName]="otherUser.name"
-                            [imageUrl]="otherUser.imageUrl"
+                            [imageUrl]="addPublicFilePrefix(otherUser.imageUrl)"
                             [isEditable]="false"
                         />
                     } @else if (sidebarItem.icon) {

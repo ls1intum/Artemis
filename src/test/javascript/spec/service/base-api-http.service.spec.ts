@@ -1,4 +1,4 @@
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 describe('debounce', () => {
     jest.useFakeTimers();

@@ -4,7 +4,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
+import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/metis.util';
 import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
