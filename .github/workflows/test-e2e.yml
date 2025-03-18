@@ -16,7 +16,7 @@ concurrency:
 
 env:
   # This is the context of the status. It will be displayed in the GitHub Actions UI.
-  STATUS_CONTEXT: "GitHub E2E Tests"
+  STATUS_CONTEXT: "End-to-End (E2E) Tests"
   # This is the URL to make a request to the GitHub API to update the status of the workflow run.
   STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
   # This is the URL to the workflow run in the GitHub Actions UI.
