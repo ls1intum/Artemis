@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
@@ -160,7 +159,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 }
             });
 
-            // Export the build plan of a programming exercise, if one exists. Only relevant for Gitlab/Jenkins or Gitlab/GitlabCI setups.
+            // Export the build plan of a programming exercise, if one exists. Only relevant for Jenkins setups.
             var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(exercise.getId());
             if (buildPlan.isPresent()) {
                 Path buildPlanPath = exportDir.orElseThrow().resolve(BUILD_PLAN_FILE_NAME);
@@ -540,7 +539,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             if (!clonePath.toFile().exists()) {
                 Files.createDirectories(clonePath);
             }
-            String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
+            String assignmentPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
             FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
             gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true);
             for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {

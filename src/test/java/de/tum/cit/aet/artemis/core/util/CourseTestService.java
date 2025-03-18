@@ -119,8 +119,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -196,7 +196,7 @@ public class CourseTestService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private ExamRepository examRepo;
+    private ExamTestRepository examRepo;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -1175,6 +1175,21 @@ public class CourseTestService {
 
         optionalCourse = coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
+    }
+
+    // Test
+    public void testGetCourseWithExercisesAndLecturesAndCompetencies() throws Exception {
+        Course course = courseUtilService.createCourseWithExercisesAndLecturesAndCompetencies();
+        Course receivedCourse = request.get("/api/core/courses/" + course.getId() + "/with-exercises-lectures-competencies", HttpStatus.OK, Course.class);
+
+        assertThat(receivedCourse.getExercises()).isNotEmpty();
+        assertThat(receivedCourse.getExercises()).isEqualTo(course.getExercises());
+
+        assertThat(receivedCourse.getLectures()).isNotEmpty();
+        assertThat(receivedCourse.getLectures()).isEqualTo(course.getLectures());
+
+        assertThat(receivedCourse.getCompetencies()).isNotEmpty();
+        assertThat(receivedCourse.getCompetencies()).isEqualTo(course.getCompetencies());
     }
 
     // Test
