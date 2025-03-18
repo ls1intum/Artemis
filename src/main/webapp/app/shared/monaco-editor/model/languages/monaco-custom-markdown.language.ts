@@ -1,5 +1,5 @@
 import { languages } from 'monaco-editor';
-import { taskRegex } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
+import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 
 export const CUSTOM_MARKDOWN_LANGUAGE_ID = 'custom-md';
 /*

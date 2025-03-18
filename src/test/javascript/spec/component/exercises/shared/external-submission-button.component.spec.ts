@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
+import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
+import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

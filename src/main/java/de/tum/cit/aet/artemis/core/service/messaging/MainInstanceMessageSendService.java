@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class MainInstanceMessageSendService implements InstanceMessageSendService {
 
     public final InstanceMessageReceiveService instanceMessageReceiveService;
@@ -58,51 +58,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendUnlockAllStudentRepositories(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllRepositories(exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllRepositoriesAndParticipations(exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate(exerciseId);
-    }
-
-    @Override
-    public void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate(exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId) {
-        instanceMessageReceiveService.processLockAllRepositoriesAndParticipations(exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentRepositories(Long exerciseId) {
-        instanceMessageReceiveService.processLockAllRepositories(exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processLockAllRepositoriesAndParticipationsWithEarlierDueDate(exerciseId);
-    }
-
-    @Override
-    public void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processLockAllParticipationsWithEarlierDueDate(exerciseId);
-    }
-
-    @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         instanceMessageReceiveService.processRemoveNonActivatedUser(userId);
     }
@@ -120,16 +75,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     @Override
     public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exerciseId);
-    }
-
-    @Override
-    public void sendRescheduleAllStudentExams(Long examId) {
-        instanceMessageReceiveService.processRescheduleExamDuringConduction(examId);
-    }
-
-    @Override
-    public void sendStudentExamIndividualWorkingTimeChangeDuringConduction(Long studentExamId) {
-        instanceMessageReceiveService.processStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
     }
 
     @Override

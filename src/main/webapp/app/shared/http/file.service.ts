@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
 
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
@@ -27,11 +28,12 @@ export class FileService {
 
     /**
      * Fetches the file from the given path and returns it as a File object with a unique file name.
-     * @param filePath path of the file
+     * @param filePath path of the file (without API prefix)
      * @param mapOfFiles optional map to check if the generated file name already exists
      */
     async getFile(filePath: string, mapOfFiles?: Map<string, { path?: string; file: File }>): Promise<File> {
-        const blob = await lastValueFrom(this.http.get(filePath, { responseType: 'blob' }));
+        const filePathUrl = addPublicFilePrefix(filePath)!;
+        const blob = await lastValueFrom(this.http.get(filePathUrl, { responseType: 'blob' }));
         const file = new File([blob], this.getUniqueFileName(this.getExtension(filePath), mapOfFiles));
         return Promise.resolve(file);
     }

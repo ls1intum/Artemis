@@ -2,11 +2,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_ATLAS, PROFILE_LTI } from 'app/app.constants';
@@ -17,7 +17,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal, NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
@@ -25,7 +25,7 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
@@ -149,6 +149,7 @@ export class CourseUpdateComponent implements OnInit {
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
+                this.croppedImage = course.courseIconPath;
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
                 });
@@ -268,11 +269,10 @@ export class CourseUpdateComponent implements OnInit {
                 unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
                 unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 color: new FormControl(this.course.color),
-                courseIcon: new FormControl(this.course.courseIcon),
+                courseIcon: new FormControl(this.course.courseIconPath),
             },
             { validators: CourseValidator },
         );
-        this.croppedImage = this.course.courseIcon;
 
         this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.TutorialGroups)
@@ -666,7 +666,7 @@ export class CourseUpdateComponent implements OnInit {
      * Deletes the course icon
      */
     deleteCourseIcon() {
-        this.course.courseIcon = undefined;
+        unsetCourseIcon(this.course);
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }

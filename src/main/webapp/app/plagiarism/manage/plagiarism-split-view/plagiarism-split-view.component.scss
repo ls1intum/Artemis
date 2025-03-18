@@ -1,0 +1,25 @@
+@import '../../../../content/scss/artemis-variables';
+
+:host {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.plagiarism-split-view {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    height: 100%;
+    overflow: hidden;
+
+    .plagiarism-split-pane {
+        padding-top: 30px;
+        position: relative;
+    }
+}
+
+.split-pane-header-color {
+    background-color: var(--bs-body-bg);
+}

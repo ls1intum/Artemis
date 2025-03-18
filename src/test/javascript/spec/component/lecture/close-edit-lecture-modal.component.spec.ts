@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CloseEditLectureModalComponent } from '../../../../../main/webapp/app/lecture/close-edit-lecture-modal/close-edit-lecture-modal.component';
+import { CloseEditLectureModalComponent } from 'app/lecture/manage/close-edit-lecture-modal/close-edit-lecture-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

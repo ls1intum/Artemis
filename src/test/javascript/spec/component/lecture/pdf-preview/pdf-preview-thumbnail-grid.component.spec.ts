@@ -2,10 +2,10 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
+import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { ElementRef, signal, Signal, SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { OrderedPage, HiddenPageMap, HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';

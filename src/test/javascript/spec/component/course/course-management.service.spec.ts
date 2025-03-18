@@ -13,8 +13,8 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -22,13 +22,13 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CourseScores } from 'app/course/course-scores/course-scores';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;

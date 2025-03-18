@@ -130,15 +130,14 @@ public class SlideSplitterService {
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
                 Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
-
                 Optional<Slide> existingSlideOpt = Optional.ofNullable(slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnit.getId(), slideNumber));
-                Slide slide = existingSlideOpt.orElseGet(Slide::new);
-                slide.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) slideNumber).toString());
-                slide.setSlideNumber(slideNumber);
-                slide.setAttachmentUnit(attachmentUnit);
-                slide.setHidden(null);
-                slide.setExercise(null);
-                slideRepository.save(slide);
+                Slide slideEntity = existingSlideOpt.orElseGet(Slide::new);
+                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
+                slideEntity.setSlideNumber(slideNumber);
+                slideEntity.setAttachmentUnit(attachmentUnit);
+                slideEntity.setHidden(null);
+                slideEntity.setExercise(null);
+                slideRepository.save(slideEntity);
             }
         }
         catch (IOException e) {
@@ -208,20 +207,20 @@ public class SlideSplitterService {
                 java.util.Date previousHiddenValue = slide.getHidden();
 
                 if (hiddenData != null && hiddenData.containsKey("date")) {
-                    slide.setHidden((java.util.Date) hiddenData.get("date"));
+                    slideEntity.setHidden((java.util.Date) hiddenData.get("date"));
 
                     if (hiddenData.containsKey("exerciseId") && hiddenData.get("exerciseId") != null) {
                         Number exerciseId = (Number) hiddenData.get("exerciseId");
                         Optional<Exercise> exercise = exerciseRepository.findById(exerciseId.longValue());
-                        exercise.ifPresent(slide::setExercise);
+                        exercise.ifPresent(slideEntity::setExercise);
                     }
                     else {
-                        slide.setExercise(null);
+                        slideEntity.setExercise(null);
                     }
                 }
                 else {
-                    slide.setHidden(null);
-                    slide.setExercise(null);
+                    slideEntity.setHidden(null);
+                    slideEntity.setExercise(null);
                 }
 
                 if (isNewSlide) {
@@ -238,12 +237,12 @@ public class SlideSplitterService {
                     }
                 }
 
-                Slide savedSlide = slideRepository.save(slide);
+                Slide savedSlide = slideRepository.save(slideEntity);
 
                 // Schedule unhiding if the hidden date has changed
-                if (!Objects.equals(previousHiddenValue, slide.getHidden())) {
+                if (!Objects.equals(previousHiddenValue, slideEntity.getHidden())) {
                     slideUnhideService.handleSlideHiddenUpdate(savedSlide);
-                    log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), slide.getHidden());
+                    log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), slideEntity.getHidden());
                 }
             }
 

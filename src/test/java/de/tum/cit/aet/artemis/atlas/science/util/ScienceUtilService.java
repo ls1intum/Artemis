@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.science.util;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
@@ -12,6 +15,7 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ScienceUtilService {
 
     @Autowired

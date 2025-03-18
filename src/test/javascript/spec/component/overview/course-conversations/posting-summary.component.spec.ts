@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PostingSummaryComponent } from 'app/overview/course-conversations/posting-summary/posting-summary.component';
+import { PostingSummaryComponent } from 'app/communication/course-conversations/posting-summary/posting-summary.component';
 import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
@@ -7,7 +7,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content.components';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

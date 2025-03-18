@@ -4,8 +4,8 @@ import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
-import { PasswordResetFinishComponent } from 'app/account/password-reset/finish/password-reset-finish.component';
-import { PasswordResetFinishService } from 'app/account/password-reset/finish/password-reset-finish.service';
+import { PasswordResetFinishComponent } from 'app/core/account/password-reset/finish/password-reset-finish.component';
+import { PasswordResetFinishService } from 'app/core/account/password-reset/finish/password-reset-finish.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
