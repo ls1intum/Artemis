@@ -1,8 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
-import {
-    AddUsersFormData,
-    ConversationAddUsersFormComponent,
-} from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -15,6 +11,10 @@ import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channe
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import {
+    AddUsersFormData,
+    ConversationAddUsersFormComponent,
+} from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {

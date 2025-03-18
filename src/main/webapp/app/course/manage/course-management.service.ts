@@ -5,9 +5,9 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,16 +19,16 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
 import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -135,6 +135,16 @@ export class CourseManagementService {
     findWithExercises(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    }
+
+    /**
+     * finds the course with the provided unique identifier together with its exercises
+     * @param courseId - the id of the course to be found
+     */
+    findWithExercisesAndLecturesAndCompetencies(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-lectures-competencies`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 

@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
-import { AuditsService } from 'app/admin/audits/audits.service';
-import { Audit } from 'app/admin/audits/audit.model';
+import { AuditsService } from 'app/core/admin/audits/audits.service';
+import { Audit } from 'app/core/admin/audits/audit.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 

@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
@@ -15,7 +15,7 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

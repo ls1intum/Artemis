@@ -1,5 +1,5 @@
-import { TreeItem, TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
-import { findItem, findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/tree-view-helper';
+import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
+import { findItem, findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 
 const rootNoChildren = new TreeViewItem<number>({
     children: [],

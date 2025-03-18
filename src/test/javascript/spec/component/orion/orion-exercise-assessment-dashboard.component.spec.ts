@@ -1,5 +1,5 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
+import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -7,13 +7,13 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionState } from 'app/shared/orion/orion';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { OrionAssessmentService } from 'app/orion/assessment/orion-assessment.service';
+import { OrionAssessmentService } from 'app/orion/manage/assessment/orion-assessment.service';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

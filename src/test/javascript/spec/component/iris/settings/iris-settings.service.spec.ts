@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { mockSettings } from './mock-settings';
 import { provideHttpClient } from '@angular/common/http';
 

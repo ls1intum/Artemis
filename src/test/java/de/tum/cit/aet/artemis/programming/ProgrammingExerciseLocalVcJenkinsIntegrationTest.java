@@ -419,14 +419,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     // TODO: enable or remove the test
     @Disabled
     @Test
-    @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
-    void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
-        programmingExerciseTestService.startProgrammingExerciseStudentRetrieveEmptyArtifactPage();
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
         programmingExerciseTestService.repositoryAccessIsAdded_whenStudentIsAddedToTeam();

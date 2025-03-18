@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
-import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
+import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { SimpleChange } from '@angular/core';
 
 describe('CourseChatbotComponent', () => {

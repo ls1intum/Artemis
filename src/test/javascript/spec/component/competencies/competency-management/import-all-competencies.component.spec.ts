@@ -3,7 +3,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { ImportAllCompetenciesComponent } from 'app/course/competencies/competency-management/import-all-competencies.component';
+import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 

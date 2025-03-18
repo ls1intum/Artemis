@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';

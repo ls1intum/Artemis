@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
+import { SystemNotificationManagementUpdateComponent } from 'app/core/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
