@@ -21,6 +21,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Lecture } from 'app/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/lti.constants';
+import { LtiService } from 'app/shared/service/lti.service';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -47,6 +48,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     private router = inject(Router);
     private alertService = inject(AlertService);
     private sessionStorageService = inject(SessionStorageService);
+    private ltiService = inject(LtiService);
 
     courseId: number;
     exercises: Exercise[];
@@ -216,6 +218,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
             let contentIds: string | null = null;
 
             if (this.selectedExercises?.size) {
+                if (this.selectedExercises.size > 1) {
+                    this.ltiService.setMultiLaunch(true);
+                    this.ltiService.setMultiLaunchExercises(Array.from(this.selectedExercises).map((id) => this.exercises.find((exercise) => exercise.id === id)!));
+                }
                 resourceType = DeepLinkingType.EXERCISE;
                 contentIds = Array.from(this.selectedExercises).join(',');
             } else if (this.selectedLectures?.size) {

@@ -56,6 +56,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private ltiSubscription: Subscription;
+    private multiLaunchSubscription: Subscription;
 
     course?: Course;
     courseId: number;
@@ -68,6 +69,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed = false;
     isShownViaLti = false;
+    isMultiLaunch = false;
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -92,6 +94,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
             this.isShownViaLti = isShownViaLti;
+        });
+
+        this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
+            this.isMultiLaunch = isMultiLaunch;
         });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
@@ -131,10 +137,18 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        if (!this.course?.exercises) {
-            return;
+        let exercises: Exercise[];
+
+        if (this.isMultiLaunch) {
+            exercises = this.ltiService.ltiMultiLaunchExercises || [];
+        } else {
+            if (!this.course?.exercises) {
+                return;
+            }
+            exercises = this.course.exercises;
         }
-        this.sortedExercises = this.courseOverviewService.sortExercises(this.course.exercises);
+
+        this.sortedExercises = this.courseOverviewService.sortExercises(exercises);
         this.sidebarExercises = this.courseOverviewService.mapExercisesToSidebarCardElements(this.sortedExercises);
         this.accordionExerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
         this.updateSidebarData();
