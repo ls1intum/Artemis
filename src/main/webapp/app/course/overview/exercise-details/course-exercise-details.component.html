@@ -2,7 +2,9 @@
     <div id="course-exercise-details" class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
         <div class="d-flex align-items-center my-2 justify-content-between">
             <div class="d-flex">
-                <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon" />{{ exercise.title }}</h5>
+                @if (exerciseIcon) {
+                    <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon" />{{ exercise.title }}</h5>
+                }
             </div>
             <div class="d-flex gap-1">
                 @if (exercise.isAtLeastTutor) {
