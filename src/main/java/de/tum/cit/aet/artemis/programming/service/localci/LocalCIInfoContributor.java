@@ -27,7 +27,7 @@ public class LocalCIInfoContributor implements InfoContributor {
     private int defaultInstructorBuildTimeoutOption;
 
     @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
-    private String[] networks;
+    private List<String> networks;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 

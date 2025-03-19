@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerS
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_NORMAL;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -41,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.hazelcast.collection.IQueue;
 
@@ -1076,8 +1078,23 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
 
             assertThat(buildJobQueueItem).isNotNull();
-            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().isNetworkDisabled()).isTrue();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIllegalNetwork() {
+            String illegalNetworkName = "illegalNetwork";
+            String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", illegalNetworkName);
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setDockerFlags(dockerFlags);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Invalid network: " + illegalNetworkName);
         }
     }
 }
