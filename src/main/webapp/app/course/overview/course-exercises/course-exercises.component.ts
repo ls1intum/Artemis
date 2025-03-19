@@ -140,7 +140,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         let exercises: Exercise[];
 
         if (this.isMultiLaunch) {
-            exercises = this.ltiService.ltiMultiLaunchExercises || [];
+            exercises = this.ltiService.getMultiLaunchExercises() || [];
         } else {
             if (!this.course?.exercises) {
                 return;
@@ -179,5 +179,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
+        this.multiLaunchSubscription?.unsubscribe();
     }
 }
