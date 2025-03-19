@@ -131,10 +131,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     dropdownPosition = { x: 0, y: 0 };
     originalAnswer?: AnswerPost;
     course: Course;
+    newContent?: string;
 
     constructor() {
         super();
         this.course = this.metisService.getCourse() ?? throwError('Course not found');
+        this.newContent = this.content;
     }
 
     get reactionsBar() {
@@ -341,6 +343,39 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.onNavigateToPost.emit(post);
     }
 
+    removeMarkdown(content?: string) {
+        if (!content) {
+            return;
+        }
+
+        const transformations = [
+            { regex: /~~(.*?)~~/g, replacement: '$1' }, // strikethrough
+            { regex: /\*\*(.*?)\*\*/g, replacement: '$1' }, // bold
+            { regex: /\*(.*?)\*/g, replacement: '$1' }, // italic
+            { regex: /\[(.*?)\]\(.*?\)/g, replacement: '$1' }, // link
+            { regex: /<ins>(.*?)<\/ins>/g, replacement: '$1' }, // underline
+            { regex: /```([\s\S]*?)```/g, replacement: '$1' }, // code block
+            { regex: /`([^`]*)`/g, replacement: '$1' }, // inline code
+            { regex: /^\s*>+\s?/gm, replacement: '' }, // quote
+        ];
+
+        let newContent = content;
+        transformations.forEach(({ regex, replacement }) => {
+            newContent = newContent.replace(regex, replacement);
+        });
+
+        const metisTags = ['user', 'channel', 'faq', 'lecture', 'programming'];
+        metisTags.forEach((tag) => {
+            const regex = new RegExp(`\\[${tag}\\](.*?)\\[\\/${tag}\\]`, 'g');
+            newContent = newContent.replace(regex, (match, group1) => {
+                return group1.replace(/\(.*?\)/g, '');
+            });
+        });
+
+        this.newContent = newContent;
+        this.changeDetector.detectChanges();
+    }
+
     private loadOriginalAnswerContent(): void {
         if (this.posting.originalAnswerId) {
             const courseId = this.course.id;
@@ -348,6 +383,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                 next: (res) => {
                     this.originalAnswer = res[0];
                     this.changeDetector.detectChanges();
+                    this.removeMarkdown(this.originalAnswer?.post?.content);
                 },
                 error: () => {
                     throwError('AnswerPost not found');

@@ -624,26 +624,43 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onTriggerNavigateToPost(post: Posting) {
-        let id = (post as Post)?.conversation?.id;
+        let conversationId = (post as Post)?.conversation?.id;
         this.focusPostId = post.id;
-        this.openThreadOnFocus = false;
-        if (post.id === undefined) {
+        this.openThreadOnFocus = post.postingType === PostingType.ANSWER;
+
+        if (!post.id) {
             return;
-        } else if ((post as Post)?.conversation?.id === undefined) {
+        } else if (!(post as Post)?.conversation?.id) {
             this.openThreadOnFocus = true;
-            id = (post as AnswerPost)?.post?.conversation?.id;
+            conversationId = (post as AnswerPost)?.post?.conversation?.id;
             this.focusPostId = (post as AnswerPost)?.post?.id;
         }
 
-        if (this.activeConversation && this.activeConversation.id === id) {
-            this.metisConversationService.setActiveConversation(undefined);
-            setTimeout(() => {
-                this.metisConversationService.setActiveConversation(id);
-                this.changeDetector.detectChanges();
-            }, 0);
+        if (this.activeConversation && this.activeConversation.id === conversationId) {
+            if (this.openThreadOnFocus) {
+                const threadPost = (post as AnswerPost)?.post || post;
+                this.openThread(threadPost as Post);
+            } else {
+                this.scrollToPost(this.focusPostId?.toString()!);
+            }
         } else {
-            this.metisConversationService.setActiveConversation(id);
+            this.metisConversationService.setActiveConversation(conversationId);
             this.changeDetector.detectChanges();
+            setTimeout(() => {
+                if (this.openThreadOnFocus) {
+                    const threadPost = (post as AnswerPost)?.post || post;
+                    this.openThread(threadPost as Post);
+                } else {
+                    this.scrollToPost(this.focusPostId?.toString()!);
+                }
+            }, 0);
+        }
+    }
+
+    scrollToPost(postId: string): void {
+        const element = document.getElementById(postId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 }

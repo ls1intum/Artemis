@@ -27,7 +27,7 @@ import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../h
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
-import { Router, RouterState, provideRouter } from '@angular/router';
+import { provideRouter, Router, RouterState } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -522,5 +522,31 @@ describe('PostComponent', () => {
 
         expect(spyOnNavigateToPost).toHaveBeenCalledWith(testPost);
         expect(spyOnNavigateToPost).toHaveBeenCalledOnce();
+    });
+
+    it('should remove markdown formatting from content', () => {
+        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
+        fixture.detectChanges();
+
+        const markdownContent = `
+            This is **bold** text.
+            This is *italic* text.
+            This is a [link](http://example.com).
+            Here is some \`inline code\`.
+            ~~Strikethrough~~ should be visible.
+            <ins>Underline</ins> should be visible.
+            [user]Alice[/user] is a user.`;
+
+        const expectedOutput = `
+            This is bold text.
+            This is italic text.
+            This is a link.
+            Here is some inline code.
+            Strikethrough should be visible.
+            Underline should be visible.
+            Alice is a user.`;
+
+        component.removeMarkdown(markdownContent);
+        expect(component.newContent).toEqual(expectedOutput);
     });
 });
