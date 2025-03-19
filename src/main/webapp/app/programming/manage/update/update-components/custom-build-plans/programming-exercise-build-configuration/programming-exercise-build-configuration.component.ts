@@ -101,7 +101,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     initDockerFlags() {
         this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
-        // this.isNetworkDisabled = this.dockerFlags.network === 'none';
         if (this.dockerFlags.cpuCount) {
             this.cpuCount = this.dockerFlags.cpuCount;
         }
