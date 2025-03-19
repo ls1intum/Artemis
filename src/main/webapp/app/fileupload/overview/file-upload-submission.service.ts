@@ -52,7 +52,7 @@ export class FileUploadSubmissionService {
         }
         return this.http
             .get<FileUploadSubmission>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.submissionService.convertSubmissionResponseFromServer(res)));
+            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertFileSubmissionResponseFromServer(res)));
     }
 
     /**
