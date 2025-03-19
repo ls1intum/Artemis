@@ -19,6 +19,8 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { Lecture } from 'app/entities/lecture.model';
+import { DeepLinkingType } from 'app/lti/lti.constants';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -48,12 +50,21 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     courseId: number;
     exercises: Exercise[];
+    lectures: Lecture[];
     selectedExercises?: Set<number> = new Set();
+    selectedLectures?: Set<number> = new Set();
+    isCompetencySelected = false;
+    isLearningPathSelected = false;
+    isIrisSelected = false;
     course: Course;
 
     predicate = 'type';
     reverse = false;
     isLinking = true;
+
+    //dropdowns
+    isExerciseDropdownOpen = false;
+    isLectureDropdownOpen = false;
 
     // Icons
     faSort = faSort;
@@ -81,10 +92,15 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
             this.accountService.identity().then((user) => {
                 if (user) {
-                    this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
-                        if (findWithExercisesResult?.body?.exercises) {
+                    this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId).subscribe((findWithExercisesResult) => {
+                        if (findWithExercisesResult?.body) {
                             this.course = findWithExercisesResult.body;
-                            this.exercises = findWithExercisesResult.body.exercises;
+                            if (findWithExercisesResult?.body?.exercises) {
+                                this.exercises = findWithExercisesResult.body.exercises;
+                            }
+                            if (findWithExercisesResult?.body?.lectures) {
+                                this.lectures = findWithExercisesResult.body.lectures;
+                            }
                         }
                     });
                 } else {
@@ -138,45 +154,110 @@ export class Lti13DeepLinkingComponent implements OnInit {
     /**
      * Checks if the given exercise is currently selected.
      *
-     * @param exercise The exercise to check.
      * @returns True if the exercise is selected, false otherwise.
+     * @param exerciseId
      */
     isExerciseSelected(exerciseId: number | undefined) {
         return exerciseId !== undefined && this.selectedExercises?.has(exerciseId);
     }
 
+    selectLecture(lectureId: number | undefined) {
+        if (lectureId !== undefined) {
+            if (this.selectedLectures?.has(lectureId)) {
+                this.selectedLectures?.delete(lectureId);
+            } else {
+                this.selectedLectures?.add(lectureId);
+            }
+        }
+    }
+
+    isLectureSelected(lectureId: number | undefined) {
+        return lectureId !== undefined && this.selectedLectures?.has(lectureId);
+    }
+
+    enableCompetency() {
+        if (!this.isCompetencySelected) {
+            this.isCompetencySelected = true;
+            this.isIrisSelected = false;
+            this.isLearningPathSelected = false;
+        }
+    }
+
+    enableLearningPath() {
+        if (!this.isLearningPathSelected) {
+            this.isLearningPathSelected = true;
+            this.isIrisSelected = false;
+            this.isCompetencySelected = false;
+        }
+    }
+
+    enableIris() {
+        if (!this.isIrisSelected) {
+            this.isIrisSelected = true;
+            this.isLearningPathSelected = false;
+            this.isCompetencySelected = false;
+        }
+    }
+
     /**
      * Sends a deep link request for the selected exercise.
-     * If an exercise is selected, it sends a POST request to initiate deep linking.
+     * If an exercise, lecture, competency, learning path or Iris is selected, it sends a POST request to initiate deep linking.
      */
     sendDeepLinkRequest() {
-        if (this.selectedExercises?.size) {
+        if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected || this.isLearningPathSelected || this.isIrisSelected) {
             const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
-            const exerciseIds = Array.from(this.selectedExercises).join(',');
-
-            const httpParams = new HttpParams().set('exerciseIds', exerciseIds).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
 
             type DeepLinkingResponse = {
                 targetLinkUri: string;
             };
-            this.http.post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
-                next: (response) => {
-                    if (response.status === 200) {
-                        if (response.body) {
-                            const targetLink = response.body.targetLinkUri;
-                            window.location.replace(targetLink);
+
+            let resourceType: DeepLinkingType;
+            let contentIds: string | null = null;
+
+            if (this.selectedExercises?.size) {
+                resourceType = DeepLinkingType.EXERCISE;
+                contentIds = Array.from(this.selectedExercises).join(',');
+            } else if (this.selectedLectures?.size) {
+                resourceType = DeepLinkingType.LECTURE;
+                contentIds = Array.from(this.selectedLectures).join(',');
+            } else if (this.isCompetencySelected) {
+                resourceType = DeepLinkingType.COMPETENCY;
+            } else if (this.isLearningPathSelected) {
+                resourceType = DeepLinkingType.LEARNING_PATH;
+            } else if (this.isIrisSelected) {
+                resourceType = DeepLinkingType.IRIS;
+            } else {
+                this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
+                return;
+            }
+
+            const httpParams = new HttpParams()
+                .set('resourceType', resourceType)
+                .set('ltiIdToken', ltiIdToken)
+                .set('clientRegistrationId', clientRegistrationId)
+                // Set contentIds only if it exists
+                .set('contentIds', contentIds || '');
+
+            this.http
+                .post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, {
+                    observe: 'response',
+                    params: httpParams,
+                })
+                .subscribe({
+                    next: (response) => {
+                        if (response.status === 200 && response.body) {
+                            window.location.replace(response.body.targetLinkUri);
+                        } else {
+                            this.isLinking = false;
+                            this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
                         }
-                    } else {
+                    },
+                    error: (error) => {
                         this.isLinking = false;
-                        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
-                    }
-                },
-                error: (error) => {
-                    this.isLinking = false;
-                    onError(this.alertService, error);
-                },
-            });
+                        onError(this.alertService, error);
+                    },
+                });
         } else {
             this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
         }

@@ -33,7 +33,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { FileUploadAssessmentService } from 'app/file-upload/manage/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
