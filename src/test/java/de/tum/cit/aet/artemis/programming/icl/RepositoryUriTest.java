@@ -72,6 +72,20 @@ class RepositoryUriTest {
     }
 
     @Test
+    void testLocalRepositoryPath_testExamAttempt() throws Exception {
+        String projectKey = "projectX23";
+        String repositorySlug = "projectX23-my-repo";
+        URL localVCBaseUrl = new URI("https://artemis.cit.tum.de").toURL();
+
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUrl);
+
+        assertThat(uri.getProjectKey()).isEqualTo(projectKey);
+        assertThat(uri.getRepositoryTypeOrUserName()).isEqualTo("my-repo");
+        assertThat(uri.isPracticeRepository()).isFalse();
+        assertThat(uri.getURI().toString()).isEqualTo("https://artemis.cit.tum.de/git/projectX23/projectX23-my-repo.git");
+    }
+
+    @Test
     void testRemoteRepositoryPath() throws Exception {
         Path repositoryPath = Path.of("/remote/path/projectY/projectY-repo");
         URL localVCServerUrl = new URI("https://artemis.tum.de").toURL();

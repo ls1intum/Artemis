@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -99,26 +98,18 @@ public class ProgrammingExerciseImportService {
         String sourceBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
 
         // TODO: in case one of those operations fail, we should do error handling and revert all previous operations
-        versionControl.copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName());
-        versionControl.copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName());
-        versionControl.copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName());
+        versionControl.copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
+        versionControl.copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
+        versionControl.copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
         List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxRepos.size(); i++) {
             AuxiliaryRepository auxRepo = auxRepos.get(i);
-            var repoUri = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName()).toString();
+            var repoUri = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null).toString();
             AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
         }
-
-        // Unprotect the default branch of the template exercise repo.
-        VcsRepositoryUri templateVcsRepositoryUri = newExercise.getVcsTemplateRepositoryUri();
-        String templateVcsRepositoryBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
-        versionControl.unprotectBranch(templateVcsRepositoryUri, templateVcsRepositoryBranch);
-
-        // Add the necessary hooks notifying Artemis about changes after commits have been pushed
-        versionControl.addWebHooksForExercise(newExercise);
 
         try {
             // Adjust placeholders that were replaced during creation of template exercise
@@ -203,7 +194,6 @@ public class ProgrammingExerciseImportService {
         continuousIntegration.copyBuildPlan(templateExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
         continuousIntegration.givePlanPermissions(newExercise, templatePlanName);
         continuousIntegration.givePlanPermissions(newExercise, solutionPlanName);
-        programmingExerciseService.giveCIProjectPermissions(newExercise);
         continuousIntegration.enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegration.enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
     }
@@ -251,7 +241,7 @@ public class ProgrammingExerciseImportService {
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise, false);
+            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.

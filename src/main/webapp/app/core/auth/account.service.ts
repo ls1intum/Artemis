@@ -5,15 +5,16 @@ import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/complaints/complaint.service';
+import { EntityResponseType } from 'app/assessment/shared/complaint.service';
 import dayjs from 'dayjs/esm';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -287,7 +288,7 @@ export class AccountService implements IAccountService {
      * Returns undefined if the user is not authenticated or the user does not have an image.
      */
     getImageUrl() {
-        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
+        return this.isAuthenticated() && this.userIdentity ? addPublicFilePrefix(this.userIdentity.imageUrl) : undefined;
     }
 
     setImageUrl(url: string | undefined) {

@@ -1,21 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -23,7 +22,8 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
+import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 describe('ExamExerciseRowButtonsComponent', () => {
     const course = { id: 3 } as Course;

@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisChatService } from 'app/iris/iris-chat.service';
+import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
+import { IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 
 describe('IrisChatbotWidgetComponent', () => {
     let component: IrisChatbotWidgetComponent;

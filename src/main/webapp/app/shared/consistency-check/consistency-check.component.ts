@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';

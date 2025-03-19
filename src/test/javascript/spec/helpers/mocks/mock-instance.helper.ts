@@ -1,5 +1,5 @@
 import { MockInstance } from 'ng-mocks';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { signal } from '@angular/core';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 

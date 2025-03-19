@@ -8,18 +8,18 @@ import {
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
-} from 'app/exercises/programming/participate/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+} from 'app/programming/overview/programming-submission.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';

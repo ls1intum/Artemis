@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -38,9 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
-import de.tum.cit.aet.artemis.programming.web.SubmissionPolicyResource;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -72,18 +68,15 @@ public class ProgrammingExerciseRepositoryService {
 
     private final UserRepository userRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final ResourceLoaderService resourceLoaderService;
 
     private final Optional<VersionControlService> versionControlService;
 
-    public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, UserRepository userRepository,
-            InstanceMessageSendService instanceMessageSendService, ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService) {
+    public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, UserRepository userRepository
+            ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService) {
         this.fileService = fileService;
         this.gitService = gitService;
         this.userRepository = userRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.resourceLoaderService = resourceLoaderService;
         this.versionControlService = versionControlService;
     }
@@ -210,12 +203,6 @@ public class ProgrammingExerciseRepositoryService {
             final RepositoryResources solutionResources, final RepositoryResources testResources) throws GitAPIException {
         try {
             setupTemplateAndPush(exerciseResources, "Exercise", programmingExercise, exerciseCreator);
-            // The template repo can be re-written, so we can unprotect the default branch.
-            final var templateVcsRepositoryUri = programmingExercise.getVcsTemplateRepositoryUri();
-            VersionControlService versionControl = versionControlService.orElseThrow();
-            final String templateBranch = versionControl.getOrRetrieveBranchOfExercise(programmingExercise);
-            versionControl.unprotectBranch(templateVcsRepositoryUri, templateBranch);
-
             setupTemplateAndPush(solutionResources, "Solution", programmingExercise, exerciseCreator);
             setupTestTemplateAndPush(testResources, programmingExercise, exerciseCreator);
         }
@@ -240,9 +227,9 @@ public class ProgrammingExerciseRepositoryService {
     void createRepositoriesForNewExercise(final ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.orElseThrow().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
-        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
-        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE)); // Create template repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS)); // Create tests repository
+        versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION)); // Create solution repository
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
@@ -258,7 +245,7 @@ public class ProgrammingExerciseRepositoryService {
     private void createAndInitializeAuxiliaryRepositories(final String projectKey, final ProgrammingExercise programmingExercise) throws GitAPIException {
         for (final AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-            versionControlService.orElseThrow().createRepository(projectKey, repositoryName, null);
+            versionControlService.orElseThrow().createRepository(projectKey, repositoryName);
             repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
             final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
@@ -297,7 +284,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void createAndInitializeAuxiliaryRepository(final ProgrammingExercise programmingExercise, final AuxiliaryRepository repo) throws GitAPIException {
         final String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-        versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName, null);
+        versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName);
         repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
         final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
@@ -328,7 +315,7 @@ public class ProgrammingExerciseRepositoryService {
     private void setupTemplateAndPush(final RepositoryResources repositoryResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
             throws IOException, GitAPIException {
         // Only copy template if repo is empty
-        if (!gitService.listFiles(repositoryResources.repository).isEmpty()) {
+        if (!gitService.getFiles(repositoryResources.repository).isEmpty()) {
             return;
         }
 
@@ -362,7 +349,7 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void setupTestTemplateAndPush(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final User user) throws IOException, GitAPIException {
         // Only copy template if repo is empty
-        if (gitService.listFiles(resources.repository).isEmpty()
+        if (gitService.getFiles(resources.repository).isEmpty()
                 && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             setupJVMTestTemplateAndPush(resources, programmingExercise, user);
         }
@@ -739,93 +726,6 @@ public class ProgrammingExerciseRepositoryService {
             fileService.replaceVariablesInFilename(repositoryLocalPath, APP_NAME_PLACEHOLDER, cleanPackageName);
 
             replacements.put(APP_NAME_PLACEHOLDER, cleanPackageName);
-        }
-    }
-
-    /**
-     * Locks or unlocks the participations and repositories if necessary due to the changes in the programming exercise.
-     * This might be because of changes in the release date or due date, or because of a change in whether offline IDEs are allowed or not.
-     * As of now the submission policy cannot be changed here. See {@link SubmissionPolicyResource#updateSubmissionPolicy(Long, SubmissionPolicy)} for that.
-     *
-     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise      the updated exercise with new values
-     */
-    public void handleRepoAccessRightChanges(final ProgrammingExercise programmingExerciseBeforeUpdate, final ProgrammingExercise updatedProgrammingExercise) {
-
-        final ZonedDateTime now = ZonedDateTime.now();
-
-        // Figure out if we have to lock repositories and participations.
-        // This is the case if the updated configuration further restricts when students can submit.
-
-        // Case 1: The exercise start date was unset or in the past and the update moves it into the future.
-        boolean stricterStartDate = programmingExerciseBeforeUpdate.isReleased() && !updatedProgrammingExercise.isReleased();
-
-        if (stricterStartDate) {
-            // In this case we don't have to consider any of the other attributes. No repository or participation should be unlocked if the start date is in the future.
-            instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
-            return;
-        }
-
-        // Case 2: The exercise due date was unset or in the future and is moved to the past.
-        boolean stricterDueDate = (programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
-                && (updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now));
-
-        // Case 3: Offline IDE usage was allowed and is now disallowed.
-        // Note: isAllowOfflineIde() == null means that the offline IDE is allowed.
-        boolean oldExerciseAllowsIdeUsage = !Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde());
-        boolean updatedExerciseAllowsIdeUsage = !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde());
-        boolean stricterIdeUsage = oldExerciseAllowsIdeUsage && !updatedExerciseAllowsIdeUsage;
-
-        if (stricterIdeUsage) {
-            // Lock all repositories but leave the participations untouched as the locked state of the participations is independent of whether offline IDE usage is allowed or not.
-            instanceMessageSendService.sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
-        }
-
-        if (stricterDueDate) {
-            if (stricterIdeUsage) {
-                // Repositories were already locked in the step before. Only lock the participations that are not allowed to submit under the updated configuration, i.e. with a due
-                // date in the past.
-                instanceMessageSendService.sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
-            }
-            else {
-                // Lock all repositories and participations that are not allowed to submit under the updated configuration.
-                instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
-            }
-        }
-
-        // Figure out if we have to unlock repositories and participations.
-        // This is the case if the updated configuration relaxes when students can submit.
-
-        // Case 1: The exercise start date was in the future and is moved to the past or is unset.
-        boolean moreLenientStartDate = !programmingExerciseBeforeUpdate.isReleased() && updatedProgrammingExercise.isReleased();
-
-        // Case 2: The exercise due date was in the past and is moved to the future or is unset.
-        boolean moreLenientDueDate = (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now))
-                && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now));
-
-        // Case 3: Offline IDE usage was disallowed and is now allowed.
-        boolean moreLenientIdeUsage = !oldExerciseAllowsIdeUsage && updatedExerciseAllowsIdeUsage;
-
-        if (moreLenientIdeUsage) {
-            if (moreLenientStartDate || moreLenientDueDate) {
-                // In this case unlock all repositories and participations within the time frame.
-                instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
-            }
-            else {
-                // If the start date or the due date were not changed, the participations are not affected, and we only unlock the repositories.
-                instanceMessageSendService.sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
-            }
-        }
-        else if (moreLenientStartDate || moreLenientDueDate) {
-            // The offline IDE usage was not changed, but the start date or the due date were changed.
-            // Unlock the participations that are allowed to submit under the updated configuration, i.e. the current date is within the working time frame.
-            // But only unlock the repositories in addition to the participations if offline IDE usage is allowed.
-            if (updatedExerciseAllowsIdeUsage) {
-                instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
-            }
-            else {
-                instanceMessageSendService.sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
-            }
         }
     }
 

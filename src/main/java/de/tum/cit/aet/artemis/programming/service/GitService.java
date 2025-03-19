@@ -170,7 +170,6 @@ public class GitService extends AbstractGitService {
      * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
-     * For GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
      * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
@@ -321,10 +320,10 @@ public class GitService extends AbstractGitService {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUrl, boolean pullOnGet)
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
-        Path localPath = getDefaultLocalPathOfRepo(targetUrl);
-        return getOrCheckoutRepository(repoUri, targetUrl, localPath, pullOnGet);
+        Path localPath = getDefaultLocalPathOfRepo(targetUri);
+        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet);
     }
 
     public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
@@ -1016,7 +1015,7 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Lists all files and directories within the given repository, excluding symbolic links.
+     * Returns all files and directories within the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
      * It supports bare and checked-out repositories.
      * <p>
@@ -1058,13 +1057,13 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * List all files in the repository. In an empty git repo, this method returns 0.
+     * List all files in the repository. In an empty git repo, this method returns en empty list.
      *
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
     @NotNull
-    public Collection<File> listFiles(Repository repo) {
+    public Collection<File> getFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
             FileAndDirectoryFilter filter = new FileAndDirectoryFilter();

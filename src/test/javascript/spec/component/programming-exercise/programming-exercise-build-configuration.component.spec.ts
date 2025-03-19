@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
+import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
