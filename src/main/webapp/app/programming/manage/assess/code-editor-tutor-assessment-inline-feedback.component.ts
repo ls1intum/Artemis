@@ -57,11 +57,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Input() get feedback(): Feedback {
         return this._feedback;
     }
+
     set feedback(feedback: Feedback | undefined) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
     }
+
     private _feedback: Feedback;
 
     @Input() selectedFile: string;
@@ -148,5 +150,18 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
         return buildFeedbackTextForReview(feedback, false);
+    }
+
+    /**
+     * This method prevents the propagation to global event listeners (especially the monaco event listener), so the backspace key can be used.
+     *
+     * As this component is rendered within the monaco code editor, the monaco keydown event listener is attached to input fields
+     * in this component.
+     * In the assessment the code editor is readonly, so it will prevent the default behavior of the backspace key.
+     */
+    protected handleKeydown(event: KeyboardEvent) {
+        if (event.key === 'Backspace') {
+            event.stopPropagation();
+        }
     }
 }
