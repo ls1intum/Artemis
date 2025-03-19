@@ -3,8 +3,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
-import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
+import { CleanupOperationModalComponent } from 'app/core/admin/cleanup-service/cleanup-operation-modal.component';
+import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/core/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 import { signal } from '@angular/core';
@@ -111,7 +111,7 @@ describe('CleanupOperationModalComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
             error: 'Some error message',
-            url: 'https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons', // Mock URL
+            url: 'https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons', // Mock URL
         });
 
         jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(throwError(() => errorResponse));
@@ -133,7 +133,7 @@ describe('CleanupOperationModalComponent', () => {
         comp.executeCleanupOperation();
 
         expect(cleanupService.deletePlagiarismComparisons).toHaveBeenCalledOnce();
-        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons: 500 Internal Server Error');
+        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons: 500 Internal Server Error');
     });
 
     it('should close the modal', () => {

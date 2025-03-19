@@ -10,7 +10,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
@@ -20,7 +20,7 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;
@@ -32,8 +32,8 @@ export class ExamManagementService {
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
 
-    public resourceUrl = 'api/courses';
-    public adminResourceUrl = 'api/admin/courses';
+    public resourceUrl = 'api/exam/courses';
+    public adminResourceUrl = 'api/exam/admin/courses';
 
     /**
      * Create an exam on the server using a POST request.
@@ -122,7 +122,7 @@ export class ExamManagementService {
      * @param examId The id of the exam to get.
      */
     findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
-        return this.http.get<Exam>(`api/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+        return this.http.get<Exam>(`api/exam/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     /**
@@ -411,26 +411,6 @@ export class ExamManagementService {
      */
     assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Unlock all the programming exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the programming exercises should be unlocked
-     * @returns number of exercises for which the repositories were unlocked
-     */
-    unlockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/unlock-all-repositories`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Lock all the programming exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the programming exercises should be locked
-     * @returns number of exercises for which the repositories were locked
-     */
-    lockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**

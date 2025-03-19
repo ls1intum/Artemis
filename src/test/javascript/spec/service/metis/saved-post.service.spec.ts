@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { SavedPostService } from 'app/shared/metis/saved-post.service';
+import { SavedPostService } from 'app/communication/saved-post.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -12,7 +12,7 @@ import Dayjs from 'dayjs/esm';
 describe('SavedPostService', () => {
     let service: SavedPostService;
     let httpMock: HttpTestingController;
-    const resourceUrl = 'api/saved-posts/';
+    const resourceUrl = 'api/communication/saved-posts/';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

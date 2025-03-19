@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpRequest } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 describe(`ErrorHandlerInterceptor`, () => {
@@ -46,8 +46,8 @@ describe(`ErrorHandlerInterceptor`, () => {
         });
     });
 
-    it.each([{ url: '/api/public/account' }, { url: '/api/account' }])(
-        'should not broadcast an http error if status is 401 but url includes /api/public/account or /api/account',
+    it.each([{ url: '/api/core/public/account' }, { url: '/api/core/account' }])(
+        'should not broadcast an http error if status is 401 but url includes /api/core/public/account or /api/core/account',
         ({ url }) => {
             const error = new HttpErrorResponse({ status: 401, url });
             const mockHandler = {

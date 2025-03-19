@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -47,7 +47,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
     private StudentExamService studentExamService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -130,7 +130,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
                 HttpStatus.FORBIDDEN);
     }
 
@@ -143,7 +143,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -154,7 +154,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
 
-        request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
+        request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -177,7 +177,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
         waitForParticipantScores();
 
@@ -188,8 +188,8 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             studentExamRepository.save(studentExam);
         }
 
-        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numberOfEvaluatedExercises = request.postWithResponseBody(
+                "/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class, HttpStatus.OK);
 
         waitForParticipantScores();
 
@@ -200,7 +200,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -236,8 +236,8 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             studentExamRepository.save(studentExam);
         }
 
-        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numberOfEvaluatedExercises = request.postWithResponseBody(
+                "/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class, HttpStatus.OK);
 
         waitForParticipantScores();
 
@@ -246,7 +246,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     private void waitForParticipantScores() {
@@ -274,7 +274,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             userUtilService.changeUser(user.getLogin());
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
             // add another submission manually to trigger multiple submission branch of evaluateQuizSubmission
             final var studentParticipation = studentParticipationRepository
@@ -292,8 +292,8 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             studentExamRepository.save(studentExam);
         }
 
-        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numberOfEvaluatedExercises = request.postWithResponseBody(
+                "/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class, HttpStatus.OK);
         waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
@@ -303,7 +303,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -325,7 +325,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
             QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
-            request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+            request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
         waitForParticipantScores();
 
@@ -336,14 +336,14 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
             studentExamRepository.save(studentExam);
         }
 
-        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        Integer numberOfEvaluatedExercises = request.postWithResponseBody(
+                "/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class, HttpStatus.OK);
         waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         // Evaluate quiz twice
-        numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
+        numberOfEvaluatedExercises = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         waitForParticipantScores();
 
@@ -354,7 +354,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
     }
 
     private void checkStatistics(QuizExercise quizExercise) {

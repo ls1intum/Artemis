@@ -7,10 +7,10 @@ import { Injector } from '@angular/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ExerciseView, OrionBuildConnector, OrionExerciseConnector, OrionSharedUtilConnector, OrionState, OrionVCSConnector } from 'app/shared/orion/orion';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RepositoryType } from '../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RepositoryType } from '../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

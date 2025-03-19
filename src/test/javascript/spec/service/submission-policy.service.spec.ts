@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -11,7 +11,7 @@ describe('Submission Policy Service', () => {
     let submissionPolicyService: SubmissionPolicyService;
     let lockRepositoryPolicy: LockRepositoryPolicy;
     let programmingExercise: ProgrammingExercise;
-    const expectedUrl = 'api/programming-exercises/1/submission-policy';
+    const expectedUrl = 'api/programming/programming-exercises/1/submission-policy';
     const statusOk = { status: 200 };
 
     beforeEach(() => {

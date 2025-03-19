@@ -35,10 +35,12 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import tech.jhipster.web.util.PaginationUtil;
@@ -48,7 +50,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_LTI)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/lti/")
 public class LtiResource {
 
     private static final Logger log = LoggerFactory.getLogger(LtiResource.class);
@@ -121,24 +123,33 @@ public class LtiResource {
     }
 
     /**
-     * Handles the HTTP POST request for LTI 1.3 Deep Linking. This endpoint is used for deep linking of LTI links
-     * for exercises within a course. The method populates content items with the provided course and exercise identifiers,
-     * builds a deep linking response, and returns the target link URI in a JSON object.
+     * Handles the HTTP POST request for LTI 1.3 Deep Linking. This endpoint enables deep linking of LTI links
+     * for various course-related resources, such as exercises, lectures, competencies, learning paths, and IRIS integrations.
+     * The method processes the provided course and resource identifiers, validates LTI configurations,
+     * and constructs a deep linking response based on the specified resource type. The resulting deep link target URI
+     * is returned in a JSON object.
      *
-     * @param courseId             The identifier of the course for which the deep linking is being performed.
-     * @param exerciseIds          The identifier of the exercises to be included in the deep linking response.
-     * @param ltiIdToken           The token holding the deep linking information.
-     * @param clientRegistrationId The identifier online of the course configuration.
+     * @param courseId             The identifier of the course for which deep linking is being performed.
+     * @param resourceType         The type of resource being linked. Valid values are defined in the {@link DeepLinkingType} enum.
+     * @param contentIds           A set of content identifiers (e.g., exercise IDs or lecture IDs) to be included in the deep linking response.
+     *                                 This parameter is required for resource types that support multiple content items (e.g., EXERCISE, LECTURE).
+     * @param ltiIdToken           The token containing the deep linking information.
+     * @param clientRegistrationId The identifier of the course's online configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
+     * @throws ParseException           If the LTI ID token cannot be parsed.
+     * @throws BadRequestAlertException If LTI is not configured for the course, if no valid deep linking type is provided,
+     *                                      or if content IDs are required but not provided for the specified resource type.
      */
     @PostMapping("lti13/deep-linking/{courseId}")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
-            @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
-        log.info("LTI 1.3 Deep Linking request received for course {} with exercises {} for registrationId {}", courseId, exerciseIds, clientRegistrationId);
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "resourceType") DeepLinkingType resourceType,
+            @RequestParam(name = "contentIds", required = false) Set<Long> contentIds, @RequestParam(name = "ltiIdToken") String ltiIdToken,
+            @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
+
+        log.info("LTI 1.3 Deep Linking request received for course {} with resourceType: {}, contentIds: {}, registrationId: {}", courseId, resourceType, contentIds,
+                clientRegistrationId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
@@ -146,7 +157,16 @@ public class LtiResource {
 
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
-        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
+        String targetLink = switch (resourceType) {
+            case EXERCISE, LECTURE -> {
+                if (contentIds == null || contentIds.isEmpty()) {
+                    throw new BadRequestAlertException("Content IDs are required for resource type: " + resourceType, "LTI", "contentIdsRequired");
+                }
+                yield ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, contentIds, resourceType);
+            }
+            case COMPETENCY, LEARNING_PATH, IRIS -> ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, null, resourceType);
+            default -> throw new BadRequestAlertException("Unsupported resource type provided: " + resourceType, "LTI", "invalidResourceType");
+        };
 
         ObjectNode json = new ObjectMapper().createObjectNode();
         json.put("targetLinkUri", targetLink);

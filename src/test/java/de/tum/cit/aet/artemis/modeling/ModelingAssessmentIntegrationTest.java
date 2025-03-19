@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -73,13 +73,13 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "modelingassessment";
 
-    public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
+    public static final String API_MODELING_SUBMISSIONS = "/api/modeling/modeling-submissions/";
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
@@ -97,7 +97,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private AssessmentService assessmentService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -236,11 +236,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
-                HttpStatus.OK);
+        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList,
+                Result.class, HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        var result = request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+        var result = request.get(
+                "/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
                 HttpStatus.OK, Result.class);
         for (Feedback feedback : result.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
@@ -255,12 +256,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, false));
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
-                HttpStatus.OK);
+        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList,
+                Result.class, HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
-                Result.class);
+        request.get("/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+                HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -269,12 +270,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
-                HttpStatus.OK);
+        Result storedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList,
+                Result.class, HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
-                Result.class);
+        request.get("/api/modeling/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+                HttpStatus.OK, Result.class);
     }
 
     @Test
@@ -334,7 +335,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getParticipation()).isNotNull();
 
-        Course course = request.get("/api/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
+        Course course = request.get("/api/core/courses/" + this.course.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
         Exercise exercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
@@ -489,7 +490,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
@@ -508,7 +509,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(null, true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
@@ -522,7 +523,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, activityExercise);
@@ -536,7 +537,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, activityExercise);
@@ -550,7 +551,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
@@ -567,7 +568,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
@@ -583,7 +584,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
@@ -600,7 +601,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
@@ -614,7 +615,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         Optional<Result> automaticResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
@@ -971,7 +972,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "tutor1");
 
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
         compassService.build(classExercise);
@@ -979,8 +980,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        ModelingSubmission submissionWithAutomaticAssessment = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
-                ModelingSubmission.class, params);
+        ModelingSubmission submissionWithAutomaticAssessment = request.get("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment",
+                HttpStatus.OK, ModelingSubmission.class, params);
 
         assertThat(submissionWithAutomaticAssessment.getId()).isEqualTo(storedSubmission.getId());
 
@@ -1301,7 +1302,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
         params.add("correction-round", "0");
-        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+        ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/modeling/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
                 ModelingSubmission.class, params);
         // verify that no new submission was created
         assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
@@ -1314,7 +1315,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
-        var assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        var assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1331,7 +1332,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
                 Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
-        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
                 paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
@@ -1369,7 +1370,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
-        final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
+        final var submissionWithoutSecondAssessment = request.get("/api/modeling/exercises/" + exercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
                 ModelingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
@@ -1410,7 +1411,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
-        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR2);
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+                paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
@@ -1420,7 +1422,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
-        assessedSubmissionList = request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class, paramsGetAssessedCR1);
+        assessedSubmissionList = request.getList("/api/modeling/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
+                paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 
@@ -1555,7 +1558,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "tutor1");
         modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "instructor1");
-        var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
+        var path = "/api/modeling/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
         assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(classExercise.getId());
@@ -1586,7 +1589,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(submission.getResults()).hasSize(2);
         Result firstResult = submission.getResults().getFirst();
         Result lastResult = submission.getLatestResult();
-        request.delete("/api/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
+        request.delete("/api/modeling/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);

@@ -1,8 +1,8 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
@@ -41,7 +41,7 @@ describe('OneToOneChatService', () => {
                 expect(response.body).toEqual(mockResponse);
             });
 
-            const req = httpMock.expectOne(`/api/courses/${courseId}/one-to-one-chats`);
+            const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats`);
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toEqual([loginOfChatPartner]);
             req.flush(mockResponse);
@@ -62,7 +62,7 @@ describe('OneToOneChatService', () => {
                 expect(response.body).toEqual(mockResponse);
             });
 
-            const req = httpMock.expectOne(`/api/courses/${courseId}/one-to-one-chats/${userIdOfChatPartner}`);
+            const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats/${userIdOfChatPartner}`);
             expect(req.request.method).toBe('POST');
             expect(req.request.body).toBeNull();
             req.flush(mockResponse);

@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { BehaviorSubject } from 'rxjs';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -48,7 +48,7 @@ describe('ArtemisIntelligenceService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/rewrite-text`,
+                url: `api/iris/courses/${courseId}/rewrite-text`,
                 method: 'POST',
             });
 
@@ -70,7 +70,7 @@ describe('ArtemisIntelligenceService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/courses/${courseId}/rewrite-text`,
+                url: `api/iris/courses/${courseId}/rewrite-text`,
                 method: 'POST',
             });
 

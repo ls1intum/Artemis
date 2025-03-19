@@ -31,24 +31,29 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSe
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/core/admin/")
 public class AdminBuildJobQueueResource {
 
     private final SharedQueueManagementService localCIBuildJobQueueService;
+
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildJobRepository buildJobRepository;
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
-    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository) {
+    public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
+            DistributedDataAccessService distributedDataAccessService) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
+        this.distributedDataAccessService = distributedDataAccessService;
     }
 
     /**
@@ -59,19 +64,23 @@ public class AdminBuildJobQueueResource {
     @GetMapping("queued-jobs")
     public ResponseEntity<List<BuildJobQueueItem>> getQueuedBuildJobs() {
         log.debug("REST request to get the queued build jobs");
-        List<BuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobs();
+        List<BuildJobQueueItem> buildJobQueue = distributedDataAccessService.getQueuedJobs();
         return ResponseEntity.ok(buildJobQueue);
     }
 
     /**
-     * Returns the running build jobs.
+     * Returns the running build jobs, optionally filtered by agent name.
      *
+     * @param agentName the name of the agent (optional)
      * @return the running build jobs
      */
     @GetMapping("running-jobs")
-    public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobs() {
-        log.debug("REST request to get the running build jobs");
-        List<BuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
+    public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobs(@RequestParam(required = false) String agentName) {
+        log.debug("REST request to get the running build jobs for agent {}", agentName);
+        List<BuildJobQueueItem> runningBuildJobs = distributedDataAccessService.getProcessingJobs();
+        if (agentName != null && !agentName.isEmpty()) {
+            runningBuildJobs.removeIf(buildJobQueueItem -> !buildJobQueueItem.buildAgent().name().equals(agentName));
+        }
         return ResponseEntity.ok(runningBuildJobs);
     }
 
@@ -83,7 +92,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agents")
     public ResponseEntity<List<BuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
-        List<BuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
+        List<BuildAgentInformation> buildAgentSummary = distributedDataAccessService.getBuildAgentInformation();
         return ResponseEntity.ok(buildAgentSummary);
     }
 
@@ -96,7 +105,7 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
+        Optional<BuildAgentInformation> buildAgentDetails = distributedDataAccessService.getBuildAgentInformation().stream()
                 .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
         return buildAgentDetails.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -192,7 +201,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/{agentName}/pause} : Pause the specified build agent.
+     * {@code PUT /admin/agents/{agentName}/pause} : Pause the specified build agent.
      * This endpoint allows administrators to pause a specific build agent by its name.
      * Pausing a build agent will prevent it from picking up any new build jobs until it is resumed.
      *
@@ -212,7 +221,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/pause-all} : Pause all build agents.
+     * {@code PUT /admin/agents/pause-all} : Pause all build agents.
      * This endpoint allows administrators to pause all build agents.
      * Pausing all build agents will prevent them from picking up any new build jobs until they are resumed.
      *
@@ -231,7 +240,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/{agentName}/resume} : Resume the specified build agent.
+     * {@code PUT /admin/agents/{agentName}/resume} : Resume the specified build agent.
      * This endpoint allows administrators to resume a specific build agent by its name.
      * Resuming a build agent will allow it to pick up new build jobs again.
      *
@@ -251,7 +260,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/agents/resume-all} : Resume all build agents.
+     * {@code PUT /admin/agents/resume-all} : Resume all build agents.
      * This endpoint allows administrators to resume all build agents.
      * Resuming all build agents will allow them to pick up new build jobs again.
      *
@@ -270,7 +279,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * {@code PUT /api/admin/clear-distributed-data} : Clear all distributed data.
+     * {@code PUT /admin/clear-distributed-data} : Clear all distributed data.
      * This endpoint allows administrators to clear all distributed data. See {@link SharedQueueManagementService#clearDistributedData()}.
      *
      * <p>

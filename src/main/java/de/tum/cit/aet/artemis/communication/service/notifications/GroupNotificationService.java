@@ -9,11 +9,11 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DUPLI
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_RELEASED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_UPDATED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.FAILED_STASH_OPERATIONS;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ILLEGAL_SUBMISSION;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_ANNOUNCEMENT_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
@@ -138,7 +138,7 @@ public class GroupNotificationService {
                 case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED ->
                     createNotification((Exam) notificationSubject, author, group, notificationType, (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_BUILD_RUN_UPDATE ->
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION, FAILED_STASH_OPERATIONS, PROGRAMMING_BUILD_RUN_UPDATE ->
                     createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 // Additional Types
                 case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST ->
@@ -225,16 +225,6 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
-    }
-
-    /**
-     * Notify editor and instructor groups about a finished repository permission change and the amount of failed updated.
-     *
-     * @param exercise         the exercise where the repository permissions got updated
-     * @param notificationText the notification text containing the amount of failed operations.
-     */
-    public void notifyEditorAndInstructorGroupsAboutRepositoryLocks(ProgrammingExercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_REPOSITORY_LOCKS, exercise, notificationText, null);
     }
 
     /**
@@ -379,5 +369,9 @@ public class GroupNotificationService {
         else {
             return foundUsers.stream().filter((user) -> !Objects.equals(user.getId(), author.getId())).collect(Collectors.toSet());
         }
+    }
+
+    public void notifyEditorAndInstructorGroupsAboutFailedStashOperations(ProgrammingExercise exercise, String notificationText) {
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, FAILED_STASH_OPERATIONS, exercise, notificationText, null);
     }
 }

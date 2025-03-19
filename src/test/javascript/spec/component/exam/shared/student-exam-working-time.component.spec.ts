@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time/student-exam-working-time.component';
+import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { input } from '@angular/core';
 
 describe('StudentExamWorkingTimeComponent', () => {
     let fixture: ComponentFixture<StudentExamWorkingTimeComponent>;
@@ -32,7 +33,9 @@ describe('StudentExamWorkingTimeComponent', () => {
 
     const setExamWithWorkingTime = (workingTimeSeconds: number) => {
         studentExam.workingTime = workingTimeSeconds;
-        comp.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            comp.studentExam = input(studentExam);
+        });
         comp.ngOnInit();
     };
 
@@ -57,7 +60,9 @@ describe('StudentExamWorkingTimeComponent', () => {
     });
 
     it('should only count exams as test runs if they explicitly are', () => {
-        comp.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            comp.studentExam = input(studentExam);
+        });
 
         studentExam.testRun = undefined;
         comp.ngOnInit();

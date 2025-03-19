@@ -114,17 +114,19 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        request.put("/api/text-exercises", exercise, HttpStatus.OK);
+        request.put("/api/text/text-exercises", exercise, HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();
         await().until(() -> participantScoreScheduleService.isIdle());
 
-        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
-        assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
+        await().untilAsserted(() -> {
+            List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
 
-        ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
-        assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
-        assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
+            ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
+            assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
+            assertThat(savedParticipantScore.getLastRatedPoints()).isEqualTo(200.0);
+        });
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

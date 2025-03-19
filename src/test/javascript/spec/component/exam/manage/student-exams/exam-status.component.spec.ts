@@ -12,8 +12,9 @@ import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { input } from '@angular/core';
 
 enum DateOffsetType {
     HOURS = 'hours',
@@ -37,7 +38,11 @@ describe('ExamStatusComponent', () => {
         exam.startDate = startDate;
         exam.endDate = dayjs().add(endDateOffset, offsetType);
         testExam.examMaxPoints = 0;
-        component.exam = exam;
+
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.course = input({} as Course);
+        });
     };
 
     const prepareForTestExamConductionStateTest = (startDate: dayjs.Dayjs, endDateOffset: number, offsetType: DateOffsetType) => {
@@ -45,12 +50,18 @@ describe('ExamStatusComponent', () => {
         testExam.endDate = dayjs().add(endDateOffset, offsetType);
         testExam.examMaxPoints = 10;
         testExam.testExam = true;
-        component.exam = testExam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(testExam);
+            component.course = input({} as Course);
+        });
     };
 
     const prepareForExamReviewStateTest = (endDate: dayjs.Dayjs) => {
         exam.examStudentReviewEnd = endDate;
-        component.exam = exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.course = input({} as Course);
+        });
     };
 
     beforeEach(() => {
@@ -76,6 +87,7 @@ describe('ExamStatusComponent', () => {
     it('should set examConductionState correctly if exam is started but not finished yet', () => {
         prepareForExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
         component.mandatoryPreparationFinished = true;
+
         component.ngOnChanges();
 
         expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
@@ -92,14 +104,20 @@ describe('ExamStatusComponent', () => {
     it('should set examConductionState correctly if exam is finished', () => {
         prepareForExamConductionStateTest(dayjs().add(-2, DateOffsetType.DAYS), -1, DateOffsetType.DAYS);
         component.mandatoryPreparationFinished = true;
-        component.course = { isAtLeastInstructor: true } as Course;
+        const course = { isAtLeastInstructor: true } as Course;
+        TestBed.runInInjectionContext(() => {
+            component.course = input(course);
+        });
         component.ngOnChanges();
 
         expect(component.examConductionState).toBe(ExamConductionState.FINISHED);
     });
 
     it('should set examReviewState correctly if exam review phase is not defined', () => {
-        component.exam = exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.course = input({} as Course);
+        });
 
         component.ngOnChanges();
 
@@ -114,7 +132,9 @@ describe('ExamStatusComponent', () => {
         expect(component.examReviewState).toBe(ExamReviewState.RUNNING);
 
         exam.examStudentReviewStart = dayjs().add(-1, DateOffsetType.DAYS);
-        component.exam = exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
 
         component.ngOnChanges();
 
@@ -143,9 +163,14 @@ describe('ExamStatusComponent', () => {
         examChecklist.allExamExercisesAllStudentsPrepared = true;
         examChecklist.numberOfGeneratedStudentExams = 42;
         getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
-        component.exam = exam;
-        component.course = { isAtLeastInstructor: true } as Course;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
 
+        const course = { isAtLeastInstructor: true } as Course;
+        TestBed.runInInjectionContext(() => {
+            component.course = input(course);
+        });
         component.ngOnChanges();
 
         expect(component.configuredExercises).toBeTrue();
@@ -194,7 +219,10 @@ describe('ExamStatusComponent', () => {
         getExamStatisticsStub = jest.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(examChecklist));
         calculateExercisePointsStub = jest.spyOn(examChecklistService, 'calculateExercisePoints').mockReturnValue(10);
         prepareForTestExamConductionStateTest(dayjs().add(1, DateOffsetType.DAYS), 2, DateOffsetType.DAYS);
-        component.course = { isAtLeastInstructor: true } as Course;
+        const course = { isAtLeastInstructor: true } as Course;
+        TestBed.runInInjectionContext(() => {
+            component.course = input(course);
+        });
 
         component.ngOnChanges();
 

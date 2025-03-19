@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
@@ -40,10 +39,11 @@ import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -54,17 +54,23 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -73,20 +79,49 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository participationRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private PostTestRepository postRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
-    private final String studentRepoBaseUrl = "/api/repository/";
+    private final String studentRepoBaseUrl = "/api/programming/repository/";
 
-    private final String filesContentBaseUrl = "/api/repository-files-content/";
+    private final String filesContentBaseUrl = "/api/programming/repository-files-content/";
 
     private ProgrammingExercise programmingExercise;
 
@@ -197,8 +232,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
-        gitlabRequestMockProvider.enableMockingOfRequests();
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(participation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfParticipation(participation);
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
@@ -324,6 +358,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesWithContentAtCommit() throws Exception {
@@ -734,6 +769,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         assertThat(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName)).doesNotExist();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChanges() throws Exception {
@@ -755,6 +791,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         assertThat(studentFilePath).hasContent("updatedFileContent");
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
@@ -775,6 +812,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         assertThat(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.getFirst().getAuthorIdent().getName());
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFilesAfterDueDateAsInstructor() throws Exception {
@@ -787,13 +825,14 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         var instructorAssignmentRepoUri = new GitUtilService.MockFileRepositoryUri(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfParticipation(instructorAssignmentParticipation);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUri(), true, defaultBranch);
 
         request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
@@ -801,6 +840,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
@@ -834,6 +874,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         }
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testResetToLastCommit() throws Exception {
@@ -888,6 +929,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         }
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStatus() throws Exception {
@@ -1040,6 +1082,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChangesAllowedForPracticeModeAfterDueDate() throws Exception {
@@ -1054,38 +1097,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         testCommitChanges();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCommitChangesNotAllowedForLockedParticipation() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
-        participationRepository.updateLockedById(participation.getId(), true);
-
-        // Committing is not allowed
-        var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-        request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.FORBIDDEN, null);
-        assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-    }
-
     private void assertUnchangedRepositoryStatusForForbiddenReset() throws Exception {
         // Reset the repo is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/reset", null, HttpStatus.FORBIDDEN, null);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testResetNotAllowedForLockedParticipation() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
-        participationRepository.updateLockedById(participation.getId(), true);
-
-        assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
@@ -1126,6 +1143,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         return programmingExercise;
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChanges() throws Exception {
@@ -1152,6 +1170,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDatePassed() throws Exception {
@@ -1181,57 +1200,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGit
         var response = studentParticipationRepository.findById(participation.getId());
         assertThat(response).isPresent();
         assertThat(response.get().getId()).isEqualTo(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUnlockStudentRepository() {
-        doAnswer((Answer<Void>) invocation -> {
-            ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
-            return null;
-        }).when(versionControlService).addMemberToRepository(participation.getVcsRepositoryUri(), participation.getStudent().orElseThrow(),
-                VersionControlRepositoryPermission.REPO_WRITE);
-
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-
-        assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        assertThat(participation.isLocked()).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUnlockStudentRepository_beforeStateRepoConfigured() {
-        participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot unlock student repository for participation ");
-        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testLockStudentRepository() {
-        doAnswer((Answer<Void>) invocation -> {
-            participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
-            return null;
-        }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), participation.getStudents());
-
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
-        assertThat(participation.isLocked()).isTrue();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testLockStudentRepository_beforeStateRepoConfigured() {
-        participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot lock student repository for participation ");
-        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {

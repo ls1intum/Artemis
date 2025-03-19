@@ -4,8 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
-import { AttachmentService } from 'app/lecture/attachment.service';
+import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
+import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -18,7 +18,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { RouterModule } from '@angular/router';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -64,7 +64,7 @@ describe('LectureAttachmentsComponent', () => {
         {
             id: 50,
             name: 'test',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf',
             version: 2,
             uploadDate: dayjs('2019-05-05T10:05:25+02:00'),
             attachmentType: 'FILE',
@@ -72,7 +72,7 @@ describe('LectureAttachmentsComponent', () => {
         {
             id: 52,
             name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -82,7 +82,7 @@ describe('LectureAttachmentsComponent', () => {
     const newAttachment = {
         id: 53,
         name: 'TestFile',
-        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+        link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
         version: 1,
         uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
         attachmentType: 'FILE',
@@ -294,7 +294,7 @@ describe('LectureAttachmentsComponent', () => {
                     body: {
                         id: 52,
                         name: 'TestFile',
-                        link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                        link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
                         version: 2,
                         uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
                         attachmentType: 'FILE',
@@ -324,7 +324,7 @@ describe('LectureAttachmentsComponent', () => {
         const toDelete = {
             id: attachmentId,
             name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -343,7 +343,7 @@ describe('LectureAttachmentsComponent', () => {
         const toDelete = {
             id: attachmentId,
             name: 'test2',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -362,7 +362,7 @@ describe('LectureAttachmentsComponent', () => {
         const toCancel = {
             id: 52,
             name: 'test34',
-            link: '/api/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
+            link: '/api/core/files/attachments/lecture/4/Mein_Test_PDF34.pdf',
             version: 5,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
@@ -383,8 +383,8 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should set lecture attachment', fakeAsync(() => {
         fixture.detectChanges();
-        const myBlob1 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest34.pdf' };
-        const myBlob2 = { size: 1024, name: '/api/files/attachments/lecture/4/NewTest100.pdf' };
+        const myBlob1 = { size: 1024, name: '/api/core/files/attachments/lecture/4/NewTest34.pdf' };
+        const myBlob2 = { size: 1024, name: '/api/core/files/attachments/lecture/4/NewTest100.pdf' };
         const object = {
             target: {
                 files: [myBlob1, myBlob2],

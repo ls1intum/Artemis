@@ -2,15 +2,15 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
-import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { StringCountService } from 'app/exercises/text/participate/string-count.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { StringCountService } from 'app/text/overview/string-count.service';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 import { MockProvider } from 'ng-mocks';
 

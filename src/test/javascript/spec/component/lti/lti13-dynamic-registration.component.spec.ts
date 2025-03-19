@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
+import { Lti13DynamicRegistrationComponent } from 'app/lti/overview/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
@@ -59,7 +59,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/admin/lti13/dynamic-registration', null, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
 
         expect(comp.isRegistering).toBeFalse();
         expect(comp.registeredSuccessfully).toBeTrue();
@@ -76,7 +76,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/admin/lti13/dynamic-registration', null, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti/admin/lti13/dynamic-registration', null, expect.anything());
 
         expect(comp.isRegistering).toBeFalse();
         expect(comp.registeredSuccessfully).toBeFalse();

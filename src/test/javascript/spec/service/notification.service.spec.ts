@@ -19,12 +19,12 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -33,7 +33,7 @@ import { MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChangeDetectorRef } from '@angular/core';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { MetisPostAction } from 'app/shared/metis/metis.util';
+import { MetisPostAction } from 'app/communication/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
@@ -43,7 +43,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Notification Service', () => {
-    const resourceUrl = 'api/notifications';
+    const resourceUrl = 'api/communication/notifications';
 
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
@@ -212,11 +212,11 @@ describe('Notification Service', () => {
         notificationService = TestBed.inject(NotificationService);
         jest.advanceTimersByTime(20 * 1000); // simulate setInterval time passing
 
-        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/muted-conversations' });
+        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/communication/muted-conversations' });
     });
 
     afterEach(() => {
-        httpMock.expectOne({ method: 'GET', url: 'api/notification-settings' });
+        httpMock.expectOne({ method: 'GET', url: 'api/communication/notification-settings' });
         httpMock.verify();
         jest.restoreAllMocks();
         jest.clearAllTimers();
@@ -226,7 +226,7 @@ describe('Notification Service', () => {
         it('should call correct URL to fetch all notifications filtered by current notification settings', () => {
             notificationService.queryNotificationsFilteredBySettings().subscribe(() => {});
             const req = httpMock.expectOne({ method: 'GET', url: resourceUrl });
-            const url = 'api/notifications';
+            const url = 'api/communication/notifications';
             expect(req.request.url).toBe(url);
         });
 

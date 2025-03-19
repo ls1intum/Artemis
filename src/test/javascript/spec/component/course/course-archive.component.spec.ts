@@ -14,14 +14,14 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { CourseArchiveComponent } from 'app/overview/course-archive/course-archive.component';
-import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
+import { CourseArchiveComponent } from 'app/course/overview/course-archive/course-archive.component';
+import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 const course1 = { id: 1, semester: 'WS21/22', title: 'iPraktikum' } as CourseForArchiveDTO;
 const course2 = { id: 2, semester: 'WS21/22' } as CourseForArchiveDTO;
@@ -99,7 +99,7 @@ describe('CourseArchiveComponent', () => {
             const emptyCourses: CourseForArchiveDTO[] = [];
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-archive` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-archive` });
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();

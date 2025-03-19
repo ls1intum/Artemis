@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "repoprogexpartjenk";
 
@@ -61,7 +61,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), buildPlanId, jobWithDetails, false);
         jenkinsRequestMockProvider.mockGetBuildStatus(programmingExercise.getProjectKey(), buildPlanId, true, true, false, true);
 
-        var url = "/api/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
+        var url = "/api/programming/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
         var buildLogs = request.getList(url, HttpStatus.OK, BuildLogEntry.class);
         assertThat(buildLogs).hasSize(3);
     }

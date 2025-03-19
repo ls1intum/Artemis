@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { PasswordService } from 'app/account/password/password.service';
+import { PasswordService } from 'app/core/account/password/password.service';
 import { HttpClient } from '@angular/common/http';
 
 describe('PasswordService', () => {
@@ -8,7 +8,7 @@ describe('PasswordService', () => {
     let httpService: HttpClient;
     let postStub: jest.SpyInstance;
 
-    const postURL = 'api/account/change-password';
+    const postURL = 'api/core/account/change-password';
 
     beforeEach(() => {
         TestBed.configureTestingModule({

@@ -5,15 +5,16 @@ import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/complaints/complaint.service';
+import { EntityResponseType } from 'app/assessment/shared/complaint.service';
 import dayjs from 'dayjs/esm';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -72,11 +73,11 @@ export class AccountService implements IAccountService {
     }
 
     private fetch(): Observable<HttpResponse<User>> {
-        return this.http.get<User>('api/public/account', { observe: 'response' });
+        return this.http.get<User>('api/core/public/account', { observe: 'response' });
     }
 
     save(user: User): Observable<HttpResponse<any>> {
-        return this.http.put('api/account', user, { observe: 'response' });
+        return this.http.put('api/core/account', user, { observe: 'response' });
     }
 
     authenticate(identity?: User) {
@@ -287,7 +288,7 @@ export class AccountService implements IAccountService {
      * Returns undefined if the user is not authenticated or the user does not have an image.
      */
     getImageUrl() {
-        return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
+        return this.isAuthenticated() && this.userIdentity ? addPublicFilePrefix(this.userIdentity.imageUrl) : undefined;
     }
 
     setImageUrl(url: string | undefined) {
@@ -302,7 +303,7 @@ export class AccountService implements IAccountService {
      * @param languageKey The new languageKey
      */
     updateLanguage(languageKey: string): Observable<void> {
-        return this.http.post<void>('api/public/account/change-language', languageKey);
+        return this.http.post<void>('api/core/public/account/change-language', languageKey);
     }
 
     /**
@@ -329,7 +330,7 @@ export class AccountService implements IAccountService {
      * Sends a request to the server to delete the user's current vcsAccessToken
      */
     deleteUserVcsAccessToken(): Observable<void> {
-        return this.http.delete<void>('api/account/user-vcs-access-token');
+        return this.http.delete<void>('api/core/account/user-vcs-access-token');
     }
 
     /**
@@ -339,7 +340,7 @@ export class AccountService implements IAccountService {
      */
     addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
         const params = new HttpParams().set('expiryDate', expiryDate);
-        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
+        return this.http.put<User>('api/core/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**
@@ -350,7 +351,7 @@ export class AccountService implements IAccountService {
      */
     getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.get<string>('api/account/participation-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.get<string>('api/core/account/participation-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
     }
 
     /**
@@ -361,7 +362,7 @@ export class AccountService implements IAccountService {
      */
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.put<string>('api/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.put<string>('api/core/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 
     /**
