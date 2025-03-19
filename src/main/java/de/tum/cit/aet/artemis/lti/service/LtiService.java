@@ -214,7 +214,7 @@ public class LtiService {
      *
      * @param response the response to add the JWT cookie to
      */
-    protected void prepareLogoutCookie(HttpServletResponse response) {
+    public void prepareLogoutCookie(HttpServletResponse response) {
         ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
