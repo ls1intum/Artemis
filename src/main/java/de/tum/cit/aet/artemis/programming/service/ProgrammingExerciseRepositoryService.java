@@ -72,8 +72,8 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, UserRepository userRepository
-            ResourceLoaderService resourceLoaderService, Optional<VersionControlService> versionControlService) {
+    public ProgrammingExerciseRepositoryService(FileService fileService, GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
+            Optional<VersionControlService> versionControlService) {
         this.fileService = fileService;
         this.gitService = gitService;
         this.userRepository = userRepository;
