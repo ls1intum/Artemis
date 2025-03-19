@@ -1,8 +1,8 @@
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { UserManagementResolve } from 'app/admin/user-management/user-management-resolve.service';
+import { UserManagementResolve } from 'app/core/admin/user-management/user-management-resolve.service';
 import { User } from 'app/core/user/user.model';
 import { of } from 'rxjs';
-import { AdminUserService } from 'app/core/user/admin-user.service';
+import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TestBed } from '@angular/core/testing';
 
 describe('UserManagementResolve', () => {

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DetailedGradingSystemComponent } from 'app/grading-system/detailed-grading-system/detailed-grading-system.component';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { DetailedGradingSystemComponent } from 'app/assessment/manage/grading-system/detailed-grading-system/detailed-grading-system.component';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -14,7 +14,7 @@ import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
+import { PresentationType } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

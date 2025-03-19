@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
+import { ExercisePagingService } from 'app/exercise/manage/exercise-paging.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs';

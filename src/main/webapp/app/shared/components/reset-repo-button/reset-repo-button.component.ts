@@ -1,14 +1,14 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { finalize } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
