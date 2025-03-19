@@ -41,18 +41,18 @@ You can see the structure of the saml2 configuration in the following:
 .. code:: yaml
 
     spring:
-      security:
-        saml2:
-          relyingparty:
-            registration:
-              REGISTRATION_ID_HERE:
-                entityId: artemis # optional: by default the entityId is https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
-                signing.credentials: &my-metadata
-                  - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem
-                    certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt
-                decryption.credentials: *my-metadata
-                assertingparty:
-                  metadata-uri: URL_TO_METADATA_HERE
+        security:
+            saml2:
+                relyingparty:
+                    registration:
+                        REGISTRATION_ID_HERE:
+                            entityId: artemis # optional: by default the entityId is https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
+                            signing.credentials: &my-metadata
+                                - private-key-location: file:/opt/artemis/config/shibboleth-sp-key.pem
+                                  certificate-location: file:/opt/artemis/config/shibboleth-sp-cert.crt
+                            decryption.credentials: *my-metadata
+                            assertingparty:
+                                metadata-uri: URL_TO_METADATA_HERE
 
     saml2:
         # Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
@@ -112,18 +112,18 @@ The SAML2 configuration of Artemis could look like this:
             password-login-disabled: true
             identity-provider-name: 'Shibboleth Account'
     spring:
-      security:
-        saml2:
-          relyingparty:
-            registration:
-              scc:
-                # entityId: e.g., artemis ; default: https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
-                signing.credentials: &scc-metadata
-                  - private-key-location: file:/config/shibboleth-sp-key.pem
-                    certificate-location: file:/config/shibboleth-sp-cert.crt
-                decryption.credentials: *scc-metadata
-                assertingparty:
-                  metadata-uri: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
+        security:
+            saml2:
+                relyingparty:
+                    registration:
+                        scc:
+                            # entityId: e.g., artemis ; default: https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>
+                            signing.credentials: &scc-metadata
+                                - private-key-location: file:/config/shibboleth-sp-key.pem
+                                  certificate-location: file:/config/shibboleth-sp-cert.crt
+                            decryption.credentials: *scc-metadata
+                            assertingparty:
+                                metadata-uri: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
 
 The SAML2 configuration for Artemis at your IT department could look like this:
 

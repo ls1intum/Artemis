@@ -29,7 +29,7 @@ public class SAML2Configuration {
      * Constructs a new instance.
      */
     public SAML2Configuration() {
-        // TODO: we should describe why this line is actually needed
+        // SAML2 / Shibboleth uses several algorithms that are provided by BouncyCastle
         Security.addProvider(new BouncyCastleProvider());
     }
 
