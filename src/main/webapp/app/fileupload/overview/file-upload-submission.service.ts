@@ -111,12 +111,19 @@ export class FileUploadSubmissionService {
             .pipe(map((res: FileUploadSubmission) => this.convertFileSubmissionFromServer(res)));
     }
 
+    /**
+     * In {@link submissionService.convertSubmissionFromServer} {@link object.assign} is used, which means that we never actually call the
+     * constructor of the {@link FileUploadSubmission} class, which would set {@link FileUploadSubmission.filePathUrl}, therefore we need to set it manually here.
+     */
     private convertFileSubmissionFromServer(res: FileUploadSubmission) {
         const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res);
         convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
         return convertedBaseSubmission;
     }
 
+    /**
+     * See {@link convertFileSubmissionFromServer}
+     */
     private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmission>): HttpResponse<FileUploadSubmission> {
         const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(res);
         if (convertedBaseSubmission.body) {
