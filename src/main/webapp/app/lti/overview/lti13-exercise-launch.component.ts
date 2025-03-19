@@ -157,6 +157,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         } else {
             path = new URL(url).pathname;
         }
+        console.log('Redirecting to ' + path);
         this.router.navigate([path], { replaceUrl: true });
     }
 }
