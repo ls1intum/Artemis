@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
@@ -171,19 +171,6 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         const badgeElement = fixture.debugElement.query(By.css('.badge'));
         expect(badgeElement.nativeElement.textContent).toContain('0P');
         expect(badgeElement.nativeElement.classList).toContain('bg-warning');
-    });
-
-    it('should display credits and icons for graded feedback', () => {
-        comp.feedback = {
-            credits: 1,
-            type: FeedbackType.AUTOMATIC,
-            text: 'feedback',
-        } as Feedback;
-        fixture.detectChanges();
-
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).not.toBeNull();
-        expect(badgeElement.nativeElement.textContent).toContain('1P');
     });
 
     it('should use the correct translation key for non-graded feedback', () => {

@@ -1,0 +1,44 @@
+@import '../../../../../../../node_modules/bootstrap/scss/functions';
+@import '../../../../../../../node_modules/bootstrap/scss/variables';
+@import '../../../../../../../node_modules/bootstrap/scss/mixins';
+
+.posting-summary {
+    background-color: transparent;
+    cursor: pointer;
+    position: relative;
+
+    transition: background-color 0.2s ease-in-out;
+}
+
+.posting-summary:hover {
+    background-color: rgba($primary, 0.1);
+
+    & .posting-summary-saved-post-options {
+        opacity: 1;
+    }
+}
+
+.posting-summary-author-content {
+    margin-top: -0.15em;
+}
+
+.posting-summary-saved-post-options {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    opacity: 0;
+
+    transition: opacity 0.2s ease-in-out;
+}
+
+.posting-summary-content.is-answer-post {
+    padding-left: 0.7rem;
+    margin-left: 0.35rem;
+    border-left: 1px solid $secondary;
+}
+
+@include media-breakpoint-down(sm) {
+    .posting-summary-saved-post-options {
+        opacity: 1;
+    }
+}

@@ -1,6 +1,6 @@
 import { ActivatedRouteSnapshot, GuardResult, MaybeAsync, Router, RouterStateSnapshot } from '@angular/router';
-import { hasLectureUnsavedChangesGuard } from '../../../../../main/webapp/app/lecture/hasLectureUnsavedChanges.guard';
-import { LectureUpdateComponent } from '../../../../../main/webapp/app/lecture/lecture-update.component';
+import { hasLectureUnsavedChangesGuard } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
+import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update.component';
 import { TestBed } from '@angular/core/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';

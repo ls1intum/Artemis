@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.io.IOException;
@@ -41,8 +42,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.athena.domain.ModuleType;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -89,6 +90,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryS
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -153,9 +155,11 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final Optional<AthenaApi> athenaApi;
 
     private final Environment environment;
+
+    private final RepositoryCheckoutService repositoryCheckoutService;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
@@ -166,8 +170,8 @@ public class ProgrammingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            Environment environment) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Environment environment,
+            RepositoryCheckoutService repositoryCheckoutService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -190,8 +194,9 @@ public class ProgrammingExerciseResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaApi = athenaApi;
         this.environment = environment;
+        this.repositoryCheckoutService = repositoryCheckoutService;
     }
 
     /**
@@ -247,14 +252,14 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> programmingExercise.setFeedbackSuggestionModule(null));
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
                 () -> programmingExercise.setPreliminaryFeedbackModule(null));
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise, false);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
@@ -344,12 +349,12 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ModuleType.PRELIMINARY_FEEDBACK, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setPreliminaryFeedbackModule(null));
         // Changing Athena module after the due date has passed is not allowed
-        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
+        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
@@ -373,8 +378,6 @@ public class ProgrammingExerciseResource {
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise,
                 notificationText);
-
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
@@ -891,6 +894,7 @@ public class ProgrammingExerciseResource {
      * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
      *         for the requested programming language for the submission and solution build.
      */
+    @Profile(PROFILE_LOCALCI)
     @GetMapping("programming-exercises/repository-checkout-directories")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -898,7 +902,8 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
-        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage, checkoutSolution);
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = repositoryCheckoutService.getCheckoutDirectories(programmingLanguage, checkoutSolution);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
     }
+
 }

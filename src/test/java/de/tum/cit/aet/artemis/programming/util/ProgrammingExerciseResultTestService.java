@@ -8,20 +8,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,6 +49,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -50,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
@@ -67,9 +77,10 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
- * 1) Jenkins + Gitlab
+ * 1) Jenkins + LocalVc
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ProgrammingExerciseResultTestService {
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
@@ -140,13 +151,13 @@ public class ProgrammingExerciseResultTestService {
 
     private String userPrefix;
 
-    public void setup(String userPrefix) {
+    public void setup(String userPrefix) throws GitAPIException, IOException {
         this.userPrefix = userPrefix;
         userUtilService.addUsers(userPrefix, 2, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 
-    public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
+    public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
@@ -157,6 +168,9 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         programmingExerciseStudentParticipationStaticCodeAnalysis = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
+        var localRepoFile = Files.createTempDirectory("repo").toFile();
+        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
     }
 
     public void setupProgrammingExerciseForExam(boolean isExamOver) {
@@ -381,6 +395,8 @@ public class ProgrammingExerciseResultTestService {
     public void shouldCreateResultOnParticipationDefaultBranch(BuildResultNotification resultNotification) {
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setBranch("branch");
+        participationUtilService.addSubmission(programmingExerciseStudentParticipation,
+                new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultRequestBody);
@@ -405,6 +421,8 @@ public class ProgrammingExerciseResultTestService {
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+        participationUtilService.addSubmission(solutionParticipation,
+                new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
 
         final var resultRequestBody = convertBuildResultToJsonObject(resultNotification);
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultRequestBody);
@@ -418,6 +436,8 @@ public class ProgrammingExerciseResultTestService {
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
         programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+        participationUtilService.addSubmission(programmingExerciseStudentParticipation,
+                new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
 
         postResult(resultNotification);
 
@@ -441,6 +461,8 @@ public class ProgrammingExerciseResultTestService {
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
         programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+        participationUtilService.addSubmission(programmingExerciseStudentParticipation,
+                new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
 
         postResult(resultNotification);
 
@@ -454,6 +476,8 @@ public class ProgrammingExerciseResultTestService {
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
         programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
         programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+        participationUtilService.addSubmission(programmingExerciseStudentParticipation,
+                new ProgrammingSubmission().commitHash("commit1").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
 
         postResult(resultNotification);
 
