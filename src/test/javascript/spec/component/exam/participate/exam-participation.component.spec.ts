@@ -40,7 +40,7 @@ import { ProgrammingExamSubmissionComponent } from 'app/exam/overview/exercises/
 import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
 import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
-import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
