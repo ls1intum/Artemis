@@ -40,6 +40,16 @@ jobs:
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
     steps:
+      # Since this workflow is triggered by a workflow_run event, we are not able to see the workflow status in check-runs.
+      # So we need to set the status to pending manually by calling the GitHub API.
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running...","target_url":"${{ env.TARGET_URL }}"}'
+
       # Save the triggering workflow information as an artifact for later reference
       - name: Save triggering workflow info
         run: |
@@ -60,16 +70,6 @@ jobs:
         run: |
           echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
 
-
-      # Since this workflow is triggered by a workflow_run event, we are not able to see the workflow status in check-runs.
-      # So we need to set the status to pending manually by calling the GitHub API.
-      - name: Create pending status
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "${{ env.STATUSES_REQUEST_URL }}" \
-            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running...","target_url":"${{ env.TARGET_URL }}"}'
       - name: Git Checkout
         uses: actions/checkout@v4
         with:
