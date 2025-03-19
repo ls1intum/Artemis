@@ -29,7 +29,7 @@
                 <div left-body>
                     <div class="row">
                         @if (submission?.filePathUrl) {
-                            <div class="col-12 card-text">
+                            <div class="col-12 card-text" id="e2e-download-file">
                                 <a class="text-primary" (click)="downloadFile(submission!.filePathUrl!)" jhiTranslate="artemisApp.fileUploadAssessment.submissionFile"></a>
                                 <span class="ms-2 badge bg-info">{{ attachmentExtension(submission!.filePathUrl!) | uppercase }}</span>
                             </div>
