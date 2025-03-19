@@ -54,7 +54,6 @@ on:
     - 'SECURITY.md'
     - 'docs/**'
     - '.github/**'
-    - '.husky/**'
     - '!.github/workflows/build.yml'
     - '!.github/workflows/test-e2e.yml'
     - '.husky/**'
