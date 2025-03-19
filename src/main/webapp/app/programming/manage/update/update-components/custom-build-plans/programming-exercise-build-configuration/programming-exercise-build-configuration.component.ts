@@ -36,7 +36,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeoutChange = output<number>();
 
     envVars: [string, string][] = [];
-    isNetworkDisabled = false;
+    useCustomNetwork = false;
+    allowedCustomNetworks: string[] | undefined;
+    network: string | undefined;
     cpuCount: number | undefined;
     memory: number | undefined;
     memorySwap: number | undefined;
@@ -79,7 +81,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 if (!this.timeout) {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
                 }
-
+                this.allowedCustomNetworks = profileInfo.allowedCustomContainerNetworks;
                 if (!this.cpuCount) {
                     this.cpuCount = profileInfo.defaultContainerCpuCount;
                 }
@@ -99,7 +101,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     initDockerFlags() {
         this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
-        this.isNetworkDisabled = this.dockerFlags.network === 'none';
+        // this.isNetworkDisabled = this.dockerFlags.network === 'none';
         if (this.dockerFlags.cpuCount) {
             this.cpuCount = this.dockerFlags.cpuCount;
         }
@@ -117,11 +119,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         }
     }
 
-    onDisableNetworkAccessChange(event: any) {
-        this.isNetworkDisabled = event.target.checked;
-        this.parseDockerFlagsToString();
-    }
-
     onCpuCountChange(event: any) {
         this.cpuCount = event.target.value;
         this.parseDockerFlagsToString();
@@ -134,6 +131,15 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     onMemorySwapChange(event: any) {
         this.memorySwap = event.target.value;
+        this.parseDockerFlagsToString();
+    }
+
+    onNetworkChange() {
+        this.parseDockerFlagsToString();
+    }
+
+    onUseCustomNetworkToggle() {
+        this.network = this.useCustomNetwork ? this.network : undefined;
         this.parseDockerFlagsToString();
     }
 
@@ -169,7 +175,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 newEnv![key] = value;
             }
         });
-        this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
+        this.dockerFlags = { network: this.network, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
 

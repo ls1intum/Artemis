@@ -732,6 +732,10 @@
                     "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
                     "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
                 },
+                "useCustomNetwork": {
+                    "title": "Eigenes Dockernetzwerk verwenden",
+                    "description": "Aktiviere diese Option, wenn du statt dem default Docker Netzwerk ein eigenes verwenden willst, oder den Container komplett ohne Netzwerk starten willst."
+                },
                 "envVars": {
                     "title": "Umgebungsvariablen",
                     "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",

@@ -731,6 +731,10 @@
                     "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission.",
                     "warning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
                 },
+                "useCustomNetwork": {
+                    "title": "Use custom network",
+                    "description": "Enable this option to use your own docker network, or no network at all."
+                },
                 "envVars": {
                     "title": "Environment Variables",
                     "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
