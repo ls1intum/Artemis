@@ -35,7 +35,7 @@ export class ProfileInfo {
     public buildTimeoutMin?: number;
     public buildTimeoutMax?: number;
     public buildTimeoutDefault?: number;
-    public allowedCustomContainerNetworks?: string[];
+    public allowedCustomDockerNetworks?: string[];
     public defaultContainerCpuCount?: number;
     public defaultContainerMemoryLimitInMB?: number;
     public defaultContainerMemorySwapLimitInMB?: number;

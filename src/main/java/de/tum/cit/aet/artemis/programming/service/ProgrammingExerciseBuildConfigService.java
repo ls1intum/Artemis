@@ -101,7 +101,6 @@ public class ProgrammingExerciseBuildConfigService {
             return null;
         }
         List<String> environmentStrings = new ArrayList<>();
-        boolean isNetworkDisabled = network != null && network.equals("none");
 
         if (environmentMap != null) {
             for (Map.Entry<String, String> entry : environmentMap.entrySet()) {
@@ -111,7 +110,7 @@ public class ProgrammingExerciseBuildConfigService {
             }
         }
 
-        return new DockerRunConfig(isNetworkDisabled, environmentStrings, cpuCount, memory, memorySwap);
+        return new DockerRunConfig(environmentStrings, network, cpuCount, memory, memorySwap);
     }
 
     /**

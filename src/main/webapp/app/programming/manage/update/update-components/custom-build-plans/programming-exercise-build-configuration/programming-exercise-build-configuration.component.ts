@@ -81,7 +81,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 if (!this.timeout) {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
                 }
-                this.allowedCustomNetworks = profileInfo.allowedCustomContainerNetworks;
+                this.allowedCustomNetworks = profileInfo.allowedCustomDockerNetworks;
                 if (!this.cpuCount) {
                     this.cpuCount = profileInfo.defaultContainerCpuCount;
                 }

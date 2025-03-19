@@ -41,6 +41,7 @@ artemis:
             max-lines-per-job: 10000
             max-chars-per-line: 1024
         container-flags-limit:
+            allowed-custom-networks: none
             max-cpu-count: 4
             max-memory: 8096
             max-memory-swap: 8096

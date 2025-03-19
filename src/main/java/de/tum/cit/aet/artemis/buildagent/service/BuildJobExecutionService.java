@@ -40,6 +40,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
@@ -235,24 +236,19 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        List<String> envVars = null;
-        boolean isNetworkDisabled = false;
-        int cpuCount = 0;
-        int memory = 0;
-        int memorySwap = 0;
+        DockerRunConfig dockerRunConfig;
         if (buildJob.buildConfig().dockerRunConfig() != null) {
-            envVars = buildJob.buildConfig().dockerRunConfig().env();
-            isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
-            cpuCount = buildJob.buildConfig().dockerRunConfig().cpuCount();
-            memory = buildJob.buildConfig().dockerRunConfig().memory();
-            memorySwap = buildJob.buildConfig().dockerRunConfig().memorySwap();
+            dockerRunConfig = buildJob.buildConfig().dockerRunConfig();
+        }
+        else {
+            dockerRunConfig = new DockerRunConfig(null, null, 0, 0, 0);
         }
 
         CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
-                envVars, cpuCount, memory, memorySwap);
+                dockerRunConfig);
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
     }
 
     /**
@@ -287,7 +283,7 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
+            @Nullable String testRepoCommitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -309,7 +305,7 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), isNetworkDisabled);
+        buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
