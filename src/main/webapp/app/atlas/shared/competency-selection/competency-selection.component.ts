@@ -17,10 +17,10 @@ import { Subscription, finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../language/translate.directive';
-import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-competency-selection',

@@ -1,6 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import {
     MENTIONED_IN_MESSAGE_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
@@ -25,7 +24,8 @@ import { NotificationSettingsService } from 'app/shared/user-settings/notificati
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 const conversationMessageNotificationTitles = [
     MENTIONED_IN_MESSAGE_TITLE,

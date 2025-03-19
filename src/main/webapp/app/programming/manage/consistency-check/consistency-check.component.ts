@@ -1,14 +1,14 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 @Component({
     selector: 'jhi-consistency-check',

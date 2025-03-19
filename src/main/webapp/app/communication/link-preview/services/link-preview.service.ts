@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
-import { Link } from 'app/shared/link-preview/services/linkify.service';
+import { Link } from 'app/communication/link-preview/services/linkify.service';
 
 export interface LinkPreview {
     title: string;
