@@ -125,7 +125,8 @@ The SAML2 configuration of Artemis could look like this:
                             assertingparty:
                                 metadata-uri: https://www.aai.dfn.de/fileadmin/metadata/dfn-aai-local-148-metadata.xml
 
-The SAML2 configuration for Artemis at your IT department could look like this:
+The SAML2 configuration for Artemis at your IT department could look like the following.
+However, you can also download the metadata from `https://<<ARTEMIS_URL_HERE>>/saml2/service-provider-metadata/<<REGISTRATION_ID_HERE>>`__ .
 
 .. code:: xml
 
