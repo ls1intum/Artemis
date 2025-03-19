@@ -13,6 +13,7 @@ import { NgClass, NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/course-overview.service';
+import { ExerciseService} from 'app/exercise/exercise.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -52,11 +53,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private courseOverviewService = inject(CourseOverviewService);
     private ltiService = inject(LtiService);
+    private exerciseService = inject(ExerciseService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private ltiSubscription: Subscription;
-    private multiLaunchSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
 
     course?: Course;
     courseId: number;
@@ -70,6 +72,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     isCollapsed = false;
     isShownViaLti = false;
     isMultiLaunch = false;
+    multiLaunchExerciseIDs: number[] = [];
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -90,14 +93,17 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.onCourseLoad();
         });
 
+        this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
+            this.isMultiLaunch = params['isMultiLaunch'] === 'true';
+            if (params['exerciseIDs']) {
+                this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map(id => Number(id));
+            }
+        });
+
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
             this.isShownViaLti = isShownViaLti;
-        });
-
-        this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
-            this.isMultiLaunch = isMultiLaunch;
         });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
@@ -139,8 +145,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         let exercises: Exercise[];
 
-        if (this.isMultiLaunch) {
-            exercises = this.ltiService.getMultiLaunchExercises() || [];
+        if (this.isMultiLaunch && this.multiLaunchExerciseIDs.length > 0) {
+            const exerciseIDsAsNumbers = this.multiLaunchExerciseIDs.map(id => Number(id));
+
+            exercises = this.exerciseService.find(exerciseIDsAsNumbers) || [];
         } else {
             if (!this.course?.exercises) {
                 return;
@@ -179,6 +187,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
-        this.multiLaunchSubscription?.unsubscribe();
+        this.queryParamsSubscription?.unsubscribe();
     }
 }

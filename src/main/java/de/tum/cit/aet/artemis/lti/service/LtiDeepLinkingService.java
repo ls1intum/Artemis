@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -214,7 +215,28 @@ public class LtiDeepLinkingService {
      * Build a content URL for deep linking.
      */
     String buildContentUrl(String courseId, String resourceType, String resourceId) {
-        return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+        // return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+        String baseUrl = String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+
+        if ("exercise".equals(resourceType)) {
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl)
+                //TODO remove hardcoded values
+                .queryParam("isMultiLaunch", true);
+
+            /*
+            if (exerciseIDs != null && !exerciseIDs.isEmpty()) {
+                String exerciseIDsParam = exerciseIDs.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(","));
+                uriBuilder.queryParam("exerciseIDs", exerciseIDsParam);
+            }
+             */
+            uriBuilder.queryParam("exerciseIDs", "995,1010");
+
+            return uriBuilder.toUriString();
+        }
+
+        return baseUrl;
     }
 
     String buildContentUrl(String courseId, String resourceType) {
