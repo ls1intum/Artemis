@@ -29,4 +29,5 @@ public record QuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO 
         }
         return new QuizQuestionWithoutSolutionDTO(quizQuestionBaseDTO, multipleChoiceQuestionDTO, dragAndDropQuestionDTO, shortAnswerQuestionDTO);
     }
+
 }

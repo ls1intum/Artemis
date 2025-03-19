@@ -18,4 +18,5 @@ public record StudentQuizParticipationWithQuestionsDTO(@JsonUnwrapped StudentQui
         }
         return new StudentQuizParticipationWithQuestionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithQuestionsDTO.of(quizExercise));
     }
+
 }

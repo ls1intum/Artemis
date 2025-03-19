@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.quiz.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentQuizParticipationWithoutQuestionsDTO(@JsonUnwrapped StudentQuizParticipationBaseDTO studentQuizParticipationBaseDTO,
         QuizExerciseWithoutQuestionsDTO exercise) {
 
@@ -17,4 +19,5 @@ public record StudentQuizParticipationWithoutQuestionsDTO(@JsonUnwrapped Student
         }
         return new StudentQuizParticipationWithoutQuestionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithoutQuestionsDTO.of(quizExercise));
     }
+
 }
