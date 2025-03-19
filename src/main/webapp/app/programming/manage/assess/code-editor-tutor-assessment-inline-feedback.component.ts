@@ -158,6 +158,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * As this component is rendered within the monaco code editor, the monaco keydown event listener is attached to input fields
      * in this component.
      * In the assessment the code editor is readonly, so it will prevent the default behavior of the backspace key.
+     *
+     * To verify that the assumption of the side effects of the monaco code editor do still hold, use Chromes developer tools:
+     * 1. Inspect the textarea element
+     * 2. Go to the Event Listeners pane
+     * 3. Expand the keydown events to see which functions are bound to these events
+     * 4. Check if the monaco editor is bound to the keydown event and causes the issue when not using the handleKeydown method
+     * 5. You should observe, that when deleting the monaco event listener and NOT using the handleKeydown method, the backspace key works as expected
      */
     protected handleKeydown(event: KeyboardEvent) {
         if (event.key === 'Backspace') {
