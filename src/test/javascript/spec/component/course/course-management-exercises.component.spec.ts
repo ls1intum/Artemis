@@ -4,7 +4,7 @@ import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-c
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { FileUploadExerciseComponent } from 'app/file-upload/manage/file-upload-exercise.component';
+import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise.component';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';

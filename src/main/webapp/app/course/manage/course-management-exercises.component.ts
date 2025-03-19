@@ -15,7 +15,7 @@ import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
 import { ExerciseCreateButtonsComponent } from 'app/exercise/manage/exercise-create-buttons.component';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
-import { FileUploadExerciseComponent } from 'app/file-upload/manage/file-upload-exercise.component';
+import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

@@ -13,7 +13,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
-import { FileUploadAssessmentService } from 'app/file-upload/manage/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

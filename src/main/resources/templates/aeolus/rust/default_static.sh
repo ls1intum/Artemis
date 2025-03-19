@@ -11,7 +11,7 @@ static_code_analysis () {
 
 build () {
   echo '⚙️ executing build'
-  cargo build --verbose
+  cargo build --tests --profile test
 }
 
 run_all_tests () {

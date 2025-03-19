@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileService } from 'app/shared/http/file.service';

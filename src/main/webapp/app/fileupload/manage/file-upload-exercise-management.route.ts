@@ -3,12 +3,12 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { FileUploadExerciseManagementResolve } from 'app/file-upload/manage/file-upload-exercise-management-resolve.service';
+import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/file-upload-exercise-management-resolve.service';
 
 export const routes: Routes = [
     {
         path: 'file-upload-exercises/new',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -20,7 +20,7 @@ export const routes: Routes = [
     },
     {
         path: 'file-upload-exercises/:exerciseId/import',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -33,7 +33,7 @@ export const routes: Routes = [
 
     {
         path: 'file-upload-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -66,6 +66,6 @@ export const routes: Routes = [
     },
     {
         path: 'file-upload-exercises/:exerciseId/submissions/:submissionId',
-        loadChildren: () => import('app/file-upload/manage/assess/file-upload-assessment.route').then((m) => m.routes),
+        loadChildren: () => import('app/fileupload/manage/assess/file-upload-assessment.route').then((m) => m.routes),
     },
 ];
