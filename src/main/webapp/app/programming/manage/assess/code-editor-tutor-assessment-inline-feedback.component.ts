@@ -37,6 +37,19 @@ import { QuotePipe } from 'app/shared/pipes/quote.pipe';
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly Feedback = Feedback;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly MANUAL = FeedbackType.MANUAL;
+
+    // Expose the function to the template
+    protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
@@ -63,24 +76,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Output() onDeleteFeedback = new EventEmitter<Feedback>();
     @Output() onEditFeedback = new EventEmitter<number>();
 
-    // Expose the function to the template
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    protected readonly Feedback = Feedback;
-    readonly ButtonSize = ButtonSize;
-    readonly MANUAL = FeedbackType.MANUAL;
-
     viewOnly: boolean;
     oldFeedback: Feedback;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faQuestionCircle = faQuestionCircle;
-    faPencilAlt = faPencilAlt;
-    faTrashAlt = faTrashAlt;
-    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
@@ -102,7 +101,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * When an inline feedback already exists, we set it back and display it the viewOnly mode.
-     * Otherwise the component is not displayed anymore in the parent component
+     * Otherwise, the component is not displayed anymore in the parent component
      */
     cancelFeedback() {
         this.feedback = this.oldFeedback;
