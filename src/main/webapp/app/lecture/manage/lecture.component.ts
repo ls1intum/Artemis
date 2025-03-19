@@ -245,12 +245,12 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Trigger the Ingestion of all Lectures in the course.
      */
     ingestLecturesInPyris() {
-        if (this.lectures.first()) {
-            this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
-                next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allLecturesSuccess'),
-                error: () => {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.allLecturesError');
-                },
+        if (this.lectures.length > 0) {
+            this.lectures.forEach((lecture) => {
+                this.lectureService.ingestLecturesInPyris(lecture.course!.id!).subscribe({
+                    next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureSuccess', { lectureTitle: lecture.title }),
+                    error: () => this.alertService.error('artemisApp.iris.ingestionAlert.lectureError', { lectureTitle: lecture.title }),
+                });
             });
         }
     }
