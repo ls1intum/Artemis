@@ -275,7 +275,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: '',
-                        loadChildren: () => import('app/file-upload/manage/file-upload-exercise-management.route').then((m) => m.routes),
+                        loadChildren: () => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes),
                     },
                     {
                         path: '',

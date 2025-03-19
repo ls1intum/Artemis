@@ -3,7 +3,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
