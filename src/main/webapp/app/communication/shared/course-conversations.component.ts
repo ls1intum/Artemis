@@ -626,7 +626,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     onTriggerNavigateToPost(post: Posting) {
         let conversationId = (post as Post)?.conversation?.id;
         this.focusPostId = post.id;
-        this.openThreadOnFocus = post.postingType === PostingType.ANSWER;
 
         if (!post.id) {
             return;
