@@ -18,7 +18,7 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/u
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',

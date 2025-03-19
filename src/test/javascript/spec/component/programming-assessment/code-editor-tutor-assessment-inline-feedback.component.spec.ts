@@ -8,7 +8,7 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
