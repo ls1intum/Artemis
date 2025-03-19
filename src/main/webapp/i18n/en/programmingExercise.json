@@ -760,7 +760,7 @@
                 "consistencyCheckAlert": {
                     "title": "Consistency Check Result",
                     "improvement": "Suggestion for improvement",
-                    "inconsistencies": "Inconsistencies"
+                    "inconsistencies": "Please review the FAQ for inconsistencies and adjust it accordingly to ensure clarity and coherence."
                 }
             }
         },

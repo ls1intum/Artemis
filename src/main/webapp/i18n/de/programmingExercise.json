@@ -761,7 +761,7 @@
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",
-                    "inconsistencies": "Inkonsistenzen"
+                    "inconsistencies": "Bitte überprüfe das FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
                 }
             }
         },
