@@ -32,7 +32,7 @@ export class FileUploadSubmissionService {
             .post<FileUploadSubmission>(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.submissionService.convertSubmissionResponseFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertFileSubmissionResponseFromServer(res)));
     }
 
     /**
@@ -96,7 +96,7 @@ export class FileUploadSubmissionService {
                 if (!res) {
                     return undefined;
                 }
-                return this.submissionService.convertSubmissionFromServer(res);
+                return this.convertFileSubmissionFromServer(res);
             }),
         );
     }
@@ -114,6 +114,14 @@ export class FileUploadSubmissionService {
     private convertFileSubmissionFromServer(res: FileUploadSubmission) {
         const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res);
         convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
+        return convertedBaseSubmission;
+    }
+
+    private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmission>): HttpResponse<FileUploadSubmission> {
+        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(res);
+        if (convertedBaseSubmission.body) {
+            convertedBaseSubmission.body.filePathUrl = addPublicFilePrefix(convertedBaseSubmission.body.filePath);
+        }
         return convertedBaseSubmission;
     }
 }
