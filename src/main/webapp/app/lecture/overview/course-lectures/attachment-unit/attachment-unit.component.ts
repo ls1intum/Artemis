@@ -21,6 +21,7 @@ import {
 import { FileService } from 'app/shared/http/file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -51,8 +52,8 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
         this.logEvent();
 
         if (this.lectureUnit().attachment?.link) {
-            const link = this.lectureUnit().attachment!.link!;
-            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
+            this.fileService.downloadFileByAttachmentName(link!, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }
