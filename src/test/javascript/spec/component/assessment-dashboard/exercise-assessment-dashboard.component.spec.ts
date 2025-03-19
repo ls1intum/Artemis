@@ -20,7 +20,7 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
-import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

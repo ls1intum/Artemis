@@ -139,6 +139,16 @@ export class CourseManagementService {
     }
 
     /**
+     * finds the course with the provided unique identifier together with its exercises
+     * @param courseId - the id of the course to be found
+     */
+    findWithExercisesAndLecturesAndCompetencies(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-lectures-competencies`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
+    }
+
+    /**
      * finds a course with the given id and eagerly loaded organizations
      * @param courseId the id of the course to be found
      */

@@ -11,7 +11,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
-import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { AccountService } from 'app/core/auth/account.service';

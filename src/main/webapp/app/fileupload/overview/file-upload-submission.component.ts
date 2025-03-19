@@ -7,9 +7,9 @@ import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { FileUploadAssessmentService } from 'app/file-upload/manage/assess/file-upload-assessment.service';
+import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
