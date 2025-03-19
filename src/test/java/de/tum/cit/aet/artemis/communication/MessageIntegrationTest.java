@@ -759,7 +759,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindCourseWideMessages_IncludesDirectMessages() throws Exception {
+    void shouldIncludeDirectMessagesWhenFindingCourseWideMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
@@ -776,7 +776,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindCourseWideMessages_IncludesDirectMessages_UsingGetRequest() throws Exception {
+    void shouldIncludeDirectMessagesWhenFindingCourseWideMessagesUsingGetRequest() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
@@ -792,7 +792,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindCourseWideMessages_IncludesNonCourseWideGroupChannels() throws Exception {
+    void shouldIncludeNonCourseWideChannelsWhenFindingCourseWideMessages() throws Exception {
         Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "group-chat-test");
         conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student1");
         conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
