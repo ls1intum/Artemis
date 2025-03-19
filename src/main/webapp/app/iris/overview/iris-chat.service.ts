@@ -20,6 +20,7 @@ export enum ChatServiceMode {
     EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
     LECTURE = 'lecture-chat',
+    TUTOR_SUGGESTION = 'tutor-suggestion',
 }
 
 /**

@@ -95,6 +95,13 @@ public class PyrisJobService {
         return token;
     }
 
+    public String addTutorSuggestionJob(Long courseId, Long sessionId) {
+        var token = generateJobIdToken();
+        var job = new CourseChatJob(token, courseId, sessionId, null);
+        jobMap.put(token, job);
+        return token;
+    }
+
     /**
      * Adds a new lecture ingestion webhook job to the job map with a timeout.
      *

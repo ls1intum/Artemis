@@ -12,12 +12,23 @@ import { MessageReplyInlineInputComponent } from 'app/communication/message/mess
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
+import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostComponent,
+        MessageReplyInlineInputComponent,
+        ArtemisTranslatePipe,
+        NgClass,
+        TutorSuggestionComponent,
+        TutorSuggestionComponent,
+    ],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;

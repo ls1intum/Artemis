@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
     @JsonSubTypes.Type(value = IrisExerciseChatSession.class, name = "chat"), // TODO: Legacy. Should ideally be "exercise_chat"
     @JsonSubTypes.Type(value = IrisCourseChatSession.class, name = "course_chat"),
     @JsonSubTypes.Type(value = IrisLectureChatSession.class, name = "lecture_chat"),
+    @JsonSubTypes.Type(value = IrisTutorSuggestionSession.class, name = "tutor_suggestion"),
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
