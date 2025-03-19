@@ -194,7 +194,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
+                this.loadIrisSettings();
             });
+    }
+
+    private loadIrisSettings(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // only load the settings if Iris is available and this is not an exam exercise
             if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {
