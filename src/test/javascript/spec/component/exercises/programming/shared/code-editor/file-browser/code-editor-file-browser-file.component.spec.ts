@@ -1,10 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
-import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { TreeViewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/tree-view-item';
+import {
+    CodeEditorFileBrowserFileComponent
+} from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-file.component';
+import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('CodeEditorFileBrowserFileComponent', () => {
     let component: CodeEditorFileBrowserFileComponent;
