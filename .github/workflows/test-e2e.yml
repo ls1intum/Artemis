@@ -40,6 +40,27 @@ jobs:
       TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
       TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
     steps:
+      # Save the triggering workflow information as an artifact for later reference
+      - name: Save triggering workflow info
+        run: |
+          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
+          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
+          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
+          cat workflow-context.txt
+
+      - name: Upload workflow context
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-context
+          path: workflow-context.txt
+
+      # Add a notice in this workflow run's timeline showing which Build workflow triggered it
+      # This helps developers navigate between related workflow runs
+      - name: Add link to triggering workflow
+        run: |
+          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
+
+
       # Since this workflow is triggered by a workflow_run event, we are not able to see the workflow status in check-runs.
       # So we need to set the status to pending manually by calling the GitHub API.
       - name: Create pending status
