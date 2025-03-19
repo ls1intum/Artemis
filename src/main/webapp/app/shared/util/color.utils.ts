@@ -1,4 +1,4 @@
-import { deterministicRandomValueFromString } from 'app/utils/text.utils';
+import { deterministicRandomValueFromString } from 'app/shared/util/text.utils';
 
 /**
  * Returns a background color hue for a given string.

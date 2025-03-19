@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import type { ProgrammingTestStatusDetail } from 'app/detail-overview-list/detail.model';
+import type { ProgrammingTestStatusDetail } from 'app/shared/detail-overview-list/detail.model';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';

@@ -2,7 +2,7 @@ import { Component, OnChanges, input } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';

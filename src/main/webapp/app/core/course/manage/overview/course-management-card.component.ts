@@ -39,7 +39,7 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { getContrastingTextColor } from 'app/utils/color.utils';
+import { getContrastingTextColor } from 'app/shared/util/color.utils';
 
 @Component({
     selector: 'jhi-course-management-card',

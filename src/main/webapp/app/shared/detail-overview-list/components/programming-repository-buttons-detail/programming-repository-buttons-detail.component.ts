@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import type { ProgrammingRepositoryButtonsDetail } from 'app/detail-overview-list/detail.model';
+import type { ProgrammingRepositoryButtonsDetail } from 'app/shared/detail-overview-list/detail.model';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { RouterModule } from '@angular/router';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';

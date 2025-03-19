@@ -10,7 +10,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, getCourseId, resetForImport } from 'app/entities/exercise.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

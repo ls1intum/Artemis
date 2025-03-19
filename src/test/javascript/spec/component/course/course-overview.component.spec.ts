@@ -44,7 +44,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { CourseSidebarComponent } from 'app/course/shared/course-sidebar/course-sidebar.component';
+import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseOverviewComponent } from 'app/course/overview/course-overview.component';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { TeamService } from 'app/exercise/team/team.service';

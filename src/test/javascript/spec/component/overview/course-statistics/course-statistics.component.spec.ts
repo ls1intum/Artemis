@@ -15,7 +15,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseStatisticsComponent, NgxExercise } from 'app/core/course/overview/course-statistics/course-statistics.component';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';

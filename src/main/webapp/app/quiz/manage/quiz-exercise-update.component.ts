@@ -29,7 +29,7 @@ import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';

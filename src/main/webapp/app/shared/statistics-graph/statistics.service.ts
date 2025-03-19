@@ -6,7 +6,7 @@ import { CourseManagementStatisticsDTO } from 'app/core/course/manage/course-man
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })

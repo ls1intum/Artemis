@@ -12,7 +12,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
+import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

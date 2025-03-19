@@ -15,7 +15,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { getLocalRepositoryLink } from 'app/utils/navigation.utils';
+import { getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/service/code-editor-submission.service';

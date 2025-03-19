@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import type { BooleanDetail } from 'app/detail-overview-list/detail.model';
+import type { BooleanDetail } from 'app/shared/detail-overview-list/detail.model';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 
 @Component({

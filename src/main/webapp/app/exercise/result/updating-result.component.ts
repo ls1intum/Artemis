@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ResultComponent } from './result.component';
 
 /**

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { SubjectObservablePair } from 'app/utils/rxjs.utils';
+import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';
 
 /**
  * This service is used to store {@link Course} objects for the currently logged-in user.

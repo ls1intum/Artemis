@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
-import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
+import type { ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';

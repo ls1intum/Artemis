@@ -50,7 +50,7 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-c
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { onTextEditorTab } from 'app/utils/text.utils';
+import { onTextEditorTab } from 'app/shared/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

@@ -10,7 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {

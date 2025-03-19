@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseDeletionSummaryDTO } from 'app/entities/course-deletion-summary.model';
 

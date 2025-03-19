@@ -3,7 +3,7 @@ import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';
-import { getContrastingTextColor } from 'app/utils/color.utils';
+import { getContrastingTextColor } from 'app/shared/util/color.utils';
 
 @Component({
     selector: 'jhi-course-card-header',

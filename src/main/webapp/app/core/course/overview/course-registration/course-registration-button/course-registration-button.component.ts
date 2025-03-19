@@ -3,7 +3,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Course } from 'app/entities/course.model';
-import { matchesRegexFully } from 'app/utils/regex.util';
+import { matchesRegexFully } from 'app/shared/util/regex.util';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

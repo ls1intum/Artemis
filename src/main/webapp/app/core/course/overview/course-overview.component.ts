@@ -65,7 +65,7 @@ import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.co
 import { sortCourses } from 'app/shared/util/course.util';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';

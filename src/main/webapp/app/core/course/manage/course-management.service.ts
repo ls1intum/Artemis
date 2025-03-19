@@ -17,8 +17,8 @@ import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/ov
 import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { convertDateFromClient } from 'app/utils/date.utils';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';

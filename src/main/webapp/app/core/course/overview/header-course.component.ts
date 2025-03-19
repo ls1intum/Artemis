@@ -6,7 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { getContrastingTextColor } from 'app/utils/color.utils';
+import { getContrastingTextColor } from 'app/shared/util/color.utils';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

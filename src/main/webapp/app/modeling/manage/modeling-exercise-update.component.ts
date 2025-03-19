@@ -13,7 +13,7 @@ import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entiti
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep, isEmpty } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

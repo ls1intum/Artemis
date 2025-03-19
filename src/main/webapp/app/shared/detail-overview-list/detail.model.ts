@@ -6,7 +6,7 @@ import { AuxiliaryRepository } from 'app/entities/programming/programming-exerci
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
-import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';

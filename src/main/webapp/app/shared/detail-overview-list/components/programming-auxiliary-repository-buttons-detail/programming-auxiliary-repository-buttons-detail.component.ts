@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { ProgrammingAuxiliaryRepositoryButtonsDetail } from 'app/detail-overview-list/detail.model';
+import { ProgrammingAuxiliaryRepositoryButtonsDetail } from 'app/shared/detail-overview-list/detail.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';

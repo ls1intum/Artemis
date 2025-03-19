@@ -19,7 +19,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { sortBy } from 'lodash-es';
 import { Subject, Subscription } from 'rxjs';

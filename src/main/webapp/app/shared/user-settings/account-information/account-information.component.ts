@@ -6,7 +6,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { base64StringToBlob } from 'app/utils/blob-util';
+import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
