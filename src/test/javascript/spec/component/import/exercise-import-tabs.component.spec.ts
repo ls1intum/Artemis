@@ -1,11 +1,11 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
+import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
-import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
+import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 describe('ExerciseImportTabsComponent', () => {

@@ -9,7 +9,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { Course } from 'app/entities/course.model';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
-import { FaqService } from 'app/faq/faq.service';
+import { FaqService } from 'app/communication/faq/faq.service';
 
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;

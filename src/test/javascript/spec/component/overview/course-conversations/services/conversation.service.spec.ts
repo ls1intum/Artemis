@@ -6,7 +6,7 @@ import { ChannelDTO } from '../../../../../../../main/webapp/app/entities/metis/
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/conversation.service';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
 import { NotificationService } from 'app/shared/notification/notification.service';

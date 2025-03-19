@@ -4,7 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 /**
  * Is used as the abstract user-settings "parent" with all the necessary basic logic for other "child" components to implement/inherit from.

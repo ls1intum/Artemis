@@ -1,4 +1,4 @@
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
@@ -12,7 +12,7 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Course } from 'app/entities/course.model';
-import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 

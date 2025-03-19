@@ -15,7 +15,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
@@ -29,7 +29,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ActivatedRoute } from '@angular/router';
 
 describe('Notification Sidebar Component', () => {

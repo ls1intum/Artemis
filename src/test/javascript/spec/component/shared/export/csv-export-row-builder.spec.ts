@@ -1,4 +1,4 @@
-import { CourseScoresStudentStatistics } from 'app/course/course-scores/course-scores-student-statistics';
+import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { ExerciseType } from 'app/entities/exercise.model';

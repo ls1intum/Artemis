@@ -1,9 +1,9 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { COMPRESSION_HEADER, ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
+import { COMPRESSION_HEADER, ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
+import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
 import { defer, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { Message, Subscription as StompSubscription } from 'webstomp-client';

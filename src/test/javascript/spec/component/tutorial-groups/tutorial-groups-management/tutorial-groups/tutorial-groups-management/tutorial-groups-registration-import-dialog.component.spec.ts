@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';

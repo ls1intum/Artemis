@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
-import { ConnectionState, WebsocketService } from 'app/core/websocket/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -6,7 +6,7 @@ import {
     getTextColorClass,
     getUnreferencedFeedback,
     isOnlyCompilationTested,
-} from 'app/exercises/shared/result/result.utils';
+} from 'app/exercise/result/result.utils';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
