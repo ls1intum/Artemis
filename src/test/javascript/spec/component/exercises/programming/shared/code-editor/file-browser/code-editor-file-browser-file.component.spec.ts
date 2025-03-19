@@ -3,9 +3,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import {
-    CodeEditorFileBrowserFileComponent
-} from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-file.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 
 describe('CodeEditorFileBrowserFileComponent', () => {
