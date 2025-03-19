@@ -22,7 +22,7 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/entities/programming/programming-exercise-theia.config';
 
@@ -528,7 +528,7 @@ describe('CodeButtonComponent', () => {
         const inputs = form.getElementsByTagName('input');
         const data: { [key: string]: string } = {
             appDef: 'theia-image',
-            gitUri: 'https://edx_userLogin:token@repo.uri',
+            gitUri: 'https://user1:token@repo.uri',
             gitToken: 'token',
         };
 
