@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
-import { RepositoryType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Injectable({ providedIn: 'root' })
 export class VcsRepositoryAccessLogService extends BaseApiHttpService {
