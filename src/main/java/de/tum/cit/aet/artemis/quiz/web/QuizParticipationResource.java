@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -21,11 +20,15 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.StudentQuizParticipationWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.StudentQuizParticipationWithSolutionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -98,12 +101,27 @@ public class QuizParticipationResource {
             result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
         }
 
-        participation.setResults(Set.of(result));
+        // participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
-        var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));
-        MappingJacksonValue value = new MappingJacksonValue(participation);
-        value.setSerializationView(view);
+        Object responseDTO;
+        if (exercise.isQuizEnded()) {
+            responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        }
+        else if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
+            responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
+        }
+        else {
+            responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
+        }
+
+        // var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));
+        if (responseDTO == null) {
+            throw new InternalServerErrorException("Error starting quiz participation");
+        }
+        MappingJacksonValue value = new MappingJacksonValue(responseDTO);
+        // value.setSerializationView(view);
         return new ResponseEntity<>(value, HttpStatus.OK);
     }
+
 }
