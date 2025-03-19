@@ -1,4 +1,4 @@
-import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
+import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MockDirective } from 'ng-mocks';

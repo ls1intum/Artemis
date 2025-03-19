@@ -1,4 +1,4 @@
-import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
+import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

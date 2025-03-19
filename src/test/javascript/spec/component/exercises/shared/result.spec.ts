@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/entities/result.model';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -18,7 +18,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
