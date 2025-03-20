@@ -12,6 +12,8 @@ import { MockTranslateService } from '../spec/helpers/mocks/service/mock-transla
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 
 // Mock the initialize method
 class MockThemeService {

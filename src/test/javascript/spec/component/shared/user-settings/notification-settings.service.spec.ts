@@ -7,6 +7,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/core/user/settings/notification-settings/notification-settings.service';
 import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { Setting } from 'app/core/user/settings/user-settings.model';
 
 const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,

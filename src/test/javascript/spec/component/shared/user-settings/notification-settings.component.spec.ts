@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { NotificationSettingsCommunicationChannel, NotificationSettingsComponent } from 'app/core/user/settings/notification-settings/notification-settings.component';
 import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
-import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
+import { NotificationSetting, notificationSettingsStructure } from 'app/core/user/settings/notification-settings/notification-settings-structure';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
