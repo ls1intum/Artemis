@@ -4,9 +4,6 @@ import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -14,15 +11,12 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
 @Entity
 @Table(name = "slide")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Slide {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "id", updatable = false, nullable = false)
-    private String id;
+public class Slide extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "attachment_unit_id")
@@ -37,10 +31,6 @@ public class Slide {
 
     @Column(name = "hidden")
     private Date hidden;
-
-    public String getId() {
-        return id;
-    }
 
     public AttachmentUnit getAttachmentUnit() {
         return attachmentUnit;
