@@ -20,12 +20,12 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { RouteComponents } from 'app/communication/metis.util';
-import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
 
 const conversationMessageNotificationTitles = [
     MENTIONED_IN_MESSAGE_TITLE,

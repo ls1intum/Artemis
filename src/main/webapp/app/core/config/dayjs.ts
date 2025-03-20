@@ -13,9 +13,6 @@ import isoWeeksInYear from 'dayjs/esm/plugin/isoWeeksInYear';
 import isLeapYear from 'dayjs/esm/plugin/isLeapYear';
 import timezone from 'dayjs/esm/plugin/timezone';
 
-import 'dayjs/esm/locale/en';
-import 'dayjs/esm/locale/de';
-
 dayjs.extend(customParseFormat);
 dayjs.extend(duration);
 dayjs.extend(relativeTime);

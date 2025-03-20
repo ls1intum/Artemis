@@ -4,7 +4,6 @@ import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
@@ -34,6 +33,7 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 

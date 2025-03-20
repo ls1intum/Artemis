@@ -7,20 +7,19 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBookmark, faBoxArchive, faBullhorn, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

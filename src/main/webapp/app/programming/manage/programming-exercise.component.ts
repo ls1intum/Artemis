@@ -17,7 +17,6 @@ import { ProgrammingExerciseParticipationType } from 'app/entities/programming/p
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import {
     faBook,
     faCheckDouble,
@@ -43,7 +42,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ProgrammingExerciseGradingDirtyWarningComponent } from './grading/programming-exercise-grading-dirty-warning.component';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/programming-exercise-reset-button.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -53,6 +51,8 @@ import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 
 @Component({
     selector: 'jhi-programming-exercise',

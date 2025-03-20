@@ -3,8 +3,8 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 import { RouterLink } from '@angular/router';
+import { SshUserSettingsFingerprintsService } from 'app/core/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
 @Component({
     selector: 'jhi-account-information',

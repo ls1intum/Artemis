@@ -47,7 +47,6 @@ import { ExerciseDetailsStudentActionsComponent } from './exercise-details-stude
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
-import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
@@ -59,6 +58,7 @@ import { LtiInitializerComponent } from './lti-initializer.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
+import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 
 interface InstructorActionItem {
     routerLink: string;

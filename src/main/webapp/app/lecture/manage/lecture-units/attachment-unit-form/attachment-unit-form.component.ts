@@ -10,8 +10,8 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;

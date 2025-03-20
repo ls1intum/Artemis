@@ -17,7 +17,6 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { cloneDeep } from 'lodash-es';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -27,6 +26,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',

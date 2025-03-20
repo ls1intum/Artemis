@@ -5,7 +5,6 @@ import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
-import { FileService } from 'app/shared/http/file.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -37,6 +36,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { FileService } from 'app/shared/service/file.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;

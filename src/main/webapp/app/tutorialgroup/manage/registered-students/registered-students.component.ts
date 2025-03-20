@@ -11,9 +11,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 import { captureException } from '@sentry/angular';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
 
 @Component({
     selector: 'jhi-registered-students',

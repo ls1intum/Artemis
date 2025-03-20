@@ -10,7 +10,7 @@ import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, 
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_ATLAS, PROFILE_LTI } from 'app/app.constants';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
@@ -26,13 +26,11 @@ import { CourseAdminService } from 'app/core/course/manage/course-admin.service'
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/shared/util/semester-utils';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { KeyValuePipe, NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
@@ -43,6 +41,7 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { FileService } from 'app/shared/service/file.service';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 

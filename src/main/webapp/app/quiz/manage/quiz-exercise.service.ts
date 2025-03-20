@@ -9,8 +9,8 @@ import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
+import { FileService } from 'app/shared/service/file.service';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;

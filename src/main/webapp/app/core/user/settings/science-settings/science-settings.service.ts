@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting } from 'app/shared/user-settings/user-settings.model';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
-import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
+import { Setting } from 'app/core/user/settings/user-settings.model';
 
 export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 

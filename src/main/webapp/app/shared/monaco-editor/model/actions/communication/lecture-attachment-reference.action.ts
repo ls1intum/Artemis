@@ -9,9 +9,9 @@ import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
-import { FileService } from 'app/shared/http/file.service';
 import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 interface LectureWithDetails {
     id: number;

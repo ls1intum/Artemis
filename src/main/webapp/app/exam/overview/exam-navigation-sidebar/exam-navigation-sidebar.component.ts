@@ -1,7 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
-import { SidebarData } from 'app/types/sidebar';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
@@ -14,7 +13,6 @@ import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -23,6 +21,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { SidebarData } from 'app/shared/types/sidebar';
+import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
 
 export enum ExerciseButtonStatus {
     Synced = 'synced',

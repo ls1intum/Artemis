@@ -9,13 +9,13 @@ import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 export enum ExerciseRowType {
     FUTURE = 'future',

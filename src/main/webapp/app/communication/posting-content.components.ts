@@ -12,7 +12,7 @@ import { TranslateDirective } from '../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
-import { LinkPreviewContainerComponent } from '../shared/link-preview/components/link-preview-container/link-preview-container.component';
+import { LinkPreviewContainerComponent } from 'app/communication/link-preview/components/link-preview-container/link-preview-container.component';
 
 @Component({
     selector: 'jhi-posting-content',

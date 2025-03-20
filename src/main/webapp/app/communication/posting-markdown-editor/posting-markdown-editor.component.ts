@@ -9,6 +9,7 @@ import {
     OnInit,
     Output,
     ViewChild,
+    ViewContainerRef,
     ViewEncapsulation,
     computed,
     forwardRef,
@@ -16,11 +17,9 @@ import {
     input,
 } from '@angular/core';
 import monaco from 'monaco-editor';
-import { ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/metis.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
@@ -45,9 +44,10 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { PostingContentComponent } from '../posting-content.components';
 import { NgStyle } from '@angular/common';
-import { FileService } from 'app/shared/http/file.service';
 import { PostingEditType } from '../metis.util';
 import { ChannelService } from 'app/communication/conversations/channel.service';
+import { FileService } from 'app/shared/service/file.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',

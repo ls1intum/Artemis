@@ -15,7 +15,6 @@ import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, N
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations/other/conversation.util';
 import { MetisService } from 'app/communication/metis.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -24,6 +23,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Component({
     selector: 'jhi-conversation-options',

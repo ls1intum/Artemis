@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';
 import { compare } from 'compare-versions';
 import { Observable, of } from 'rxjs';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Injectable({
     providedIn: 'root',

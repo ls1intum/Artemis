@@ -17,7 +17,6 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +27,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 
 @Component({
     selector: 'jhi-lecture-update',

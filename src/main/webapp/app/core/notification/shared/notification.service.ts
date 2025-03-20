@@ -47,11 +47,11 @@ import { MetisService } from 'app/communication/metis.service';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
 
 const notificationsPerPage = 25;
 

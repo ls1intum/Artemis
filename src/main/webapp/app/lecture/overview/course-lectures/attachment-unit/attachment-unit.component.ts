@@ -18,10 +18,10 @@ import {
     faFilePowerpoint,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
-import { FileService } from 'app/shared/http/file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-attachment-unit',

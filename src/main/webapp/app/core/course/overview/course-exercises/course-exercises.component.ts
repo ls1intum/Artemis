@@ -7,12 +7,12 @@ import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-ex
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { LtiService } from 'app/shared/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },

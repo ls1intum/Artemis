@@ -11,7 +11,6 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -21,6 +20,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
 import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;

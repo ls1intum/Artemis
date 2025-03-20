@@ -3,7 +3,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
@@ -23,6 +22,7 @@ import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } 
 import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const examManagementRoute: Routes = [
     {

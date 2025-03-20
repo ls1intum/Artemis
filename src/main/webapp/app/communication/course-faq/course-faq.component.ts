@@ -12,7 +12,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { SortService } from 'app/shared/service/sort.service';
@@ -20,6 +19,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 @Component({
     selector: 'jhi-course-faq',

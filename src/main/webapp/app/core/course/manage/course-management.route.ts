@@ -7,9 +7,9 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const courseManagementState: Routes = [
     {

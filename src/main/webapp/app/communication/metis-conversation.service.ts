@@ -18,8 +18,8 @@ import { GroupChatService } from 'app/communication/conversations/group-chat.ser
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE

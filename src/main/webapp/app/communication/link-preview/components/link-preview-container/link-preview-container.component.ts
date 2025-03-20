@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, signal } from '@angular/core';
-import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
-import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
+import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-link-preview-container',

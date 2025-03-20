@@ -4,12 +4,12 @@ import { SystemNotification, SystemNotificationType } from 'app/entities/system-
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { User } from 'app/core/user/user.model';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, filter } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
@@ -12,10 +12,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
-import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 
 @Component({
     selector: 'jhi-account-information',

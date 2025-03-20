@@ -4,7 +4,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
 import { Result } from 'app/entities/result.model';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
@@ -35,6 +34,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

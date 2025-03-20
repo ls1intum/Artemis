@@ -9,9 +9,9 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',

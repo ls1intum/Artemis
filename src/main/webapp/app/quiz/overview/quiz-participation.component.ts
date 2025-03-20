@@ -13,7 +13,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
@@ -29,7 +29,6 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
@@ -40,13 +39,13 @@ import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 @Component({
     selector: 'jhi-quiz',

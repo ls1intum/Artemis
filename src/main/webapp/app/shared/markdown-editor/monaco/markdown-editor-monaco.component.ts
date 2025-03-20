@@ -43,7 +43,6 @@ import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/stri
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
-import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -71,11 +70,12 @@ import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { facArtemisIntelligence } from 'app/icons/icons';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
 import { Course } from 'app/entities/course.model';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,

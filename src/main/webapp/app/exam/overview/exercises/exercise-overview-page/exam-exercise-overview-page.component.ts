@@ -6,13 +6,13 @@ import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overvi
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseButtonStatus } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',

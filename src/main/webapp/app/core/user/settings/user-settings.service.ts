@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { User } from 'app/core/user/user.model';
+import { Setting, SettingGroup, UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
+import { NotificationSetting, notificationSettingsStructure } from 'app/core/user/settings/notification-settings/notification-settings-structure';
+import { ScienceSetting, scienceSettingsStructure } from 'app/core/user/settings/science-settings/science-settings-structure';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {

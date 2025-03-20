@@ -45,7 +45,6 @@ import { MetisService } from 'app/communication/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -54,10 +53,11 @@ import { ConversationMessagesComponent } from 'app/communication/course-conversa
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { SavedPostsComponent } from 'app/communication/course-conversations/saved-posts/saved-posts.component';
 import { captureException } from '@sentry/angular';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },

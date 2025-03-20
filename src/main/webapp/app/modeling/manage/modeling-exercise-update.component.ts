@@ -24,9 +24,8 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { Subscription } from 'rxjs';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -34,19 +33,18 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
-import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',

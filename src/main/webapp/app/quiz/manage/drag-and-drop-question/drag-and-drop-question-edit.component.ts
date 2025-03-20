@@ -32,7 +32,6 @@ import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-import { FileService } from 'app/shared/http/file.service';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -61,6 +60,7 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',

@@ -1,7 +1,5 @@
 import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
-import { FileService } from 'app/shared/http/file.service';
-
 import {
     faAt,
     faBan,
@@ -25,6 +23,7 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-posting-content-part',

@@ -21,30 +21,26 @@ import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/t
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
-import { Subject, Subscription, TeardownLogic } from 'rxjs';
+import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
 import { omit } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../manage/assess/modeling-assessment.util';
-import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { of } from 'rxjs';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingAssessmentComponent } from '../manage/assess/modeling-assessment.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -58,6 +54,7 @@ import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
 import { modelingTour } from 'app/core/guided-tour/tours/modeling-tour';
+import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
     selector: 'jhi-modeling-submission',

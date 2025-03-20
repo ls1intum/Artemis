@@ -30,11 +30,11 @@ import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { SavedPostService } from 'app/communication/saved-post.service';
 import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
 import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {

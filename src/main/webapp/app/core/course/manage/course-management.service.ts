@@ -16,7 +16,6 @@ import { Submission, reconnectSubmissions } from 'app/entities/submission.model'
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
@@ -29,6 +28,7 @@ import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;

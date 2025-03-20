@@ -25,7 +25,6 @@ import { ExamPage } from 'app/entities/exam/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { TestRunRibbonComponent } from '../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from './exam-cover/exam-participation-cover.component';
 import { AsyncPipe, NgClass } from '@angular/common';
@@ -61,6 +60,7 @@ import { TextSubmissionService } from 'app/text/overview/text-submission.service
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
+import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

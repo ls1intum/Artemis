@@ -11,13 +11,13 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/types/sidebar';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },

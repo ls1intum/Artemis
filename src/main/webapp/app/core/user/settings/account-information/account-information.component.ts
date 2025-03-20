@@ -2,19 +2,18 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable } from 'rxjs';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SecuredImageComponent } from '../../image/secured-image.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
 
 @Component({
     selector: 'jhi-account-information',

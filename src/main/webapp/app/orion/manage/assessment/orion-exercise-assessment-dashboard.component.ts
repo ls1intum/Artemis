@@ -9,10 +9,9 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { onError } from 'app/shared/util/global.utils';
 import { OrionAssessmentService } from 'app/orion/manage/assessment/orion-assessment.service';
-import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
-import { ExerciseAssessmentDashboardComponent } from '../../../exercise/dashboards/tutor/exercise-assessment-dashboard.component';
-import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
+import { OrionButtonComponent, OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 @Component({
     selector: 'jhi-orion-exercise-assessment-dashboard',

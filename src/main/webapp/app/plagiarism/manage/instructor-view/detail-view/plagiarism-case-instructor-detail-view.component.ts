@@ -39,8 +39,8 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',

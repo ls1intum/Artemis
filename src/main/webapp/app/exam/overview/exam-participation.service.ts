@@ -11,12 +11,12 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { SidebarCardElement } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
+import { SidebarCardElement } from 'app/shared/types/sidebar';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 

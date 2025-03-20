@@ -17,11 +17,11 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;

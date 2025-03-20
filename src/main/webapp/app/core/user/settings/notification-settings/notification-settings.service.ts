@@ -37,12 +37,12 @@ import {
     TUTORIAL_GROUP_UPDATED_TITLE,
 } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting } from 'app/shared/user-settings/user-settings.model';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
+import { Setting } from 'app/core/user/settings/user-settings.model';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 

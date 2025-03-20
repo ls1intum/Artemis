@@ -18,11 +18,11 @@ import { FormsModule } from '@angular/forms';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { TextExerciseRowButtonsComponent } from './text-exercise-row-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-text-exercise',

@@ -23,7 +23,6 @@ import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import {
     faBook,
@@ -45,8 +44,6 @@ import {
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { hasEditableBuildPlan } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
@@ -68,6 +65,9 @@ import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
+import { hasEditableBuildPlan } from 'app/core/layouts/profiles/profile-info.model';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

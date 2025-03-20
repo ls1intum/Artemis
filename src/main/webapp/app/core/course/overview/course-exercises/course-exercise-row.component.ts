@@ -18,11 +18,11 @@ import { SubmissionResultStatusComponent } from '../submission-result-status.com
 import { ExerciseDetailsStudentActionsComponent } from '../exercise-details/exercise-details-student-actions.component';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { NgClass } from '@angular/common';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-course-exercise-row',

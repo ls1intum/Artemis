@@ -14,10 +14,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',

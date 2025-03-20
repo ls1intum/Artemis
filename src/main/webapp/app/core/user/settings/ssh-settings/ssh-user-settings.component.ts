@@ -6,14 +6,14 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
-import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationLinkComponent } from '../../components/documentation-link/documentation-link.component';
 import { RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 
 @Component({
     selector: 'jhi-account-information',
