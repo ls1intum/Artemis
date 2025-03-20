@@ -1,7 +1,7 @@
-import { StringBaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/shared/model/base-entity';
 
-export class Slide implements StringBaseEntity {
-    public id?: string;
+export class Slide implements BaseEntity {
+    public id?: number;
     public slideImagePath?: string;
     public slideNumber?: number;
     public hidden?: boolean;
