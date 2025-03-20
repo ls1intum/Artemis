@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { HiddenPage, HiddenPageMap } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { HiddenPage, HiddenPageMap } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
