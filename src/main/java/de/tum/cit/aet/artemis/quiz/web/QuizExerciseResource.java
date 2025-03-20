@@ -301,6 +301,7 @@ public class QuizExerciseResource {
         Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
         exerciseService.reconnectCompetencyExerciseLinks(quizExercise);
+        exerciseService.handleDueDateChange(originalQuiz, quizExercise);
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);

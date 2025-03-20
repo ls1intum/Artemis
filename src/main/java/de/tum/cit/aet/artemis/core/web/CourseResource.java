@@ -831,6 +831,22 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/{courseId}/all-exercises : Returns all exercises in a course
+     *
+     * @param courseId the id of the course
+     * @return Set of exercises with status 200 (OK)
+     */
+    @GetMapping("courses/{courseId}/all-exercises")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<Exercise>> getAllExercisesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all exercises in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
+        return ResponseEntity.ok(exercises);
+    }
+
+    /**
      * GET /courses/exercises-for-management-overview
      * <p>
      * gets the courses with exercises for the user

@@ -102,6 +102,7 @@
                 "removePageButton": "Remove Pages",
                 "hidePageButton": "Hide Pages",
                 "showPageButton": "Show Pages",
+                "showPagesTitle": "Show Pages",
                 "appendPDFButton": "Append PDF",
                 "attachmentUpdateSuccess": "Attachment updated successfully.",
                 "attachmentUpdateError": "Failed to update attachment: {{error}}",
@@ -112,7 +113,24 @@
                 "deleteAllPagesQuestion": "Are you sure you want to delete all pages? This will result in the deletion of the attachment.",
                 "confirmCancelEditing": "Confirm cancel operation",
                 "cancelEditingQuestion": "Are you sure you would like to leave without saving your changes?",
-                "invalidFileType": "You can only upload PDF files."
+                "invalidFileType": "You can only upload PDF files.",
+                "thumbnailGrid": {
+                    "showPage": "Show Page {{ param }}",
+                    "hiddenUntil": "This page is hidden until:",
+                    "showPageConfirmation": "Would you like to show this page?",
+                    "forever": "FOREVER",
+                    "exerciseId": "(Exercise Id: {{ param }})"
+                },
+                "dateBox": {
+                    "hidePage": "Hide Page {{ param }}",
+                    "hideMultiplePages": "Hide Pages {{ param }}",
+                    "hideForever": "Hide forever",
+                    "selectDate": "Select Date",
+                    "selectExercise": "Select Exercise",
+                    "noExercises": "No exercises available",
+                    "exerciseTypeTitle": "{{ param }} Exercises",
+                    "dateError": "The selected date can not be in the past."
+                }
             }
         }
     }

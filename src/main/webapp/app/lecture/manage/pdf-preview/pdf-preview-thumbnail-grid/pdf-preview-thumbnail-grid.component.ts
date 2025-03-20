@@ -7,20 +7,29 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { Course } from 'app/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { HiddenPage, HiddenPageMap } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent],
+    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbModule, TranslateDirective],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
+    FOREVER = dayjs('9999-12-31');
+
     // Inputs
+    course = input<Course>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
-    hiddenPages = input<Set<number>>();
+    hiddenPages = input<HiddenPageMap>();
     isAttachmentUnit = input<boolean>();
     updatedSelectedPages = input<Set<number>>(new Set());
 
@@ -30,13 +39,15 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     loadedPages = signal<Set<number>>(new Set());
     selectedPages = signal<Set<number>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
-    newHiddenPages = signal(new Set<number>(this.hiddenPages()!));
+    newHiddenPages = signal<HiddenPageMap>(this.hiddenPages() || {});
     initialPageNumber = signal<number>(0);
+    activeButtonIndex = signal<number | null>(null);
+    isPopoverOpen = signal<boolean>(false);
 
     // Outputs
     totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<number>>();
-    newHiddenPagesOutput = output<Set<number>>();
+    newHiddenPagesOutput = output<HiddenPageMap>();
 
     // Injected services
     private readonly alertService = inject(AlertService);
@@ -46,7 +57,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['hiddenPages']) {
-            this.newHiddenPages.set(new Set(this.hiddenPages()!));
+            this.newHiddenPages.set(this.hiddenPages()!);
         }
         if (changes['currentPdfUrl']) {
             this.loadPdf(this.currentPdfUrl()!, this.appendFile()!);
@@ -130,12 +141,12 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param event The event object triggered by the click action.
      */
     toggleVisibility(pageIndex: number, event: Event): void {
-        if (this.hiddenPages()!.has(pageIndex)) {
-            this.hiddenPages()!.delete(pageIndex);
-        } else {
-            this.hiddenPages()!.add(pageIndex);
+        this.activeButtonIndex.set(pageIndex);
+        const button = (event.target as HTMLElement).closest('button');
+        if (button) {
+            button.style.opacity = '1';
         }
-        this.newHiddenPagesOutput.emit(this.hiddenPages()!);
+
         event.stopPropagation();
     }
 
@@ -155,6 +166,26 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
+     * Updates hidden pages information based on data from the date box component
+     * @param hiddenPageData Data for one or more hidden pages
+     */
+    onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
+        const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
+
+        const updatedHiddenPages = { ...this.newHiddenPages() };
+
+        pages.forEach((page) => {
+            updatedHiddenPages[page.pageIndex] = {
+                date: dayjs(page.date),
+                exerciseId: page.exerciseId ?? null,
+            };
+        });
+
+        this.newHiddenPages.set(updatedHiddenPages);
+        this.newHiddenPagesOutput.emit(this.newHiddenPages());
+    }
+
+    /**
      * Displays the selected PDF page in an enlarged view for detailed examination.
      * @param pageIndex - The index of PDF page to be enlarged.
      * */
@@ -163,6 +194,32 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageIndex);
+    }
+
+    /**
+     * Removes a page from the hidden pages and hides the associated action button.
+     *
+     * @param pageIndex - The index of the page to be made visible.
+     */
+    showPage(pageIndex: number): void {
+        this.newHiddenPages.update((pages) => {
+            delete pages[pageIndex];
+            return pages;
+        });
+        this.hideActionButton(pageIndex);
+        this.newHiddenPagesOutput.emit(this.newHiddenPages());
+    }
+
+    /**
+     * Hides the action button associated with a specified page by setting its opacity to 0.
+     *
+     * @param pageIndex - The index of the page whose action button should be hidden.
+     */
+    hideActionButton(pageIndex: number): void {
+        const button = document.getElementById('hide-show-button-' + pageIndex);
+        if (button) {
+            button.style.opacity = '0';
+        }
     }
 
     /**

@@ -1,7 +1,7 @@
-<div #pdfContainer class="pdf-container">
+<div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
     @for (page of totalPagesArray(); track page) {
         <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
-            @if (hiddenPages()!.has(page)) {
+            @if (newHiddenPages()[page]) {
                 <ng-container>
                     <div class="hidden-overlay pdf-overlay" style="opacity: 1">
                         <span>
@@ -19,11 +19,62 @@
             @if (isAttachmentUnit()) {
                 <button
                     [id]="'hide-show-button-' + page"
-                    [class]="'hide-show-btn btn ' + (hiddenPages()!.has(page) ? 'btn-success' : 'btn-secondary')"
+                    style="'opacity' : activeButtonIndex === page '1' : '0'"
+                    [class]="'hide-show-btn btn ' + (newHiddenPages()[page] ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
+                    [ngbPopover]="newHiddenPages()[page] ? showPageBox : hidePageBox"
+                    #popover="ngbPopover"
+                    [autoClose]="'outside'"
+                    placement="right auto"
+                    container="body"
+                    (shown)="isPopoverOpen.set(true)"
+                    (hidden)="this.hideActionButton(page); isPopoverOpen.set(false)"
                 >
-                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash" />
+                    <fa-icon [icon]="newHiddenPages()[page] ? faEye : faEyeSlash" />
                 </button>
+
+                <ng-template #hidePageBox>
+                    <jhi-pdf-preview-date-box-component
+                        [course]="course()"
+                        [pageIndices]="[activeButtonIndex()!]"
+                        (hiddenPagesOutput)="onHiddenPagesReceived($event); popover.close()"
+                        (selectionCancelledOutput)="popover.close()"
+                    />
+                </ng-template>
+                <ng-template #showPageBox>
+                    <div class="confirmation-box">
+                        <div class="popover-title mb-2">
+                            <h5><span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPage" [translateValues]="{ param: activeButtonIndex()! }"></span></h5>
+                            <p>
+                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
+                                @if (newHiddenPages()[activeButtonIndex()!]?.date!.isSame(FOREVER, 'day')) {
+                                    <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
+                                } @else {
+                                    <span>
+                                        {{ newHiddenPages()[activeButtonIndex()!]?.date!.format('MMM D, YYYY - HH:mm') }}
+                                    </span>
+                                }
+                                @if (newHiddenPages()[activeButtonIndex()!]?.exerciseId) {
+                                    <span
+                                        class="text-primary"
+                                        jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.exerciseId"
+                                        [translateValues]="{ param: newHiddenPages()[activeButtonIndex()!].exerciseId }"
+                                    ></span>
+                                }
+                                <br />
+                                <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.showPageConfirmation"></span>
+                            </p>
+                            <div class="submit-container mt-3 d-flex justify-content-between">
+                                <button class="btn btn-secondary" (click)="hideActionButton(activeButtonIndex()!); popover.close()">
+                                    <span jhiTranslate="entity.action.cancel"></span>
+                                </button>
+                                <button class="btn btn-primary" (click)="showPage(activeButtonIndex()!); popover.close()">
+                                    <span jhiTranslate="entity.action.show"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
             }
         </div>
     }

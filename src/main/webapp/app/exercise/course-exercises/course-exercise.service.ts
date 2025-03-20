@@ -19,6 +19,16 @@ export class CourseExerciseService {
     private accountService = inject(AccountService);
 
     /**
+     * returns all exercises for the course corresponding to courseId
+     * @param courseId - the unique identifier of the course
+     */
+    findAllExercisesForCourse(courseId: number): Observable<HttpResponse<Exercise[]>> {
+        return this.http
+            .get<Exercise[]>(`api/core/courses/${courseId}/all-exercises`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
+    }
+
+    /**
      * returns all programming exercises for the course corresponding to courseId
      * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
      * @param courseId

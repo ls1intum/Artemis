@@ -7,6 +7,20 @@ import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { ElementRef, InputSignal, Signal, SimpleChanges } from '@angular/core';
+import dayjs from 'dayjs/esm';
+
+interface HiddenPageMap {
+    [pageIndex: number]: {
+        date: dayjs.Dayjs;
+        exerciseId: number | null;
+    };
+}
+
+interface HiddenPage {
+    pageIndex: number;
+    date: dayjs.Dayjs;
+    exerciseId: number | null;
+}
 
 jest.mock('pdfjs-dist', () => {
     return {
@@ -60,22 +74,17 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     });
 
     it('should update newHiddenPages when hiddenPages changes', () => {
-        const initialHiddenPages = new Set<number>([1, 2, 3]);
-        const updatedHiddenPages = new Set<number>([4, 5, 6]);
-
-        component.hiddenPages = jest.fn(() => updatedHiddenPages) as unknown as InputSignal<Set<number>>;
-
-        const changes: SimpleChanges = {
-            hiddenPages: {
-                currentValue: updatedHiddenPages,
-                previousValue: initialHiddenPages,
-                firstChange: false,
-                isFirstChange: () => false,
-            },
+        const updatedHiddenPages: HiddenPageMap = {
+            4: { date: dayjs(), exerciseId: null },
+            5: { date: dayjs(), exerciseId: null },
+            6: { date: dayjs(), exerciseId: null },
         };
-        component.ngOnChanges(changes);
 
-        expect(component.newHiddenPages()).toEqual(new Set(updatedHiddenPages));
+        fixture.componentRef.setInput('hiddenPages', updatedHiddenPages);
+
+        fixture.detectChanges();
+
+        expect(component.newHiddenPages()).toEqual(updatedHiddenPages);
     });
 
     it('should load the PDF when currentPdfUrl changes', async () => {
@@ -121,20 +130,34 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     });
 
     it('should toggle visibility of a page', () => {
-        fixture.componentRef.setInput('hiddenPages', new Set([1]));
-        component.toggleVisibility(1, new MouseEvent('click'));
-        expect(component.hiddenPages()!.has(1)).toBeFalse();
+        const mockButton = document.createElement('button');
+        const mockEvent = new MouseEvent('click', {
+            bubbles: true,
+            cancelable: true,
+        });
 
-        component.toggleVisibility(2, new MouseEvent('click'));
-        expect(component.hiddenPages()!.has(2)).toBeTrue();
+        Object.defineProperty(mockEvent, 'target', {
+            value: mockButton,
+            enumerable: true,
+        });
+
+        const initialHiddenPages = { 1: dayjs() };
+        fixture.componentRef.setInput('hiddenPages', initialHiddenPages);
+
+        component.toggleVisibility(1, mockEvent);
+        expect(component.activeButtonIndex()).toBe(1);
+        expect(mockButton.style.opacity).toBe('1');
+
+        component.showPage(1);
+        expect(component.newHiddenPages()[1]).toBeUndefined();
     });
 
     it('should select and deselect pages', () => {
         component.togglePageSelection(1, { target: { checked: true } } as unknown as Event);
-        expect(component.selectedPages().has(1)).toBeTrue();
+        expect(component.selectedPages().has(1)).toBeTruthy();
 
         component.togglePageSelection(1, { target: { checked: false } } as unknown as Event);
-        expect(component.selectedPages().has(1)).toBeFalse();
+        expect(component.selectedPages().has(1)).toBeFalsy();
     });
 
     it('should handle enlarged view correctly for a specific page', () => {
@@ -160,47 +183,121 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         expect(component.isEnlargedView()).toBeTruthy();
     });
 
+    it('should update newHiddenPages and emit the change', () => {
+        const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+        const hiddenPage: HiddenPage = {
+            pageIndex: 1,
+            date: dayjs('2024-01-01'),
+            exerciseId: null,
+        };
+
+        component.onHiddenPagesReceived(hiddenPage);
+
+        expect(component.newHiddenPages()[hiddenPage.pageIndex]).toBeDefined();
+        expect(component.newHiddenPages()[hiddenPage.pageIndex].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
+        expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+    });
+
+    it('should remove the page from newHiddenPages and hide the action button', () => {
+        const initialPages = { 1: dayjs() };
+        fixture.componentRef.setInput('hiddenPages', initialPages);
+        fixture.detectChanges();
+
+        const hideButtonSpy = jest.spyOn(component, 'hideActionButton');
+
+        component.showPage(1);
+
+        expect(component.newHiddenPages()[1]).toBeUndefined();
+        expect(hideButtonSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle showing a page that is not hidden', () => {
+        fixture.componentRef.setInput('hiddenPages', {});
+        fixture.detectChanges();
+
+        const hideButtonSpy = jest.spyOn(component, 'hideActionButton');
+
+        component.showPage(1);
+
+        expect(hideButtonSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should set opacity to 0 for existing button', () => {
+        const mockButton = document.createElement('button');
+        mockButton.id = 'hide-show-button-1';
+        document.body.appendChild(mockButton);
+
+        component.hideActionButton(1);
+
+        expect(mockButton.style.opacity).toBe('0');
+
+        document.body.removeChild(mockButton);
+    });
+
+    it('should handle non-existent button gracefully', () => {
+        component.hideActionButton(999);
+
+        expect(document.getElementById('hide-show-button-999')).toBeNull();
+    });
+
     describe('toggleVisibility method', () => {
-        it('should remove page from hiddenPages set if it already exists', () => {
-            const mockHiddenPages = new Set<number>([1, 3, 5]);
+        it('should set activeButtonIndex and make button visible', () => {
+            const pageIndex = 3;
+            const mockButton = document.createElement('button');
             const mockEvent = {
                 stopPropagation: jest.fn(),
+                target: mockButton,
             } as unknown as Event;
-            component.hiddenPages = jest.fn(() => mockHiddenPages) as unknown as InputSignal<Set<number>>;
-            jest.spyOn(component.newHiddenPagesOutput, 'emit');
 
-            component.toggleVisibility(3, mockEvent);
+            component.toggleVisibility(pageIndex, mockEvent);
 
-            expect(mockHiddenPages.has(3)).toBeFalsy();
+            expect(component.activeButtonIndex()).toBe(pageIndex);
+            expect(mockButton.style.opacity).toBe('1');
             expect(mockEvent.stopPropagation).toHaveBeenCalled();
-            expect(component.newHiddenPagesOutput.emit).toHaveBeenCalledWith(mockHiddenPages);
         });
 
-        it('should add page to hiddenPages set if it does not exist', () => {
-            const mockHiddenPages = new Set<number>([1, 3, 5]);
+        it('should find closest button element if target is not a button', () => {
+            const pageIndex = 3;
+            const mockButton = document.createElement('button');
+            const mockSpan = document.createElement('span');
+            mockButton.appendChild(mockSpan);
+
+            // Mock the closest method
+            Object.defineProperty(mockSpan, 'closest', {
+                value: jest.fn().mockReturnValue(mockButton),
+            });
+
             const mockEvent = {
                 stopPropagation: jest.fn(),
+                target: mockSpan,
             } as unknown as Event;
-            component.hiddenPages = jest.fn(() => mockHiddenPages) as unknown as InputSignal<Set<number>>;
-            jest.spyOn(component.newHiddenPagesOutput, 'emit');
 
-            component.toggleVisibility(2, mockEvent);
+            component.toggleVisibility(pageIndex, mockEvent);
 
-            expect(mockHiddenPages.has(2)).toBeTruthy();
+            expect(component.activeButtonIndex()).toBe(pageIndex);
+            expect(mockButton.style.opacity).toBe('1');
             expect(mockEvent.stopPropagation).toHaveBeenCalled();
-            expect(component.newHiddenPagesOutput.emit).toHaveBeenCalledWith(mockHiddenPages);
         });
 
-        it('should prevent event propagation to parent elements', () => {
-            const mockHiddenPages = new Set<number>();
+        it('should handle case when no button is found', () => {
+            const pageIndex = 3;
+            const mockDiv = document.createElement('div');
+
+            // Mock the closest method to return null
+            Object.defineProperty(mockDiv, 'closest', {
+                value: jest.fn().mockReturnValue(null),
+            });
+
             const mockEvent = {
                 stopPropagation: jest.fn(),
+                target: mockDiv,
             } as unknown as Event;
-            component.hiddenPages = jest.fn(() => mockHiddenPages) as unknown as InputSignal<Set<number>>;
 
-            component.toggleVisibility(1, mockEvent);
+            component.toggleVisibility(pageIndex, mockEvent);
 
-            expect(mockEvent.stopPropagation).toHaveBeenCalledTimes(1);
+            expect(component.activeButtonIndex()).toBe(pageIndex);
+            expect(mockEvent.stopPropagation).toHaveBeenCalled();
         });
     });
 
@@ -482,6 +579,103 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                     behavior: 'smooth',
                 });
             }
+        });
+    });
+
+    describe('onHiddenPagesReceived method', () => {
+        it('should update newHiddenPages with a single page and emit the change', () => {
+            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+            component.newHiddenPages.set({});
+
+            const hiddenPage: HiddenPage = {
+                pageIndex: 1,
+                date: dayjs('2024-01-01'),
+                exerciseId: null,
+            };
+
+            component.onHiddenPagesReceived(hiddenPage);
+
+            expect(component.newHiddenPages()[hiddenPage.pageIndex]).toBeDefined();
+            expect(component.newHiddenPages()[hiddenPage.pageIndex].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
+            expect(component.newHiddenPages()[hiddenPage.pageIndex].exerciseId).toBeNull();
+            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        });
+
+        it('should update newHiddenPages with multiple pages and emit the change', () => {
+            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+            const initialHiddenPages: HiddenPageMap = {
+                5: { date: dayjs('2023-12-15'), exerciseId: 123 },
+            };
+            component.newHiddenPages.set({ ...initialHiddenPages });
+
+            const hiddenPages: HiddenPage[] = [
+                {
+                    pageIndex: 1,
+                    date: dayjs('2024-01-01'),
+                    exerciseId: null,
+                },
+                {
+                    pageIndex: 2,
+                    date: dayjs('2024-01-15'),
+                    exerciseId: 456,
+                },
+            ];
+
+            component.onHiddenPagesReceived(hiddenPages);
+
+            expect(Object.keys(component.newHiddenPages()).length).toBe(3); // 1 initial + 2 new
+            expect(component.newHiddenPages()[1]).toBeDefined();
+            expect(component.newHiddenPages()[1].date.isSame(dayjs('2024-01-01'))).toBeTruthy();
+            expect(component.newHiddenPages()[1].exerciseId).toBeNull();
+            expect(component.newHiddenPages()[2]).toBeDefined();
+            expect(component.newHiddenPages()[2].date.isSame(dayjs('2024-01-15'))).toBeTruthy();
+            expect(component.newHiddenPages()[2].exerciseId).toBe(456);
+            expect(component.newHiddenPages()[5]).toBeDefined();
+            expect(component.newHiddenPages()[5].date.isSame(dayjs('2023-12-15'))).toBeTruthy();
+            expect(component.newHiddenPages()[5].exerciseId).toBe(123);
+            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        });
+
+        it('should overwrite existing page data if same pageIndex is received', () => {
+            const emitSpy = jest.spyOn(component.newHiddenPagesOutput, 'emit');
+
+            const initialHiddenPages: HiddenPageMap = {
+                1: { date: dayjs('2023-12-15'), exerciseId: 123 },
+            };
+            component.newHiddenPages.set({ ...initialHiddenPages });
+
+            const updatedPage: HiddenPage = {
+                pageIndex: 1,
+                date: dayjs('2024-02-01'),
+                exerciseId: 789,
+            };
+
+            component.onHiddenPagesReceived(updatedPage);
+
+            expect(Object.keys(component.newHiddenPages()).length).toBe(1);
+            expect(component.newHiddenPages()[1]).toBeDefined();
+            expect(component.newHiddenPages()[1].date.isSame(dayjs('2024-02-01'))).toBeTruthy();
+            expect(component.newHiddenPages()[1].exerciseId).toBe(789);
+
+            expect(emitSpy).toHaveBeenCalledWith(component.newHiddenPages());
+        });
+
+        it('should handle null exerciseId correctly', () => {
+            component.newHiddenPages.set({});
+
+            const hiddenPages: HiddenPage[] = [
+                {
+                    pageIndex: 1,
+                    date: dayjs('2024-01-01'),
+                    exerciseId: null,
+                },
+            ];
+
+            component.onHiddenPagesReceived(hiddenPages);
+
+            expect(component.newHiddenPages()[1].exerciseId).toBeNull();
         });
     });
 });
