@@ -1,12 +1,13 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE } from 'app/entities/notification.model';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
-import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/core/user/settings/notification-settings/notification-settings.service';
-import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { Setting } from 'app/shared/user-settings/user-settings.model';
 
 const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,

@@ -33,6 +33,7 @@ import {
 } from '../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -46,7 +47,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { of } from 'rxjs';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;

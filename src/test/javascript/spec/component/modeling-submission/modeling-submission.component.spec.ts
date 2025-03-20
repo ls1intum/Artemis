@@ -32,6 +32,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
+import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -43,7 +44,6 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;

@@ -2,6 +2,8 @@ import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/shared/notification/system-notification/system-notification.component';
+import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
@@ -11,8 +13,6 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
-import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 describe('System Notification Component', () => {
     let systemNotificationComponent: SystemNotificationComponent;

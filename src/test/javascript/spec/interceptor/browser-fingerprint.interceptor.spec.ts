@@ -1,8 +1,8 @@
 import { HttpRequest } from '@angular/common/http';
+import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { of } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 describe(`BrowserFingerprintInterceptor`, () => {
     let fingerprintInterceptor: BrowserFingerprintInterceptor;

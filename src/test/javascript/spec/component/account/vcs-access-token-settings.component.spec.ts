@@ -7,11 +7,11 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClient } from '@angular/common/http';
-import { VcsAccessTokensSettingsComponent } from 'app/core/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     let fixture: ComponentFixture<VcsAccessTokensSettingsComponent>;

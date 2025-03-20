@@ -26,6 +26,8 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
+
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
@@ -33,7 +35,6 @@ import { signal } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;

@@ -44,13 +44,14 @@ import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/chan
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/communication/saved-post.service';
 import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
+import 'jest-extended';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
 import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;

@@ -12,13 +12,14 @@ import { CourseFaqComponent } from 'app/communication/course-faq/course-faq.comp
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+
+import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { ElementRef, signal } from '@angular/core';
-import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();

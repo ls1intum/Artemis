@@ -13,6 +13,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
@@ -20,8 +21,12 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-has-any-authority.directive';
+import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -32,10 +37,6 @@ import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, per
 import { GuidedTourMapping, GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 import { completedTour } from 'app/core/guided-tour/tours/general-tour';
-import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
-import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
-import { NavbarComponent } from 'app/core/navbar/navbar.component';
 
 class MockRouterWithEvents {
     public url = 'courses';

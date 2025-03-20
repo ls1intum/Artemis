@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 
 describe('FormStatusBarComponent', () => {
     let fixture: ComponentFixture<FormStatusBarComponent>;

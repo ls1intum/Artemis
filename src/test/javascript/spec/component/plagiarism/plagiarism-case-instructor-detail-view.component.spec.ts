@@ -16,12 +16,12 @@ import { Post } from 'app/entities/metis/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { NotificationService } from '../../../../../main/webapp/app/shared/notification/notification.service';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;

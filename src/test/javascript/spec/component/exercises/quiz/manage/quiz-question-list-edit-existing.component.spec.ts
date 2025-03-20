@@ -28,12 +28,12 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef, EventEmitter } from '@angular/core';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { FileService } from 'app/shared/service/file.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();

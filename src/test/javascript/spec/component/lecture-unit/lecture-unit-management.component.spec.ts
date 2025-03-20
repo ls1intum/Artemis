@@ -35,10 +35,10 @@ import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Course } from 'app/entities/course.model';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {

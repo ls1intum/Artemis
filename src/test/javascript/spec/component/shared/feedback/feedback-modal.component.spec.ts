@@ -16,6 +16,7 @@ import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { ResultService } from 'app/exercise/result/result.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -23,7 +24,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;

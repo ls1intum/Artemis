@@ -10,6 +10,7 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { BehaviorSubject } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -26,7 +27,6 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 const user = { id: 1, name: 'Test User' } as User;
 

@@ -1,3 +1,4 @@
+import { FileService } from 'app/shared/http/file.service';
 import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentType } from 'app/entities/attachment.model';
@@ -9,6 +10,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import {
+    IconDefinition,
     faFile,
     faFileArchive,
     faFileCode,
@@ -20,10 +22,8 @@ import {
     faFilePen,
     faFilePowerpoint,
     faFileWord,
-    IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
-import { FileService } from 'app/shared/service/file.service';
 
 describe('AttachmentUnitComponent', () => {
     let scienceService: ScienceService;

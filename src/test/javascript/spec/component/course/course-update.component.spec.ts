@@ -24,6 +24,7 @@ import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
@@ -46,7 +47,6 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {

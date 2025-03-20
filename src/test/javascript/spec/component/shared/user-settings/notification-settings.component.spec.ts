@@ -1,3 +1,4 @@
+import { NotificationSettingsCommunicationChannel, NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -5,15 +6,14 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
+import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UrlSerializer } from '@angular/router';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { NotificationSettingsCommunicationChannel, NotificationSettingsComponent } from 'app/core/user/settings/notification-settings/notification-settings.component';
-import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
-import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;

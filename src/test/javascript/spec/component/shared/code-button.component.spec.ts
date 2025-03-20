@@ -5,6 +5,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/components/code-button/code-button.component';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
@@ -12,6 +13,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ExerciseActionButtonComponent } from '../../../../../main/webapp/app/shared/components/exercise-action-button.component';
@@ -20,8 +22,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;

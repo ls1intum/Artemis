@@ -1,5 +1,6 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Column, ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercise/manage/paging.service';
 import { Course } from 'app/entities/course.model';
 import { Observable, of } from 'rxjs';
@@ -8,7 +9,6 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 
 describe('ImportTableComponent', () => {
     let component: ImportTableComponent<Course>;

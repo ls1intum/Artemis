@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective } from 'ng-mocks';
+import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCircleInfo, faCoffee } from '@fortawesome/free-solid-svg-icons';
-import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.component';
 
 describe('IconCardComponent', () => {
     let component: IconCardComponent;

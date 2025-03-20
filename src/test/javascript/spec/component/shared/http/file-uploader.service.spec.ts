@@ -1,8 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_COMMUNICATION } from '../../../../../../main/webapp/app/shared/constants/input.constants';
-import { FileUploaderService } from 'app/shared/service/file-uploader.service';
 
 describe('FileUploaderService', () => {
     let service: FileUploaderService;

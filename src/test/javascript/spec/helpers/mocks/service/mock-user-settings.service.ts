@@ -1,5 +1,5 @@
 import { Subject } from 'rxjs';
-import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 
 export class MockUserSettingsService {
     private applyNewChangesSource = new Subject<string>();

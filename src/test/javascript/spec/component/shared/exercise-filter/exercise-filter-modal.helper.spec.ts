@@ -2,6 +2,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SidebarCardElement } from 'app/types/sidebar';
 import {
     satisfiesCategoryFilter,
     satisfiesDifficultyFilter,
@@ -10,7 +11,6 @@ import {
     satisfiesScoreFilter,
 } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
 import { FilterDetails, RangeFilter } from 'app/shared/types/exercise-filter';
-import { SidebarCardElement } from 'app/shared/types/sidebar';
 
 const EXERCISE_1 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 10, type: ExerciseType.TEXT } as Exercise;
 const EXERCISE_2 = { categories: [new ExerciseCategory('category3', '#0d3cc2'), new ExerciseCategory('category4', '#6ae8ac')], maxPoints: 5 } as Exercise;

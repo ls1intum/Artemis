@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
-import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsService', () => {
     let sshUserSettingsService: SshUserSettingsService;

@@ -1,4 +1,5 @@
 import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
@@ -40,7 +41,6 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/communication/notifications';
