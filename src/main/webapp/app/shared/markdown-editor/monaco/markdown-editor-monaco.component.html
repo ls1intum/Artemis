@@ -170,7 +170,7 @@
                                                     "
                                                     type="button"
                                                 >
-                                                    {{ unit.name }}le
+                                                    {{ unit.name }}
                                                 </button>
                                                 @for (slide of unit.slides; track slide.id; let index = $index) {
                                                     <button
@@ -183,7 +183,6 @@
                                                                 slide,
                                                                 attachmentUnit: unit,
                                                                 slideIndex: index + 1,
-                                                                slideId: slide.id,
                                                             })
                                                         "
                                                         type="button"

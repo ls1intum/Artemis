@@ -552,16 +552,16 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideId} : Get the lecture unit attachment slide by slide id
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
-     * @param slideId          the slideId of the file
+     * @param slideNumber      the slideNumber of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideId}")
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideId) {
-        log.debug("REST request to get the slide : {}", slideId);
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
+        log.debug("REST request to get the slide : {}", slideNumber);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         Attachment attachment = attachmentUnit.getAttachment();
@@ -569,7 +569,43 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = slideRepository.findByAttachmentUnitIdAndId(attachmentUnitId, slideId);
+        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+
+        if (slide.getHidden() != null) {
+            throw new AccessForbiddenException("Slide is hidden");
+        }
+
+        String directoryPath = slide.getSlideImagePath();
+
+        // Use regular expression to match and extract the file name with ".png" format
+        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
+        Matcher matcher = pattern.matcher(directoryPath);
+
+        if (matcher.matches()) {
+            String fileName = matcher.group(1);
+            return buildFileResponse(
+                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
+                    true);
+        }
+        else {
+            throw new EntityNotFoundException("Slide", slideNumber);
+        }
+    }
+
+    /**
+     * GET files/slides/{slideId} : Get the lecture unit attachment slide by slide id
+     *
+     * @param slideId the id of the slide that wanted to be retrieved
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/slides/{slideId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
+        log.debug("REST request to get the slide : {}", slideId);
+
+        Slide slide = slideRepository.findById(slideId).orElseThrow(() -> new EntityNotFoundException("Slide", slideId));
+
+        AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
 
         if (slide.getHidden() != null) {
             throw new AccessForbiddenException("Slide is hidden");

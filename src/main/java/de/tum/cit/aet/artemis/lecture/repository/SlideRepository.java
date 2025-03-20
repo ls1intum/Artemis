@@ -22,7 +22,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, String> {
 
     Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
 
-    Slide findByAttachmentUnitIdAndId(Long attachmentUnitId, String id);
+    Slide findByAttachmentUnitIdAndId(Long attachmentUnit_id, Long id);
 
     /**
      * Find all slides that have a non-null hidden timestamp
