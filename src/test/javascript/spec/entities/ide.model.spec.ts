@@ -1,4 +1,4 @@
-import { Ide, ideEquals } from 'app/core/user/settings/ide-preferences/ide.model';
+import { Ide } from 'app/core/user/settings/ide-preferences/ide.model';
 
 describe('Ide Model Tests', () => {
     it('should create an Ide instance with the given name and deepLink', () => {

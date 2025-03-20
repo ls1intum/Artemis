@@ -20,7 +20,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { of } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;

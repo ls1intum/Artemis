@@ -36,7 +36,6 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 class MockRouterWithEvents {
     public url = 'courses';

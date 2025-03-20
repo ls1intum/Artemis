@@ -11,7 +11,7 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import { SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/core/notification/system-notification/system-notification.component';
+import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 describe('System Notification Component', () => {
