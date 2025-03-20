@@ -330,6 +330,18 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void participateInProgrammingExerciseAsStudentDueDatePassed() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        prepareMocksForProgrammingExercise(user.getLogin(), false);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void participateInProgrammingExerciseAsEditorDueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
