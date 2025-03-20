@@ -93,7 +93,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCodeReviewFeedbackService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -135,8 +134,6 @@ public class ParticipationResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private final UserRepository userRepository;
 
     private final AuditEventRepository auditEventRepository;
@@ -176,9 +173,8 @@ public class ParticipationResource {
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ParticipationAuthorizationCheckService participationAuthCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository,
-            GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
@@ -192,7 +188,6 @@ public class ParticipationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
