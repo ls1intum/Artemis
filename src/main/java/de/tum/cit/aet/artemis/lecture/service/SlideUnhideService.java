@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Instant;
 import java.util.Date;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 /**
  * Service that dynamically schedules tasks to unhide slides at their expiration time.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SCHEDULING)
 @Service
 public class SlideUnhideService implements ApplicationListener<ApplicationReadyEvent> {
 
