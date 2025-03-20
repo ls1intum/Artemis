@@ -1,5 +1,3 @@
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
@@ -14,6 +12,8 @@ import { NgbActiveModal, NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;

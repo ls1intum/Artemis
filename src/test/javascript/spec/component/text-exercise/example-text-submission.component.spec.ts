@@ -11,7 +11,6 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
@@ -37,6 +36,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;

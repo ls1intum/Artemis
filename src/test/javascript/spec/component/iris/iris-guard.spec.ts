@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { MockProvider } from 'ng-mocks';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('IrisGuard', () => {
     let guard: IrisGuard;

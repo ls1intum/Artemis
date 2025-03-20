@@ -1,9 +1,10 @@
 import { Exercise } from 'app/entities/exercise.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import * as Sentry from '@sentry/angular';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');
@@ -12,7 +13,6 @@ jest.mock('@sentry/angular', () => {
         captureException: jest.fn(),
     };
 });
-import * as Sentry from '@sentry/angular';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;

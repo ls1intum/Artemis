@@ -11,7 +11,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
-import 'jest-extended';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;

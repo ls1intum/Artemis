@@ -30,8 +30,8 @@ import { Attachment } from 'app/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/entities/faq.model';
-import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
+import { FileService } from 'app/shared/service/file.service';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;

@@ -1,15 +1,15 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AboutUsComponent } from 'app/core/about-us/about-us.component';
 import { ActivatedRoute } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { BehaviorSubject, of } from 'rxjs';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('AboutUsComponent', () => {
     let fixture: ComponentFixture<AboutUsComponent>;

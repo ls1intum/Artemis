@@ -2,9 +2,9 @@ import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('OrionValidatorService', () => {
     let orionVersionValidator: OrionVersionValidator;

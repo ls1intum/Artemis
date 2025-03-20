@@ -41,13 +41,13 @@ import { Lecture } from 'app/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Directive({
     selector: '[infinite-scroll]',

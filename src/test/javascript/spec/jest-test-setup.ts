@@ -3,9 +3,7 @@ import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
 import 'app/core/config/dayjs';
 import 'jest-canvas-mock';
-import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
-import { TextDecoder, TextEncoder } from 'util';
 import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
 
 /*
@@ -16,8 +14,6 @@ import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
  * on the document.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
-
 failOnConsole({
     shouldFailOnWarn: true,
     shouldFailOnLog: true,

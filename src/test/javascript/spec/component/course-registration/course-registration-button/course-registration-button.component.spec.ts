@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -6,9 +6,9 @@ import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { CourseRegistrationButtonComponent } from 'app/core/course/overview/course-registration/course-registration-button/course-registration-button.component';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseRegistrationButtonComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationButtonComponent>;
