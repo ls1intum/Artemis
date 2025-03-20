@@ -31,6 +31,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     imports: [
@@ -230,8 +231,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         }
                     }
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.exercise.startError');
+                error: (err: HttpErrorResponse) => {
+                    const responseCodesWithErrorKeySentByServer = [403];
+                    if (!responseCodesWithErrorKeySentByServer.includes(err.status)) {
+                        this.alertService.error('artemisApp.exercise.startError');
+                    }
                 },
             });
     }
