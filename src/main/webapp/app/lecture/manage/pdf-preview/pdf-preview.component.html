@@ -10,13 +10,30 @@
                         {{ attachmentUnit()!.id! }}: {{ attachmentUnit()!.name! }}
                     }
                 </h4>
-                @if (isPdfLoading()) {
-                    <div class="spinner-border ms-2" role="status">
-                        <span class="sr-only" jhiTranslate="loading"></span>
-                    </div>
-                }
             </div>
             <div class="d-flex-end text-end">
+                @if (attachmentUnit()) {
+                    @if (hiddenPages()!.size > 0) {
+                        <button
+                            (click)="toggleVisibility('show', selectedPages())"
+                            class="btn btn-success text-truncate"
+                            aria-label="Hide selected pages"
+                            [disabled]="isPdfLoading() || selectedPages().size === 0"
+                        >
+                            <fa-icon [icon]="faEye" />
+                            <span jhiTranslate="artemisApp.attachment.pdfPreview.showPageButton"></span>
+                        </button>
+                    }
+                    <button
+                        (click)="toggleVisibility('hide', selectedPages())"
+                        class="btn btn-primary text-truncate"
+                        aria-label="Hide selected pages"
+                        [disabled]="isPdfLoading() || selectedPages().size === 0"
+                    >
+                        <fa-icon [icon]="faEyeSlash" />
+                        <span jhiTranslate="artemisApp.attachment.pdfPreview.hidePageButton"></span>
+                    </button>
+                }
                 <button
                     type="button"
                     class="btn btn-danger"
@@ -32,54 +49,65 @@
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
-                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
+                <input type="file" #fileInput style="display: none" accept="application/pdf" (change)="mergePDF($event)" />
                 <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file" [disabled]="!currentPdfUrl() || isPdfLoading()">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
                 </button>
             </div>
         </div>
-        @if (currentPdfUrl()) {
+
+        @if (isPdfLoading()) {
+            <div class="empty-pdf-container">
+                <div class="loading-container">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only" jhiTranslate="loading"></span>
+                    </div>
+                </div>
+            </div>
+        } @else if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
                 [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
                 [hiddenPages]="hiddenPages()"
                 [isAttachmentUnit]="!!attachmentUnit()"
-                (isPdfLoading)="isPdfLoading.set($event)"
+                [updatedSelectedPages]="selectedPages()"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
                 (newHiddenPagesOutput)="hiddenPages.set($event)"
             />
         } @else {
-            <div class="empty-pdf-container"></div>
+            <div class="empty-pdf-container">
+                <fa-icon [icon]="faExclamationCircle" />
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.noPDFAvailable"></span>
+            </div>
         }
-        <div class="d-flex justify-content-between">
-            <div>
-                <a
-                    type="button"
-                    class="btn btn-secondary"
-                    [routerLink]="
-                        attachment()
-                            ? ['/course-management', course()!.id, 'lectures', attachment()!.lecture!.id, 'attachments']
-                            : ['/course-management', course()!.id, 'lectures', attachmentUnit()!.lecture!.id, 'unit-management']
-                    "
-                    [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faTimes" />
-                    <span jhiTranslate="entity.action.cancel"></span>
-                </a>
-            </div>
-            <div>
-                <button
-                    type="submit"
-                    (click)="updateAttachmentWithFile()"
-                    class="btn btn-primary"
-                    [disabled]="(isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged()"
-                >
+        <div class="d-flex justify-content-end">
+            <jhi-confirm-button
+                title="artemisApp.attachment.pdfPreview.cancelButton"
+                confirmationText="artemisApp.attachment.pdfPreview.cancelEditingQuestion"
+                confirmationTitle="artemisApp.attachment.pdfPreview.confirmCancelEditing"
+                [translateText]="true"
+                [icon]="faCancel"
+                [btnType]="ButtonType.SECONDARY"
+                (onConfirm)="navigateToCourseManagement()"
+                class="mx-1"
+            />
+            <button
+                type="submit"
+                (click)="updateAttachmentWithFile()"
+                class="btn btn-primary"
+                [disabled]="isSaving() || ((isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged())"
+            >
+                @if (isSaving()) {
+                    <div class="spinner-border spinner-border-sm me-1" role="status">
+                        <span class="visually-hidden" jhiTranslate="loading"></span>
+                    </div>
+                } @else {
                     <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate" />
-                    <span jhiTranslate="entity.action.save"></span>
-                </button>
-            </div>
+                }
+                <span jhiTranslate="entity.action.save"></span>
+            </button>
         </div>
     </div>
 </div>

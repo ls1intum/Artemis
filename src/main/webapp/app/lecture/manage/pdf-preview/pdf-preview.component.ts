@@ -10,7 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -23,18 +23,33 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { finalize } from 'rxjs/operators';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ButtonType } from 'app/shared/components/button.component';
+
+type VisibilityAction = 'hide' | 'show';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
     styleUrls: ['./pdf-preview.component.scss'],
-    imports: [PdfPreviewThumbnailGridComponent, ArtemisTranslatePipe, FontAwesomeModule, NgbTooltipModule, RouterModule, DeleteButtonDirective, TranslateDirective],
+    imports: [
+        PdfPreviewThumbnailGridComponent,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        NgbTooltipModule,
+        RouterModule,
+        DeleteButtonDirective,
+        TranslateDirective,
+        ConfirmAutofocusButtonComponent,
+    ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
+    protected readonly ButtonType = ButtonType;
 
     // Signals
     course = signal<Course | undefined>(undefined);
@@ -51,6 +66,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     initialHiddenPages = signal<Set<number>>(new Set());
     hiddenPages = signal<Set<number>>(new Set());
+    isSaving = signal<boolean>(false);
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -64,36 +80,54 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    protected readonly faCancel = faCancel;
+    protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly faFileImport = faFileImport;
+    protected readonly faEye = faEye;
+    protected readonly faEyeSlash = faEyeSlash;
     protected readonly faSave = faSave;
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
 
     ngOnInit() {
+        this.isPdfLoading.set(true);
         this.route.data.subscribe((data) => {
             this.course.set(data.course);
 
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
-                this.attachmentSub = this.attachmentService.getAttachmentFile(this.course()!.id!, this.attachment()!.id!).subscribe({
-                    next: (blob: Blob) => {
-                        this.currentPdfBlob.set(blob);
-                        this.currentPdfUrl.set(URL.createObjectURL(blob));
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
+                this.attachmentSub = this.attachmentService
+                    .getAttachmentFile(this.course()!.id!, this.attachment()!.id!)
+                    .pipe(finalize(() => this.isPdfLoading.set(false)))
+                    .subscribe({
+                        next: (blob: Blob) => {
+                            this.currentPdfBlob.set(blob);
+                            this.currentPdfUrl.set(URL.createObjectURL(blob));
+                        },
+                        error: (error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                        },
+                    });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
                 const hiddenPages: Set<number> = new Set(data.attachmentUnit.slides.filter((page: Slide) => page.hidden).map((page: Slide) => page.slideNumber));
                 this.initialHiddenPages.set(new Set(hiddenPages));
                 this.hiddenPages.set(new Set(hiddenPages));
-                this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
-                    next: (blob: Blob) => {
-                        this.currentPdfBlob.set(blob);
-                        this.currentPdfUrl.set(URL.createObjectURL(blob));
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
+
+                this.attachmentUnitSub = this.attachmentUnitService
+                    .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
+                    .pipe(finalize(() => this.isPdfLoading.set(false)))
+                    .subscribe({
+                        next: (blob: Blob) => {
+                            this.currentPdfBlob.set(blob);
+                            this.currentPdfUrl.set(URL.createObjectURL(blob));
+                        },
+                        error: (error: HttpErrorResponse) => {
+                            onError(this.alertService, error);
+                        },
+                    });
+            } else {
+                this.isPdfLoading.set(false);
             }
         });
     }
@@ -148,6 +182,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Updates the existing attachment file or creates a student version of the attachment with hidden files.
      */
     async updateAttachmentWithFile(): Promise<void> {
+        this.isSaving.set(true);
         const pdfFileName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
         const pdfFile = new File([this.currentPdfBlob()!], `${pdfFileName}.pdf`, { type: 'application/pdf' });
 
@@ -163,10 +198,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
                 next: () => {
+                    this.isSaving.set(false);
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+                    this.navigateToCourseManagement();
                 },
                 error: (error) => {
+                    this.isSaving.set(false);
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
@@ -189,10 +226,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                 next: () => {
+                    this.isSaving.set(false);
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.navigateToCourseManagement();
                 },
                 error: (error) => {
+                    this.isSaving.set(false);
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
@@ -207,7 +246,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         if (this.attachment()) {
             this.attachmentService.delete(this.attachment()!.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+                    this.navigateToCourseManagement();
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
@@ -217,7 +256,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } else if (this.attachmentUnit()) {
             this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture!.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.navigateToCourseManagement();
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
@@ -309,7 +348,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param event - The event containing the file input.
      */
     async mergePDF(event: Event): Promise<void> {
-        const file = (event.target as HTMLInputElement).files?.[0];
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0];
+
+        if (file!.type !== 'application/pdf') {
+            this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
+            input.value = '';
+            return;
+        }
 
         this.isPdfLoading.set(true);
         try {
@@ -335,6 +381,38 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } finally {
             this.isPdfLoading.set(false);
             this.fileInput()!.nativeElement.value = '';
+        }
+    }
+
+    /**
+     * Toggles visibility of selected pages
+     */
+    toggleVisibility(action: VisibilityAction, selectedPages: Set<number>): void {
+        this.hiddenPages.update((currentSet) => {
+            const updatedSet = new Set(currentSet);
+
+            selectedPages.forEach((page) => {
+                if (action === 'hide') {
+                    updatedSet.add(page);
+                } else {
+                    updatedSet.delete(page);
+                }
+            });
+
+            return updatedSet;
+        });
+
+        this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Navigates to the appropriate course management page based on context.
+     */
+    navigateToCourseManagement(): void {
+        if (this.attachment()) {
+            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+        } else {
+            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }
