@@ -126,7 +126,7 @@ public class SlideSplitterService {
 
             Map<Integer, Map<String, Object>> hiddenPagesData = Collections.emptyMap();
             if (hiddenPages != null) {
-                List<Map<String, Object>> hiddenPagesList = new ObjectMapper().readValue(hiddenPages, new TypeReference<List<Map<String, Object>>>() {
+                List<Map<String, Object>> hiddenPagesList = new ObjectMapper().readValue(hiddenPages, new TypeReference<>() {
                 });
                 hiddenPagesData = hiddenPagesList.stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> {
                     Map<String, Object> data = new HashMap<>();

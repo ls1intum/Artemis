@@ -2,10 +2,10 @@ import { Component, OnInit, computed, inject, input, output, signal } from '@ang
 import { RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
-import { HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { HiddenPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

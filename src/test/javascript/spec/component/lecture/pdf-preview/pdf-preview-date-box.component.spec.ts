@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('PdfPreviewDateBoxComponent', () => {
     let component: PdfPreviewDateBoxComponent;
