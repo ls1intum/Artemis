@@ -27,7 +27,7 @@ interface LectureAttachmentReferenceActionArgs {
     slide?: Slide;
     attachment?: Attachment;
     slideIndex?: number;
-    slideId?: string;
+    slideId?: number;
 }
 
 /**
@@ -138,7 +138,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number, slideId: string): void {
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number, slideId: number): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Extract just the first part of the path up to /slide/
         const shortLinkWithoutFileName = shortLink?.match(/attachment-unit\/\d+\/slide\//)?.[0];
