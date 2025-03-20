@@ -30,7 +30,7 @@ import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { mockThemeSwitcherComponentViewChildren } from '../../helpers/mocks/mock-instance.helper';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
-import { EntityTitleService } from 'app/core/navbar/entity-title.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';

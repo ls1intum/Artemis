@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { ScienceSettingsComponent } from 'app/core/user/settings/science-settings/science-settings.component';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
-import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
+import { ScienceSetting, scienceSettingsStructure } from 'app/core/user/settings/science-settings/science-settings-structure';
 
 describe('ScienceSettingsComponent', () => {
     let comp: ScienceSettingsComponent;

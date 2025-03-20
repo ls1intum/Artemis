@@ -17,8 +17,9 @@ import { UsersImportDialogComponent } from 'app/shared/user-import/users-import-
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
-import { test } from '../../../../../../playwright/support/fixtures';
 
 describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;

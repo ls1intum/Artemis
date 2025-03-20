@@ -11,6 +11,7 @@ import { ScienceSetting } from 'app/core/user/settings/science-settings/science-
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { Setting } from 'app/core/user/settings/user-settings.model';
 
 const scienceSetting: ScienceSetting = {
     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,

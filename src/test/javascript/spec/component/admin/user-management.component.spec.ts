@@ -29,6 +29,7 @@ import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;

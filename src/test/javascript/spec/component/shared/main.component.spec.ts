@@ -15,6 +15,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 
 // Mock the initialize method
 class MockThemeService {

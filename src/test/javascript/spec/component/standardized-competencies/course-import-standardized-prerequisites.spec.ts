@@ -20,6 +20,8 @@ import { CourseImportStandardizedPrerequisitesComponent } from 'app/atlas/manage
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('CourseImportStandardizedPrerequisitesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedPrerequisitesComponent>;

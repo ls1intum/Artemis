@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
+import { Column } from 'app/shared/import/import.component';
 
 describe('ImportTableComponent', () => {
     let component: ImportTableComponent<Course>;

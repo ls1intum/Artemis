@@ -26,12 +26,11 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ActivatedRoute } from '@angular/router';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
+import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
 import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
 import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
-import { test } from '../../../../../playwright/support/fixtures';
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
