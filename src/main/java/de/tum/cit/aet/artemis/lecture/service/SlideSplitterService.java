@@ -167,7 +167,7 @@ public class SlideSplitterService {
             List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
             });
 
-            hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> (String) page.get("slideId"), page -> {
+            hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
                 Map<String, Object> data = new HashMap<>();
                 String dateStr = (String) page.get("date");
                 data.put("date", Timestamp.from(Instant.parse(dateStr)));
@@ -179,13 +179,13 @@ public class SlideSplitterService {
             }));
 
             List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
-            Map<Long, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(Slide::getId, slide -> slide));
+            Map<String, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), slide -> slide));
 
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
 
             for (Map<String, Object> page : pageOrderList) {
-                Long slideId = (Long) page.get("slideId");
+                String slideId = String.valueOf(page.get("slideId"));
                 int order = ((Number) page.get("order")).intValue();
                 int pageIndex = ((Number) page.get("pageIndex")).intValue();
 
@@ -247,12 +247,11 @@ public class SlideSplitterService {
             }
 
             // Clean up slides that are no longer in the page order
-            Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> (String) page.get("slideId")).filter(id -> !id.startsWith("temp_"))
-
+            Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_"))
                     .collect(Collectors.toSet());
 
             if (!slideIdsInPageOrder.isEmpty()) {
-                List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(slide.getId())).toList();
+                List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
 
                 if (!slidesToRemove.isEmpty()) {
                     slideRepository.deleteAll(slidesToRemove);
