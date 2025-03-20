@@ -429,9 +429,10 @@ public class NotificationSettingsService {
             return userNotificationSettings;
         }
 
-        // Merge user settings with default settings
         Map<String, NotificationSetting> settingsMap = userNotificationSettings.stream().collect(Collectors.toMap(NotificationSetting::getSettingId, setting -> setting));
 
+        // defaultSettings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
+        //
         // Merge user-specific settings with default settings:
         // - If the user already has a setting with the same ID, use the user’s version.
         // - If the user doesn’t have a specific setting, fall back to the default version.
