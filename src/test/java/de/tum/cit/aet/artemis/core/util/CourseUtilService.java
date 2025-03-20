@@ -195,7 +195,7 @@ public class CourseUtilService {
     private GradingScaleUtilService gradingScaleUtilService;
 
     /**
-     * Creates and saves a course with a new id (automatically generated).
+     * Creates and saves a course (`id` is automatically generated).
      *
      * @return The created course.
      */
