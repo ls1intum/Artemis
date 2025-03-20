@@ -11,7 +11,7 @@ import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_ATLAS, PROFILE_LTI } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';

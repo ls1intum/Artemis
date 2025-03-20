@@ -6,7 +6,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { LocalStorageService } from 'ngx-webstorage';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
 
 export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';

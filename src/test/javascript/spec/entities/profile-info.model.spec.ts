@@ -1,4 +1,4 @@
-import { ProfileInfo, hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo, hasEditableBuildPlan } from 'app/core/layouts/profiles/shared/profile-info.model';
 
 describe('Profile Info', () => {
     describe('has editable build plan', () => {

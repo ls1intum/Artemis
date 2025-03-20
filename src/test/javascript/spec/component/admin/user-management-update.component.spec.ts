@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subject, of } from 'rxjs';
 import { UserManagementUpdateComponent } from 'app/core/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';

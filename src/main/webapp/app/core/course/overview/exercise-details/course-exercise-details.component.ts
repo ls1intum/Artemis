@@ -9,7 +9,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/core/guided-tour/tours/course-exercise-detail-tour';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

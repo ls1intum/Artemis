@@ -9,7 +9,7 @@ import { MissingResultInformation, evaluateTemplateStatus } from 'app/exercise/r
 import { FeedbackComponentPreparedParams, prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Result } from 'app/entities/result.model';
 import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { Router } from '@angular/router';

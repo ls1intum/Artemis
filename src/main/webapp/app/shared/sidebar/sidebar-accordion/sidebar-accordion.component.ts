@@ -6,7 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
 import { SidebarCardDirective } from '../sidebar-card.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 
 @Component({

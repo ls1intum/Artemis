@@ -23,7 +23,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ActivatedRoute } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('AssessmentHeaderComponent', () => {

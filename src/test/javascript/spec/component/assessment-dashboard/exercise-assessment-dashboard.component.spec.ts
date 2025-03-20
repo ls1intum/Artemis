@@ -63,7 +63,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
 

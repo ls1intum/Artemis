@@ -40,7 +40,7 @@ import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

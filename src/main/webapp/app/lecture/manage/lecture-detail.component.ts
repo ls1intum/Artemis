@@ -4,7 +4,7 @@ import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/f
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Lecture } from 'app/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';

@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';

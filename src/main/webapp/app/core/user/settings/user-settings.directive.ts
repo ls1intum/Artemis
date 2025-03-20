@@ -2,9 +2,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Directive, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { Setting, UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
 
 /**
  * Is used as the abstract user-settings "parent" with all the necessary basic logic for other "child" components to implement/inherit from.

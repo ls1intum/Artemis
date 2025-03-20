@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { isOrion } from 'app/shared/orion/orion';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Router } from '@angular/router';
 import { filter, first, map } from 'rxjs/operators';
 import { compare } from 'compare-versions';
 import { Observable, of } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 
 @Injectable({
     providedIn: 'root',

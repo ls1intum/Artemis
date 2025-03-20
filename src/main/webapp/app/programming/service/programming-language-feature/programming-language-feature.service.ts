@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
  * ProgrammingLanguageFeature, defined on the server, allows to customize the user interface during programming exercise generation

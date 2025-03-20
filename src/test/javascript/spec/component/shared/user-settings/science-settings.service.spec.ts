@@ -9,8 +9,8 @@ import { ScienceSetting } from 'app/shared/user-settings/science-settings/scienc
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile-info.model';
 import { PROFILE_ATLAS } from '../../../../../../main/webapp/app/app.constants';
 
 const scienceSetting: ScienceSetting = {

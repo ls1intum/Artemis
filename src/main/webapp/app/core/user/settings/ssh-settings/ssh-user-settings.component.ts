@@ -7,7 +7,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationLinkComponent } from '../../components/documentation-link/documentation-link.component';
 import { RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';

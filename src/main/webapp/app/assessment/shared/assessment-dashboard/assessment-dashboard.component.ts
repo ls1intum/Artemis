@@ -26,7 +26,6 @@ import { FormsModule } from '@angular/forms';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SecondCorrectionEnableButtonComponent } from 'app/exercise/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
@@ -37,6 +36,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 
 @Component({
     selector: 'jhi-assessment-dashboard',

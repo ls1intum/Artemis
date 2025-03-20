@@ -1,16 +1,16 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
-import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
-import { HasAnyAuthorityDirective } from '../../auth/has-any-authority.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { UserSettingsDirective } from 'app/core/user/settings/user-settings.directive';
+import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
+import { UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
+import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
 
 @Component({
     selector: 'jhi-science-settings',

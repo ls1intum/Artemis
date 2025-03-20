@@ -18,7 +18,7 @@ import { MetisService } from 'app/communication/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import {
     ConversationDetailDialogComponent,

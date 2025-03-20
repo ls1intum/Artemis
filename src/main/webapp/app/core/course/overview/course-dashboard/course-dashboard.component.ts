@@ -14,7 +14,7 @@ import { ExercisePerformance } from 'app/core/course/overview/course-dashboard/c
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';

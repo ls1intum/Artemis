@@ -3,7 +3,7 @@ import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

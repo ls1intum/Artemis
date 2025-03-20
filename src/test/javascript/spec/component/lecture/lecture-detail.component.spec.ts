@@ -17,9 +17,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 const mockLecture = {

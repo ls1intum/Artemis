@@ -25,7 +25,7 @@ import {
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';

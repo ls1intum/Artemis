@@ -20,7 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditTextUnitComponent', () => {

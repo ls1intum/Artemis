@@ -8,7 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
@@ -48,24 +48,24 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { NotificationSidebarComponent } from '../../notification/notification-sidebar/notification-sidebar.component';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActiveMenuDirective } from './active-menu.directive';
-import { JhiConnectionWarningComponent } from '../../connection-warning/connection-warning.component';
-import { LoadingNotificationComponent } from '../../notification/loading-notification/loading-notification.component';
-import { SystemNotificationComponent } from '../../notification/system-notification/system-notification.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
+import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 @Component({
     selector: 'jhi-navbar',

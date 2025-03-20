@@ -6,9 +6,9 @@ import { GradingSystemService } from 'app/assessment/manage/grading-system/gradi
 import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { GraphColors } from 'app/entities/statistics.model';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from '../../components/help-icon.component';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface NgxClickEvent {
     name: string;

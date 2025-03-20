@@ -22,7 +22,7 @@ import { RepositoryType } from '../../../../../main/webapp/app/programming/share
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExercise Management Component', () => {

@@ -8,8 +8,8 @@ import { ExerciseActionButtonComponent } from '../exercise-action-button.compone
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { RouterLink } from '@angular/router';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../language/translate.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-open-code-editor-button',

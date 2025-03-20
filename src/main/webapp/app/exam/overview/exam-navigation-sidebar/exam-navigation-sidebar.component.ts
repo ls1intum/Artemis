@@ -2,7 +2,7 @@ import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';

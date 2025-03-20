@@ -5,7 +5,7 @@ import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text/
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Location } from '@angular/common';
 import { captureException } from '@sentry/angular';
 

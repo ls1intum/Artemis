@@ -1,14 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 
-import { ProfileInfo } from './profile-info.model';
+import { ProfileInfo } from '../profile-info.model';
 import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { extend, reduce } from 'lodash-es';
-import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {

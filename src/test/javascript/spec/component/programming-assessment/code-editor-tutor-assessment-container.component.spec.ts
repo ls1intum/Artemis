@@ -42,7 +42,7 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';

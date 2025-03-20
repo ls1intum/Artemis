@@ -19,7 +19,7 @@ import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';

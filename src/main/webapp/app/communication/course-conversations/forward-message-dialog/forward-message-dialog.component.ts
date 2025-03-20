@@ -19,11 +19,11 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content.components';
 import { MetisService } from 'app/communication/metis.service';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 interface CombinedOption {
     id: number;

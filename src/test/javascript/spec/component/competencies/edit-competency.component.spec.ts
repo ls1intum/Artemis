@@ -16,7 +16,7 @@ import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/compe
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
-import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('EditCompetencyComponent', () => {

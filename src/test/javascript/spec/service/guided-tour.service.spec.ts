@@ -20,8 +20,8 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';

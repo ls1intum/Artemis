@@ -70,7 +70,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ProfileService } from 'app/core/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 export interface ExampleSubmissionQueryParams {

@@ -16,7 +16,7 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import {
     faBook,

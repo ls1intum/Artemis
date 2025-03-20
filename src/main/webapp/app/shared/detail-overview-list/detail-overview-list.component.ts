@@ -23,7 +23,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from '../..
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
-import { ProfileService } from 'app/core/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export interface DetailOverviewSection {
     headline: string;

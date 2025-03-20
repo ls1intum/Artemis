@@ -18,7 +18,7 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
 

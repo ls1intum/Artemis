@@ -26,7 +26,6 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -42,6 +41,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 
 @Component({
     selector: 'jhi-course-competencies-details',

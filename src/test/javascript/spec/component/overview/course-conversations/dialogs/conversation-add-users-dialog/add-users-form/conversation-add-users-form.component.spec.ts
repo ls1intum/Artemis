@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/cor
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChatDTO } from '../../../../../../../../../main/webapp/app/entities/metis/conversation/group-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';

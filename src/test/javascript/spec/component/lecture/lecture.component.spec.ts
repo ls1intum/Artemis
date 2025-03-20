@@ -22,8 +22,8 @@ import { LectureImportComponent } from 'app/lecture/manage/lecture-import.compon
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

@@ -10,7 +10,7 @@ import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from '../../image/secured-image.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

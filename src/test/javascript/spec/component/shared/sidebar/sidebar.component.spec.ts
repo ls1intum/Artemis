@@ -23,7 +23,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('SidebarComponent', () => {

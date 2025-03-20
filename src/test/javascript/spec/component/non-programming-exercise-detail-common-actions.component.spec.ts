@@ -21,7 +21,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockActivatedRoute } from '../helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

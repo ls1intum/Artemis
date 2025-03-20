@@ -37,7 +37,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';

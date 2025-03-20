@@ -15,7 +15,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { SubmissionProcessingDTO } from 'app/entities/programming/submission-processing-dto';
 import dayjs from 'dayjs/esm';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 export enum ProgrammingSubmissionState {

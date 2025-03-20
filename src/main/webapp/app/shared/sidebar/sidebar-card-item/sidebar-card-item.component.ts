@@ -3,7 +3,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { NgClass } from '@angular/common';
 import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';

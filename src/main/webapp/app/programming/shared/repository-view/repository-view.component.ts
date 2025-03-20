@@ -15,7 +15,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

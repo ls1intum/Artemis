@@ -30,7 +30,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';

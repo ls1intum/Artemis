@@ -33,7 +33,7 @@ import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/fr
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';

@@ -23,9 +23,9 @@ import { CourseStorageService } from 'app/core/course/manage/course-storage.serv
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
 import { provideHttpClient } from '@angular/common/http';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

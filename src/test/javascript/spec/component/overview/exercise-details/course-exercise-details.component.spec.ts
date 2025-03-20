@@ -26,8 +26,8 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/participat
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

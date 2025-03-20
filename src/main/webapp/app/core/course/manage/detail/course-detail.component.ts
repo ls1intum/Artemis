@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';

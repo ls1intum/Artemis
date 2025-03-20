@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

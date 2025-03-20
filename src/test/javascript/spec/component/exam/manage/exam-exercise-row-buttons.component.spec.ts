@@ -12,7 +12,7 @@ import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

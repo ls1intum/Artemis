@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { areManualResultsAllowed } from 'app/exercise/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

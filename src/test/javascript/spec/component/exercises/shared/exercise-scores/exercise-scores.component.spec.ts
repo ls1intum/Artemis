@@ -17,7 +17,7 @@ import { ExerciseScoresComponent, FilterProp } from 'app/exercise/exercise-score
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { Subscription, of } from 'rxjs';

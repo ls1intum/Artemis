@@ -15,7 +15,7 @@ import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';

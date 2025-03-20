@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { TranslateDirective } from '../../language/translate.directive';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-footer',

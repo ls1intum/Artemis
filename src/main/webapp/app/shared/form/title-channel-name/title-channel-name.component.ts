@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild, computed
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
 import { HelpIconComponent } from '../../components/help-icon.component';
 

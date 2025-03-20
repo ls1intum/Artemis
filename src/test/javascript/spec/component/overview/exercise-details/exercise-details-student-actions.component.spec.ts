@@ -20,8 +20,8 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';

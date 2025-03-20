@@ -18,7 +18,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseManagementCardComponent', () => {

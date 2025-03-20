@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';

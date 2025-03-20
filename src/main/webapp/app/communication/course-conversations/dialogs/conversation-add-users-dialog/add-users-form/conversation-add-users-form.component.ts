@@ -5,9 +5,9 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];

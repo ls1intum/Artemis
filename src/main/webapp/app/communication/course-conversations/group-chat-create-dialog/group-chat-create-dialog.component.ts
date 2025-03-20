@@ -3,8 +3,8 @@ import { Course } from 'app/entities/course.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 
 @Component({
     selector: 'jhi-group-chat-create-dialog',

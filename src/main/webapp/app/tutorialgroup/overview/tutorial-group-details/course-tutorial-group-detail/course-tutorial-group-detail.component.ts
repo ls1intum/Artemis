@@ -7,7 +7,7 @@ import { BehaviorSubject, Subscription, catchError, combineLatest, forkJoin, swi
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AsyncPipe, NgClass } from '@angular/common';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';

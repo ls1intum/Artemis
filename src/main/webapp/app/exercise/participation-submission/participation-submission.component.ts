@@ -14,7 +14,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Result } from 'app/entities/result.model';

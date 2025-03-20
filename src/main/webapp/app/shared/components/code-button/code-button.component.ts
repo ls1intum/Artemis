@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -14,9 +14,6 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
-import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
-import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
-import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
@@ -25,11 +22,14 @@ import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router, RouterLink } from '@angular/router';
 import { HelpIconComponent } from '../help-icon.component';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
+import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';
+import { Ide } from 'app/core/user/settings/ide-preferences/ide.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',

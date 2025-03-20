@@ -15,9 +15,9 @@ import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS } from '../../../../../main/webapp/app/app.constants';
-import { ProfileInfo } from '../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('CompetencySelection', () => {

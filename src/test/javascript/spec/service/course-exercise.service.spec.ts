@@ -16,9 +16,9 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { of } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
 

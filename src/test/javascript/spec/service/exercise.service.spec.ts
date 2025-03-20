@@ -23,7 +23,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Observable } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { EntityTitleService } from 'app/shared/layouts/navbar/entity-title.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Service', () => {

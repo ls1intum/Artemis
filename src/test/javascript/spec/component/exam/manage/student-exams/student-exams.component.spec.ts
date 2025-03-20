@@ -25,7 +25,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('StudentExamsComponent', () => {

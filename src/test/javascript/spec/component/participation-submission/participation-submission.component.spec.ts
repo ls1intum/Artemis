@@ -28,8 +28,8 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
