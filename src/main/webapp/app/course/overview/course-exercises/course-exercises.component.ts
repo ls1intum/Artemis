@@ -14,8 +14,8 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { forkJoin } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+//import { forkJoin } from 'rxjs';
+//import { HttpResponse } from '@angular/common/http';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -145,8 +145,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
+        /*
+    }
         let exercises: Exercise[] = [];
-
         if (this.isMultiLaunch && this.multiLaunchExerciseIDs.length > 0) {
             const exerciseObservables = this.multiLaunchExerciseIDs.map((id) => this.exerciseService.find(id));
 
@@ -160,11 +161,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 },
             });
         } else {
-            if (!this.course?.exercises) {
-                return;
-            }
-            this.processExercises(this.course.exercises);
+
+         */
+        if (!this.course?.exercises) {
+            return;
         }
+        this.processExercises(this.course.exercises);
+        //}
     }
 
     processExercises(exercises: Exercise[]): void {
