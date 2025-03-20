@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,6 +75,7 @@ public class LtiDeepLinkingService {
 
         List<LtiContentItem> contentItems = switch (type) {
             case EXERCISE -> populateExerciseContentItems(String.valueOf(courseId), unitIds);
+            case GROUPED_EXERCISE -> List.of(populateGroupedExerciseContentItem(String.valueOf(courseId), unitIds));
             case LECTURE -> populateLectureContentItems(String.valueOf(courseId), unitIds);
             case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
             case IRIS -> populateIrisContentItems(String.valueOf(courseId));
@@ -112,6 +114,11 @@ public class LtiDeepLinkingService {
     private List<LtiContentItem> populateExerciseContentItems(String courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.EXERCISE);
         return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).toList();
+    }
+
+    private LtiContentItem populateGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
+        validateUnitIds(exerciseIds, DeepLinkingType.GROUPED_EXERCISE);
+        return setGroupedExerciseContentItem(courseId, exerciseIds);
     }
 
     /**
@@ -171,6 +178,20 @@ public class LtiDeepLinkingService {
                 .orElseThrow(() -> new BadRequestAlertException("Exercise not found.", "LTI", "exerciseNotFound"));
     }
 
+    private LtiContentItem setGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
+        List<Exercise> exercises = new ArrayList<>();
+
+        for (Long exerciseId : exerciseIds) {
+            Optional<Exercise> exerciseOpt = exerciseRepository.findById(exerciseId);
+            exerciseOpt.ifPresent(exercises::add);
+        }
+        if (exercises.isEmpty()) {
+            throw new BadRequestAlertException("No exercises found.", "LTI", "exercisesNotFound");
+        }
+        String launchUrl = buildContentUrl(courseId, "groupedExercises", exercises.stream().map(Exercise::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        return createGroupedExerciseContentItem(exercises, launchUrl);
+    }
+
     /**
      * Set a content item for a lecture.
      */
@@ -186,6 +207,13 @@ public class LtiDeepLinkingService {
     LtiContentItem createExerciseContentItem(Exercise exercise, String url) {
         LineItem lineItem = exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED ? new LineItem(DEFAULT_SCORE_MAXIMUM) : null;
         return new LtiContentItem("ltiResourceLink", exercise.getTitle(), url, lineItem);
+    }
+
+    LtiContentItem createGroupedExerciseContentItem(List<Exercise> exercises, String url) {
+        LineItem lineItem = exercises.stream().anyMatch(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED)
+                ? new LineItem(DEFAULT_SCORE_MAXIMUM)
+                : null;
+        return new LtiContentItem("ltiResourceLink", "Grouped Exercises", url, lineItem);
     }
 
     /**
@@ -215,23 +243,14 @@ public class LtiDeepLinkingService {
      * Build a content URL for deep linking.
      */
     String buildContentUrl(String courseId, String resourceType, String resourceId) {
-        // return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
         String baseUrl = String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
 
-        if ("exercise".equals(resourceType)) {
+        if ("groupedExercises".equals(resourceType)) {
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl)
-                //TODO remove hardcoded values
-                .queryParam("isMultiLaunch", true);
+                    // TODO remove hardcoded values
+                    .queryParam("isMultiLaunch", true);
 
-            /*
-            if (exerciseIDs != null && !exerciseIDs.isEmpty()) {
-                String exerciseIDsParam = exerciseIDs.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(","));
-                uriBuilder.queryParam("exerciseIDs", exerciseIDsParam);
-            }
-             */
-            uriBuilder.queryParam("exerciseIDs", "995,1010");
+            uriBuilder.queryParam("exerciseIDs", resourceId);
 
             return uriBuilder.toUriString();
         }
