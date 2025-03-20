@@ -14,7 +14,6 @@ import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -37,6 +36,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;

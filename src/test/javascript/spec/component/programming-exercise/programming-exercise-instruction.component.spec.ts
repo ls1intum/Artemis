@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -6,7 +6,7 @@ import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/t
 import { DebugElement, VERSION } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import dayjs from 'dayjs/esm';
-import { Subscription, of, throwError } from 'rxjs';
+import { of, Subscription, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import {
@@ -39,7 +39,6 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import 'jest-extended';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 

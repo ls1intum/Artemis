@@ -10,9 +10,9 @@ import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
-import { CourseGroupComponent } from '../../../../../main/webapp/app/shared/course-group/course-group.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
 
 describe('Course Group Membership Component', () => {
     let comp: CourseGroupMembershipComponent;

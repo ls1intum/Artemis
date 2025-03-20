@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/plagiarism/manage/instructor-view/plagiarism-cases-instructor-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, RouterModule } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
@@ -12,7 +12,6 @@ import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
@@ -24,6 +23,7 @@ import { MockNotificationService } from '../../helpers/mocks/service/mock-notifi
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Component({ template: '' })
 class DummyComponent {}

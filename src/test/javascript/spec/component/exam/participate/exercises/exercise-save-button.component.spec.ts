@@ -7,9 +7,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
 import { Submission } from '../../../../../../../main/webapp/app/entities/submission.model';
-import { facSaveSuccess } from 'app/icons/icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { facSaveSuccess } from 'app/shared/icons/icons';
 
 describe('ExerciseSaveButtonComponent', () => {
     let component: ExerciseSaveButtonComponent;

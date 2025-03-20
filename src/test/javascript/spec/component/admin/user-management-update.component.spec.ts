@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { UserManagementUpdateComponent } from 'app/core/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -24,6 +23,7 @@ import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import * as Sentry from '@sentry/angular';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');

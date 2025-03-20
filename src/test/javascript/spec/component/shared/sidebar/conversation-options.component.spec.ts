@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -16,7 +16,6 @@ import { ConversationService } from 'app/communication/conversations/conversatio
 import { AlertService } from 'app/shared/service/alert.service';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
@@ -27,6 +26,7 @@ import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ConversationDetailDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),

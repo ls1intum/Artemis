@@ -1,17 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
-import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
-import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
-import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -22,20 +17,25 @@ import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '.
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { mockThemeSwitcherComponentViewChildren } from '../../helpers/mocks/mock-instance.helper';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { NavbarComponent } from 'app/core/navbar/navbar.component';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
+import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
+import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 
 class MockBreadcrumb {
     label: string;

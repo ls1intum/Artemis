@@ -13,7 +13,6 @@ import { Faq, FaqState } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { FaqCategory } from 'app/entities/faq-category.model';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -21,10 +20,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileInfo } from 'app/core/layouts/profiles/shared/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import 'jest-extended';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();

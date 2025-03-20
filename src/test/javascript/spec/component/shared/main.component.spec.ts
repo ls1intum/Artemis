@@ -9,13 +9,12 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { of } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
-import { PageRibbonComponent } from 'app/core/layouts/profiles/shared/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 
 // Mock the initialize method
 class MockThemeService {
