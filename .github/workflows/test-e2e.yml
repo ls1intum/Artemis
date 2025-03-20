@@ -111,6 +111,13 @@ jobs:
           if-no-files-found: error
           path: src/test/playwright/test-reports/*.xml
 
+      - name: Upload Client Test Coverage Report
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: E2E Client Coverage Report
+          path: src/test/playwright/test-reports/client-coverage
+
       - name: Run cleanup script (after E2E)
         run: .ci/E2E-tests/cleanup.sh
 
