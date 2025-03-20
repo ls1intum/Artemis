@@ -141,9 +141,13 @@ export function getExerciseDueDate(exercise: Exercise, participation?: Participa
  */
 export const isStartExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
     const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
-    const validDueDate = !isProgrammingExercise || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
 
-    return validDueDate && (!participation || (isProgrammingExercise && programmingSetupNotFinished(participation)));
+    const isBeforeDueDate = !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
+    if (!isProgrammingExercise) {
+        return isBeforeDueDate && !participation;
+    }
+
+    return isBeforeDueDate && (!participation || programmingSetupNotFinished(participation));
 };
 
 /**

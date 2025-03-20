@@ -129,7 +129,7 @@ describe('ExerciseUtils', () => {
         it.each([
             [{ dueDate: undefined } as Exercise, undefined, true],
             [{ dueDate: dayjs().add(1, 'hour') } as Exercise, undefined, true],
-            [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, undefined, true],
+            [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, undefined, false],
             [{ dueDate: undefined, type: ExerciseType.PROGRAMMING } as Exercise, undefined, true],
             [{ dueDate: dayjs().add(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, undefined, true],
             [{ dueDate: dayjs().subtract(1, 'hour'), type: ExerciseType.PROGRAMMING } as Exercise, undefined, false],
