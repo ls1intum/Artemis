@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { CourseGroupComponent, GroupUserInformationRow } from 'app/shared/course-group/course-group.component';
 import { CourseGroup } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';

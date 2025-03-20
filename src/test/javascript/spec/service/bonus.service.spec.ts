@@ -3,9 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { BonusService } from 'app/grading-system/bonus/bonus.service';
+import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { cloneDeep } from 'lodash-es';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';

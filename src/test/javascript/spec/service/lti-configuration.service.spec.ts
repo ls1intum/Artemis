@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
-import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
+import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 

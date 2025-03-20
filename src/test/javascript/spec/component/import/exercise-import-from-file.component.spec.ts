@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExerciseImportFromFileComponent } from 'app/exercises/shared/import/from-file/exercise-import-from-file.component';
+import { ExerciseImportFromFileComponent } from 'app/exercise/import/from-file/exercise-import-from-file.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';

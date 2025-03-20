@@ -9,7 +9,7 @@ import {
     OrphanCleanupCountDTO,
     PlagiarismComparisonCleanupCountDTO,
     SubmissionVersionsCleanupCountDTO,
-} from 'app/admin/cleanup-service/data-cleanup.service';
+} from 'app/core/admin/cleanup-service/data-cleanup.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('DataCleanupService', () => {

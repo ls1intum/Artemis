@@ -6,14 +6,14 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview-guard';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/overview/courses.route';
+import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/course/overview/courses.route';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;

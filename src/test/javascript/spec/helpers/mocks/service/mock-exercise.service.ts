@@ -1,7 +1,7 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise.model';
-import { EntityArrayResponseType, EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
+import { EntityArrayResponseType, EntityResponseType } from 'app/exercise/exercise.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
 
 export class MockExerciseService {

@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 export class ExamScoresPage {
     private readonly page: Page;
