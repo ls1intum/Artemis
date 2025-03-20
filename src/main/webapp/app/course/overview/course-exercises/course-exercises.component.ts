@@ -13,7 +13,9 @@ import { NgClass, NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/course-overview.service';
-import { ExerciseService} from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { forkJoin } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -96,7 +98,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
             this.isMultiLaunch = params['isMultiLaunch'] === 'true';
             if (params['exerciseIDs']) {
-                this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map(id => Number(id));
+                this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
         });
 
@@ -143,19 +145,29 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        let exercises: Exercise[];
+        let exercises: Exercise[] = [];
 
         if (this.isMultiLaunch && this.multiLaunchExerciseIDs.length > 0) {
-            const exerciseIDsAsNumbers = this.multiLaunchExerciseIDs.map(id => Number(id));
+            const exerciseObservables = this.multiLaunchExerciseIDs.map((id) => this.exerciseService.find(id));
 
-            exercises = this.exerciseService.find(exerciseIDsAsNumbers) || [];
+            forkJoin(exerciseObservables).subscribe({
+                next: (responses: HttpResponse<Exercise>[]) => {
+                    exercises = responses.map((response) => response.body!);
+                    this.processExercises(exercises);
+                },
+                error: (err) => {
+                    return;
+                },
+            });
         } else {
             if (!this.course?.exercises) {
                 return;
             }
-            exercises = this.course.exercises;
+            this.processExercises(this.course.exercises);
         }
+    }
 
+    processExercises(exercises: Exercise[]): void {
         this.sortedExercises = this.courseOverviewService.sortExercises(exercises);
         this.sidebarExercises = this.courseOverviewService.mapExercisesToSidebarCardElements(this.sortedExercises);
         this.accordionExerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
