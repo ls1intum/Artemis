@@ -18,11 +18,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface SlideRepository extends ArtemisJpaRepository<Slide, String> {
+public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
     Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
-
-    Slide findByAttachmentUnitIdAndId(Long attachmentUnitId, String id);
 
     List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
 
@@ -57,7 +55,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, String> {
      * @param slideId The ID of the slide to unhide
      */
     @Transactional
-    default void unhideSlide(String slideId) {
+    default void unhideSlide(Long slideId) {
         findById(slideId).ifPresent(slide -> {
             slide.setHidden(null);
             save(slide);

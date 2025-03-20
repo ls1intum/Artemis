@@ -179,32 +179,32 @@ public class SlideSplitterService {
             }));
 
             List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
-            Map<String, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(Slide::getId, slide -> slide));
+            Map<Long, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(Slide::getId, slide -> slide));
 
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
 
             for (Map<String, Object> page : pageOrderList) {
-                String slideId = (String) page.get("slideId");
+                Long slideId = (Long) page.get("slideId");
                 int order = ((Number) page.get("order")).intValue();
                 int pageIndex = ((Number) page.get("pageIndex")).intValue();
 
-                Slide slide;
+                Slide slideEntity;
                 boolean isNewSlide = false;
 
                 if (slideId.startsWith("temp_") || !existingSlidesMap.containsKey(slideId)) {
                     isNewSlide = true;
-                    slide = new Slide();
-                    slide.setAttachmentUnit(attachmentUnit);
+                    slideEntity = new Slide();
+                    slideEntity.setAttachmentUnit(attachmentUnit);
                 }
                 else {
-                    slide = existingSlidesMap.get(slideId);
+                    slideEntity = existingSlidesMap.get(slideId);
                 }
 
-                slide.setSlideNumber(order);
+                slideEntity.setSlideNumber(order);
 
                 Map<String, Object> hiddenData = hiddenPagesMap.get(slideId);
-                java.util.Date previousHiddenValue = slide.getHidden();
+                java.util.Date previousHiddenValue = slideEntity.getHidden();
 
                 if (hiddenData != null && hiddenData.containsKey("date")) {
                     slideEntity.setHidden((java.util.Date) hiddenData.get("date"));
@@ -233,7 +233,7 @@ public class SlideSplitterService {
                         Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                                 .resolve(String.valueOf(order)).resolve(filename));
 
-                        slide.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                        slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
                     }
                 }
 

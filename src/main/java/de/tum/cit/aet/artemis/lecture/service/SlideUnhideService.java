@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Instant;
 import java.util.Date;
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 /**
  * Service that dynamically schedules tasks to unhide slides at their expiration time.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_SCHEDULING)
 @Service
 public class SlideUnhideService implements ApplicationListener<ApplicationReadyEvent> {
 
@@ -36,7 +36,7 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
 
     private final AttachmentService attachmentService;
 
-    private final Map<String, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideService.class);
 
@@ -100,7 +100,7 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
      *
      * @param slideId The ID of the slide to unhide
      */
-    public void unhideSlide(String slideId) {
+    public void unhideSlide(Long slideId) {
         slideRepository.findById(slideId).ifPresent(slide -> {
             AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
             Attachment attachment = null;
@@ -129,7 +129,7 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
      *
      * @param slideId The ID of the slide whose task should be canceled
      */
-    public void cancelScheduledUnhiding(String slideId) {
+    public void cancelScheduledUnhiding(Long slideId) {
         ScheduledFuture<?> scheduledTask = scheduledTasks.get(slideId);
         if (scheduledTask != null) {
             scheduledTask.cancel(false);
