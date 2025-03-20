@@ -55,7 +55,7 @@ export const __VERSION__ = '${process.env.APP_VERSION || inferVersion()}';
 // (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
 export const I18N_HASH = '${languagesHash.hash}';
 `;
-fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'environments', 'environment.override.ts'), environmentConfig);
+fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'core', 'environments', 'environment.override.ts'), environmentConfig);
 
 
 // =====================

@@ -4,75 +4,14 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { BuildJob } from 'app/entities/programming/build-job.model';
-import dayjs from 'dayjs/esm';
 import { lastValueFrom } from 'rxjs';
-import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
-import { BuildAgentInformation } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';
-import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { JobTimingInfo } from 'app/entities/job-timing-info.model';
-import { BuildConfig } from 'app/entities/programming/build-config.model';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
+import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;
     let httpMock: HttpTestingController;
     let element: BuildAgentInformation;
-
-    const repositoryInfo: RepositoryInfo = {
-        repositoryName: 'repo2',
-        repositoryType: 'USER',
-        triggeredByPushTo: TriggeredByPushTo.USER,
-        assignmentRepositoryUri: 'https://some.uri',
-        testRepositoryUri: 'https://some.uri',
-        solutionRepositoryUri: 'https://some.uri',
-        auxiliaryRepositoryUris: [],
-        auxiliaryRepositoryCheckoutDirectories: [],
-    };
-
-    const jobTimingInfo: JobTimingInfo = {
-        submissionDate: dayjs('2023-01-01'),
-        buildStartDate: dayjs('2023-01-01'),
-    };
-
-    const buildConfig: BuildConfig = {
-        dockerImage: 'someImage',
-        commitHashToBuild: 'abc124',
-        branch: 'main',
-        programmingLanguage: 'Java',
-        projectType: 'Maven',
-        scaEnabled: false,
-        sequentialTestRunsEnabled: false,
-        resultPaths: [],
-    };
-
-    const mockRunningJobs: BuildJob[] = [
-        {
-            id: '2',
-            name: 'Build Job 2',
-            buildAgent: { name: 'agent2', memberAddress: 'localhost:8080', displayName: 'Agent 2' },
-            participationId: 102,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 3,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo,
-            buildConfig: buildConfig,
-        },
-        {
-            id: '4',
-            name: 'Build Job 4',
-            buildAgent: { name: 'agent4', memberAddress: 'localhost:8080', displayName: 'Agent 4' },
-            participationId: 104,
-            courseId: 10,
-            exerciseId: 100,
-            retryCount: 0,
-            priority: 2,
-            repositoryInfo: repositoryInfo,
-            jobTimingInfo: jobTimingInfo,
-            buildConfig: buildConfig,
-        },
-    ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -85,7 +24,6 @@ describe('BuildAgentsService', () => {
         element.buildAgent = { name: 'buildAgent1', memberAddress: 'localhost:8080', displayName: 'Build Agent 1' };
         element.maxNumberOfConcurrentBuildJobs = 3;
         element.numberOfCurrentBuildJobs = 1;
-        element.runningBuildJobs = mockRunningJobs;
     });
 
     it('should return build agents', () => {

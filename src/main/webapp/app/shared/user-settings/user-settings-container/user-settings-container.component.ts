@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
@@ -26,7 +26,7 @@ export class UserSettingsContainerComponent implements OnInit {
     faUser = faUser;
 
     currentUser?: User;
-    localVCEnabled = false;
+    localVCEnabled = true;
     isAtLeastTutor = false;
 
     ngOnInit() {
@@ -44,4 +44,6 @@ export class UserSettingsContainerComponent implements OnInit {
             )
             .subscribe();
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

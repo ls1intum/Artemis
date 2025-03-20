@@ -45,22 +45,26 @@
                     <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
                 </a>
             }
-            @if (atlasEnabled && course.isAtLeastInstructor) {
-                <a class="tab-link" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
-                    <fa-icon [icon]="faFlag" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton"></span>
-                </a>
+            @if (course.isAtLeastInstructor) {
+                <jhi-feature-overlay [enabled]="atlasEnabled">
+                    <a class="tab-link" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
+                        <fa-icon [icon]="faFlag" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton"></span>
+                    </a>
+                </jhi-feature-overlay>
             }
-            @if (atlasEnabled && course.isAtLeastInstructor) {
-                <a
-                    class="tab-link"
-                    [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
-                    [routerLink]="['/course-management', course.id, 'learning-path-management']"
-                    routerLinkActive="active"
-                >
-                    <fa-icon [icon]="faNetworkWired" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton"></span>
-                </a>
+            @if (course.isAtLeastInstructor) {
+                <jhi-feature-overlay [enabled]="atlasEnabled">
+                    <a
+                        class="tab-link"
+                        [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
+                        [routerLink]="['/course-management', course.id, 'learning-path-management']"
+                        routerLinkActive="active"
+                    >
+                        <fa-icon [icon]="faNetworkWired" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton"></span>
+                    </a>
+                </jhi-feature-overlay>
             }
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'assessment-dashboard']" routerLinkActive="active" [class.active]="shouldHighlightAssessmentLink()">
                 <fa-icon [icon]="faUserCheck" />

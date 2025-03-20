@@ -1,22 +1,24 @@
 import dayjs from 'dayjs/esm';
-import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
+import { EditOnlineUnitComponent } from 'app/lecture/manage/lecture-units/edit-online-unit/edit-online-unit.component';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { OnlineUnitFormComponent } from '../../../../../../main/webapp/app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditOnlineUnitComponent', () => {
     let editOnlineUnitComponentFixture: ComponentFixture<EditOnlineUnitComponent>;
@@ -59,6 +61,7 @@ describe('EditOnlineUnitComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

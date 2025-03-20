@@ -3,8 +3,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 
-import { PasswordComponent } from 'app/account/password/password.component';
-import { PasswordService } from 'app/account/password/password.service';
+import { PasswordComponent } from 'app/core/account/password/password.component';
+import { PasswordService } from 'app/core/account/password/password.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

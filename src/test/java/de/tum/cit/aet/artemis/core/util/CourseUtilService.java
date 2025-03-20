@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.util;
 
 import static de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory.generateResult;
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -16,6 +17,7 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestR
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -39,8 +42,8 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -92,6 +95,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  * Service responsible for initializing the database with specific testdata related to courses for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class CourseUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
@@ -149,7 +153,7 @@ public class CourseUtilService {
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private OrganizationUtilService organizationTestService;
@@ -243,6 +247,29 @@ public class CourseUtilService {
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
+        return courseRepo.save(course);
+    }
+
+    /**
+     * Creates and saves a course with a programming exercise, lecture, and competency with default values.
+     *
+     * @return The created course.
+     */
+    public Course createCourseWithExercisesAndLecturesAndCompetencies() {
+        Course course = createCourse();
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        course.addExercises(programmingExercise);
+
+        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        course.addLectures(lecture);
+
+        Competency competency = competencyUtilService.createCompetency(course);
+        course.setCompetencies(Set.of(competency));
+
+        lectureRepo.save(lecture);
+        exerciseRepository.save(programmingExercise);
+
         return courseRepo.save(course);
     }
 

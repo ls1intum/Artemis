@@ -2,11 +2,11 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
 import { faSmile } from '@fortawesome/free-solid-svg-icons';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ViewContainerRef } from '@angular/core';
-import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 import { Overlay, OverlayPositionBuilder, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 
 /**
  * Action to open the emoji picker and insert the selected emoji into the editor.
