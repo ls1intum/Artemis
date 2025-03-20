@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -251,8 +252,17 @@ public class ParticipationResource {
         Participant participant = user;
         if (exercise.isTeamMode()) {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
-                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
+                    .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
         }
+
+        ZonedDateTime exerciseDueDate = exercise.getDueDate();
+        boolean studentMightHaveIndividualWorkingTime = exercise.isExamExercise();
+        boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
+        if (!studentMightHaveIndividualWorkingTime && isDueDateInPast) {
+            String errorMessageKey = exercise instanceof ProgrammingExercise ? "dueDateOver.participationInPracticeMode" : "dueDateOver.noParticipationPossible";
+            throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME, errorMessageKey);
+        }
+
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
 
         if (exercise.isExamExercise() && exercise instanceof ProgrammingExercise) {
