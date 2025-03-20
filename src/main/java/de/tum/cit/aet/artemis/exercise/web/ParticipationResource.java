@@ -253,8 +253,8 @@ public class ParticipationResource {
         ZonedDateTime exerciseDueDate = exercise.getDueDate();
         boolean userMightHaveIndividualWorkingTime = exercise.isExamExercise();
         boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
-        boolean isEditorInProgrammingExercise = exercise instanceof ProgrammingExercise && authCheckService.isAtLeastEditorForExercise(exercise, user);
-        if (!isEditorInProgrammingExercise && !userMightHaveIndividualWorkingTime && isDueDateInPast) {
+        boolean isAtLeastEditorInProgrammingExercise = exercise instanceof ProgrammingExercise && authCheckService.isAtLeastEditorForExercise(exercise, user);
+        if (!isAtLeastEditorInProgrammingExercise && !userMightHaveIndividualWorkingTime && isDueDateInPast) {
             String errorMessageKey = exercise instanceof ProgrammingExercise ? "dueDateOver.participationInPracticeMode" : "dueDateOver.noParticipationPossible";
             throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME, errorMessageKey);
         }
