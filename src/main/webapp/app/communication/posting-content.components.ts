@@ -47,6 +47,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
 
     // Directory for attachments. If the endpoint of the file service changes, this needs to be adapted
     private readonly ATTACHMENT_DIR = 'api/core/files/attachments/';
+    private readonly SLIDE_DIR = 'api/core/files/slides/';
 
     // Icons
     faAngleUp = faAngleUp;
@@ -167,8 +168,16 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // Get the full path from within the parentheses
                     const fullPath = this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
 
-                    const attachmentUnitRefDir = this.ATTACHMENT_DIR;
-                    slideToReference = attachmentUnitRefDir + fullPath;
+                    // Two cases are created to handle both old and new version of the pattern
+                    if (fullPath.startsWith('#')) {
+                        // This is a slide ID reference
+                        const slideId = fullPath.substring(1);
+                        const slideRefDir = this.SLIDE_DIR;
+                        slideToReference = slideRefDir + slideId;
+                    } else {
+                        const attachmentUnitRefDir = this.ATTACHMENT_DIR;
+                        slideToReference = attachmentUnitRefDir + fullPath;
+                    }
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
