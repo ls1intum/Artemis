@@ -15,7 +15,6 @@ import { faChalkboardUser, faChartColumn, faGraduationCap, faListAlt } from '@fo
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/overview/course-sidebar/course-sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
@@ -46,8 +45,6 @@ describe('CourseSidebarComponent', () => {
             icon: faListAlt,
             title: 'Dashboard',
             translation: 'artemisApp.courseOverview.menu.dashboard',
-            hasInOrionProperty: false,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
             hidden: false,
         },
@@ -63,8 +60,6 @@ describe('CourseSidebarComponent', () => {
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             guidedTour: true,
             hidden: false,
         },
@@ -73,8 +68,6 @@ describe('CourseSidebarComponent', () => {
             icon: faChalkboardUser,
             title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         },
         {
@@ -83,8 +76,6 @@ describe('CourseSidebarComponent', () => {
             title: 'Exams',
             testId: 'exam-tab',
             translation: 'artemisApp.courseOverview.menu.exams',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         },
     ];
@@ -112,7 +103,6 @@ describe('CourseSidebarComponent', () => {
                 MockDirective(NgbDropdown),
                 MockDirective(TranslateDirective),
                 MockComponent(FaIconComponent),
-                MockDirective(OrionFilterDirective),
                 MockDirective(FeatureToggleHideDirective),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),

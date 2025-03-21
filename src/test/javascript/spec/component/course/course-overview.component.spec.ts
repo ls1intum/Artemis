@@ -17,7 +17,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { WebsocketService } from 'app/core/websocket/websocket.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -174,7 +173,6 @@ describe('CourseOverviewComponent', () => {
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockDirective(OrionFilterDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),

@@ -33,11 +33,7 @@
             <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
                 @for (sidebarItem of sidebarItems(); track sidebarItem) {
                     <li class="nav-item" [hidden]="sidebarItem.hidden">
-                        @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
-                            <ng-template *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
-                        } @else {
-                            <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
-                        }
+                        <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                     </li>
                 }
                 <li ngbDropdownToggle class="nav-item">
@@ -53,11 +49,7 @@
                 <div ngbDropdownMenu class="dropdown-content" [ngClass]="{ fixedContentSize: hiddenItems().length >= 4 }">
                     @for (hiddenItem of hiddenItems(); track hiddenItem) {
                         <li class="nav-item">
-                            @if (hiddenItem.hasInOrionProperty && hiddenItem.showInOrionWindow !== undefined) {
-                                <ng-template *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
-                            } @else {
-                                <ng-template *ngTemplateOutlet="navItem; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
-                            }
+                            <ng-template *ngTemplateOutlet="navItem; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
                         </li>
                     }
                     @if (courseActionItems()?.length && anyItemHidden()) {
@@ -139,27 +131,6 @@
         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
         <span [jhiTranslate]="sidebarItem.translation"></span>
     }
-</ng-template>
-
-<ng-template #navItemOrionFilter let-sidebarItem let-iconTextTemplate="iconTextTemplate">
-    <a
-        class="nav-link nav-link-sidebar px-3 py-2"
-        [id]="sidebarItem.testId ?? ''"
-        [ngClass]="{
-            'guided-tour': sidebarItem.guidedTour,
-            newMessage: hasUnreadMessages() && sidebarItem.title === 'Communication',
-            collapsed: isNavbarCollapsed(),
-        }"
-        jhiOrionFilter
-        [showInOrionWindow]="sidebarItem.showInOrionWindow"
-        [routerLink]="sidebarItem.routerLink"
-        routerLinkActive="active"
-        [jhiFeatureToggleHide]="sidebarItem.featureToggle"
-        [title]="sidebarItem.title"
-        (click)="itemsDrop?.close()"
-    >
-        <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
-    </a>
 </ng-template>
 
 <ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">

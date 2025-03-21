@@ -2,14 +2,12 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
+import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/tutorial-group-management-resolve.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { LocalCIGuard } from 'app/localci/localci-guard.service';
-import { IrisGuard } from 'app/iris/iris-guard.service';
-import { FaqResolve } from 'app/faq/faq-resolve.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { isOrion } from 'app/shared/orion/orion';
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/assessment/orion-exercise-assessment-dashboard.component';
+import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
+import { IrisGuard } from 'app/iris/shared/iris-guard.service';
+import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
+import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 
 export const courseManagementState: Routes = [
     {
@@ -79,7 +77,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: 'assessment-dashboard/:exerciseId',
-                loadComponent: () => (isOrion ? OrionExerciseAssessmentDashboardComponent : ExerciseAssessmentDashboardComponent),
+                loadComponent: () => ExerciseAssessmentDashboardComponent,
                 data: {
                     authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
                     pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -180,7 +178,7 @@ export const courseManagementState: Routes = [
                 children: [
                     {
                         path: 'exercises',
-                        loadComponent: () => import('app/orion/management/orion-course-management-exercises.component').then((m) => m.OrionCourseManagementExercisesComponent),
+                        loadComponent: () => import('app/course/manage/course-management-exercises.component').then((m) => m.CourseManagementExercisesComponent),
                         data: {
                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.course.exercises',
