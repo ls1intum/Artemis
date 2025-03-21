@@ -1,8 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Optional;
 
@@ -14,7 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-public class BuildJobGitServiceTest {
+class BuildJobGitServiceTest {
 
     @InjectMocks
     private BuildJobGitService buildJobGitService;
@@ -27,30 +26,30 @@ public class BuildJobGitServiceTest {
     }
 
     @Test
-    public void testUseSshWhenUseSshBuildAgentEnabled() {
-        assertFalse(buildJobGitService.useSsh());
+    public void shouldNotUseSshWhenUseSshBuildAgentDisabled() {
+        assertThat(buildJobGitService.useSsh()).isFalse();
         buildJobGitService.init();
     }
 
     @Test
-    public void testInitWhenUseSshBuildAgentEnabled() {
+    public void shouldSucceedInitWhenUseSshBuildAgentEnabled() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
         buildJobGitService.init();
-        assertTrue(buildJobGitService.useSsh());
+        assertThat(buildJobGitService.useSsh()).isTrue();
         buildJobGitService.init();
     }
 
     @Test
-    public void testThrowsExceptionWhenNoTemplate() {
+    public void shouldThrowWhenNoTemplate() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
         ReflectionTestUtils.setField(buildJobGitService, "sshUrlTemplate", null);
-        assertThrows(RuntimeException.class, () -> buildJobGitService.init());
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> buildJobGitService.init());
     }
 
     @Test
-    public void testThrowsExceptionWhenNoPrivateKey() {
+    public void shouldThrowWhenNoPrivateKey() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
         ReflectionTestUtils.setField(buildJobGitService, "gitSshPrivateKeyPath", Optional.empty());
-        assertThrows(RuntimeException.class, () -> buildJobGitService.init());
+        assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> buildJobGitService.init());
     }
 }
