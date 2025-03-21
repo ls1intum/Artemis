@@ -74,12 +74,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
-      - name: Download Artemis.war
+      - name: Download Docker tag
         uses: actions/download-artifact@v4
         with:
-          name: Artemis.war
+          name: docker-tag
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+      - name: Set Docker Tag Environment Variable
+        id: docker-tag
+        run: |
+          if [ -f "docker-tag.txt" ]; then
+            DOCKER_TAG=$(cat docker-tag.txt)
+            echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_ENV
+            echo "Using Docker tag: ${DOCKER_TAG}"
+          else
+            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
+            exit 1
+          fi
 
       - name: Make scripts executable
         run: |
