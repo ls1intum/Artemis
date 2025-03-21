@@ -1,6 +1,6 @@
 <div class="d-flex horizontal-scroll">
     @if (course) {
-        @if (!isShownViaLti || isMultiLaunch) {
+        @if (!isShownViaLti) {
             <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
                 <jhi-sidebar
                     [itemSelected]="exerciseSelected"
@@ -11,6 +11,15 @@
                     [showFilter]="true"
                 />
             </div>
+        } @else if (isShownViaLti && isMultiLaunch) {
+            <jhi-sidebar
+                [itemSelected]="exerciseSelected"
+                [courseId]="courseId"
+                [sidebarData]="sidebarData"
+                [collapseState]="DEFAULT_COLLAPSE_STATE"
+                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                [showFilter]="true"
+            />
         }
 
         @if (exerciseSelected) {
