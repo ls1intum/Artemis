@@ -49,13 +49,8 @@ The following screenshot illustrates the first section of the form. It consists 
 - **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation.
 - **Points**: Total points of an exercise.
 - **Bonus Points**: Bonus points for an exercise.
-- **Automatic assessment suggestions enabled**: When enabled, Artemis tries to automatically suggest assessments for text blocks based on previously graded submissions for this exercise using the `Athena <https://github.com/ls1intum/Athena>`_ service.
-
-    .. figure:: text/create-text-exercise-form-1.png
-              :align: center
-
-- **Preliminary Feedback Module**:  If the Artemis instance supports Athena, instructors can select available models for feedback requests when creating programming exercises. Model selection is only available if the due date has not passed. If a model is selected, students will see a button to request AI feedback while working on programming exercises and potentially improve their work before the submission deadline.
-- **Feedback Suggestions Module**: If the Artemis instance supports Athena, instructors can select available models that will provide feedback suggestions during the review of student submissions. Model selection is only available if the due date has not passed and if the Assessment Type is manual.
+- **Preliminary Feedback Module**:  If the Artemis instance supports `Athena <https://github.com/ls1intum/Athena>`_, instructors can select available models for feedback requests when creating programming exercises. Model selection is only available if the due date has not passed. If a model is selected, students will see a button to request AI feedback while working on programming exercises and potentially improve their work before the submission deadline.
+- **Feedback Suggestions Module**: If the Artemis instance supports `Athena <https://github.com/ls1intum/Athena>`_, instructors can select available models that will provide feedback suggestions during the review of student submissions. Model selection is only available if the due date has not passed and if the Assessment Type is manual.
 To get a better understanding of the configuration of Athena feedback modules, you can watch the following video:
 
       .. raw:: html
@@ -63,6 +58,9 @@ To get a better understanding of the configuration of Athena feedback modules, y
           <iframe src="https://tum.live/w/artemisintro/56285/PRES?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
               Watch this video on TUM-Live.
           </iframe>
+
+      .. figure:: text/create-text-exercise-form-1.png
+                    :align: center
 
 
 .. note::
