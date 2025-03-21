@@ -263,6 +263,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     });
                 }
 
+                orderedPages.sort((a, b) => a.order - b.order);
                 this.pageOrder.set(orderedPages);
             }
         } catch (error) {
