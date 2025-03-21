@@ -152,13 +152,21 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         console.log('Replacing window location with ' + url);
         this.ltiService.setShownViaLti(true);
         this.themeService.applyThemePreference(Theme.LIGHT);
+
         let path;
+        let queryParams = {};
+
         if (url === '/lti/select-course') {
             path = url;
         } else {
-            path = new URL(url).pathname;
+            const urlObj = new URL(url);
+            path = urlObj.pathname;
+            urlObj.searchParams.forEach((value, key) => {
+                queryParams[key] = value;
+            });
         }
-        console.log('Redirecting to ' + path);
-        this.router.navigate([path], { replaceUrl: true });
+
+        console.log('Redirecting to ' + path + ' with query params:', queryParams);
+        this.router.navigate([path], { queryParams: queryParams, replaceUrl: true });
     }
 }
