@@ -23,6 +23,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -69,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -785,5 +788,24 @@ public class ResultService {
         longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
+    }
+
+    /**
+     * Retrieves the build logs for a specific result ID.
+     *
+     * @param resultId      for which the logs shall be retrieved from a logfile
+     * @param participation to which the result belongs
+     * @return the build log entries read from a stored logfile, or null if the logfile was not found
+     */
+    public List<BuildLogEntry> getBuildLogsByResultId(Long resultId, Participation participation) {
+        Map<Long, String> resultIdBuildsJobsMap = getLogsAvailabilityForResults(List.of(resultId), participation);
+        String buildJobId = resultIdBuildsJobsMap.get(resultId);
+        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
+        if (buildLog == null) {
+            return null;
+        }
+
+        List<BuildLogDTO> parsedBuildLogs = buildLogEntryService.parseBuildLogEntries(buildLog);
+        return parsedBuildLogs.stream().map(BuildLogDTO::toBuildLogEntry).collect(Collectors.toList());
     }
 }
