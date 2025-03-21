@@ -21,8 +21,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
@@ -33,6 +31,8 @@ import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exer
 import { RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
 
 @Component({
     template: '',
