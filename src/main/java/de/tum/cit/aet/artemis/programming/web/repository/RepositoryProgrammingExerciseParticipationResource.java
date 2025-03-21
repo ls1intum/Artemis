@@ -447,9 +447,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new AccessForbiddenException("Build logs cannot be retrieved when the build hasn't failed!");
         }
 
-        // Load the logs from the database
         List<BuildLogEntry> buildLogs;
-
         if (resultId.isPresent()) {
             buildLogs = buildLogService.getBuildLogsForResultId(resultId.get(), (Participation) participation);
             if (buildLogs == null) {
