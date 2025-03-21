@@ -154,7 +154,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         this.themeService.applyThemePreference(Theme.LIGHT);
 
         let path;
-        let queryParams = {};
+        const queryParams: { [key: string]: string } = {};
 
         if (url === '/lti/select-course') {
             path = url;
