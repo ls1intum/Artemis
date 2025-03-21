@@ -20,7 +20,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
@@ -28,7 +28,6 @@ import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficul
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { RouterModule } from '@angular/router';
@@ -67,7 +66,6 @@ describe('CourseExerciseRowComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(OrionFilterDirective),
                 CourseExerciseRowComponent,
                 DummyComponent,
             ],

@@ -18,12 +18,4 @@ export const errorRoute: Routes = [
             error403: true,
         },
     },
-    {
-        path: 'orion-outdated',
-        loadComponent: () => import('app/shared/orion/outdated-plugin-warning/orion-outdated.component').then((m) => m.OrionOutdatedComponent),
-        data: {
-            authorities: [],
-            pageTitle: 'Outdated Orion Version',
-        },
-    },
 ];
