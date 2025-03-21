@@ -123,3 +123,24 @@ jobs:
       docker-file: ./docker/artemis/Dockerfile
       tags: |
         type=ref,event=tag
+
+  # Save Docker image tag as an artifact
+  save-docker-tag:
+    name: Save Docker Image Tag
+    needs: docker
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save Docker Tag to File
+        run: |
+          echo "${{ needs.docker.outputs.image_tag }}" > docker-tag.txt
+          echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
+
+      - name: Upload Docker Tag as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-tag
+          path: docker-tag.txt
+          # Set the retention days for the artifact as 1 day
+          # Since it is only needed for the next workflow (e.g. E2E test workflow)
+          retention-days: 1
