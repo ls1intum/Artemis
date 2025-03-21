@@ -84,7 +84,7 @@ The following screenshot illustrates the second section of the form. It consists
 
 - **Preliminary Feedback Module**:  If the Artemis instance supports Athena, instructors can select available models for feedback requests when creating programming exercises. Model selection is only available if the due date has not passed. If a model is selected, students will see a button to request AI feedback while working on programming exercises and potentially improve their work before the submission deadline.
 - **Feedback Suggestions Module**: If the Artemis instance supports Athena, instructors can select available models that will provide feedback suggestions during the review of student submissions. Model selection is only available if the due date has not passed and if the Assessment Type is manual.
-To get a better understanding of the configuration of Athena feedback modules, you can watch the following video:
+  To get a better understanding of the configuration of Athena feedback modules, you can watch the following video:
 
     .. raw:: html
 
