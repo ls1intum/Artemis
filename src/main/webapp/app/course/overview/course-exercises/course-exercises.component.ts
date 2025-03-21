@@ -83,16 +83,16 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.courseId = Number(params.courseId);
         });
 
-        this.course = this.courseStorageService.getCourse(this.courseId);
-        this.onCourseLoad();
-        this.prepareSidebarData();
-
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
             this.isMultiLaunch = params['isMultiLaunch'] === 'true';
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
         });
+
+        this.course = this.courseStorageService.getCourse(this.courseId);
+        this.onCourseLoad();
+        this.prepareSidebarData();
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
