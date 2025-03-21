@@ -72,25 +72,19 @@
         @if (isLanguageSupported) {
             <div class="form-check mb-2">
                 <label class="form-check-label" for="field_useCustomNetwork">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="useCustomNetwork"
-                        id="field_useCustomNetwork"
-                        [(ngModel)]="useCustomNetwork"
-                        (ngModelChange)="onUseCustomNetworkToggle()"
-                    />
+                    <input class="form-check-input" type="checkbox" name="useCustomNetwork" id="field_useCustomNetwork" (change)="onUseCustomNetworkToggle($event)" />
                     <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.title"></span>
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.description" />
                 </label>
             </div>
-            @if (useCustomNetwork) {
-                <select class="form-select mb-2" id="network" [(ngModel)]="network" (ngModelChange)="onNetworkChange()">
+            @if (useCustomNetwork()) {
+                <select class="form-select mb-2" id="network" (change)="onNetworkChange($event)">
+                    <option hidden></option>
                     @for (customNetwork of allowedCustomNetworks; track customNetwork) {
                         <option [value]="customNetwork">{{ customNetwork }}</option>
                     }
                 </select>
-                @if (network === 'none') {
+                @if (network() === 'none') {
                     <div class="alert alert-warning mb-2" role="alert">
                         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.warning"></span>
                     </div>

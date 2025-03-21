@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
@@ -36,9 +36,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeoutChange = output<number>();
 
     envVars: [string, string][] = [];
-    useCustomNetwork = false;
     allowedCustomNetworks: string[] | undefined;
-    network: string | undefined;
     cpuCount: number | undefined;
     memory: number | undefined;
     memorySwap: number | undefined;
@@ -48,6 +46,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
+
+    useCustomNetwork = signal<boolean>(false);
+    network = signal<string | undefined>(undefined);
 
     timeoutMinValue?: number;
     timeoutMaxValue?: number;
@@ -61,6 +62,10 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     constructor() {
         effect(() => {
             this.setIsLanguageSupported();
+        });
+        // when the network changes
+        effect(() => {
+            this.parseDockerFlagsToString();
         });
     }
 
@@ -78,10 +83,10 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                     this.timeoutDefaultValue = profileInfo.buildTimeoutDefault;
                 }
 
+                this.allowedCustomNetworks = profileInfo.allowedCustomDockerNetworks;
                 if (!this.timeout) {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
                 }
-                this.allowedCustomNetworks = profileInfo.allowedCustomDockerNetworks;
                 if (!this.cpuCount) {
                     this.cpuCount = profileInfo.defaultContainerCpuCount;
                 }
@@ -101,6 +106,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     initDockerFlags() {
         this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
+        if (this.dockerFlags.network) {
+            this.network.set(this.dockerFlags.network);
+        }
         if (this.dockerFlags.cpuCount) {
             this.cpuCount = this.dockerFlags.cpuCount;
         }
@@ -118,6 +126,17 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         }
     }
 
+    onUseCustomNetworkToggle(event: any) {
+        this.useCustomNetwork.set(event.target.checked);
+        if (!this.useCustomNetwork()) {
+            this.network.set(undefined);
+        }
+    }
+
+    onNetworkChange(event: any) {
+        this.network.set(event);
+    }
+
     onCpuCountChange(event: any) {
         this.cpuCount = event.target.value;
         this.parseDockerFlagsToString();
@@ -130,15 +149,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     onMemorySwapChange(event: any) {
         this.memorySwap = event.target.value;
-        this.parseDockerFlagsToString();
-    }
-
-    onNetworkChange() {
-        this.parseDockerFlagsToString();
-    }
-
-    onUseCustomNetworkToggle() {
-        this.network = this.useCustomNetwork ? this.network : undefined;
         this.parseDockerFlagsToString();
     }
 
@@ -174,7 +184,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 newEnv![key] = value;
             }
         });
-        this.dockerFlags = { network: this.network, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
+        this.dockerFlags = { env: newEnv, network: this.network(), cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
 

@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
-import { ProgrammingExercise, ProgrammingLanguage } from '../../../../../main/webapp/app/entities/programming/programming-exercise.model';
-import { Course } from '../../../../../main/webapp/app/entities/course.model';
-import { ProgrammingExerciseBuildConfig } from '../../../../../main/webapp/app/entities/programming/programming-exercise-build.config';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { Course } from 'app/entities/course.model';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -105,14 +105,19 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.timeoutDefaultValue).toBe(120);
     });
 
-    it('should update network flag value', () => {
-        comp.onDisableNetworkAccessChange({ target: { checked: true } });
-        expect(comp.isNetworkDisabled).toBeTrue();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
+    it('should set custom network flag value', () => {
+        comp.onUseCustomNetworkToggle({ target: { checked: true } });
+        expect(comp.useCustomNetwork()).toBeTrue();
 
-        comp.onDisableNetworkAccessChange({ target: { checked: false } });
-        expect(comp.isNetworkDisabled).toBeFalse();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
+        comp.onUseCustomNetworkToggle({ target: { checked: false } });
+        expect(comp.useCustomNetwork()).toBeFalse();
+    });
+
+    it('should remove selected network when flag is un-checked', () => {
+        comp.network.set('some_network');
+        comp.onUseCustomNetworkToggle({ target: { checked: false } });
+
+        expect(comp.network()).toBeUndefined();
     });
 
     it('should parse docker flags correctly', () => {
@@ -120,12 +125,12 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"}}');
 
-        comp.isNetworkDisabled = true;
+        comp.network.set('custom');
         comp.parseDockerFlagsToString();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{"key":"value"}}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"},"network":"custom"}');
 
         comp.removeEnvVar(0);
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom"}');
 
         comp.addEnvVar();
         const mockEventMemory = { target: { value: 1024 } };
@@ -135,7 +140,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.onCpuCountChange(mockEventCpu);
         comp.onMemorySwapChange(mockEventMemorySwap);
         comp.parseDockerFlagsToString();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{},"cpuCount":1,"memory":1024,"memorySwap":2048}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom","cpuCount":1,"memory":1024,"memorySwap":2048}');
     });
 
     it('should parse existing docker flags', () => {
@@ -147,9 +152,9 @@ describe('ProgrammingExercise Docker Image', () => {
             }),
         );
 
-        programmingExercise.buildConfig!.dockerFlags = '{"network":"none","env":{"key":"value"}}';
+        programmingExercise.buildConfig!.dockerFlags = '{"env":{"key":"value"}, "network":"none"}';
         comp.ngOnInit();
-        expect(comp.isNetworkDisabled).toBeTrue();
+        expect(comp.network()).toBe('none');
         expect(comp.envVars).toEqual([['key', 'value']]);
     });
 
