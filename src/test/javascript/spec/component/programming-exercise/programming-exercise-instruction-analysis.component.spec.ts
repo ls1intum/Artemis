@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { triggerChanges } from '../../helpers/utils/general.utils';
-import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

@@ -3,7 +3,7 @@ import type { ProgrammingRepositoryButtonsDetail } from 'app/detail-overview-lis
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { RouterModule } from '@angular/router';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 
 @Component({
     selector: 'jhi-programming-repository-buttons-detail',

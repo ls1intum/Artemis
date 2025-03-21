@@ -69,6 +69,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      */
     List<Submission> findAllByParticipationId(long participationId);
 
+    Long countByParticipationId(long participationId);
+
     Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
 
     /**

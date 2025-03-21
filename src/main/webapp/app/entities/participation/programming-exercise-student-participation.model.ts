@@ -5,7 +5,6 @@ export class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     public repositoryUri?: string;
     public buildPlanId?: string;
     public branch?: string;
-    public locked?: boolean;
 
     // helper attribute
     public buildPlanUrl?: string;

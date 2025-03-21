@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CommitsInfoGroupComponent } from 'app/exercises/programming/shared/commits-info/commits-info-group/commits-info-group.component';
+import { CommitsInfoGroupComponent } from 'app/programming/shared/commits-info/commits-info-group/commits-info-group.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import type { CommitInfo } from 'app/entities/programming/programming-submission.model';
-import { CommitsInfoRowComponent } from 'app/exercises/programming/shared/commits-info/commits-info-group/commits-info-row/commits-info-row.component';
+import { CommitsInfoRowComponent } from 'app/programming/shared/commits-info/commits-info-group/commits-info-row/commits-info-row.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';

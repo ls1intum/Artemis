@@ -212,10 +212,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             "exerciseGroups.exercises.teamAssignmentConfig" })
     Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
-            "exerciseGroups.exercises.studentParticipations.submissions" })
-    Optional<Exam> findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(long examId);
-
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
     Optional<Exam> findWithExamUsersById(long examId);
 
@@ -510,4 +506,5 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
+
 }

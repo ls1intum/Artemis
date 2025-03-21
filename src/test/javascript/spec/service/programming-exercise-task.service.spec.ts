@@ -1,14 +1,14 @@
-import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
+import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingExerciseGradingService } from '../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
+import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseServerSideTask } from '../../../../main/webapp/app/entities/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { firstValueFrom, of } from 'rxjs';

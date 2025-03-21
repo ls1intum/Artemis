@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
+import { CategoryIssuesChartComponent } from 'app/programming/manage/grading/charts/category-issues-chart.component';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 
 describe('CategoryIssuesChartComponent', () => {

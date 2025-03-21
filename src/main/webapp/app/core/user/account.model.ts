@@ -1,4 +1,4 @@
-import { GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
+import { GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
 
 export class Account {
     public activated?: boolean;

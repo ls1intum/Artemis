@@ -20,10 +20,10 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
@@ -89,22 +89,6 @@ describe('StudentExamsComponent', () => {
                 return of(
                     new HttpResponse({
                         body: undefined,
-                        status: 200,
-                    }),
-                );
-            },
-            unlockAllRepositories: () => {
-                return of(
-                    new HttpResponse({
-                        body: 2,
-                        status: 200,
-                    }),
-                );
-            },
-            lockAllRepositories: () => {
-                return of(
-                    new HttpResponse({
-                        body: 2,
                         status: 200,
                     }),
                 );
@@ -398,106 +382,6 @@ describe('StudentExamsComponent', () => {
         expect(startExercisesButton).toBeTruthy();
         expect(startExercisesButton.nativeElement.disabled).toBeFalse();
         startExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should unlock all repositories of the students', () => {
-        const componentInstance = { title: String, text: String };
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
-            componentInstance,
-            result,
-        });
-
-        course.isAtLeastInstructor = true;
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
-        expect(course).toBeTruthy();
-        const unlockAllRepositories = jest.spyOn(examManagementService, 'unlockAllRepositories');
-        const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
-        expect(unlockAllRepositoriesButton).toBeTruthy();
-        expect(unlockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
-        unlockAllRepositoriesButton.nativeElement.click();
-        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
-        expect(unlockAllRepositories).toHaveBeenCalledOnce();
-    });
-
-    it('should correctly catch HTTPError when unlocking all repositories', () => {
-        const componentInstance = { title: String, text: String };
-        const result = new Promise((resolve) => resolve(true));
-        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
-            componentInstance,
-            result,
-        });
-
-        const alertService = TestBed.inject(AlertService);
-        course.isAtLeastInstructor = true;
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(examManagementService, 'unlockAllRepositories').mockReturnValue(throwError(() => httpError));
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
-        expect(course).toBeTruthy();
-
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const unlockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#handleUnlockAllRepositoriesButton'));
-        expect(unlockAllRepositoriesButton).toBeTruthy();
-        expect(unlockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
-
-        unlockAllRepositoriesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should lock all repositories of the students', () => {
-        const componentInstance = { title: String, text: String };
-        const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
-            componentInstance,
-            result,
-        });
-
-        course.isAtLeastInstructor = true;
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
-        expect(course).toBeTruthy();
-        const lockAllRepositories = jest.spyOn(examManagementService, 'lockAllRepositories');
-        const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
-        expect(lockAllRepositoriesButton).toBeTruthy();
-        expect(lockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
-
-        lockAllRepositoriesButton.nativeElement.click();
-        expect(modalServiceOpenStub).toHaveBeenCalledOnce();
-        expect(lockAllRepositories).toHaveBeenCalledOnce();
-    });
-
-    it('should correctly catch HTTPError when locking all repositories', () => {
-        const componentInstance = { title: String, text: String };
-        const result = new Promise((resolve) => resolve(true));
-        jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{
-            componentInstance,
-            result,
-        });
-
-        const alertService = TestBed.inject(AlertService);
-        course.isAtLeastInstructor = true;
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(examManagementService, 'lockAllRepositories').mockReturnValue(throwError(() => httpError));
-
-        studentExamsComponentFixture.detectChanges();
-        expect(studentExamsComponent.isLoading).toBeFalse();
-        expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
-        expect(course).toBeTruthy();
-
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const lockAllRepositoriesButton = studentExamsComponentFixture.debugElement.query(By.css('#lockAllRepositoriesButton'));
-        expect(lockAllRepositoriesButton).toBeTruthy();
-        expect(lockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
-        lockAllRepositoriesButton.nativeElement.click();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 

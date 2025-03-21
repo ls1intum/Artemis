@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
+import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
+import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { ManualTextSelectionComponent, wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
+import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
-import { TextSelectDirective } from 'app/exercises/text/shared/text-select.directive';
+import { TextSelectDirective } from 'app/text/manage/assess/text-select.directive';
 
 describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;
