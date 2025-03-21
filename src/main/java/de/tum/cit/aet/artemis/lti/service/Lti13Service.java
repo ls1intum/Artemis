@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 @Profile(PROFILE_LTI)
 public class Lti13Service {
 
-    private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}**";
+    private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
     private static final String LECTURE_PATH_PATTERN = "/courses/{courseId}/lectures/{lectureId}";
 

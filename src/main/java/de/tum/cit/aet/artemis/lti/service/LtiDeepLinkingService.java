@@ -254,12 +254,8 @@ public class LtiDeepLinkingService {
 
             baseUrl = String.format("%s/courses/%s/exercises/%d", artemisServerUrl, courseId, smallestExerciseId);
 
-            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("exerciseIDs", resourceId); // Include all
-                                                                                                                                                                   // exercise IDs
-                                                                                                                                                                   // in the query
-                                                                                                                                                                   // parameter for
-                                                                                                                                                                   // sidebar
-                                                                                                                                                                   // content
+            // Include all exercise IDs in the query parameter for sidebar content
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("exerciseIDs", resourceId);
 
             return uriBuilder.toUriString();
         }
