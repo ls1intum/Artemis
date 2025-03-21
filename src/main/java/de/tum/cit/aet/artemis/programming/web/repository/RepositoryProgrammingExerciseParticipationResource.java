@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -15,7 +14,6 @@ import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -87,8 +83,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
-    private final ResultService resultService;
-
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
     public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
@@ -96,7 +90,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, ResultService resultService) {
+            RepositoryParticipationService repositoryParticipationService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
                 localVCServletService);
         this.buildLogService = buildLogService;
@@ -105,7 +99,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.repositoryParticipationService = repositoryParticipationService;
-        this.resultService = resultService;
         this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
@@ -458,16 +451,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         List<BuildLogEntry> buildLogs;
 
         if (resultId.isPresent()) {
-            Map<Long, String> resultIdBuildsJobsMap = this.resultService.getLogsAvailabilityForResults(List.of(resultId.get()), (Participation) participation);
-            String buildJobId = resultIdBuildsJobsMap.get(resultId.get());
-
-            FileSystemResource buildLog = buildLogService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
-            if (buildLog == null) {
+            buildLogs = buildLogService.getBuildLogsForResultId(resultId.get(), (Participation) participation);
+            if (buildLogs == null) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
-
-            List<BuildLogDTO> parsedBuildLogs = buildLogService.parseBuildLogEntries(buildLog);
-            buildLogs = parsedBuildLogs.stream().map(dto -> new BuildLogEntry(dto.time(), dto.log())).collect(Collectors.toList());
         }
         else {
             buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);

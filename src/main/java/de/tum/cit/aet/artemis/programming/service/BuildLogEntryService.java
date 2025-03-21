@@ -14,6 +14,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,8 +27,10 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -45,15 +48,17 @@ public class BuildLogEntryService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildLogEntryService.class);
 
+    private final BuildJobRepository buildJobRepository;
+
     private final BuildLogEntryRepository buildLogEntryRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ProfileService profileService;
 
-    private final BuildJobRepository buildJobRepository;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ResultService resultService;
 
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
@@ -62,12 +67,13 @@ public class BuildLogEntryService {
     private Path buildLogsPath;
 
     public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, ProfileService profileService,
-            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ResultService resultService) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.profileService = profileService;
         this.buildJobRepository = buildJobRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.resultService = resultService;
     }
 
     /**
@@ -101,6 +107,25 @@ public class BuildLogEntryService {
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
         return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
                 .orElseGet(Collections::emptyList);
+    }
+
+    /**
+     * Retrieves the build logs for a specific result ID.
+     *
+     * @param resultId      for which the logs shall be retrieved from a logfile
+     * @param participation to which the result belongs
+     * @return the build log entries read from a stored logfile, or null if the logfile was not found
+     */
+    public List<BuildLogEntry> getBuildLogsForResultId(Long resultId, Participation participation) {
+        Map<Long, String> resultIdBuildsJobsMap = this.resultService.getLogsAvailabilityForResults(List.of(resultId), participation);
+        String buildJobId = resultIdBuildsJobsMap.get(resultId);
+        FileSystemResource buildLog = retrieveBuildLogsFromFileForBuildJob(buildJobId);
+        if (buildLog == null) {
+            return null;
+        }
+
+        List<BuildLogDTO> parsedBuildLogs = parseBuildLogEntries(buildLog);
+        return parsedBuildLogs.stream().map(BuildLogDTO::toBuildLogEntry).collect(Collectors.toList());
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
