@@ -426,7 +426,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.getSubmissions().stream().findFirst().orElse(null);
-        // If a resultId is specified and the ID does not belong to the latest result, find the corresponding submission. Otherwise use the latest submission.
+        // If a resultId is specified and the ID does not belong to the latest result, find the corresponding submission. Otherwise, use the latest submission.
         if (resultId.isPresent() && (programmingSubmission == null || programmingSubmission.getResults().stream().noneMatch(r -> resultId.get().equals(r.getId())))) {
             // Note: if the submission was null, this will fail with a good message.
             programmingSubmission = programmingSubmissionRepository.findByResultIdElseThrow(resultId.get());
