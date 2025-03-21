@@ -246,9 +246,7 @@ public class LtiDeepLinkingService {
         String baseUrl = String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
 
         if ("groupedExercises".equals(resourceType)) {
-            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl)
-                    // TODO remove hardcoded values
-                    .queryParam("isMultiLaunch", true);
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true);
 
             uriBuilder.queryParam("exerciseIDs", resourceId);
 
