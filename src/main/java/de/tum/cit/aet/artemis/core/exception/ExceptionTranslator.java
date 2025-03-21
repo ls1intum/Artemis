@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
 import org.zalando.problem.DefaultProblem;
 import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
@@ -154,24 +153,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
             log.info("Broken pipe IOException occurred: {}", e.getMessage());
             // socket is closed, cannot return any response
-            return null;
-        }
-        else {
-            return new HttpEntity<>(e.getMessage());
-        }
-    }
-
-    /**
-     * @param e       a specific exception
-     * @param request the request
-     * @return the exception wrapped into a http entity
-     */
-    @ExceptionHandler(SockJsMessageDeliveryException.class)
-    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    public Object exceptionHandler(SockJsMessageDeliveryException e, HttpServletRequest request) {
-        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Session closed")) {
-            // session is closed, cannot return any response
-            log.info("Session closed SockJsMessageDeliveryException occurred: {}", e.getMessage());
             return null;
         }
         else {

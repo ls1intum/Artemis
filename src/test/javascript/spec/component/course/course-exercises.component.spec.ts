@@ -4,7 +4,6 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -52,7 +51,6 @@ describe('CourseExercisesComponent', () => {
             declarations: [
                 CourseExercisesComponent,
                 SidebarComponent,
-                MockDirective(OrionFilterDirective),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
