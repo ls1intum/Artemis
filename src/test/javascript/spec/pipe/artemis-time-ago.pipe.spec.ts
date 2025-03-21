@@ -3,6 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import 'dayjs/esm/locale/de';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
 
