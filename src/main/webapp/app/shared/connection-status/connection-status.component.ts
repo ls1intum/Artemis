@@ -1,7 +1,7 @@
 import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../language/translate.directive';

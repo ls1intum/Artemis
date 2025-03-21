@@ -4,7 +4,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { UrlSerializer } from '@angular/router';
 import { ScienceSettingsComponent } from 'app/shared/user-settings/science-settings/science-settings.component';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';

@@ -5,9 +5,9 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-button.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

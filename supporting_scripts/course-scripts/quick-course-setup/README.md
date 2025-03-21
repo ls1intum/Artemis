@@ -4,136 +4,114 @@ This project contains Python scripts that automate the setup and management of c
 
 # Setup
 
-### 1. Install Python and the Python Plugin for IntelliJ
+## Prerequisites
 
-- Ensure that Python (preferably version 3.12) is installed on your system.
-```shell
-python3 --version
-```
-- Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
-- Enable Python support in IntelliJ:
-  - Go to `File > Project Structure > Facets > Add - Python`.
-  - Add a Python environment by configuring the Python interpreter. 
+- Python 3.12 or higher
+- pip
 
-    ![IntelliJ Python Facet Configuration](./images/facets-config.png)
-  - Add a module in IntelliJ by navigating to `File > Project Structure > Modules > Add - Python`.
-
-    ![IntelliJ Module Configuration](./images/module-config.png)
-
-### 2. **(Optional)**: Setting Up a Virtual Environment
-
+## 1. Optionally, create and activate a virtual environment
 It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
 
-- Install `virtualenv` if it's not already installed:
-```shell
-python3 -m pip install virtualenv
-```
+1. Install `virtualenv` if it's not already installed:
+   - If you are using [brew](https://brew.sh/) on macOS, you can install `virtualenv` using:
+      ```shell
+      brew install virtualenv
+      ```
+   - Otherwise, you can use pip to install `virtualenv`:
+      ```shell
+      python3 -m pip install virtualenv
+      ```
 
-- Create a virtual environment in your project folder:
-```shell
-python3 -m virtualenv venv
-```
+2. Create a virtual environment in your project folder:
+    ```shell
+    python3 -m venv venv
+    ```
 
-- Activate the virtual environment:
-
-- On **Windows**:
-```shell
-venv\Scripts\activate
-```
-
-- On **macOS/Linux**:
-```shell
-source venv/bin/activate
-```
+3. Activate the virtual environment:
+   - On **macOS/Linux**:
+     ```shell
+     source venv/bin/activate
+     ```
+   - On **Windows**:
+     ```shell
+     venv\Scripts\activate
+     ```
 
 Once the virtual environment is activated, you will see the `(venv)` prefix in your terminal prompt. All dependencies will now be installed locally to this environment.
 
-To install any packages into this virtual environment, proceed with the same steps as described below.
-### 3. Configure the Environment
-
-- Start your local Artemis instance.
-- Configure the [config.ini](./config.ini) file according to your local or test server setup.
-- If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
-
+## 2. Install the Required Packages
 ```shell
-python3 -m pip install <packageName>
+pip install -r requirements.txt
 ```
+
+## 3. Configure the Environment
+1. Start your local Artemis instance.
+2. Configure the [config.ini](./config.ini) file according to your local or test server setup.
+
 # Usage
 
-## Section 1: Create Local Course and Users
+## Create Local Course and Users
 
 These scripts help you configure and set up your first Artemis course quickly.
 
 1. Start your local Artemis instance.
-
 2. Configure the values in [config.ini](./config.ini) according to your setup.
+3. Run the scripts of your choice _(see the shell commands provided below)_
 
-3. Install the missing packages of the Python scripts that you want to execute (if not done already). You can check the [requirements.txt](./requirements.txt) file for the required packages.
+**Note:**
+1. Ensure that the [config.ini](./config.ini) file is correctly configured before running any scripts.
+2. **Always test the scripts on a local setup before running them on a production or test server! ⚠️**
 
-4. Run the main script using IntelliJ:
+### Create Users
+Creates users 1-20 (students, tutors, editors, instructors - 5 for each group).
 
-    - Use the play button within IntelliJ (if Python is configured properly).
-    - Alternatively, you can run the script directly from the terminal using the commands provided in this README.
+```shell
+python3 create_users.py
+```
+
+### Authenticate Users
+If the users have already been created, they still need to be logged in order to be added to a course (without a first login, Artemis does not know that the users exist).
+
+```shell  
+python3 authenticate_all_users.py
+```
 
 ### Creating a Course with Standard User Groups
-
 Creates a course for which the users are registered according to their user groups (students, tutors, editors, instructors).
 
 ```shell
 python3 create_course.py
 ```
 
-### Create Users
+### Test Servers
+#### Create a Course with Default Users
 
-Creates users 1-20 (students, tutors, editors, instructors - 5 for each group).
-    
-```shell
-python3 create_users.py
-```
+1.	Adjust `server_url` and `client_url` according to the test server.
+2.  Update `admin_user` and `admin_password` to valid values for the test server.
+3.  Set `is_local_course` in [config.ini](./config.ini) to `False`.
+4. Create a Course and Assign the Default Users
 
-### Authenticate Users
+    | User Range | Role        |
+    |------------|-------------|
+    | 1-5        | Students    |
+    | 6-10       | Tutors      |
+    | 11-15      | Instructors |
+    | 16-20      | Editors     |
 
-If the users have already been created, they still need to be logged in order to be added to a course (without a first login, Artemis does not know that the users exist).
-    
-```shell  
-python3 authenticate_all_users.py
-```
+5. Define the name of your course in the [config.ini](./config.ini) as `course_name`.
+6. Run the script to create a new course with the default users:
+    ```shell  
+    python3 create_course.py
+    ```
 
-## Test Servers
+#### Add Users to Existing Course
+1. Define the `course_id` in the [config.ini](./config.ini).
+2. Run the script to add users to the existing course:
+    ```shell  
+    python3 add_users_to_course.py
+    ```
 
-### To configure the scripts for use with Artemis test servers:
-
-1.	Adjust server_url and client_url according to the test server.
-2.  Update admin_user and admin_password to valid values for the test server.
-3.  Set is_local_course in [config.ini](./config.ini) to False.
-
-Create a Course and Assign the Default Users
-
-1-5: students
-6-10: tutors
-11-15: instructors
-16-20: editors
-
-Define the name of your course in the config.ini as course_name.
-
-```shell  
-python3 create_course.py
-```
-
-### Add Users to Existing Course
-
-Define the course_id in the [config.ini](./config.ini).
-
-```shell  
-python3 add_users_to_course.py
-```
-
-## Notes
-
-1.  Ensure that the config.ini file is correctly configured before running any scripts.
-2.  Always test the scripts on a local setup before running them on a production or test server.
-
-## Section 2: Artemis Large Course with Submissions on Programming Exercise Automation
+## Artemis Large Course with Submissions on Programming Exercise Automation
 
 This section details how to use the large_course_main script that orchestrates the entire process, from user creation to course setup, and finally user participation in programming exercises.
 
@@ -146,12 +124,15 @@ The large_course_main script performs all necessary steps to set up a large cour
 1. Open the project in IntelliJ. 
 2. Locate the large_course_main.py file in the project directory.
 3. Update the [config.ini](./config.ini) to your needs
-   1. To change the number of students created, modify the students variable in the config.ini file.
-   2. To change the number of commits each student should perform in the example exercise, modify the commits variable in the config.ini file.
-   3. To change the number of programming exercises created, modify the exercises variable in the config.ini file.
-   4. To change the name of programming exercises created, modify the exercise_name variable in the config.ini file.
-   5. To use an existing course, modify the create_course variable to False and provide a valid course_id in the config.ini file.
-   6. To use an existing programming exercise, modify the create_exercises variable to False and provide a valid exercise_Ids in the config.ini file.
+ 
+   | Variable           | Description                                                                              |
+   |--------------------|------------------------------------------------------------------------------------------|
+   | `students`         | Number of students to be created                                                         |
+   | `commits`          | Number of commits each student should perform in the example exercise                    |
+   | `exercises`        | Number of programming exercises to be created                                            |
+   | `exercise_name`    | Name of the programming exercises to be created                                          |
+   | `create_course`    | Set to `False` to use an existing course and provide a valid `course_id`.                |
+   | `create_exercises` | Set to `False` to use an existing programming exercise and provide valid `exercise_Ids`. |
 4. You can use the play button within IntelliJ (if Python is configured properly) to run the script.
 ```shell
 python3 large_course_main.py
@@ -170,21 +151,21 @@ The script will automatically perform all the necessary steps:
 
 If you want to generate different results for all the students created by the script:
 
-1.	Run the following Script which will navigate to the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and copy the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file into it.
-    It will delete the existing folders (behavior and structural) from the programming exercise’s test case template. The new test cases will randomly pass or fail, causing different results for each student.
-```shell
-python3 randomize_results_before.py
-```
-2.  Rebuild Artemis to apply the changes.
-3.	Run the main method in large_course_main.py. Now, all created students should have varying results in the programming exercise.
-```shell
-python3 large_course_main.py
-```
-4.  Make sure to revert these changes after running the script. The following script copies the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and deletes the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
-    If you don't run this script after running the script in Step 1, you risk breaking the real template of the programming exercise if these changes are pushed and merged.
-```shell
-python3 randomize_results_after.py
-```
+1. Run the following Script which will navigate to the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and copy the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file into it.
+   It will delete the existing folders (behavior and structural) from the programming exercise’s test case template. The new test cases will randomly pass or fail, causing different results for each student.
+    ```shell
+    python3 randomize_results_before.py
+    ```
+2. Rebuild Artemis to apply the changes.
+3. Run the main method in large_course_main.py. Now, all created students should have varying results in the programming exercise.
+    ```shell
+    python3 large_course_main.py
+    ```
+4. Make sure to revert these changes after running the script. The following script copies the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and deletes the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
+   If you don't run this script after running the script in Step 1, you risk breaking the real template of the programming exercise if these changes are pushed and merged.
+    ```shell
+    python3 randomize_results_after.py
+    ```
 
 ### Optional: Using an Existing Programming Exercise (Can also be done on Test Server)
 Alternatively, you can use an existing programming exercise and push the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file to the test repository of the programming exercise. 
@@ -193,8 +174,6 @@ Make sure to adjust the [config.ini](./config.ini) file to use the existing prog
 ### Optional: Deleting All Created Students
 
 If you want to delete all the students created by the script:
-
-1.	Run the main in delete_students.py.
 ```shell
 python3 delete_students.py
 ```
@@ -202,12 +181,12 @@ python3 delete_students.py
 ### Dependency management
 
 Find outdated dependencies using the following command:
-```
+```shell
 pip list --outdated
 ```
 
 Find unused dependencies using the following command:
-```
+```shell
 pip install deptry
 deptry .
 ```

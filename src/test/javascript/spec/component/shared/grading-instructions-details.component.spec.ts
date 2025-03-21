@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise } from 'app/entities/exercise.model';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

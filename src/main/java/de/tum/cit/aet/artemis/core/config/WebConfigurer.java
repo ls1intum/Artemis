@@ -139,6 +139,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/public/**");
+        registry.addInterceptor(toolsInterceptor).addPathPatterns("/api/**").excludePathPatterns("/api/*/public/**");
     }
 }

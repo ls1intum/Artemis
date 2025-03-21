@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseTutorialGroupCardComponent } from 'app/overview/course-tutorial-groups/course-tutorial-group-card/course-tutorial-group-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
@@ -10,6 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { RouterModule } from '@angular/router';
+import { CourseTutorialGroupCardComponent } from 'app/tutorialgroup/overview/course-tutorial-group-card/course-tutorial-group-card.component';
 
 describe('CourseTutorialGroupCardComponent', () => {
     let component: CourseTutorialGroupCardComponent;

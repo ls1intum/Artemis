@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { ConfigurationService } from 'app/admin/configuration/configuration.service';
-import { Bean, ConfigProps, Env, PropertySource } from 'app/admin/configuration/configuration.model';
+import { ConfigurationService } from 'app/core/admin/configuration/configuration.service';
+import { Bean, ConfigProps, Env, PropertySource } from 'app/core/admin/configuration/configuration.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Service Tests', () => {

@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
 /**
  * Service Implementation for managing Exercise.
@@ -72,7 +72,7 @@ public class ExerciseDeletionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final TextExerciseService textExerciseService;
+    private final Optional<TextApi> textApi;
 
     private final ChannelRepository channelRepository;
 
@@ -85,9 +85,8 @@ public class ExerciseDeletionService {
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsService> irisSettingsService) {
+            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, Optional<TextApi> textApi, ChannelRepository channelRepository,
+            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -99,7 +98,7 @@ public class ExerciseDeletionService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.textExerciseService = textExerciseService;
+        this.textApi = textApi;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -167,7 +166,7 @@ public class ExerciseDeletionService {
 
         if (exercise instanceof TextExercise) {
             log.info("Cancel scheduled operations of exercise {}", exercise.getId());
-            textExerciseService.cancelScheduledOperations(exerciseId);
+            textApi.ifPresent(api -> api.cancelScheduledOperations(exerciseId));
         }
 
         // delete all exercise units linking to the exercise
@@ -184,7 +183,7 @@ public class ExerciseDeletionService {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
+        participationService.deleteAllByExercise(exercise, false);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
@@ -247,6 +246,6 @@ public class ExerciseDeletionService {
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, true, true, true);
+        participationService.deleteAllByExercise(exercise, true);
     }
 }

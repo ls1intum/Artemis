@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, forwardRef, inject } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -13,12 +13,14 @@ import {
 } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { finalize } from 'rxjs';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { Subscription, finalize } from 'rxjs';
+import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '../language/translate.directive';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_ATLAS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -33,11 +35,12 @@ import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
     ],
     imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
 })
-export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
+export class CompetencySelectionComponent implements OnInit, ControlValueAccessor, OnDestroy {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private changeDetector = inject(ChangeDetectorRef);
+    private profileService = inject(ProfileService);
 
     @Input() labelName: string;
     @Input() labelTooltip: string;
@@ -65,7 +68,23 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
 
+    private profileSubscription?: Subscription = undefined;
+
     ngOnInit(): void {
+        // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+            if (atlasEnabled) {
+                this.initialize();
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.profileSubscription?.unsubscribe();
+    }
+
+    initialize(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.competencyLinks && courseId) {
             const course = this.courseStorageService.getCourse(courseId);

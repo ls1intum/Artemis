@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { mockSettings } from './mock-settings';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
+import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled.component';
 import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';

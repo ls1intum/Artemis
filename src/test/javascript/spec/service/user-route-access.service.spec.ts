@@ -9,11 +9,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { Mutable } from '../helpers/mutable';
 import { mockedActivatedRouteSnapshot } from '../helpers/mocks/activated-route/mock-activated-route-snapshot';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

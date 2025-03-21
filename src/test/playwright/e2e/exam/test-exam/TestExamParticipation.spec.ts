@@ -141,6 +141,7 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             await examParticipation.checkYourFullname(studentFourName);
             const response = await examStartEnd.finishExam();
             expect(response.status()).toBe(200);
+            await examStartEnd.pressShowSummary();
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
         });
