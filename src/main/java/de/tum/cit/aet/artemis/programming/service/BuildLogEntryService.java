@@ -116,7 +116,7 @@ public class BuildLogEntryService {
      * @param participation to which the result belongs
      * @return the build log entries read from a stored logfile, or null if the logfile was not found
      */
-    public List<BuildLogEntry> getBuildLogsForResultId(Long resultId, Participation participation) {
+    public List<BuildLogEntry> getBuildLogsByResultId(Long resultId, Participation participation) {
         Map<Long, String> resultIdBuildsJobsMap = this.resultService.getLogsAvailabilityForResults(List.of(resultId), participation);
         String buildJobId = resultIdBuildsJobsMap.get(resultId);
         FileSystemResource buildLog = retrieveBuildLogsFromFileForBuildJob(buildJobId);

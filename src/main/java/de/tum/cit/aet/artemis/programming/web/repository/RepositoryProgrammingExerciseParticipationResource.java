@@ -449,7 +449,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         List<BuildLogEntry> buildLogs;
         if (resultId.isPresent()) {
-            buildLogs = buildLogService.getBuildLogsForResultId(resultId.get(), (Participation) participation);
+            buildLogs = buildLogService.getBuildLogsByResultId(resultId.get(), (Participation) participation);
             if (buildLogs == null) {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
