@@ -19,35 +19,34 @@ class BuildJobGitServiceTest {
     private BuildJobGitService buildJobGitService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", false);
         ReflectionTestUtils.setField(buildJobGitService, "gitSshPrivateKeyPath", Optional.of("somePath"));
         ReflectionTestUtils.setField(buildJobGitService, "sshUrlTemplate", Optional.of("someUrl"));
     }
 
     @Test
-    public void shouldNotUseSshWhenUseSshBuildAgentDisabled() {
+    void shouldNotUseSshWhenUseSshBuildAgentDisabled() {
         assertThat(buildJobGitService.useSsh()).isFalse();
         buildJobGitService.init();
     }
 
     @Test
-    public void shouldSucceedInitWhenUseSshBuildAgentEnabled() {
+    void shouldSucceedInitWhenUseSshBuildEnabled() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
-        buildJobGitService.init();
         assertThat(buildJobGitService.useSsh()).isTrue();
         buildJobGitService.init();
     }
 
     @Test
-    public void shouldThrowWhenNoTemplate() {
+    void shouldThrowWhenNoTemplateButUseBuildAgentEnabled() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
         ReflectionTestUtils.setField(buildJobGitService, "sshUrlTemplate", null);
         assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> buildJobGitService.init());
     }
 
     @Test
-    public void shouldThrowWhenNoPrivateKey() {
+    void shouldThrowWhenNoPrivateKeyButUseBuildAgentEnabled() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
         ReflectionTestUtils.setField(buildJobGitService, "gitSshPrivateKeyPath", Optional.empty());
         assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> buildJobGitService.init());
