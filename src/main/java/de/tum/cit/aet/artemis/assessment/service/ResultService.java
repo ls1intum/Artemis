@@ -469,15 +469,12 @@ public class ResultService {
     /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
-     * @param results       the results for which to check the availability of build logs
+     * @param resultIds     the results for which to check the availability of build logs
      * @param participation the participation the results belong to
      * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
      */
-    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results, Participation participation) {
-
+    public Map<Long, String> getLogsAvailabilityForResults(List<Long> resultIds, Participation participation) {
         Map<Long, String> logsAvailability = new HashMap<>();
-
-        List<Long> resultIds = results.stream().map(Result::getId).toList();
 
         Map<Long, String> resultBuildJobSet = buildJobRepository.findBuildJobIdsForResultIds(resultIds).stream()
                 .collect(Collectors.toMap(ResultBuildJob::resultId, ResultBuildJob::buildJobId, (existing, replacement) -> existing));
