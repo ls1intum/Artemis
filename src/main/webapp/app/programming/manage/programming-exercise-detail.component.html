@@ -18,8 +18,6 @@
                             @if (programmingExercise.templateParticipation) {
                                 <a
                                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                    jhiOrionFilter
-                                    [showInOrionWindow]="false"
                                     [routerLink]="[baseResource, 'code-editor', RepositoryType.TEMPLATE, programmingExercise.templateParticipation.id!]"
                                     class="btn btn-warning btn-sm"
                                 >
@@ -29,13 +27,7 @@
                             }
                             <!-- Edit build plan button -->
                             @if (isBuildPlanEditable) {
-                                <a
-                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                    jhiOrionFilter
-                                    [showInOrionWindow]="false"
-                                    [routerLink]="[baseResource, 'edit-build-plan']"
-                                    class="btn btn-warning btn-sm"
-                                >
+                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" [routerLink]="[baseResource, 'edit-build-plan']" class="btn btn-warning btn-sm">
                                     <fa-icon [icon]="faPencilAlt" />
                                     <span jhiTranslate="entity.action.editBuildPlan"></span>
                                 </a>

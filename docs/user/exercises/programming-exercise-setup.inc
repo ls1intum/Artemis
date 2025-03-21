@@ -341,8 +341,6 @@ Update exercise code in repositories
   .. figure:: programming/instructor-editor.png
             :align: center
 
-- **Alternative 3:** Use IntelliJ with the Orion plugin and change the code directly in IntelliJ
-
 - Check the results of the template and the solution build plan
 - They should not have the status |build_failed|
 - In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
