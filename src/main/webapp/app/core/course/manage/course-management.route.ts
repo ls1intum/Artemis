@@ -177,7 +177,7 @@ export const courseManagementState: Routes = [
                 children: [
                     {
                         path: 'exercises',
-                        loadComponent: () => import('app/course/manage/course-management-exercises.component').then((m) => m.CourseManagementExercisesComponent),
+                        loadComponent: () => import('app/core/course/manage/course-management-exercises.component').then((m) => m.CourseManagementExercisesComponent),
                         data: {
                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.course.exercises',

@@ -60,12 +60,12 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
-import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
-import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 
 @Component({
     selector: 'jhi-navbar',

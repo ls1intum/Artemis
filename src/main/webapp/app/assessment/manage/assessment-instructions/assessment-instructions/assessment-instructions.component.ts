@@ -15,7 +15,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
+import { SecureLinkDirective } from 'app/shared/http/secure-link.directive';
 
 @Component({
     selector: 'jhi-assessment-instructions',
