@@ -34,8 +34,8 @@ export function prepareFeedbackComponentParameters(
         result: result,
     };
 
-    if (!result.participation) {
-        result.participation = participation;
+    if (!result.submission?.participation) {
+        result.submission!.participation = participation;
     }
 
     if (exercise) {
