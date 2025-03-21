@@ -1,11 +1,11 @@
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Result } from 'app/entities/result.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
+import { BuildLogService } from 'app/programming/service/build-log.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
@@ -13,7 +13,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

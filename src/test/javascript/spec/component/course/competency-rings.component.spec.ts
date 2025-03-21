@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
+import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

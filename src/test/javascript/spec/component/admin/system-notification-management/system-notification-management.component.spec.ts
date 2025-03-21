@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
+import { SystemNotificationManagementComponent } from 'app/core/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -15,7 +15,7 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import '@angular/localize/init';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';

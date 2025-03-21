@@ -1,6 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
+import { QuizPoolService } from 'app/quiz/manage/quiz-pool.service';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';

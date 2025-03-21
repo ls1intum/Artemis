@@ -2,8 +2,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post.service';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { PostService } from 'app/communication/post.service';
+import { DisplayPriority } from 'app/communication/metis.util';
 import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from '../../helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 

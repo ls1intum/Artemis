@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { generateExampleChannelDTO } from '../helpers/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';

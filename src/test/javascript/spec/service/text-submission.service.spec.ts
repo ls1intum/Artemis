@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';

@@ -20,8 +20,8 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
-import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { CourseImportStandardizedPrerequisitesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-prerequisites.component';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 
 describe('CourseImportStandardizedPrerequisitesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedPrerequisitesComponent>;

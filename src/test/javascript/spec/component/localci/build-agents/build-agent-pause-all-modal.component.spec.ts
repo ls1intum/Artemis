@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BuildAgentPauseAllModalComponent } from '../../../../../../main/webapp/app/localci/build-agents/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
+import { BuildAgentPauseAllModalComponent } from 'app/buildagent/build-agent-summary/build-agent-pause-all-modal/build-agent-pause-all-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

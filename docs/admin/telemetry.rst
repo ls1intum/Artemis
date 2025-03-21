@@ -16,7 +16,7 @@ Artemis collects the following data at the startup of an instance:
 * The name of the admin, set in `info.operatorAdminName` (optional)
 * The server's URL
 * The operator's name
-* The used profiles (e.g. Gitlab, Jenkins, LocalVC, Aeolus, ...)
+* The used profiles (e.g. Jenkins, LocalVC, Aeolus, ...)
 
 Example configuration in `application-prod.yml`:
 
