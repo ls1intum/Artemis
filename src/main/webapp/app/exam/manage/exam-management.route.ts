@@ -14,10 +14,7 @@ import { exerciseTypes } from 'app/entities/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
-import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
-import { isOrion } from 'app/shared/orion/orion';
-import { FileUploadExerciseManagementResolve } from 'app/file-upload/manage/file-upload-exercise-management-resolve.service';
+import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
@@ -414,7 +411,7 @@ export const examManagementRoute: Routes = [
     // Create File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -427,7 +424,7 @@ export const examManagementRoute: Routes = [
     // Edit File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -450,7 +447,7 @@ export const examManagementRoute: Routes = [
     // Import File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -553,7 +550,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId',
-        loadComponent: () => import('app/file-upload/manage/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
+        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
@@ -742,7 +739,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard/:exerciseId',
-        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -751,7 +748,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-assessment-dashboard/:exerciseId',
-        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
@@ -858,7 +855,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -867,7 +864,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -876,7 +873,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessment',
-        loadComponent: () => import('app/file-upload/manage/assess/file-upload-assessment.component').then((m) => m.FileUploadAssessmentComponent),
+        loadComponent: () => import('app/fileupload/manage/assess/file-upload-assessment.component').then((m) => m.FileUploadAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
@@ -885,7 +882,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        loadComponent: () => import('app/file-upload/manage/assess/file-upload-assessment.component').then((m) => m.FileUploadAssessmentComponent),
+        loadComponent: () => import('app/fileupload/manage/assess/file-upload-assessment.component').then((m) => m.FileUploadAssessmentComponent),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
