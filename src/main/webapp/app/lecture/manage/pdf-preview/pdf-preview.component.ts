@@ -30,11 +30,20 @@ import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-p
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 
+export interface PDFSource {
+    id: string;
+    pdfDocument: PDFDocument;
+    blob: Blob;
+    url: string;
+}
+
 export interface OrderedPage {
     pageIndex: number;
     slideId: string;
     order: number;
-    pageProxy?: PDFJS.PDFPageProxy;
+    sourcePdfId: string;
+    sourceIndex: number;
+    pageProxy: PDFJS.PDFPageProxy;
 }
 
 export interface HiddenPage {
@@ -86,7 +95,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentUnit = signal<AttachmentUnit | undefined>(undefined);
     isPdfLoading = signal<boolean>(false);
     attachmentToBeEdited = signal<Attachment | undefined>(undefined);
-    currentPdfBlob = signal<Blob | undefined>(undefined);
     currentPdfUrl = signal<string | undefined>(undefined);
     totalPages = signal<number>(0);
     appendFile = signal<boolean>(false);
@@ -96,6 +104,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hiddenPages = signal<HiddenPageMap>({});
     isSaving = signal<boolean>(false);
     pageOrder = signal<OrderedPage[]>([]);
+    sourcePDFs = signal<Map<string, PDFSource>>(new Map());
 
     // Computed properties
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
@@ -140,10 +149,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     .pipe(finalize(() => this.isPdfLoading.set(false)))
                     .subscribe({
                         next: (blob: Blob) => {
-                            this.currentPdfBlob.set(blob);
                             const url = URL.createObjectURL(blob);
                             this.currentPdfUrl.set(url);
-                            this.loadPdf(url, false);
+                            blob.arrayBuffer().then((arrayBuffer) => {
+                                this.loadPdf(url, arrayBuffer, 'original');
+                            });
                         },
                         error: (error: HttpErrorResponse) => {
                             onError(this.alertService, error);
@@ -153,16 +163,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.attachmentUnit.set(data.attachmentUnit);
                 const { slides } = data.attachmentUnit;
 
-                if (slides?.length > 0) {
-                    this.pageOrder.set(
-                        slides.map((slide: Slide, index: number) => ({
-                            pageIndex: slide.slideNumber,
-                            slideId: slide.id,
-                            order: index + 1,
-                        })),
-                    );
-                }
-
+                // Store hidden pages information
                 const hiddenPagesMap: HiddenPageMap = Object.fromEntries(
                     slides
                         .filter((page: Slide) => page.hidden)
@@ -181,10 +182,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     .pipe(finalize(() => this.isPdfLoading.set(false)))
                     .subscribe({
                         next: (blob: Blob) => {
-                            this.currentPdfBlob.set(blob);
                             const url = URL.createObjectURL(blob);
                             this.currentPdfUrl.set(url);
-                            this.loadPdf(url, false);
+                            blob.arrayBuffer().then((arrayBuffer) => {
+                                this.loadPdf(url, arrayBuffer, 'original', slides);
+                            });
                         },
                         error: (error: HttpErrorResponse) => {
                             onError(this.alertService, error);
@@ -198,52 +200,70 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Loads a PDF from a provided URL and creates/updates page order.
-     * @param fileUrl The URL of the file to load.
-     * @param append Whether to append the new pages to existing ones.
+     * @param fileUrl The URL of the file to load
+     * @param arrayBuffer The PDF file as an ArrayBuffer
+     * @param sourceId Identifier for the source PDF, or 'original' for the initial PDF
+     * @param existingSlides Optional array of existing slides (for attachmentUnit)
+     * @param append Whether to append the new pages to existing ones
      */
-    async loadPdf(fileUrl: string, append: boolean = false): Promise<void> {
+    async loadPdf(fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string = 'original', existingSlides?: Slide[], append: boolean = false): Promise<void> {
         this.isPdfLoading.set(true);
         try {
+            const pdfDocument = await PDFDocument.load(arrayBuffer);
+            const pageCount = pdfDocument.getPageCount();
+
             const loadingTask = PDFJS.getDocument(fileUrl);
-            const pdf = await loadingTask.promise;
-            this.totalPages.set(pdf.numPages);
+            const pdfJsDocument = await loadingTask.promise;
+
+            this.sourcePDFs.update((sources) => {
+                const newSources = new Map(sources);
+                newSources.set(sourceId, {
+                    id: sourceId,
+                    pdfDocument,
+                    blob: new Blob([arrayBuffer], { type: 'application/pdf' }),
+                    url: fileUrl,
+                });
+                return newSources;
+            });
+
+            this.totalPages.set(this.totalPages() + pageCount);
 
             if (append) {
                 const currentPageCount = this.pageOrder().length;
                 const newPages: OrderedPage[] = [];
 
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const pageProxy = await pdf.getPage(i);
+                for (let i = 0; i < pageCount; i++) {
+                    const pageProxy = await pdfJsDocument.getPage(i + 1);
+
                     newPages.push({
-                        slideId: `temp_${Date.now()}_${i - 1}`,
-                        pageIndex: currentPageCount + i,
-                        order: currentPageCount + i,
-                        pageProxy: pageProxy,
+                        slideId: `temp_${Date.now()}_${i}`,
+                        pageIndex: currentPageCount + i + 1,
+                        order: currentPageCount + i + 1,
+                        sourcePdfId: sourceId,
+                        sourceIndex: i,
+                        pageProxy,
                     });
                 }
 
                 this.pageOrder.update((pages) => [...pages, ...newPages]);
             } else {
-                const currentOrder = [...this.pageOrder()];
+                const orderedPages: OrderedPage[] = [];
 
-                if (currentOrder.length === 0) {
-                    const newPages: OrderedPage[] = [];
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        const pageProxy = await pdf.getPage(i);
-                        newPages.push({
-                            slideId: `attachment_${Date.now()}_${i - 1}`,
-                            pageIndex: i,
-                            order: i,
-                            pageProxy: pageProxy,
-                        });
-                    }
-                    this.pageOrder.set(newPages);
-                } else {
-                    for (let i = 0; i < currentOrder.length && i < pdf.numPages; i++) {
-                        currentOrder[i].pageProxy = await pdf.getPage(i + 1);
-                    }
-                    this.pageOrder.set(currentOrder);
+                for (const slide of existingSlides!) {
+                    const sourceIndex = slide.slideNumber! - 1; // Convert to 0-based index
+                    const pageProxy = await pdfJsDocument.getPage(sourceIndex + 1);
+
+                    orderedPages.push({
+                        pageIndex: slide.slideNumber!,
+                        slideId: slide.id!.toString(),
+                        order: slide.slideNumber!,
+                        sourcePdfId: sourceId,
+                        sourceIndex,
+                        pageProxy,
+                    });
                 }
+
+                this.pageOrder.set(orderedPages);
             }
         } catch (error) {
             onError(this.alertService, error);
@@ -256,9 +276,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.attachmentSub?.unsubscribe();
         this.attachmentUnitSub?.unsubscribe();
 
-        if (this.currentPdfUrl()) {
-            URL.revokeObjectURL(this.currentPdfUrl()!);
-        }
+        this.sourcePDFs().forEach((source) => {
+            URL.revokeObjectURL(source.url);
+        });
     }
 
     constructor() {
@@ -300,7 +320,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Updates the existing attachment file or creates a student version of the attachment with hidden files.
-     * Uses the page proxies from pageOrder to generate the PDF.
      */
     async updateAttachmentWithFile(): Promise<void> {
         this.isSaving.set(true);
@@ -413,7 +432,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isPdfLoading.set(true);
             const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
 
-            this.pageOrder.update((pages) => pages.filter((page) => !slideIds.includes(page.slideId)).map((page, index) => ({ ...page, pageIndex: index + 1, order: index + 1 })));
+            this.pageOrder.update((pages) => {
+                const remainingPages = pages.filter((page) => !slideIds.includes(page.slideId));
+
+                return remainingPages.map((page, index) => ({
+                    ...page,
+                    pageIndex: index + 1,
+                    order: index + 1,
+                }));
+            });
 
             this.hiddenPages.update((current) => {
                 const updated = { ...current };
@@ -449,14 +476,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.appendFile.set(true);
         try {
             const newPdfBytes = await file!.arrayBuffer();
-            this.currentPdfBlob.set(new Blob([newPdfBytes], { type: 'application/pdf' }));
-            const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
+            const objectUrl = URL.createObjectURL(file!);
+
+            const mergeSourceId = `merge_${Date.now()}`;
+            await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
 
             this.selectedPages.set(new Set());
             this.isFileChanged.set(true);
-
-            this.currentPdfUrl.set(objectUrl);
-            await this.loadPdf(objectUrl, true);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {
@@ -466,7 +492,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Creates a PDF file from page proxies in the pageOrder array
+     * Creates a PDF file by copying pages from their source PDFs based on page order
      * @param fileName Name to use for the generated PDF file
      * @param studentVersion Whether to create a student version (excluding hidden pages)
      * @returns A Promise that resolves to a File object containing the generated PDF
@@ -474,42 +500,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     async createPdf(fileName: string, studentVersion: boolean = false): Promise<File> {
         const pdfDoc = await PDFDocument.create();
         const hiddenPagesMap = this.hiddenPages();
+        const sources = this.sourcePDFs();
 
-        for (const page of this.pageOrder()) {
-            if (studentVersion && hiddenPagesMap[page.slideId]) continue;
+        const pagesToInclude = this.pageOrder().filter((page) => !(studentVersion && hiddenPagesMap[page.slideId]));
 
-            const viewport = page.pageProxy!.getViewport({ scale: 1.0 });
-            const { width, height } = viewport;
+        pagesToInclude.sort((a, b) => a.order - b.order);
 
-            const newPage = pdfDoc.addPage([width, height]);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const context = canvas.getContext('2d')!;
-
-            await page.pageProxy!.render({
-                canvasContext: context,
-                viewport: viewport,
-            }).promise;
-
-            const pngImage = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
-
-            newPage.drawImage(pngImage, {
-                x: 0,
-                y: 0,
-                width: width,
-                height: height,
-            });
+        for (const page of pagesToInclude) {
+            const source = sources.get(page.sourcePdfId);
+            const sourceDoc = source!.pdfDocument;
+            const [copiedPage] = await pdfDoc.copyPages(sourceDoc, [page.sourceIndex]);
+            pdfDoc.addPage(copiedPage);
         }
 
-        const pdfBytes = await pdfDoc.save();
-        return new File([pdfBytes], `${fileName}.pdf`, { type: 'application/pdf' });
+        const newPdfBytes = await pdfDoc.save();
+        return new File([newPdfBytes], `${fileName}.pdf`, { type: 'application/pdf' });
     }
 
     /**
-     * Shows previously hidden pages by setting their hidden property to null
-     * and clearing any associated exercise IDs
+     * Shows previously hidden pages by removing them from the hidden pages map
      * @param selectedPages The set of pages to be made visible
      */
     showPages(selectedPages: Set<OrderedPage>): void {
