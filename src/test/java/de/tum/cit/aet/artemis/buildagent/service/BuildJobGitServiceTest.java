@@ -41,7 +41,7 @@ class BuildJobGitServiceTest {
     @Test
     void shouldThrowWhenNoTemplateButUseBuildAgentEnabled() {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", true);
-        ReflectionTestUtils.setField(buildJobGitService, "sshUrlTemplate", null);
+        ReflectionTestUtils.setField(buildJobGitService, "sshUrlTemplate", Optional.empty());
         assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> buildJobGitService.init());
     }
 
