@@ -306,12 +306,12 @@ public class NotificationSettingsService {
 
         Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
                 .findAllNotificationSettingsForRecipientsWithId(users.stream().map(DomainObject::getId).toList());
-        Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
 
         return users.stream().filter(user -> {
+            Set<NotificationSetting> notificationSettings = decidedNotificationSettings.stream()
+                    .filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId())).collect(Collectors.toSet());
             // for those notification types that are not explicitly set by the user, we use the default settings
-            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
-                    .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
+            Set<String> decidedIds = notificationSettings.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet());
             for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
                     notificationSettings
