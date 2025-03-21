@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -243,12 +244,22 @@ public class LtiDeepLinkingService {
      * Build a content URL for deep linking.
      */
     String buildContentUrl(String courseId, String resourceType, String resourceId) {
-        String baseUrl = String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+        String baseUrl = String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
 
         if ("groupedExercises".equals(resourceType)) {
-            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true);
+            List<Long> exerciseIds = Arrays.stream(resourceId.split(",")).map(String::trim).map(Long::valueOf).toList();
 
-            uriBuilder.queryParam("exerciseIDs", resourceId);
+            // Take the smallest exercise ID for the base URL to establish it as "starting" exercise for LTI view
+            Long smallestExerciseId = exerciseIds.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No exercise IDs provided", "LTI", "noExerciseIds"));
+
+            baseUrl = String.format("%s/courses/%s/exercises/%d", artemisServerUrl, courseId, smallestExerciseId);
+
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("exerciseIDs", resourceId); // Include all
+                                                                                                                                                                   // exercise IDs
+                                                                                                                                                                   // in the query
+                                                                                                                                                                   // parameter for
+                                                                                                                                                                   // sidebar
+                                                                                                                                                                   // content
 
             return uriBuilder.toUriString();
         }
