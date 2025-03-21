@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -137,9 +138,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        List<Long> resultIds = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId()).stream().map(Result::getId).collect(Collectors.toList());
 
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(resultIds, participation);
         assertThat(resultBuildJobMap).hasSize(0);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);
