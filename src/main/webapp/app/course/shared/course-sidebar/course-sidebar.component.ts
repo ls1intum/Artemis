@@ -26,6 +26,7 @@ export interface SidebarItem {
     guidedTour?: boolean;
     featureToggle?: FeatureToggle;
     hidden: boolean;
+    isPrefix?: boolean;
 }
 
 @Component({

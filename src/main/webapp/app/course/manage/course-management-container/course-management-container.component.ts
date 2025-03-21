@@ -38,25 +38,29 @@ import {
     faEye,
     faFlag,
     faGraduationCap,
+    faList,
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
+    faPuzzlePiece,
     faQuestion,
+    faRobot,
     faSync,
     faTable,
     faTableCells,
     faTimes,
+    faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/icons/icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { LtiService } from 'app/shared/service/lti.service';
-import { PROFILE_ATLAS } from 'app/app.constants';
+import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
@@ -80,6 +84,7 @@ import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-d
 import { CourseScoresComponent } from 'app/course/manage/course-scores/course-scores.component';
 import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
 import { FaqComponent } from 'app/communication/faq/faq.component';
+import { EventManager } from 'app/shared/service/event-manager.service';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -103,7 +108,8 @@ import { FaqComponent } from 'app/communication/faq/faq.component';
     ],
 })
 export class CourseManagementContainerComponent implements OnInit, OnDestroy, AfterViewInit {
-    private courseService = inject(CourseManagementService);
+    private eventManager = inject(EventManager);
+    private courseManagementService = inject(CourseManagementService);
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private changeDetectorRef = inject(ChangeDetectorRef);
@@ -112,6 +118,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     private courseAccessStorageService = inject(CourseAccessStorageService);
     private profileService = inject(ProfileService);
     private ltiService = inject(LtiService);
+    private featureToggleService = inject(FeatureToggleService);
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;
@@ -122,6 +129,8 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     private ltiSubscription: Subscription;
     private controlsSubscription?: Subscription;
     private vcSubscription?: Subscription;
+    private eventSubscriber: Subscription;
+    private courseSub?: Subscription;
 
     // Signals for reactive state management
     private courseId = signal<number | undefined>(undefined);
@@ -139,6 +148,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     isExamStarted = signal<boolean>(false);
     isShownViaLti = signal<boolean>(false);
     hasSidebar = signal<boolean>(false);
+    localCIActive = signal<boolean>(false);
+    irisEnabled = signal<boolean>(false);
+    ltiEnabled = signal<boolean>(false);
 
     sidebarItems = computed(() => this.getSidebarItems());
 
@@ -195,6 +207,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     CachingStrategy = CachingStrategy;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+    private featureToggleSub: Subscription;
 
     constructor() {
         effect(() => {
@@ -220,8 +233,24 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         });
 
         this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
-            //console.log('params', params);
             this.courseId.set(Number(params.courseId));
+            this.subscribeToCourseUpdates(Number(params.courseId));
+        });
+
+        // Subscribe to course modifications and reload the course after a change.
+        this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
+            this.subscribeToCourseUpdates(this.courseId()!);
+        });
+
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isProduction.set(profileInfo?.inProduction);
+                this.isTestServer.set(profileInfo.testServer ?? false);
+                this.atlasEnabled.set(profileInfo.activeProfiles.includes(PROFILE_ATLAS));
+                this.irisEnabled.set(profileInfo.activeProfiles.includes(PROFILE_IRIS));
+                this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
+                this.localCIActive.set(profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
+            }
         });
 
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo: any) => {
@@ -256,8 +285,14 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         });
     }
 
+    private subscribeToCourseUpdates(courseId: number) {
+        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+            this.course.set(courseResponse.body!);
+        });
+    }
+
     loadCourse(): Observable<void> {
-        return this.courseService.findOneForDashboard(this.courseId()!).pipe(
+        return this.courseManagementService.findOneForDashboard(this.courseId()!).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course.set(res.body);
@@ -270,7 +305,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
 
     /** initialize courses attribute by retrieving all courses from the server */
     async updateRecentlyAccessedCourses() {
-        this.dashboardSubscription = this.courseService.findAllForDropdown().subscribe({
+        this.dashboardSubscription = this.courseManagementService.findAllForDropdown().subscribe({
             next: (res: HttpResponse<Course[]>) => {
                 if (res.body) {
                     let courses: Course[] = [];
@@ -448,6 +483,9 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         this.ltiSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.eventManager.destroy(this.eventSubscriber);
+        this.courseSub?.unsubscribe();
+        this.featureToggleSub?.unsubscribe();
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])
@@ -478,29 +516,97 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
     }
 
     getSidebarItems(): SidebarItem[] {
-        const sidebarItems = this.getDefaultItems();
-
+        const sidebarItems: SidebarItem[] = [];
         const currentCourse = this.course();
+
+        sidebarItems.push(...this.getDefaultItems());
+        if (currentCourse?.isAtLeastEditor) {
+            sidebarItems.splice(3, 0, this.getLecturesItems());
+        }
+
+        if (currentCourse?.isAtLeastInstructor && this.irisEnabled()) {
+            const irisSettingsItem: SidebarItem = {
+                routerLink: 'iris-settings',
+                icon: faRobot,
+                title: 'IRIS Settings',
+                translation: 'artemisApp.iris.settings.button.course.title',
+                testId: 'iris-settings',
+                hidden: false,
+            };
+            sidebarItems.push(irisSettingsItem);
+        }
+
+        // Communication - only when communication is enabled
         if (currentCourse && isCommunicationEnabled(currentCourse)) {
-            const communicationsItem: SidebarItem = this.getCommunicationsItems();
-            sidebarItems.push(communicationsItem);
+            sidebarItems.push(this.getCommunicationsItems());
         }
 
-        const tutorialGroupsItem: SidebarItem = this.getTutorialGroupsItems();
-        sidebarItems.push(tutorialGroupsItem);
-
-        if (this.atlasEnabled()) {
-            const competenciesItem: SidebarItem = this.getCompetenciesItems();
-            sidebarItems.push(competenciesItem);
-            if (currentCourse?.learningPathsEnabled) {
-                const learningPathItem: SidebarItem = this.getLearningPathItems();
-                sidebarItems.push(learningPathItem);
-            }
+        // Tutorial Groups - when configuration exists or user is instructor
+        if (currentCourse?.tutorialGroupsConfiguration || currentCourse?.isAtLeastInstructor) {
+            const tutorialGroupsItem = this.getTutorialGroupsItems();
+            sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (currentCourse?.faqEnabled) {
-            const faqItem: SidebarItem = this.getFaqItem();
-            sidebarItems.push(faqItem);
+        // Competency Management - only for instructors with Atlas enabled
+        if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
+            sidebarItems.push(this.getCompetenciesItems());
+        }
+
+        // Learning Path - only for instructors with Atlas enabled and learning paths enabled
+        if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
+            this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
+                if (isActive) {
+                    sidebarItems.push(this.getLearningPathItems());
+                }
+            });
+        }
+
+        const assessmentDashboardItem: SidebarItem = {
+            routerLink: 'assessment-dashboard',
+            icon: faUserCheck,
+            title: 'Assessment Dashboard',
+            translation: 'entity.action.assessmentDashboard',
+            hidden: false,
+        };
+        sidebarItems.push(assessmentDashboardItem);
+
+        if (currentCourse?.isAtLeastInstructor) {
+            const scoresItem: SidebarItem = {
+                routerLink: 'scores',
+                icon: faTable,
+                title: 'Scores',
+                translation: 'entity.action.scores',
+                hidden: false,
+            };
+            sidebarItems.push(scoresItem);
+        }
+
+        if (currentCourse?.isAtLeastTutor && currentCourse?.faqEnabled) {
+            sidebarItems.push(this.getFaqItem());
+        }
+
+        if (currentCourse?.isAtLeastInstructor && this.localCIActive()) {
+            const buildQueueItem: SidebarItem = {
+                routerLink: 'build-queue',
+                icon: faList,
+                title: 'Build Queue',
+                translation: 'artemisApp.buildQueue.title',
+                hidden: false,
+            };
+            sidebarItems.push(buildQueueItem);
+        }
+
+        // LTI Configuration - only for instructors with LTI enabled and online course
+        if (this.ltiEnabled() && currentCourse?.onlineCourse && currentCourse?.isAtLeastInstructor) {
+            const ltiConfigItem: SidebarItem = {
+                routerLink: 'lti-configuration',
+                icon: faPuzzlePiece,
+                title: 'LTI Configuration',
+                translation: 'global.menu.admin.lti',
+                testId: 'lti-settings',
+                hidden: false,
+            };
+            sidebarItems.push(ltiConfigItem);
         }
 
         return sidebarItems;
@@ -575,18 +681,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         return learningPathItem;
     }
 
-    getDashboardItems() {
-        const dashboardItem: SidebarItem = {
-            routerLink: 'dashboard',
-            icon: faChartBar,
-            title: 'Dashboard',
-            translation: 'artemisApp.courseOverview.menu.dashboard',
-            featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
-            hidden: false,
-        };
-        return dashboardItem;
-    }
-
     getFaqItem() {
         const faqItem: SidebarItem = {
             routerLink: 'faqs',
@@ -602,11 +696,12 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
         const items: SidebarItem[] = [];
 
         const overviewItem: SidebarItem = {
-            routerLink: '',
+            routerLink: '.',
             icon: faTableCells,
             title: 'Overview',
             translation: 'artemisApp.course.overview',
             hidden: false,
+            isPrefix: true,
         };
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
@@ -625,7 +720,7 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             hidden: false,
         };
 
-        return items.concat([overviewItem, this.getExamsItems(), exercisesItem, this.getLecturesItems(), statisticsItem]);
+        return items.concat([overviewItem, this.getExamsItems(), exercisesItem, statisticsItem]);
     }
 
     // only the communication tab has a sidebar in the management view

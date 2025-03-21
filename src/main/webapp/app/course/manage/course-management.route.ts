@@ -40,7 +40,7 @@ export const courseManagementState: Routes = [
                 },
                 data: {
                     authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.course.home.title',
+                    pageTitle: 'artemisApp.course.overview',
                 },
                 canActivate: [UserRouteAccessService],
             },

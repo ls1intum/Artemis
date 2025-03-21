@@ -126,8 +126,8 @@ export class AssessmentDashboardComponent implements OnInit {
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.courseId = Number(this.route?.parent?.snapshot.paramMap.get('courseId'));
+        this.examId = Number(this.route?.parent?.snapshot.paramMap.get('examId'));
         this.isExamMode = !!this.examId;
         if (this.isExamMode) {
             this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
