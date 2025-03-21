@@ -1,11 +1,8 @@
 import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { isOrion } from 'app/shared/orion/orion';
-import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -36,8 +33,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private stateStorageService = inject(StateStorageService);
     private renderer = inject(Renderer2);
     private eventManager = inject(EventManager);
-    private orionConnectorService = inject(OrionConnectorService);
-    private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
@@ -193,28 +188,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             name: 'authenticationSuccess',
             content: 'Sending Authentication Success',
         });
-
-        this.handleOrionLogin();
-    }
-
-    /**
-     * Handle special login procedures when inside the Orion plugin.
-     */
-    private handleOrionLogin() {
-        if (!isOrion) {
-            return;
-        }
-
-        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, {
-            size: 'lg',
-            backdrop: 'static',
-        });
-        modalRef.componentInstance.text = 'login.ide.confirmation';
-        modalRef.componentInstance.title = 'login.ide.title';
-        modalRef.result.then(
-            () => this.orionConnectorService.login(this.username, this.password),
-            () => {},
-        );
     }
 
     currentUserCallback(account: User) {

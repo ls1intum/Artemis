@@ -20,7 +20,6 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -297,7 +296,6 @@ describe('CourseScoresComponent', () => {
                 MockComponent(ExportButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(OrionFilterDirective),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),

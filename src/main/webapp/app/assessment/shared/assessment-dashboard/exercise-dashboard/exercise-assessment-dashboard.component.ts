@@ -111,8 +111,6 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
@@ -230,11 +228,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     // links
     complaintsLink: any[];
     moreFeedbackRequestsLink: any[];
-
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-    // @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
-    // @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
     // Icons
     faSpinner = faSpinner;

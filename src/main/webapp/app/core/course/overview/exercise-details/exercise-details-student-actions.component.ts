@@ -40,8 +40,6 @@ import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
         NgbTooltip,
         FeatureToggleDirective,
         StartPracticeModeButtonComponent,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
         FaIconComponent,
@@ -75,10 +73,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() isGeneratingFeedback: boolean;
 
     @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
-
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
 
     uninitializedQuiz: boolean;
     quizNotStarted: boolean;

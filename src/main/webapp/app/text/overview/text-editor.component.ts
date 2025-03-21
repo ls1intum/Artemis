@@ -194,7 +194,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
+                this.loadIrisSettings();
             });
+    }
+
+    /**
+     * Loads Iris settings for the current exercise if Iris is available and the exercise is not in exam mode.
+     *
+     * This method retrieves the application profile settings and checks if `PROFILE_IRIS` is active.
+     * If active and the exercise is not in exam mode, it fetches the Iris settings for the given exercise ID.
+     */
+    private loadIrisSettings(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // only load the settings if Iris is available and this is not an exam exercise
             if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {

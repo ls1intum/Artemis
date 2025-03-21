@@ -27,30 +27,7 @@
         [hidden]="shouldHideExerciseCard('programming')"
         [course]="course"
     >
-        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-        <!--        <jhi-programming-exercise-create-buttons exerciseCreateButtons-->
-        <!--                                                 *jhiExtensionPoint="overrideGenerateAndImportButton"-->
-        <!--                                                 [course]="course" />-->
         <jhi-programming-exercise-create-buttons exerciseCreateButtons [course]="course" />
-        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-        <!--        <jhi-programming-exercise-->
-        <!--            exercises-->
-        <!--            *jhiExtensionPoint="-->
-        <!--                overrideProgrammingExerciseCard;-->
-        <!--                context: {-->
-        <!--                    embedded: true,-->
-        <!--                    course: course,-->
-        <!--                    programmingExerciseCountCallback: setProgrammingExerciseCount.bind(this),-->
-        <!--                    exerciseFilter: exerciseFilter,-->
-        <!--                    filteredProgrammingExercisesCountCallback: setFilteredProgrammingExerciseCount.bind(this),-->
-        <!--                }-->
-        <!--            "-->
-        <!--            [embedded]="true"-->
-        <!--            [course]="course"-->
-        <!--            [exerciseFilter]="exerciseFilter"-->
-        <!--            (exerciseCount)="programmingExercisesCount = $event"-->
-        <!--            (filteredExerciseCount)="filteredProgrammingExercisesCount = $event"-->
-        <!--        />-->
         <jhi-programming-exercise
             exercises
             [embedded]="true"
@@ -60,14 +37,6 @@
             (filteredExerciseCount)="filteredProgrammingExercisesCount = $event"
         />
     </jhi-course-exercise-card>
-    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-    <!--    <jhi-course-exercise-card-->
-    <!--        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"-->
-    <!--        [headingJhiTranslate]="'artemisApp.course.quizExercises'"-->
-    <!--        [exerciseCount]="quizExercisesCount"-->
-    <!--        [hidden]="shouldHideExerciseCard('quiz')"-->
-    <!--        [course]="course"-->
-    <!--    >-->
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.quizExercises'"
         [exerciseCount]="quizExercisesCount"
@@ -84,14 +53,6 @@
             (filteredExerciseCount)="filteredQuizExercisesCount = $event"
         />
     </jhi-course-exercise-card>
-    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-    <!--    <jhi-course-exercise-card-->
-    <!--        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"-->
-    <!--        [headingJhiTranslate]="'artemisApp.course.modelingExercises'"-->
-    <!--        [exerciseCount]="modelingExercisesCount"-->
-    <!--        [hidden]="shouldHideExerciseCard('modeling')"-->
-    <!--        [course]="course"-->
-    <!--    >-->
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.modelingExercises'"
         [exerciseCount]="modelingExercisesCount"
@@ -108,14 +69,6 @@
             (filteredExerciseCount)="filteredModelingExercisesCount = $event"
         />
     </jhi-course-exercise-card>
-    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-    <!--    <jhi-course-exercise-card-->
-    <!--        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"-->
-    <!--        [headingJhiTranslate]="'artemisApp.course.textExercises'"-->
-    <!--        [exerciseCount]="textExercisesCount"-->
-    <!--        [hidden]="shouldHideExerciseCard('text')"-->
-    <!--        [course]="course"-->
-    <!--    >-->
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.textExercises'"
         [exerciseCount]="textExercisesCount"
@@ -132,14 +85,6 @@
             (filteredExerciseCount)="filteredTextExercisesCount = $event"
         />
     </jhi-course-exercise-card>
-    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-    <!--    <jhi-course-exercise-card-->
-    <!--        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"-->
-    <!--        [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"-->
-    <!--        [exerciseCount]="fileUploadExercisesCount"-->
-    <!--        [hidden]="shouldHideExerciseCard('file-upload')"-->
-    <!--        [course]="course"-->
-    <!--    >-->
     <jhi-course-exercise-card
         [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
         [exerciseCount]="fileUploadExercisesCount"

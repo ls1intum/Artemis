@@ -75,8 +75,6 @@ import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-ch
         ExerciseScoresExportButtonComponent,
         SlicePipe,
         ArtemisDatePipe,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
@@ -99,10 +97,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     localCIEnabled = true;
     onlineIdeEnabled = false;
 
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
-    // @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
     protected readonly RepositoryType = RepositoryType;
 

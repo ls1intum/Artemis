@@ -14,7 +14,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from './overview/course-management-card.component';
@@ -31,7 +30,6 @@ import { CourseAccessStorageService } from 'app/core/course/shared/course-access
         DocumentationButtonComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
-        OrionFilterDirective,
         RouterLink,
         FaIconComponent,
         CourseManagementCardComponent,

@@ -25,17 +25,12 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
+import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
 
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
-
-export function initOrionConnector(connector: OrionConnectorService) {
-    return () => OrionConnectorService.initConnector(connector);
-}
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -81,8 +76,6 @@ export const appConfig: ApplicationConfig = {
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
-            // Required, otherwise Orion will not work at all
-            initOrionConnector(inject(OrionConnectorService));
         }),
         /**
          * @description Interceptor declarations:

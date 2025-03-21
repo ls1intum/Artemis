@@ -23,8 +23,6 @@ import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive
     imports: [
         ExpandableSectionComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
         ProgrammingExerciseInstructionComponent,
         SecureLinkDirective,
         ButtonComponent,
@@ -52,10 +50,6 @@ export class AssessmentInstructionsComponent {
     @Input() gradingCriteria?: GradingCriterion[];
 
     readonly ExerciseType = ExerciseType;
-
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideTitle') overrideTitle: TemplateRef<any>;
 
     // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('exercise') set exerciseInput(exercise: Exercise) {

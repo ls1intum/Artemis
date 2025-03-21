@@ -27,13 +27,6 @@
                         </div>
                     </div>
                 }
-                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                <!--                <jhi-exercise-details-student-actions-->
-                <!--                    class="col"-->
-                <!--                    *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"-->
-                <!--                    [courseId]="courseId"-->
-                <!--                    [exercise]="exercise"-->
-                <!--                />-->
                 <jhi-exercise-details-student-actions class="col" [courseId]="courseId" [exercise]="exercise" />
                 @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">

@@ -65,8 +65,6 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -142,10 +140,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
-    // @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page

@@ -79,8 +79,6 @@ interface InstructorActionItem {
         NgbDropdownItem,
         RouterLink,
         TranslateDirective,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
         ExerciseDetailsStudentActionsComponent,
         ExerciseHeadersInformationComponent,
         ResultHistoryComponent,
@@ -162,10 +160,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     exerciseIcon: IconProp;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
-
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
 
     // Icons
     faBook = faBook;
