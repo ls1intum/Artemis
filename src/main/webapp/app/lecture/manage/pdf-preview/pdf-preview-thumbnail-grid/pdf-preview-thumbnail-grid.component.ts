@@ -1,6 +1,7 @@
 import { Component, ElementRef, OnChanges, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -18,7 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbModule, TranslateDirective],
+    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbModule, TranslateDirective, DragDropModule],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
@@ -249,107 +250,25 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Initiates drag operation for a slide
-     * @param event Drag event
-     * @param slideId ID of the slide being dragged
+     * Handles the drop event from Angular CDK drag-drop
+     * Updates the page order when an item is dropped in a new position
+     * @param event The CDK drop event containing source and target indices
      */
-    onDragStart(event: DragEvent, slideId: string): void {
-        if (event.dataTransfer) {
-            event.dataTransfer.setData('text/plain', slideId);
-            event.dataTransfer.effectAllowed = 'move';
-
-            this.dragSlideId.set(slideId);
-            this.isDragging.set(true);
-
-            const element = document.getElementById(`pdf-page-${slideId}`);
-            element!.classList.add('dragging');
-        }
-    }
-
-    /**
-     * Handles the drag over event to allow dropping
-     * @param event Drag event
-     */
-    onDragOver(event: DragEvent): void {
-        event.preventDefault();
-        event!.dataTransfer!.dropEffect = 'move';
-    }
-
-    /**
-     * Handles dropping of a slide to reorder it
-     * @param event Drop event
-     * @param targetSlideId ID of the target slide where item is being dropped
-     */
-    onDrop(event: DragEvent, targetSlideId: string): void {
-        event.preventDefault();
-
-        const sourceSlideId = event.dataTransfer!.getData('text/plain');
-        if (sourceSlideId !== targetSlideId) {
-            this.reorderPages(sourceSlideId, targetSlideId);
+    onPageDrop(event: CdkDragDrop<OrderedPage[]>): void {
+        if (event.previousIndex === event.currentIndex) {
+            return;
         }
 
-        this.isDragging.set(false);
-        this.dragSlideId.set(null);
-
-        document.querySelectorAll('.pdf-canvas-container').forEach((el) => {
-            el.classList.remove('dragging');
-            el.classList.remove('drag-over');
-        });
-    }
-
-    /**
-     * Handles drag enter event to highlight drop targets
-     * @param event Drag event
-     * @param slideId ID of the slide being entered
-     */
-    onDragEnter(event: DragEvent, slideId: string): void {
-        event.preventDefault();
-        const element = document.getElementById(`pdf-page-${slideId}`);
-        if (element && this.dragSlideId() !== slideId) {
-            element.classList.add('drag-over');
-        }
-    }
-
-    /**
-     * Handles drag leave event to remove highlighting
-     * @param event Drag event
-     * @param slideId ID of the slide being left
-     */
-    onDragLeave(event: DragEvent, slideId: string): void {
-        event.preventDefault();
-        const element = document.getElementById(`pdf-page-${slideId}`);
-        element!.classList.remove('drag-over');
-    }
-
-    /**
-     * Ends the drag operation
-     */
-    onDragEnd(): void {
-        this.isDragging.set(false);
-        this.dragSlideId.set(null);
-
-        document.querySelectorAll('.pdf-canvas-container').forEach((el) => {
-            el.classList.remove('dragging');
-            el.classList.remove('drag-over');
-        });
-    }
-
-    /**
-     * Reorders pages based on drag and drop operation using array positions
-     * @param sourceSlideId ID of the source slide
-     * @param targetSlideId ID of the target slide
-     */
-    reorderPages(sourceSlideId: string, targetSlideId: string): void {
         this.reordering.set(true);
+        this.isDragging.set(false);
+
         const pages = [...this.orderedPages()];
 
-        const sourceIndex = pages.findIndex((page) => page.slideId === sourceSlideId);
-        const targetIndex = pages.findIndex((page) => page.slideId === targetSlideId);
+        moveItemInArray(pages, event.previousIndex, event.currentIndex);
 
-        if (sourceIndex === -1 || targetIndex === -1) return;
-
-        pages.splice(targetIndex, 0, pages.splice(sourceIndex, 1)[0]);
-        pages.forEach((page, index) => (page.order = index + 1));
+        pages.forEach((page, index) => {
+            page.order = index + 1;
+        });
 
         this.pageOrderOutput.emit(pages);
     }

@@ -1,17 +1,21 @@
-<div #pdfContainer class="pdf-container" [class.scroll-disabled]="isPopoverOpen()">
+<div
+    #pdfContainer
+    class="pdf-container"
+    [class.scroll-disabled]="isPopoverOpen()"
+    cdkDropList
+    cdkDropListOrientation="mixed"
+    [cdkDropListData]="orderedPages()"
+    (cdkDropListDropped)="onPageDrop($event)"
+>
     @if (isAttachmentUnit()) {
         @for (page of orderedPages(); track page.slideId) {
             <div
                 [id]="'pdf-page-' + page.slideId"
                 class="pdf-canvas-container"
-                [class.dragging]="dragSlideId() === page.slideId"
-                draggable="true"
-                (dragstart)="onDragStart($event, page.slideId)"
-                (dragover)="onDragOver($event)"
-                (drop)="onDrop($event, page.slideId)"
-                (dragenter)="onDragEnter($event, page.slideId)"
-                (dragleave)="onDragLeave($event, page.slideId)"
-                (dragend)="onDragEnd()"
+                [class.cdk-drag-preview]="isDragging() && dragSlideId() === page.slideId"
+                [class.cdk-drag-placeholder]="isDragging() && dragSlideId() !== page.slideId"
+                cdkDrag
+                [cdkDragData]="page"
                 (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()"
             >
                 <div class="drag-handle">

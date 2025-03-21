@@ -137,3 +137,14 @@ input[type='checkbox'] {
     z-index: 4;
     transition: opacity 0.3s ease;
 }
+
+.cdk-drag-preview {
+    z-index: 9999;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.cdk-drag-placeholder {
+    opacity: 0.3;
+    background: #f0f0f0;
+    border: 2px dashed #ccc !important;
+}
