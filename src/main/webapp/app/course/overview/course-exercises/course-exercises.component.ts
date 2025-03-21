@@ -144,6 +144,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     prepareSidebarData() {
         const exercises: Exercise[] = [];
+        console.log('this.isMultiLaunch', this.isMultiLaunch);
+        console.log('this.multiLaunchExerciseIDs', this.multiLaunchExerciseIDs);
 
         if (this.isMultiLaunch && this.multiLaunchExerciseIDs.length > 0) {
             for (const exerciseId of this.multiLaunchExerciseIDs) {

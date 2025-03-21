@@ -149,6 +149,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     replaceWindowLocationWrapper(url: string): void {
+        console.log('Replacing window location with ' + url);
         this.ltiService.setShownViaLti(true);
         this.themeService.applyThemePreference(Theme.LIGHT);
         let path;
