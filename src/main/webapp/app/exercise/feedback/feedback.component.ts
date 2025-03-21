@@ -59,6 +59,16 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
     ],
 })
 export class FeedbackComponent implements OnInit, OnChanges {
+    protected readonly faXmark = faXmark;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly BuildLogType = BuildLogType;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly resultIsPreliminary = resultIsPreliminary;
+    protected readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    protected readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
+
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private translateService = inject(TranslateService);
@@ -67,13 +77,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
     activeModal? = inject(NgbActiveModal, { optional: true });
-
-    readonly BuildLogType = BuildLogType;
-    readonly AssessmentType = AssessmentType;
-    readonly ExerciseType = ExerciseType;
-    readonly resultIsPreliminary = resultIsPreliminary;
-    readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -104,10 +107,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() isExamReviewPage = false;
     @Input() isPrinting = false;
 
-    // Icons
-    faXmark = faXmark;
-    faCircleNotch = faCircleNotch;
-    faExclamationTriangle = faExclamationTriangle;
     private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
