@@ -43,6 +43,11 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
     imports: [TranslateDirective, NgClass, NgxDatatableModule, ResultComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
 })
 export class ParticipationSubmissionComponent implements OnInit {
+    protected readonly faTrash = faTrash;
+    protected readonly ParticipationType = ParticipationType;
+    protected readonly buttonSizeSmall = ButtonSize.SMALL;
+    protected readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
+
     private route = inject(ActivatedRoute);
     private submissionService = inject(SubmissionService);
     private translateService = inject(TranslateService);
@@ -55,10 +60,6 @@ export class ParticipationSubmissionComponent implements OnInit {
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private eventManager = inject(EventManager);
     private profileService = inject(ProfileService);
-
-    readonly ParticipationType = ParticipationType;
-    readonly buttonSizeSmall = ButtonSize.SMALL;
-    readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
 
     // These two variables are used to emit errors to the delete dialog
     protected dialogErrorSource = new Subject<string>();
@@ -77,9 +78,6 @@ export class ParticipationSubmissionComponent implements OnInit {
     isLoading = true;
     commitHashURLTemplate?: string;
     resultIdToBuildJobIdMap?: { [key: string]: string };
-
-    // Icons
-    faTrash = faTrash;
 
     /**
      * Initialize component by setting up page and subscribe to eventManager
