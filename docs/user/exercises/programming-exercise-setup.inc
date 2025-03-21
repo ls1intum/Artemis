@@ -168,16 +168,24 @@ Generate programming exercise
         The results for these submissions will not be rated.
     - **Manual feedback requests**: Enable the feature for manual feedback requests, allowing students to request feedback before the deadline.
       In this scenario, each student can initiate a single feedback request at a time. Once an instructor or tutor reviews the submitted work and provides feedback,
-      the student can then submit another request. This iterative process continues until the instructor or tutor has no further suggestions for the submission.
+      the student can then submit another request. This iterative process continues until the instructor or tutor has no further suggestions for the submission. This option is only available on non-Athena deployments.
     - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
       If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
     - **Include tests into example solution**: If active, the example solution also contains the test cases.
       This allows students to locally run the test cases and verify their result.
 
-    |
+      .. figure:: programming/programming-options-sca.png
+                    :align: center
 
-    .. figure:: programming/programming-options-sca.png
-              :align: center
+    - **Preliminary Feedback Module**:  If the Artemis instance supports Athena, instructors can select available models for feedback requests when creating programming exercises. Model selection is only available if the due date has not passed. If a model is selected, students will see a button to request AI feedback while working on programming exercises and potentially improve their work before the submission deadline.
+    - **Feedback Suggestions Module**: If the Artemis instance supports Athena, instructors can select available models that will provide feedback suggestions during the review of student submissions. Model selection is only available if the due date has not passed and if the Assessment Type is manual.
+      To get a better understanding of the configuration of Athena feedback modules, you can watch the following video:
+
+      .. raw:: html
+
+          <iframe src="https://tum.live/w/artemisintro/56285/PRES?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
+              Watch this video on TUM-Live.
+          </iframe>
 
     - **Max Static Code Analysis Penalty:** Available if static code analysis is active.
       Determines the maximum amount of points that can be deducted for code quality issues found in a submission as a percentage (between 0% and 100%) of **Points**.

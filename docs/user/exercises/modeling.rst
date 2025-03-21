@@ -76,12 +76,21 @@ The following screenshot illustrates the first section of the form. It consists 
 The following screenshot illustrates the second section of the form. It consists of:
 
 - **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise.
-- **Enable feedback suggestions from Athena**: When enabled, Artemis tries to automatically suggest assessments for diagram elements using the Athena service.
 - **Problem Statement**: The task description of the exercise as seen by students.
 - **Assessment Instructions**: Instructions for instructors while assessing the submission.
 
     .. figure:: modeling/create-modeling-exercise-form-2.png
               :align: center
+
+- **Preliminary Feedback Module**:  If the Artemis instance supports Athena, instructors can select available models for feedback requests when creating programming exercises. Model selection is only available if the due date has not passed. If a model is selected, students will see a button to request AI feedback while working on programming exercises and potentially improve their work before the submission deadline.
+- **Feedback Suggestions Module**: If the Artemis instance supports Athena, instructors can select available models that will provide feedback suggestions during the review of student submissions. Model selection is only available if the due date has not passed and if the Assessment Type is manual.
+To get a better understanding of the configuration of Athena feedback modules, you can watch the following video:
+
+    .. raw:: html
+
+        <iframe src="https://tum.live/w/artemisintro/56285/PRES?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
+            Watch this video on TUM-Live.
+        </iframe>
 
 .. note::
     If you are not clear about any of the fields, you can access additional hints by hovering over the |hint| icon for many of them.
@@ -270,7 +279,7 @@ When a modeling exercise is configured to allow ``Allow automatic AI preliminary
 
 .. admonition:: Note
    :class: note
-    
+
     It is recommended that comprehensive **Grading Instructions** be provided in the form of **Structured Grading Instructions** and that a Sample Solution is included (although not mandatory). This ensures that the AI-generated feedback aligns with the intended grading criteria and offers targeted, meaningful hints.
 
 **How to Request Automatic Feedback:**

@@ -160,6 +160,18 @@ Once submitted, you cannot make any further changes to the assessment unless you
 
 .. |save-button| image:: general/save-button.png
 
+Integration of Preliminary Feedback into Online Code Editor
+-----------------
+
+From the student's perspective, Preliminary Feedback is fully integrated into the Online Code Editor.
+You can watch the following video demonstrating the student experience.
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/56287/PRES?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Repository Access
 -----------------
 
