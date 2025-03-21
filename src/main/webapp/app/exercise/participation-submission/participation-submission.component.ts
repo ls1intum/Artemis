@@ -271,8 +271,8 @@ export class ParticipationSubmissionComponent implements OnInit {
         }
     }
 
-    viewBuildLogs(resultId: number): void {
-        const url = `/api/programming/build-log/${resultId}`;
+    viewBuildLogs(buildJobId: number): void {
+        const url = `/api/programming/build-log/${buildJobId}`;
         window.open(url, '_blank');
     }
 
