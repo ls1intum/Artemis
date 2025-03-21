@@ -25,7 +25,9 @@ plugins {
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.1.0"
     id "org.springframework.boot" version "${spring_boot_version}"
-    id 'org.springdoc.openapi-gradle-plugin' version '1.9.0'
+    id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
+    id "org.openapi.generator" version "7.12.0"
+
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -72,25 +74,36 @@ springBoot {
     mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
 }
 
-// Configure the openApi extension provided by the plugin:
 openApi {
-    // URL to your API docs endpoint (change if needed)
-    apiDocsUrl.set("http://localhost:8080/v3/api-docs")
-    // Where to output the generated spec file
+    apiDocsUrl.set("http://localhost:8080/api-docs")
     outputDir.set(file("$rootDir/openapi"))
-    // Name of the output file (if ends with .yaml, output will be YAML)
     outputFileName.set("openapi.yaml")
     // How long to wait (in seconds) for the server to start
     waitTimeInSeconds.set(180)
     customBootRun {
-        classpath = files(sourceSets.main.runtimeClasspath) + fileTree("src/test/resources/config") {
-            include "**/*.yml", "**/*.yaml", "**/*.properties"
-        }
-        systemProperties.put("spring.config.additional-location", "classpath:/config/")
-        args.set(["--spring.profiles.active=test,artemis,core,atlas,scheduling,athena, apollon, iris,aeolus,theia,lti,dev,openapi", "--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
-                  "--artemis.iris.secret-token=token", "--spring.jpa.database=h2" ])
+        jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti,dev"]
+
+        args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
+                  "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake",
+        "-- springdoc.packages-to-scan: de.tum.cit.aet.artemis.core.web.admin"])
 
     }
+}
+
+openApiGenerate {
+    generatorName = "typescript-angular" // Generator for Angular TypeScript clients
+    inputSpec = "${rootDir}/openapi/openapi.yaml" // Path to your OpenAPI spec file
+    outputDir = "$buildDir/generated-sources/openapi"
+    apiPackage = "de.tum.cit.aet.artemis.client"
+    modelPackage = "de.tum.cit.aet.artemis.client.model"
+    invokerPackage = "de.tum.cit.aet.artemis.client.invoker"
+    validateSpec = false
+    configOptions = [
+        serviceSuffix: "Service",
+        supportsES6: "true",
+        npmName: "@artemis/api-client",
+        npmVersion: "${project.version}"
+    ]
 }
 
 modernizer {
@@ -447,7 +460,7 @@ dependencies {
 
     // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
 //    testImplementation "com.h2database:h2:2.3.232"
-    testImplementation "com.h2database:h2:2.2.224"
+    runtimeOnly "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250107"
