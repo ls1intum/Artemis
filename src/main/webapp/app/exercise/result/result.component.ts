@@ -317,7 +317,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
         if (this.exercise?.type === ExerciseType.QUIZ) {
             // There is no feedback for quiz exercises.
-            // Instead, the scoring is showed next to the different questions
+            // Instead, the scoring is shown next to the different questions
             return undefined;
         }
 
