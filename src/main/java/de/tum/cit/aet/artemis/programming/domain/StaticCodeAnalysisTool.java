@@ -18,6 +18,7 @@ public enum StaticCodeAnalysisTool {
     DART_ANALYZE("dart_analyze.sarif"),
     ESLINT("eslint.sarif"),
     GCC("gcc.xml"),
+    LINTR("lintr_results.sarif"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
     RUBOCOP("rubocop.sarif"),
