@@ -141,6 +141,3 @@ jobs:
         with:
           name: docker-tag
           path: docker-tag.txt
-          # Set the retention days for the artifact as 1 day
-          # Since it is only needed for the next workflow (e.g. E2E test workflow)
-          retention-days: 1
