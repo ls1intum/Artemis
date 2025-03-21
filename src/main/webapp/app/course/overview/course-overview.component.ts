@@ -48,37 +48,37 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/icons/icons';
 
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TeamService } from 'app/exercises/shared/team/team.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { LtiService } from 'app/shared/service/lti.service';
-import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
-import { TranslateDirective } from '../shared/language/translate.directive';
 
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
-import { CourseLecturesComponent } from './course-lectures/course-lectures.component';
-import { CourseExamsComponent } from './course-exams/course-exams.component';
-import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-tutorial-groups.component';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { sortCourses } from 'app/shared/util/course.util';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
-import { CourseActionItem, CourseSidebarComponent, SidebarItem } from './course-sidebar/course-sidebar.component';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
+import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 
 @Component({
     selector: 'jhi-course-overview',

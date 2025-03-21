@@ -49,37 +49,37 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { facSidebar } from 'app/icons/icons';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { LtiService } from 'app/shared/service/lti.service';
-import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseSidebarComponent, SidebarItem } from 'app/overview/course-sidebar/course-sidebar.component';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
-import { LectureComponent } from 'app/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
-import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
-import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
-import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
-import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component';
-import { AssessmentDashboardComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard.component';
-import { CourseScoresComponent } from 'app/course/course-scores/course-scores.component';
-import { FaqComponent } from 'app/faq/faq.component';
-import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
+import { CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
+import { LectureComponent } from 'app/lecture/manage/lecture.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
+import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
+import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
+import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
+import { CourseScoresComponent } from 'app/course/manage/course-scores/course-scores.component';
+import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
+import { FaqComponent } from 'app/communication/faq/faq.component';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -512,8 +512,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faChalkboardUser,
             title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return lecturesItem;
@@ -526,8 +524,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             title: 'Exams',
             testId: 'exam-tab',
             translation: 'artemisApp.courseOverview.menu.exams',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return examsItem;
@@ -539,8 +535,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faComments,
             title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return communicationsItem;
@@ -552,8 +546,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faPersonChalkboard,
             title: 'Tutorials',
             translation: 'artemisApp.courseOverview.menu.tutorialGroups',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.TutorialGroups,
             hidden: false,
         };
@@ -566,8 +558,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faFlag,
             title: 'Competency Management',
             translation: 'artemisApp.courseOverview.menu.competencies',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return competenciesItem;
@@ -579,8 +569,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faNetworkWired,
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.LearningPaths,
             hidden: false,
         };
@@ -593,8 +581,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faChartBar,
             title: 'Dashboard',
             translation: 'artemisApp.courseOverview.menu.dashboard',
-            hasInOrionProperty: false,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
             hidden: false,
         };
@@ -607,8 +593,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faQuestion,
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
-            hasInOrionProperty: false,
-            showInOrionWindow: false,
             hidden: false,
         };
         return faqItem;
@@ -637,8 +621,6 @@ export class CourseManagementContainerComponent implements OnInit, OnDestroy, Af
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             guidedTour: true,
             hidden: false,
         };
