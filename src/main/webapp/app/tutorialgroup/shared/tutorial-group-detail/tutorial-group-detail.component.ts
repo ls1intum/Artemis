@@ -10,6 +10,7 @@ import { faCircle, faCircleInfo, faCircleXmark, faPercent, faQuestionCircle, faU
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
@@ -17,7 +18,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsTableComponent } from '../tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.component';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',

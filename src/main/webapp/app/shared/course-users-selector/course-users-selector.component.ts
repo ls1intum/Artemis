@@ -6,11 +6,11 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap }
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
+import { ProfilePictureComponent } from '../profile-picture/profile-picture.component';
+import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 let selectorId = 0;
 

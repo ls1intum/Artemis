@@ -10,13 +10,13 @@ import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
+import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
+import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from '../../language/translate.directive';
+import { ConfirmEntityNameComponent } from '../../confirm-entity-name/confirm-entity-name.component';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-reset-repo-button',

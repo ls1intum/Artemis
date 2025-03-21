@@ -11,14 +11,14 @@ import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
+import { UsersImportButtonComponent } from '../user-import/users-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from '../language/translate.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
+import { ProfilePictureComponent } from '../profile-picture/profile-picture.component';
+import { DeleteButtonDirective } from '../delete-dialog/delete-button.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',
