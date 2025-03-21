@@ -207,10 +207,18 @@ public class MailService implements InstantNotificationService {
      * @return the modified subject of the email
      */
     private String createAnnouncementText(Object notificationSubject, Locale locale) {
+        // Fallback course title
+        String unknownCourseEn = "(Unknown Course)";
+        String unknownCourseDe = "(Unbekannter Kurs)";
+        String unknownCourseText = locale.toString().equals("en") ? unknownCourseEn : unknownCourseDe;
+
         // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
         String newAnnouncementString = locale.toString().equals("en") ? "New announcement \"%s\" in course \"%s\"" : "Neue Ankündigung \"%s\" im Kurs \"%s\"";
-        String postTitle = ((Post) notificationSubject).getTitle();
-        String courseTitle = ((Post) notificationSubject).getConversation().getCourse().getTitle();
+
+        Post post = (Post) notificationSubject;
+
+        String postTitle = post.getTitle() != null ? post.getTitle() : "";
+        String courseTitle = post.getConversation().getCourse().getTitle() != null ? post.getConversation().getCourse().getTitle() : unknownCourseText;
 
         return String.format(newAnnouncementString, postTitle, courseTitle);
     }
