@@ -25,12 +25,11 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 
-import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
-
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 
 export const appConfig: ApplicationConfig = {
     providers: [

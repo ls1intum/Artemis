@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
@@ -11,9 +10,10 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { PageRibbonComponent } from './shared/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from './shared/notification/notification-popup/notification-popup.component';
-import { FooterComponent } from './shared/layouts/footer/footer.component';
+import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
+import { FooterComponent } from 'app/core/layouts/footer/footer.component';
+import { ProfileService } from 'app/core/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-app',
