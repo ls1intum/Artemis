@@ -1,7 +1,7 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { Component } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
 /**
  * An abstract component that provides the logic to filter a {@link KnowledgeAreaTreeComponent} by competency title and knowledge area.

@@ -1,4 +1,4 @@
-import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 
 export class Prerequisite extends CourseCompetency {
     constructor() {

@@ -15,7 +15,7 @@ import {
     CompetencyRelationType,
     CompetencyWithTailRelationDTO,
     CourseCompetencyProgress,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';

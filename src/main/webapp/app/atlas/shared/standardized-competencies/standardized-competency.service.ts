@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Injectable({
     providedIn: 'root',

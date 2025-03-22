@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Competency, CompetencyJol, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/atlas/shared/entities/competency.model';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';

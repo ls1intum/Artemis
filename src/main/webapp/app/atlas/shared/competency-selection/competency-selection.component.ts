@@ -10,7 +10,7 @@ import {
     MEDIUM_COMPETENCY_LINK_WEIGHT,
     MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF,
     getIcon,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Subscription, finalize } from 'rxjs';

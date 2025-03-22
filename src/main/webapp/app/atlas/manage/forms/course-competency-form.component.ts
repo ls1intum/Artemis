@@ -3,7 +3,7 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
-import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';

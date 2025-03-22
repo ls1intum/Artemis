@@ -9,11 +9,11 @@ import {
     Source,
     StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { StandardizedCompetencyEditComponent } from 'app/core/admin/standardized-competencies/standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';

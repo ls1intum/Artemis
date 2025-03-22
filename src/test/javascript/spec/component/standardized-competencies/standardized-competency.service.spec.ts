@@ -1,10 +1,10 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { KnowledgeAreaDTO, Source, StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
 import { take } from 'rxjs';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 
 describe('StandardizedCompetencyService', () => {
     let standardizedCompetencyService: StandardizedCompetencyService;

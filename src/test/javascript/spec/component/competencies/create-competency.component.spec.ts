@@ -9,7 +9,7 @@ import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
-import { Competency } from 'app/entities/competency.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Lecture } from 'app/entities/lecture.model';

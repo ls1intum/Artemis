@@ -1,6 +1,6 @@
-import { CompetencyTaxonomy, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { BaseCompetency } from 'app/entities/competency.model';
+import { BaseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 export interface StandardizedCompetency extends BaseCompetency {
     version?: string;

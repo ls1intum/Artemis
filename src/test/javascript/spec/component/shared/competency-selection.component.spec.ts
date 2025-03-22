@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Competency, CompetencyLearningObjectLink } from 'app/entities/competency.model';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
+import { of, throwError, BehaviorSubject } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';

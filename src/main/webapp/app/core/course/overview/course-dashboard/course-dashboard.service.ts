@@ -6,7 +6,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { CompetencyJol } from 'app/entities/competency.model';
+import { CompetencyJol } from 'app/atlas/shared/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {

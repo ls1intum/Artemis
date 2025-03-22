@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';

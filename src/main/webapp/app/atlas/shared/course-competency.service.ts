@@ -11,7 +11,7 @@ import {
     CompetencyWithTailRelationDTO,
     CourseCompetency,
     CourseCompetencyProgress,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';

@@ -9,7 +9,7 @@ import {
     CourseCompetencyImportSettings,
     ImportCourseCompetenciesSettingsComponent,
 } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
-import { CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
+import { CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseForImportDTOPagingService } from 'app/core/course/shared/course-for-import-dto-paging-service';

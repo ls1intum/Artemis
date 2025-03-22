@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
+import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
