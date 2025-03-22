@@ -9,6 +9,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
@@ -73,13 +74,15 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
 
     /**
      * Checks for each user if the notification should be sent as an email or/and as a push notification.
-     * Then delegates the actual sending to the corresponding {@link InstantNotificationService}s
+     * Then delegates the actual sending to the corresponding {@link InstantNotificationService}s.
+     * It is. {@link Async} to ensure that the sending of notifications does not block requests.
      *
      * @param notification        to be sent via the channel the implementing service is responsible for
      * @param users               who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
     @Override
+    @Async
     public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
         var emailRecipients = filterRecipients(notification, users, EMAIL);
         var pushRecipients = filterRecipients(notification, users, PUSH);
