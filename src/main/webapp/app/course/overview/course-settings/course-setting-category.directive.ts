@@ -26,7 +26,10 @@ export abstract class CourseSettingCategoryDirective implements OnInit, OnDestro
         if (this.route.parent) {
             this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
                 this.courseId = Number(params.courseId);
-                this.onCourseIdAvailable();
+
+                if (this.courseId) {
+                    this.onCourseIdAvailable();
+                }
             });
         }
 

@@ -43,6 +43,10 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
 
     ngOnInit(): void {
         this.courseNotificationWebsocketSubscription = this.courseNotificationWebsocketService.websocketNotification$.subscribe((notification) => {
+            if (this.notifications.findIndex((existingNotification) => existingNotification.notificationId === notification.notificationId) !== -1) {
+                return;
+            }
+
             this.notifications.push(notification);
 
             setTimeout(() => {

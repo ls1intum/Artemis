@@ -199,7 +199,12 @@ public class CourseNotificationService {
                 continue;
             }
 
-            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key).toString()));
+            String paramValue = parameters.get(key).toString();
+            if (paramValue.length() > 500) {
+                paramValue = paramValue.substring(0, 500);
+            }
+
+            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, paramValue));
         }
 
         if (!parameterEntities.isEmpty()) {
