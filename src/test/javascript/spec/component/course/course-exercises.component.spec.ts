@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -32,18 +32,29 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
+    let exerciseService: ExerciseService;
 
     let course: Course;
     let exercise: Exercise;
     let courseStorageStub: jest.SpyInstance;
+    let exerciseServiceStub: jest.SpyInstance;
 
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
-    const route = { parent: parentRoute } as any as ActivatedRoute;
+    const queryParamsSubject = new BehaviorSubject({ exercises: '', isMultiLaunch: 'false' });
+    const route = {
+        parent: parentRoute,
+        queryParams: queryParamsSubject,
+    } as any as ActivatedRoute;
+
+    class MockExerciseService {
+        find = jest.fn().mockReturnValue(of({ body: new Exercise() }));
+    }
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -78,6 +89,7 @@ describe('CourseExercisesComponent', () => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
+                exerciseService = TestBed.inject(ExerciseService);
 
                 component.sidebarData = { groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' };
                 course = new Course();
@@ -88,6 +100,7 @@ describe('CourseExercisesComponent', () => {
                 course.exercises = [exercise];
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
                 courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+                exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: exercise }));
 
                 fixture.detectChanges();
             });
@@ -99,15 +112,13 @@ describe('CourseExercisesComponent', () => {
 
     it('should initialize', () => {
         expect(component.course).toEqual(course);
-        expect(courseStorageStub.mock.calls).toHaveLength(1);
-        expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
+        expect(courseStorageStub).toHaveBeenCalledTimes(1);
+        expect(courseStorageStub).toHaveBeenCalledWith(course.id);
         component.ngOnDestroy();
     });
 
     it('should display sidebar when course is provided', () => {
         fixture.detectChanges();
-        // Wait for any async operations to complete here if necessary
-        fixture.detectChanges(); // Trigger change detection again if async operations might change the state
         expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
     });
 
@@ -141,5 +152,16 @@ describe('CourseExercisesComponent', () => {
         component.exerciseSelected = true;
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
+    });
+
+    it('should update isMultiLaunch from false to true when query parameters change', () => {
+        component.isMultiLaunch = true;
+        component.multiLaunchExerciseIDs = [1, 2];
+
+        component.prepareSidebarData();
+
+        expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
+        expect(exerciseServiceStub).toHaveBeenCalledWith(1);
+        expect(exerciseServiceStub).toHaveBeenCalledWith(2);
     });
 });
