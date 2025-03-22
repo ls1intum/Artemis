@@ -133,7 +133,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
-        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
         Result existingManualResult = participation.getResults().stream().filter(Result::isManual).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
 

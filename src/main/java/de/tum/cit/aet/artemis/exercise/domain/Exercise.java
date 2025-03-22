@@ -579,34 +579,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
-     * results.
-     *
-     * @param participation to find the latest result for.
-     * @return latest result or null
-     */
-    public Result findLatestResultWithCompletionDate(Participation participation) {
-        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
-        if (participation.getResults() == null) {
-            return null;
-        }
-        Optional<Result> latestResult = participation.getResults().stream().filter(result -> result.getCompletionDate() != null).max((result1, result2) -> {
-            ZonedDateTime resultDate1 = result1.getCompletionDate();
-            ZonedDateTime resultDate2 = result2.getCompletionDate();
-            if (resultDate1.equals(resultDate2)) {
-                return 0;
-            }
-            else if (resultDate1.isAfter(resultDate2)) {
-                return 1;
-            }
-            else {
-                return -1;
-            }
-        });
-        return latestResult.orElse(null);
-    }
-
-    /**
      * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
      * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
@@ -618,7 +590,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (!isAssessmentOver) {
             // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
             if (this instanceof TextExercise || this instanceof ModelingExercise) {
-                // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                 return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
             }
             return Set.of();

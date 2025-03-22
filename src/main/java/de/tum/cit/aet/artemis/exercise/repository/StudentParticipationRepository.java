@@ -991,7 +991,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
                     }
                     else {
-                        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                         resultsOfParticipation = participation.getResults();
                     }
                     // search for the relevant result by filtering out irrelevant results using the continue keyword

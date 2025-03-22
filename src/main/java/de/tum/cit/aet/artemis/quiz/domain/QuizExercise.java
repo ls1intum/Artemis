@@ -394,7 +394,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             return null;
         }
         else {
-            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             return participation.getResults();
         }
     }

@@ -176,15 +176,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return the exercise with the given ID, if found.
      */
     @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH sp.results AS spr
-                LEFT JOIN FETCH spr.feedbacks sf
-                LEFT JOIN FETCH sf.testCase
-                LEFT JOIN FETCH spr.submission
-            WHERE pe.id = :exerciseId
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                SELECT DISTINCT pe
+                FROM ProgrammingExercise pe
+                    LEFT JOIN FETCH pe.solutionParticipation sp
+                    LEFT JOIN FETCH sp.submissions s
+                    LEFT JOIN FETCH s.results res
+                    LEFT JOIN FETCH res.feedbacks sf
+                    LEFT JOIN FETCH sf.testCase
+                WHERE pe.id = :exerciseId
+                    AND (res.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.result r2 WHERE s2.participation = sp) OR res.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 

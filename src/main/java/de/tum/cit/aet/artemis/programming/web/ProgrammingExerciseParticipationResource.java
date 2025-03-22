@@ -134,7 +134,6 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
-        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
     }
@@ -155,7 +154,6 @@ public class ProgrammingExerciseParticipationResource {
         hasAccessToParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
-        // TODO Michal Kawka not sure if we still need the line below
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
     }

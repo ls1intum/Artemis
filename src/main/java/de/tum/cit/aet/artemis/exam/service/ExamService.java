@@ -694,7 +694,6 @@ public class ExamService {
                 continue;
             }
             // Relevant Result is already calculated
-            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result relevantResult = studentParticipation.getResults().iterator().next();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());

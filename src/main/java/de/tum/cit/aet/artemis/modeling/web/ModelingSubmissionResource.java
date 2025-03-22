@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -352,13 +351,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
             // We want to have the preliminary feedback before the assessment due date too
-            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             Set<Result> participationResults = participation.getResults();
             if (participationResults != null) {
                 List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                 modelingSubmission.setResults(athenaResults);
-                Set<Result> athenaResultsSet = new HashSet<>(athenaResults);
-                participation.setResults(athenaResultsSet);
             }
         }
 

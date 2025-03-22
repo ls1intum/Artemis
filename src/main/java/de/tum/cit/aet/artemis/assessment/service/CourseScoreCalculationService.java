@@ -264,7 +264,6 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
                 var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());

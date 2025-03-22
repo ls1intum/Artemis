@@ -9,7 +9,6 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -351,7 +350,6 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
-        addLatestResultToParticipation(participation);
         participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(participation);
     }
@@ -450,22 +448,6 @@ public class ParticipationResource {
         }
         else {
             return programmingExercise.getDueDate() == null || now().isBefore(programmingExercise.getDueDate());
-        }
-    }
-
-    /**
-     * This makes sure the client can display the latest result immediately after loading this participation
-     *
-     * @param participation The participation to which the latest result should get added
-     */
-    // TODO Michal Kawka I think we don't need this method anymore
-    private void addLatestResultToParticipation(StudentParticipation participation) {
-        // Load results of participation as they are not contained in the current object
-        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-
-        Result result = participation.findLatestLegalResult();
-        if (result != null) {
-            participation.setResults(Set.of(result));
         }
     }
 
@@ -622,7 +604,6 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                 if (participation.getResults() != null && !participation.getResults().isEmpty()
                         && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
                     participation.setSubmissions(null);
@@ -727,12 +708,6 @@ public class ParticipationResource {
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
-        Set<Result> results = new HashSet<>();
-        if (result != null) {
-            results.add(result);
-        }
-        participation.setResults(results);
         return new ResponseEntity<>(participation, HttpStatus.OK);
     }
 
@@ -1007,18 +982,7 @@ public class ParticipationResource {
             }
             return participation;
         }
-        else if (optionalParticipation.isEmpty()) {
-            return null;
-        }
 
-        StudentParticipation participation = optionalParticipation.get();
-        Optional<Submission> optionalSubmission = submissionRepository.findByParticipationIdOrderBySubmissionDateDesc(participation.getId());
-        // TODO Michal Kawka not sure what to do here
-        if (optionalSubmission.isPresent()) {
-            Result result = new Result().submission(optionalSubmission.get());
-            participation.setResults(Set.of(result));
-        }
-
-        return participation;
+        return optionalParticipation.orElse(null);
     }
 }

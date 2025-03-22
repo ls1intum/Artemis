@@ -147,7 +147,6 @@ public class QuizResultService {
 
                 participation.setInitializationState(InitializationState.FINISHED);
 
-                // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                 Optional<Result> existingRatedResult = participation.getResults().stream().filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
 
                 if (existingRatedResult.isPresent()) {

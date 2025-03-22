@@ -328,8 +328,6 @@ public class ExerciseResource {
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerResultsAndSubmissions(exercise, user.getId());
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
-            // TODO Michal Kawka not sure what to do here
-            participation.setResults(exercise.findResultsFilteredForStudents(participation));
             // By filtering the results available yet, they can become null for the exercise.
             if (participation.getResults() != null) {
                 participation.getResults().forEach(Result::filterSensitiveInformation);

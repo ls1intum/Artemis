@@ -247,6 +247,10 @@ public abstract class Participation extends DomainObject implements Participatio
         return findLatestResult(false);
     }
 
+    public Set<Result> getResults() {
+        return this.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toSet());
+    }
+
     /**
      * Like findLatestLegalResult() but with the possibility to include illegal submissions,
      *
