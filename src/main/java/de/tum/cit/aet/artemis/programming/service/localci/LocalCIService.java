@@ -2,15 +2,11 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -21,26 +17,21 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanCheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.ci.CIPermission;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
- * Note: Because the ContinuousIntegrationSystem and the AbstractContinuousIntegrationService were designed with Jenkins integration in mind, some methods here are not
+ * Note: Because the ContinuousIntegrationSystem was designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
 @Service
 @Profile(PROFILE_LOCALCI)
-public class LocalCIService extends AbstractContinuousIntegrationService {
+public class LocalCIService implements ContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
@@ -48,15 +39,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    private final SharedQueueManagementService sharedQueueManagementService;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     public LocalCIService(BuildScriptProviderService buildScriptProviderService, AeolusTemplateService aeolusTemplateService,
-            SharedQueueManagementService sharedQueueManagementService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            DistributedDataAccessService distributedDataAccessService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildScriptProviderService = buildScriptProviderService;
         this.aeolusTemplateService = aeolusTemplateService;
-        this.sharedQueueManagementService = sharedQueueManagementService;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
@@ -74,9 +65,11 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) throws JsonProcessingException {
+        // TODO: implement this differently for LocalCI in the future
         if (exercise == null) {
             return;
         }
+        log.debug("Recreating build plans for exercise {}", exercise.getTitle());
         String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
@@ -119,10 +112,10 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        if (!sharedQueueManagementService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
+        if (!distributedDataAccessService.getQueuedJobsForParticipation(participation.getId()).isEmpty()) {
             return BuildStatus.QUEUED;
         }
-        else if (!sharedQueueManagementService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
+        else if (!distributedDataAccessService.getProcessingJobsForParticipation(participation.getId()).isEmpty()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -140,16 +133,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        // Not implemented for local CI.
-    }
-
-    @Override
-    public void removeAllDefaultProjectPermissions(String projectKey) {
-        // Not implemented for local CI.
-    }
-
-    @Override
-    public void giveProjectPermissions(String projectKey, List<String> groupNames, List<CIPermission> permissions) {
         // Not implemented for local CI.
     }
 
@@ -181,26 +164,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("buildAgents", sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs()));
-    }
-
-    @Override
-    public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // No webhooks needed within Integrated Code Lifecycle, so we return an empty Optional.
-        return Optional.empty();
-    }
-
-    /**
-     * Gets the latest available artifact for the given participation.
-     *
-     * @param participation to use its buildPlanId to find the artifact.
-     * @return the html representation of the artifact page.
-     */
-    @Override
-    public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // TODO LOCALVC_CI: Extract artifacts from the container when running the build job, store them on disk, and retrieve them here.
-        log.error("Unsupported action: LocalCIService.retrieveLatestArtifact()");
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new byte[0]);
+        return new ConnectorHealth(true, Map.of("buildAgents", distributedDataAccessService.getBuildAgentInformation()));
     }
 
     @Override
@@ -225,51 +189,5 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private String getCleanPlanName(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
-    }
-
-    @Override
-    public CheckoutDirectoriesDTO getCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
-        BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories = getSubmissionBuildPlanCheckoutDirectories(programmingLanguage, checkoutSolution);
-        BuildPlanCheckoutDirectoriesDTO solutionBuildPlanCheckoutDirectories = getSolutionBuildPlanCheckoutDirectories(submissionBuildPlanCheckoutDirectories);
-
-        return new CheckoutDirectoriesDTO(submissionBuildPlanCheckoutDirectories, solutionBuildPlanCheckoutDirectories);
-    }
-
-    private BuildPlanCheckoutDirectoriesDTO getSubmissionBuildPlanCheckoutDirectories(ProgrammingLanguage programmingLanguage, boolean checkoutSolution) {
-        String exerciseCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
-        String testCheckoutDirectory = ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-
-        exerciseCheckoutDirectory = startPathWithRootDirectory(exerciseCheckoutDirectory);
-        testCheckoutDirectory = startPathWithRootDirectory(testCheckoutDirectory);
-
-        String solutionCheckoutDirectory = null;
-
-        if (checkoutSolution) {
-            try {
-                String solutionCheckoutDirectoryPath = ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-                solutionCheckoutDirectory = startPathWithRootDirectory(solutionCheckoutDirectoryPath);
-            }
-            catch (IllegalArgumentException exception) {
-                // not checked out during template & submission build
-            }
-        }
-
-        return new BuildPlanCheckoutDirectoriesDTO(exerciseCheckoutDirectory, solutionCheckoutDirectory, testCheckoutDirectory);
-    }
-
-    private String startPathWithRootDirectory(String checkoutDirectoryPath) {
-        final String ROOT_DIRECTORY = "/";
-        if (checkoutDirectoryPath == null || checkoutDirectoryPath.isEmpty()) {
-            return ROOT_DIRECTORY;
-        }
-
-        return checkoutDirectoryPath.startsWith(ROOT_DIRECTORY) ? checkoutDirectoryPath : ROOT_DIRECTORY + checkoutDirectoryPath;
-    }
-
-    private BuildPlanCheckoutDirectoriesDTO getSolutionBuildPlanCheckoutDirectories(BuildPlanCheckoutDirectoriesDTO submissionBuildPlanCheckoutDirectories) {
-        String solutionCheckoutDirectory = submissionBuildPlanCheckoutDirectories.exerciseCheckoutDirectory();
-        String testCheckoutDirectory = submissionBuildPlanCheckoutDirectories.testCheckoutDirectory();
-
-        return new BuildPlanCheckoutDirectoriesDTO(null, solutionCheckoutDirectory, testCheckoutDirectory);
     }
 }

@@ -45,44 +45,6 @@
                             <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
                         </dd>
                     }
-                    @case (DetailType.ProgrammingBuildStatistics) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"></th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration"></th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration"></th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration"></th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration"></th>
-                                        <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>{{ detail.data.buildLogStatistics.buildCount ?? 0 }}</td>
-                                        <td>
-                                            {{
-                                                detail.data.buildLogStatistics.agentSetupDuration
-                                                    ? (detail.data.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
-                                                    : '-'
-                                            }}
-                                        </td>
-                                        <td>
-                                            {{ detail.data.buildLogStatistics.testDuration ? (detail.data.buildLogStatistics.testDuration | number: '1.2-2') + 's' : '-' }}
-                                        </td>
-                                        <td>
-                                            {{ detail.data.buildLogStatistics.scaDuration ? (detail.data.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-' }}
-                                        </td>
-                                        <td>
-                                            {{ detail.data.buildLogStatistics.totalJobDuration ? (detail.data.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's' : '-' }}
-                                        </td>
-                                        <td>{{ detail.data.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </dd>
-                    }
                     @case (DetailType.ProgrammingIrisEnabled) {
                         <dd id="detail-value-{{ detail.title }}">
                             <jhi-iris-enabled
@@ -126,7 +88,7 @@
                     }
                     @case (DetailType.Image) {
                         <dd id="detail-value-{{ detail.title }}">
-                            <img [alt]="detail.data.altText" class="details-image rounded-3" [src]="detail.data.imageUrl" />
+                            <img [alt]="detail.data.altText" class="details-image rounded-3" [src]="addPublicFilePrefix(detail.data.imageUrl)" />
                         </dd>
                     }
                     @case (DetailType.DefaultProfilePicture) {

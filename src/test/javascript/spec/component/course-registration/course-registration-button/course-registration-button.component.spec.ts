@@ -7,8 +7,8 @@ import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { CourseRegistrationButtonComponent } from 'app/overview/course-registration/course-registration-button/course-registration-button.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { CourseRegistrationButtonComponent } from 'app/course/overview/course-registration/course-registration-button/course-registration-button.component';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('CourseRegistrationButtonComponent', () => {
     let fixture: ComponentFixture<CourseRegistrationButtonComponent>;

@@ -4,22 +4,21 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { onError } from 'app/shared/util/global.utils';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
-import { AlertService } from 'app/core/util/alert.service';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
+import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from './overview/course-management-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course',
@@ -31,7 +30,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         DocumentationButtonComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
-        OrionFilterDirective,
         RouterLink,
         FaIconComponent,
         CourseManagementCardComponent,

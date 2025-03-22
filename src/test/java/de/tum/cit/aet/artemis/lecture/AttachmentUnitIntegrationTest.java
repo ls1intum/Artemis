@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
@@ -92,7 +93,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("/api/core/files/temp/example.txt");
+        this.attachment.setLink("temp/example.txt");
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
         this.attachmentUnit.setDescription("Lorem Ipsum");
@@ -214,7 +215,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         attachmentUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         AttachmentUnit updatedAttachmentUnit = request.getObjectMapper()
                 .readValue(request.performMvcRequest(attachmentUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentUnit.class);
-        request.getFile(updatedAttachmentUnit.getAttachment().getLink(), HttpStatus.OK);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updatedAttachmentUnit.getAttachment().getLink());
+        request.getFile(requestUrl, HttpStatus.OK);
     }
 
     @Test

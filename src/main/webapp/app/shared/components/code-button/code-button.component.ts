@@ -1,7 +1,7 @@
 import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
+import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -9,8 +9,8 @@ import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +29,7 @@ import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -84,7 +84,7 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
 
     // this is the fallback with a default order in case the server does not specify this as part of the profile info endpoint
-    authenticationMechanism = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
+    authenticationMechanisms = [RepositoryAuthenticationMethod.Password, RepositoryAuthenticationMethod.Token, RepositoryAuthenticationMethod.SSH];
     selectedAuthenticationMechanism = RepositoryAuthenticationMethod.Password;
 
     userTokenStillValid = false;
@@ -94,8 +94,7 @@ export class CodeButtonComponent implements OnInit {
     sshTemplateUrl?: string;
     versionControlUrl: string;
 
-    localVCEnabled = signal<boolean>(false);
-    gitlabVCEnabled = false;
+    localVCEnabled = signal<boolean>(true);
 
     copyEnabled = false;
     doesUserHaveSSHkeys = false;
@@ -160,7 +159,7 @@ export class CodeButtonComponent implements OnInit {
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
             if (profileInfo.repositoryAuthenticationMechanisms?.length) {
-                this.authenticationMechanism = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
+                this.authenticationMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
                     Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
                 );
             }
@@ -169,8 +168,6 @@ export class CodeButtonComponent implements OnInit {
             }
 
             this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
-            this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
-
             this.configureTooltips(profileInfo);
         });
 
@@ -185,7 +182,7 @@ export class CodeButtonComponent implements OnInit {
     public useSshUrl() {
         this.selectedAuthenticationMechanism = RepositoryAuthenticationMethod.SSH;
 
-        this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
+        this.copyEnabled = this.doesUserHaveSSHkeys;
         this.storeToLocalStorage();
     }
 
@@ -222,7 +219,9 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        this.selectedAuthenticationMechanism = this.localStorage.retrieve('code-button-state') || RepositoryAuthenticationMethod.Password;
+        this.selectedAuthenticationMechanism = this.authenticationMechanisms.includes(this.localStorage.retrieve('code-button-state'))
+            ? this.localStorage.retrieve('code-button-state')
+            : this.authenticationMechanisms[0];
 
         if (this.useSsh) {
             this.useSshUrl();
@@ -331,7 +330,7 @@ export class CodeButtonComponent implements OnInit {
      * @return repository uri with username of current user inserted
      */
     private repositoryUriForTeam(url: string) {
-        // (https://)(gitlab.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(gitlab.ase.in.tum.de/...-team1.git)
+        // (https://)(artemis.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(artemis.ase.in.tum.de/...-team1.git)
         return url.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
     }
 

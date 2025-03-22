@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -49,7 +49,14 @@ describe('VcsAccessTokensSettingsComponent', () => {
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.deleteUserVcsAccessToken.mockReturnValue(of({}));
-        jest.spyOn(console, 'error').mockImplementation(() => {});
+        // Avoid NG0953: Unexpected emit for destroyed OutputRef for date-time-picker.component.ts
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        jest.clearAllMocks();
+        fixture.destroy();
+        TestBed.resetTestingModule();
     });
 
     it('should cancel token creation', () => {

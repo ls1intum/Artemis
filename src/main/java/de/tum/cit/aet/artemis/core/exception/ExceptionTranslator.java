@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
 import org.zalando.problem.DefaultProblem;
 import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
@@ -33,7 +32,6 @@ import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
@@ -160,30 +158,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         else {
             return new HttpEntity<>(e.getMessage());
         }
-    }
-
-    /**
-     * @param e       a specific exception
-     * @param request the request
-     * @return the exception wrapped into a http entity
-     */
-    @ExceptionHandler(SockJsMessageDeliveryException.class)
-    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    public Object exceptionHandler(SockJsMessageDeliveryException e, HttpServletRequest request) {
-        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Session closed")) {
-            // session is closed, cannot return any response
-            log.info("Session closed SockJsMessageDeliveryException occurred: {}", e.getMessage());
-            return null;
-        }
-        else {
-            return new HttpEntity<>(e.getMessage());
-        }
-    }
-
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleGitlabException(GitLabException ex, NativeWebRequest request) {
-        final var problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ex.getMessage()).build();
-        return create(ex, problem, request);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

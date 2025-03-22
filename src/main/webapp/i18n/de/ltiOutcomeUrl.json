@@ -1,0 +1,23 @@
+{
+    "artemisApp": {
+        "ltiOutcomeUrl": {
+            "home": {
+                "title": "Lti Outcome-URLs",
+                "createLabel": "Erstelle eine neue Lti Outcome-URL"
+            },
+            "created": "Neue Lti Outcome-URL mit der Kennung {{ param }} erstellt",
+            "updated": "Lti Outcome-URL mit der Kennung {{ param }} aktualisiert",
+            "deleted": "Lti Outcome-URL mit der Kennung {{ param }} gelöscht",
+            "delete": {
+                "question": "Sind Sie sicher, dass Sie die Lti Outcome-URL {{ id }} löschen möchten?"
+            },
+            "detail": {
+                "title": "Lti Outcome-URL"
+            },
+            "url": "URL",
+            "sourcedId": "Quellen-ID",
+            "user": "Benutzer",
+            "exercise": "Übung"
+        }
+    }
+}

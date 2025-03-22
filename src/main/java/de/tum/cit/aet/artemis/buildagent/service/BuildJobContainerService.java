@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.RepositoryCheckoutPath;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -76,6 +76,15 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.proxies.default.no-proxy:}")
     private String noProxy;
 
+    @Value("${artemis.continuous-integration.container-flags-limit.max-cpu-count:0}")
+    private int maxCpuCount;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.max-memory:0}")
+    private int maxMemory;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
+    private int maxMemorySwap;
+
     public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.hostConfig = hostConfig;
@@ -89,9 +98,13 @@ public class BuildJobContainerService {
      * @param image           the Docker image to use for the container
      * @param buildScript     the build script to be executed in the container
      * @param exerciseEnvVars the environment variables provided by the instructor
+     * @param cpuCount        the number of CPUs to allocate to the container
+     * @param memory          the memory limit in MB to allocate to the container
+     * @param memorySwap      the memory swap limit in MB to allocate to the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars, int cpuCount, int memory,
+            int memorySwap) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -102,8 +115,26 @@ public class BuildJobContainerService {
         if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
             envVars.addAll(exerciseEnvVars);
         }
+        HostConfig customHostConfig;
+        if (cpuCount > 0 || memory > 0 || memorySwap > 0) {
+            // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
+            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) : (hostConfig.getCpuQuota() / hostConfig.getCpuPeriod());
+
+            long adjustedMemory = (memory > 0)
+                    ? ((maxMemory > 0) ? Math.min(convertMemoryFromMBToBytes(memory), convertMemoryFromMBToBytes(maxMemory)) : convertMemoryFromMBToBytes(memory))
+                    : hostConfig.getMemory();
+
+            long adjustedMemorySwap = (memorySwap > 0)
+                    ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
+                    : hostConfig.getMemorySwap();
+
+            customHostConfig = copyAndAdjustHostConfig(adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+        }
+        else {
+            customHostConfig = hostConfig;
+        }
         try (final var createCommand = buildAgentConfiguration.getDockerClient().createContainerCmd(image)) {
-            return createCommand.withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
+            return createCommand.withName(containerName).withHostConfig(customHostConfig).withEnv(envVars)
                     // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks
                     // the
                     // container from exiting until it finishes.
@@ -115,6 +146,16 @@ public class BuildJobContainerService {
                     // "docker exec -it <container-id> /bin/bash".
                     .exec();
         }
+    }
+
+    private HostConfig copyAndAdjustHostConfig(long cpuCount, long memory, long memorySwap) {
+        long cpuPeriod = hostConfig.getCpuPeriod();
+        return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
+                .withPidsLimit(hostConfig.getPidsLimit()).withAutoRemove(true);
+    }
+
+    private long convertMemoryFromMBToBytes(long memory) {
+        return memory * 1024L * 1024L;
     }
 
     /**

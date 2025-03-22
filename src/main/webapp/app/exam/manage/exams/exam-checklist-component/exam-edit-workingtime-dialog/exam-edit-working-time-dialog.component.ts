@@ -1,11 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { examWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
@@ -22,8 +22,8 @@ export class ExamEditWorkingTimeDialogComponent {
     private activeModal = inject(NgbActiveModal);
     private examManagementService = inject(ExamManagementService);
 
-    @Input() exam: Exam;
-    @Output() examChange = new EventEmitter<Exam>();
+    exam: Exam;
+    examChange = output<Exam>();
 
     isLoading: boolean;
 

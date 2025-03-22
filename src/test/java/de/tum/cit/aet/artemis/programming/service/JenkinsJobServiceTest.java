@@ -21,11 +21,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "jenkinsjobservicetest";
 
@@ -39,7 +39,6 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
         invalidDocument = createEmptyDOMDocument();
         validDocument = createEmptyDOMDocument();
@@ -52,7 +51,6 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabT
 
     @AfterEach
     void tearDown() throws Exception {
-        gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedXmlFileUtils.close();
     }

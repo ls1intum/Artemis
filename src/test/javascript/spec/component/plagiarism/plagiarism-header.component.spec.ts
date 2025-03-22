@@ -1,20 +1,19 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of, Subject } from 'rxjs';
-import { PlagiarismHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-header/plagiarism-header.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
+import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
+import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
 import { Exercise } from 'app/entities/exercise.model';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PlagiarismHeaderComponent } from 'app/plagiarism/manage/plagiarism-header/plagiarism-header.component';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -65,14 +64,16 @@ describe('Plagiarism Header Component', () => {
         expect(comp.isLoading).toBeTrue();
     });
 
-    it('should disable deny button if plagiarism status is dirty', () => {
+    it('should disable deny button if plagiarism status is denied or loading', () => {
         comp.comparison.status = PlagiarismStatus.DENIED;
         comp.isLoading = true;
 
-        const nativeElement = fixture.nativeElement;
-        const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as ButtonComponent;
         fixture.detectChanges();
 
+        const nativeElement = fixture.nativeElement;
+        const button = nativeElement.querySelector("[data-qa='deny-plagiarism-button']") as HTMLButtonElement;
+
+        expect(button).toBeTruthy();
         expect(button.disabled).toBeTrue();
     });
 
@@ -141,15 +142,28 @@ describe('Plagiarism Header Component', () => {
         expect(comp.splitControlSubject.next).toHaveBeenCalledWith('even');
     });
 
-    it.each(['confirm-plagiarism-button', 'deny-plagiarism-button'])('should disable status update button for team exercises', (selector) => {
+    it('should display team mode disabled help icon when teamMode is enabled', () => {
         comp.exercise.teamMode = true;
-        comp.comparison.status = PlagiarismStatus.NONE;
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
-        const button = nativeElement.querySelector(`[data-qa=${selector}]`) as ButtonComponent;
+        const helpIcon = nativeElement.querySelector('fa-icon'); // Update to select FontAwesome icon
+        const textElement = nativeElement.querySelector('p small'); // Select the text inside the paragraph
+
+        expect(helpIcon).toBeTruthy(); // The icon should be present
+        expect(textElement).toBeTruthy();
+        expect(textElement.getAttribute('jhiTranslate')).toBe('artemisApp.plagiarism.teamModeDisabled');
+    });
+
+    it('should hide team mode disabled help icon when teamMode is disabled', () => {
+        comp.exercise.teamMode = false;
         fixture.detectChanges();
 
-        expect(button.disabled).toBeTrue();
+        const nativeElement = fixture.nativeElement;
+        const helpIcon = nativeElement.querySelector('fa-icon');
+        const textElement = nativeElement.querySelector('p small');
+
+        expect(helpIcon).toBeFalsy(); // The icon should not be present
+        expect(textElement).toBeFalsy(); // The text should not be present
     });
 });

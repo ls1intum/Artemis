@@ -110,8 +110,8 @@
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
-            "customizeBuildPlan": "Build Skript anpassen",
-            "customizeBuildPlanWithAeolus": "Build Skript anpassen",
+            "customizeBuildPlan": "Build Konfiguration anpassen",
+            "customizeBuildPlanWithAeolus": "Build Konfiguration anpassen",
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
@@ -545,9 +545,6 @@
                 "submissionBuildPlan": "Abgabe-Build-Plan",
                 "solutionBuildPlan": "Lösungs-Build-Plan"
             },
-            "orion": {
-                "openEditor": "Editor Öffnen"
-            },
             "reEvaluate": "Alle erneut bewerten",
             "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
@@ -557,12 +554,6 @@
                 "errorReadButton": "Ok",
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
             },
-            "unlockAllRepositories": "Alle Repositories entsperren",
-            "lockAllRepositories": "Alle Repositories sperren",
-            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studierende können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
-            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
-            "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
-            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
@@ -743,6 +734,18 @@
                     "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
                     "addEnvVar": "Umgebungsvariable hinzufügen",
                     "removeEnvVar": "Entfernen"
+                },
+                "cpuCount": {
+                    "label": "Anzahl der CPUs bearbeiten",
+                    "help": "Die Anzahl der CPUs, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                },
+                "memory": {
+                    "label": "Maximale Arbeitsspeichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                },
+                "memorySwap": {
+                    "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
                 }
             },
             "artemisIntelligence": {
