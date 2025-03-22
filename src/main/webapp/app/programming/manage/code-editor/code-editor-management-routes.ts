@@ -7,7 +7,7 @@ export const routes: Routes = [
     {
         path: 'ide/test',
         loadComponent: () =>
-            import('app/orion/manage/code-editor-instructor-and-editor-orion-container.component').then((m) => m.CodeEditorInstructorAndEditorOrionContainerComponent),
+            import('app/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then((m) => m.CodeEditorInstructorAndEditorContainerComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',
@@ -17,7 +17,7 @@ export const routes: Routes = [
     {
         path: 'ide/:repositoryId',
         loadComponent: () =>
-            import('app/orion/manage/code-editor-instructor-and-editor-orion-container.component').then((m) => m.CodeEditorInstructorAndEditorOrionContainerComponent),
+            import('app/programming/manage/code-editor/code-editor-instructor-and-editor-container.component').then((m) => m.CodeEditorInstructorAndEditorContainerComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.editor.home.title',

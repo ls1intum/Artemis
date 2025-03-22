@@ -2,9 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { OrionVersionValidator } from 'app/shared/orion/outdated-plugin-warning/orion-version-validator.service';
-import { first, switchMap } from 'rxjs/operators';
-import { from, lastValueFrom, of } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 
@@ -14,14 +11,12 @@ export class UserRouteAccessService implements CanActivate {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private stateStorageService = inject(StateStorageService);
-    private orionVersionValidator = inject(OrionVersionValidator);
 
     /**
      * Check if the client can activate a route.
      * @param route The ActivatedRouteSnapshot of the route to activate.
      * @param state The current RouterStateSnapshot.
-     * @return True if Orion version is valid or the connected client is a regular browser and
-     * user is logged in, false otherwise.
+     * @return True if user is logged in, false otherwise.
      */
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
         const ltiRedirectUrl = this.handleLTIRedirect(route, state);
@@ -39,28 +34,10 @@ export class UserRouteAccessService implements CanActivate {
         ) {
             authorities.push(Authority.EDITOR);
         }
-
         // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
         // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
-        return lastValueFrom(
-            this.orionVersionValidator
-                // Returns true, if the Orion version is up-to-date, or the connected client is just a regular browser
-                .validateOrionVersion()
-                .pipe(
-                    // Only take the first returned boolean and then cancel the subscription
-                    first(),
-                    switchMap((isValidOrNoIDE) => {
-                        // 1./2. Case: The Orion version is up-to-date/The connected client is a regular browser
-                        if (isValidOrNoIDE) {
-                            // Always check whether the user is logged in
-                            return from(this.checkLogin(authorities, urlToStore));
-                        }
-                        // 3. Case: The Orion Version is not up-to-date
-                        return of(false);
-                    }),
-                ),
-        );
+        return this.checkLogin(authorities, urlToStore);
     }
 
     /**

@@ -50,7 +50,6 @@ describe('CodeButtonComponent', () => {
         ]),
         useExternal: false,
         activeProfiles: ['localvc'],
-        allowedMinimumOrionVersion: '',
         buildPlanURLTemplate: '',
         commitHashURLTemplate: '',
         contact: '',

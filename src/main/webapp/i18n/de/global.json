@@ -217,7 +217,6 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",

@@ -1,7 +1,7 @@
 import { Component, Injector, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { FileUploadExercisePagingService } from 'app/file-upload/manage/file-upload-exercise-paging.service';
+import { FileUploadExercisePagingService } from 'app/fileupload/manage/file-upload-exercise-paging.service';
 import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';

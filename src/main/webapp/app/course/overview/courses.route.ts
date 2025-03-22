@@ -93,7 +93,7 @@ export const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadComponent: () => import('app/orion/overview/orion-course-exercise-details.component').then((m) => m.OrionCourseExerciseDetailsComponent),
+                        loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         pathMatch: 'full',
                     },
                 ],
@@ -141,7 +141,7 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
-                loadComponent: () => import('app/file-upload/overview/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
+                loadComponent: () => import('app/fileupload/overview/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',

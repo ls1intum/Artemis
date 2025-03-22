@@ -217,7 +217,6 @@
             "editSelected": "Edit selected",
             "editInEditor": "Edit in editor",
             "editBuildPlan": "Edit build plan",
-            "editInOrion": "Edit in your IDE",
             "editEntity": "Edit {{entity}}",
             "exampleSubmissions": "Example submissions",
             "generate": "Generate",

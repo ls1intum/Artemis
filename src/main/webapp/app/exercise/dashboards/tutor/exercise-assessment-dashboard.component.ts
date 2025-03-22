@@ -22,7 +22,7 @@ import { Observable, of } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploadSubmissionService } from 'app/file-upload/overview/file-upload-submission.service';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
@@ -111,8 +111,6 @@ export interface ExampleSubmissionQueryParams {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
@@ -230,11 +228,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     // links
     complaintsLink: any[];
     moreFeedbackRequestsLink: any[];
-
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-    // @ContentChild('overrideAssessmentTable') overrideAssessmentTable: TemplateRef<any>;
-    // @ContentChild('overrideOpenAssessmentButton') overrideOpenAssessmentButton: TemplateRef<any>;
 
     // Icons
     faSpinner = faSpinner;

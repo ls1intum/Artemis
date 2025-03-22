@@ -11,12 +11,14 @@ import { Exercise, getCourseId } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule],
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent],
 })
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
@@ -78,4 +80,6 @@ export class PlagiarismHeaderComponent {
     resetSplitPanes() {
         this.splitControlSubject.next('even');
     }
+
+    protected readonly faCircleInfo = faCircleInfo;
 }
