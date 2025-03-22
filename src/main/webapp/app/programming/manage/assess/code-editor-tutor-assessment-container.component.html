@@ -52,13 +52,6 @@
     </jhi-assessment-layout>
 
     <ng-template #assessment>
-        <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-        <!--        <ng-container-->
-        <!--            *jhiExtensionPoint="-->
-        <!--                overrideCodeEditor;-->
-        <!--                context: { title: editorTitle, toolbar: editorToolbar, feedback: editorBottom, exercise: exercise, participation: participation }-->
-        <!--            "-->
-        <!--        >-->
         @if (!loadingParticipation && !participationCouldNotBeFetched) {
             <jhi-code-editor-container
                 [editable]="false"
@@ -98,8 +91,6 @@
             </span>
         </ng-template>
         <ng-template #editorToolbar>
-            <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-            <!--            <ng-container *jhiExtensionPoint="overrideExportGoToRepository">-->
             @if (isAtLeastEditor && localVCEnabled && !isTestRun) {
                 <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink" />

@@ -9,7 +9,6 @@ import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise
 import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
@@ -40,7 +39,6 @@ describe('Course Management Exercises Component', () => {
                 MockDirective(TranslateDirective),
                 MockDirective(ExtensionPointDirective),
                 MockComponent(ProgrammingExerciseComponent),
-                MockDirective(OrionFilterDirective),
                 MockComponent(QuizExerciseComponent),
                 MockComponent(ModelingExerciseComponent),
                 MockComponent(FileUploadExerciseComponent),
