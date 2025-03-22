@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 
-public record SubmittedAnswerAfterEvaluationDTO(Long id, QuizQuestionWithSolutionDTO quizQuestion,
+public record SubmittedAnswerAfterEvaluationDTO(Long id, Double scoreInPoints, QuizQuestionWithSolutionDTO quizQuestion,
         @JsonUnwrapped MultipleChoiceSubmittedAnswerWithSolutionDTO multipleChoiceSubmittedAnswer, @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer,
         @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer) {
 
@@ -24,8 +24,8 @@ public record SubmittedAnswerAfterEvaluationDTO(Long id, QuizQuestionWithSolutio
             default -> {
             }
         }
-        return new SubmittedAnswerAfterEvaluationDTO(submittedAnswer.getId(), QuizQuestionWithSolutionDTO.of(submittedAnswer.getQuizQuestion()), multipleChoiceSubmittedAnswer,
-                dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer);
+        return new SubmittedAnswerAfterEvaluationDTO(submittedAnswer.getId(), submittedAnswer.getScoreInPoints(), QuizQuestionWithSolutionDTO.of(submittedAnswer.getQuizQuestion()),
+                multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer);
 
     }
 

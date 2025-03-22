@@ -32,7 +32,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -45,7 +44,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
@@ -63,73 +61,56 @@ public class Course extends DomainObject {
     private static final int DEFAULT_COMPLAINT_TEXT_LIMIT = 2000;
 
     @Column(name = "title")
-    @JsonView(QuizView.Before.class)
     private String title;
 
     @Column(name = "description")
-    @JsonView(QuizView.Before.class)
     private String description;
 
     @Column(name = "short_name", unique = true)
-    @JsonView(QuizView.Before.class)
     private String shortName;
 
     @Column(name = "student_group_name")
-    @JsonView(QuizView.Before.class)
     private String studentGroupName;
 
     @Column(name = "teaching_assistant_group_name")
-    @JsonView(QuizView.Before.class)
     private String teachingAssistantGroupName;
 
     @Column(name = "editor_group_name")
-    @JsonView(QuizView.Before.class)
     private String editorGroupName;
 
     @Column(name = "instructor_group_name")
-    @JsonView(QuizView.Before.class)
     private String instructorGroupName;
 
     @Column(name = "start_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime startDate;
 
     @Column(name = "end_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
 
     @Column(name = "enrollment_start_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime enrollmentStartDate;
 
     @Column(name = "enrollment_end_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime enrollmentEndDate;
 
     @Column(name = "unenrollment_end_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime unenrollmentEndDate;
 
     @Column(name = "semester")
-    @JsonView(QuizView.Before.class)
     private String semester;
 
     @Column(name = "test_course", nullable = false)
-    @JsonView(QuizView.Before.class)
     private boolean testCourse = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "language")
-    @JsonView(QuizView.Before.class)
     private Language language;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "default_programming_language")
-    @JsonView(QuizView.Before.class)
     private ProgrammingLanguage defaultProgrammingLanguage;
 
     @Column(name = "online_course")
-    @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -138,34 +119,27 @@ public class Course extends DomainObject {
 
     @Enumerated(EnumType.ORDINAL)
     @Column(name = "info_sharing_config", nullable = false)
-    @JsonView(QuizView.Before.class)
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
     @Column(name = "info_sharing_messaging_code_of_conduct")
     private String courseInformationSharingMessagingCodeOfConduct;
 
     @Column(name = "max_complaints", nullable = false)
-    @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
 
     @Column(name = "max_team_complaints", nullable = false)
-    @JsonView(QuizView.Before.class)
     private Integer maxTeamComplaints = 3;  // default value
 
     @Column(name = "max_complaint_time_days", nullable = false)
-    @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays = 7;   // default value
 
     @Column(name = "max_request_more_feedback_time_days", nullable = false)
-    @JsonView(QuizView.Before.class)
     private int maxRequestMoreFeedbackTimeDays = 7;   // default value
 
     @Column(name = "max_complaint_text_limit")
-    @JsonView(QuizView.Before.class)
     private int maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @Column(name = "max_complaint_response_text_limit")
-    @JsonView(QuizView.Before.class)
     private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -201,7 +175,6 @@ public class Course extends DomainObject {
     private Integer maxPoints;
 
     @Column(name = "accuracy_of_scores", nullable = false)
-    @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores = 1; // default value
 
     @Column(name = "restricted_athena_modules_access", nullable = false)

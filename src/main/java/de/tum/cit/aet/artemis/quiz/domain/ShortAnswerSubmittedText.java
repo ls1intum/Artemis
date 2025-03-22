@@ -18,10 +18,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
@@ -35,16 +33,13 @@ public class ShortAnswerSubmittedText extends DomainObject {
 
     @Column(name = "text")
     @Size(max = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH, message = "The submitted answer text is too long.")
-    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "is_correct")
-    @JsonView(QuizView.Before.class)
     private Boolean isCorrect;
 
     @OneToOne
     @JoinColumn()
-    @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -113,4 +108,5 @@ public class ShortAnswerSubmittedText extends DomainObject {
     public String toString() {
         return "ShortAnswerSubmittedText{" + "id=" + getId() + ", text='" + getText() + "'" + ", isCorrect='" + isIsCorrect() + "'" + "}";
     }
+
 }
