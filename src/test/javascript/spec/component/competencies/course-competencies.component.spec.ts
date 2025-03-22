@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { of } from 'rxjs';
-import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetenciesComponent } from 'app/atlas/overview/course-competencies/course-competencies.component';

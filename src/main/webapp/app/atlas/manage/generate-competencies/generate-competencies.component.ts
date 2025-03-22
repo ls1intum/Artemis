@@ -3,7 +3,7 @@ import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';

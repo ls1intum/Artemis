@@ -1,4 +1,4 @@
-import { CompetencyJol, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyJol, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';

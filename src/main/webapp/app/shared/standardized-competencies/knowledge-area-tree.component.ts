@@ -1,7 +1,7 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { MatTreeModule, MatTreeNestedDataSource } from '@angular/material/tree';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';

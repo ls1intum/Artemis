@@ -7,7 +7,7 @@ import { StandardizedCompetencyDetailStubComponent } from './detail/standardized
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Competency } from 'app/entities/competency.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
@@ -15,7 +15,7 @@ import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.compo
 import { SortService } from 'app/shared/service/sort.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Source } from 'app/entities/competency/standardized-competency.model';
+import { Source } from 'app/atlas/shared/entities/standardized-competency.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';

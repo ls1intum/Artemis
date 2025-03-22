@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyProgress, CourseCompetency, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
+import { CompetencyProgress, CourseCompetency, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

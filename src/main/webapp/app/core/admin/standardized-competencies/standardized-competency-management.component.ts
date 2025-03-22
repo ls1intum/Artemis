@@ -7,7 +7,7 @@ import {
     StandardizedCompetencyDTO,
     convertToKnowledgeAreaForTree,
     convertToStandardizedCompetencyForTree,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -15,7 +15,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
-import { getIcon } from 'app/entities/competency.model';
+import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';

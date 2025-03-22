@@ -11,7 +11,7 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';

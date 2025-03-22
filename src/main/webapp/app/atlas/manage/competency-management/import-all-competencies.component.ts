@@ -2,7 +2,7 @@ import { Component, Input, inject } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
-import { CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

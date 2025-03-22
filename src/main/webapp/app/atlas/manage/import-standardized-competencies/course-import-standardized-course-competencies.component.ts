@@ -1,4 +1,4 @@
-import { getIcon } from 'app/entities/competency.model';
+import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import {
     KnowledgeAreaDTO,
@@ -7,7 +7,7 @@ import {
     StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
     sourceToString,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit, inject } from '@angular/core';

@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { NodeDimension } from '@swimlane/ngx-graph';
 
 export class LearningPath implements BaseEntity {

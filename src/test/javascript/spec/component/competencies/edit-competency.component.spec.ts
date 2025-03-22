@@ -9,7 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { EditCompetencyComponent } from 'app/atlas/manage/edit/edit-competency.component';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
