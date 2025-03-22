@@ -9,6 +9,7 @@ import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
+import { ProgrammingBuildStatisticsComponent } from 'app/detail-overview-list/components/programming-build-statistics/programming-build-statistics.component';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -36,6 +37,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                 | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
                 | ProgrammingTestStatusDetailComponent
                 | ProgrammingDiffReportDetailComponent
+                | ProgrammingBuildStatisticsComponent
             >;
         } = {
             [DetailType.Text]: TextDetailComponent,
@@ -46,6 +48,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
             [DetailType.ProgrammingTestStatus]: ProgrammingTestStatusDetailComponent,
             [DetailType.ProgrammingDiffReport]: ProgrammingDiffReportDetailComponent,
+            [DetailType.ProgrammingBuildStatistics]: ProgrammingBuildStatisticsComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];
