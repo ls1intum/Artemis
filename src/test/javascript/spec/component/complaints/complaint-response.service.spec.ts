@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
+import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';

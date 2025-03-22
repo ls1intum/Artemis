@@ -51,6 +51,7 @@ test.describe('File upload exercise assessment', { tag: '@fast' }, () => {
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.problemStatement!)).toBeVisible();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.exampleSolution!)).toBeVisible();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.gradingInstructions!)).toBeVisible();
+            await fileUploadExerciseAssessment.downloadSubmissionFile();
             await fileUploadExerciseAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
             await fileUploadExerciseAssessment.submitFeedback();
         });

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
+import { FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { ChannelDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/channel.model';

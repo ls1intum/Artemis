@@ -1,4 +1,4 @@
-import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
+import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { EMPTY, Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
@@ -14,7 +14,6 @@ export class MockProgrammingSubmissionService implements IProgrammingSubmissionS
     getResultEtaInMs: () => Observable<number>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
-    downloadSubmissionInOrion: (exerciseId: number, submissionId: number, correctionRound: number) => void;
     getIsLocalCIProfile = () => false;
     fetchQueueReleaseDateEstimationByParticipationId: (participationId: number) => Observable<dayjs.Dayjs | undefined> = () => of(undefined);
 }

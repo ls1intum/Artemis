@@ -1,5 +1,5 @@
 import { ScienceService } from 'app/shared/science/science.service';
-import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
+import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

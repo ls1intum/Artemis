@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
+import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

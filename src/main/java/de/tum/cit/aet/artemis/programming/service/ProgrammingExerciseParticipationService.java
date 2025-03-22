@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,14 +15,11 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -43,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -210,116 +206,6 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Lock the repository associated with a programming participation.
-     *
-     * @param programmingExercise the programming exercise
-     * @param participation       the programming exercise student participation whose repository should be locked
-     * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
-     */
-    public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(),
-                    participation.getStudents());
-        }
-        else {
-            log.warn("Cannot lock student repository for participation {} because the repository was not copied yet!", participation.getId());
-        }
-    }
-
-    /**
-     * Asynchronously lock the repositories of all programming exercises of the given student exam, e.g. because the student handed in early
-     *
-     * @param user        the user to which the student exam belongs
-     * @param studentExam the student exam for which the lock operation should be executed
-     */
-    @Async
-    public void lockStudentRepositories(User user, StudentExam studentExam) {
-        // Only lock programming exercises when the student submitted early in real exams. Otherwise, the lock operations were already scheduled/executed.
-        // Always lock test exams since there is no locking operation scheduled (also see StudentExamService:457)
-        if (studentExam.isTestExam() || (studentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(studentExam.getIndividualEndDate()))) {
-            // Use the programming exercises in the DB to lock the repositories (for safety)
-            for (Exercise exercise : studentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    try {
-                        log.debug("lock student repositories for {}", user);
-                        var participation = findStudentParticipationByExerciseAndStudentId(programmingExercise, user.getLogin());
-                        lockStudentRepository(programmingExercise, participation);
-                    }
-                    catch (Exception e) {
-                        log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), user.getLogin(), e);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Lock a student participation. This is necessary if the student is not allowed to submit either from the online editor or from their local Git client.
-     * This is the case, if the start date of the exercise is in the future, if the due date is in the past, or if the student has reached the submission limit.
-     *
-     * @param participation the participation to be locked
-     */
-    public void lockStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
-        // Update the locked field for the given participation in the database.
-        studentParticipationRepository.updateLockedById(participation.getId(), true);
-        // Also set the correct value on the participation object in case the caller uses this participation for further processing.
-        participation.setLocked(true);
-    }
-
-    /**
-     * Lock the repository associated with a programming participation and the participation itself.
-     *
-     * @param programmingExercise the programming exercise
-     * @param participation       the programming exercise student participation whose repository should be locked
-     * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
-     */
-    public void lockStudentRepositoryAndParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        lockStudentRepository(programmingExercise, participation);
-        lockStudentParticipation(participation);
-    }
-
-    /**
-     * Unlock a student repository. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
-     * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
-     *
-     * @param participation the participation whose repository should be unlocked
-     */
-    public void unlockStudentRepository(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            for (User user : participation.getStudents()) {
-                versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUri(), user, VersionControlRepositoryPermission.REPO_WRITE);
-            }
-        }
-        else {
-            log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());
-        }
-    }
-
-    /**
-     * Unlock a student participation. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
-     * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
-     *
-     * @param participation the participation to be unlocked
-     */
-    public void unlockStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
-        // Update the locked field for the given participation in the database.
-        studentParticipationRepository.updateLockedById(participation.getId(), false);
-        // Also set the correct value on the participation object in case the caller uses this participation for further processing.
-        participation.setLocked(false);
-    }
-
-    /**
-     * Unlock the repository associated with a programming participation and the participation itself.
-     *
-     * @param participation the programming exercise student participation whose repository should be unlocked
-     * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
-     */
-    public void unlockStudentRepositoryAndParticipation(ProgrammingExerciseStudentParticipation participation) {
-        unlockStudentRepository(participation);
-        unlockStudentParticipation(participation);
-    }
-
-    /**
      * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
      *
      * @param programmingExercise exercise with information about the due date
@@ -354,10 +240,12 @@ public class ProgrammingExerciseParticipationService {
 
         // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
         FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
-        for (java.io.File file : targetRepo.getLocalPath().toFile().listFiles(filter)) {
+        final var targetRepoFiles = Optional.ofNullable(targetRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+        for (java.io.File file : targetRepoFiles) {
             FileSystemUtils.deleteRecursively(file);
         }
-        for (java.io.File file : sourceRepo.getLocalPath().toFile().listFiles(filter)) {
+        final var sourceRepoFiles = Optional.ofNullable(sourceRepo.getLocalPath().toFile().listFiles(filter)).orElseGet(() -> new File[0]);
+        for (java.io.File file : sourceRepoFiles) {
             if (file.isDirectory()) {
                 FileUtils.copyDirectory(file, targetRepo.getLocalPath().resolve(file.toPath().getFileName()).toFile());
             }
