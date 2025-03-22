@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.dto;
+package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -10,6 +10,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseForQuizExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseWithoutQuestionsDTO(Long id, String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,

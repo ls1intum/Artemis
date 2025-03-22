@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.dto;
+package de.tum.cit.aet.artemis.quiz.dto.participation;
 
 import java.time.ZonedDateTime;
 
