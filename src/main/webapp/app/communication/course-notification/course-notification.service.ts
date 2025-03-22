@@ -23,6 +23,9 @@ export class CourseNotificationService {
         newPostNotification: [CourseNotificationChannel.EMAIL],
     };
 
+    // Parameter keys that should be rendered as markdown
+    public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent'];
+
     private readonly apiEndpoint = '/api/communication/notification/';
     public readonly pageSize = 10;
 

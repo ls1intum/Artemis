@@ -8,6 +8,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-course-notification',
@@ -17,12 +19,15 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 })
 export class CourseNotificationComponent {
     private readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
+    private readonly markdownService: ArtemisMarkdownService = inject(ArtemisMarkdownService);
+    private readonly sanitizer: DomSanitizer = inject(DomSanitizer);
 
     readonly onCloseClicked = output<void>();
 
     readonly courseNotification = input.required<CourseNotification>();
     readonly isUnseen = input<boolean>(false);
     readonly isShowClose = input<boolean>(false);
+    readonly isHideTime = input<boolean>(false);
     readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
 
     protected faIcon: IconDefinition;
@@ -45,7 +50,18 @@ export class CourseNotificationComponent {
             this.faIcon = this.courseNotificationService.getIconFromType(this.courseNotification().notificationType);
             // For translations, we pass all parameters and the course name and id so they can automatically be used.
             this.notificationParameters = {
-                ...this.courseNotification().parameters,
+                ...Object.entries(this.courseNotification().parameters!).reduce(
+                    (acc, [key, value]) => {
+                        if (!CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                            acc[key] = value;
+                        } else {
+                            acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value))?.replace(/<[^>]*>/g, '') || '';
+                        }
+
+                        return acc;
+                    },
+                    {} as Record<string, any>,
+                ),
                 courseName: this.courseNotification().courseName,
                 courseId: this.courseNotification().courseId,
             };

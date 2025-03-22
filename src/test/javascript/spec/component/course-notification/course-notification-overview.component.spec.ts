@@ -14,6 +14,10 @@ import { CourseNotificationComponent } from 'app/communication/course-notificati
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { ActivatedRoute } from '@angular/router';
 
 describe('CourseNotificationOverviewComponent', () => {
     let component: CourseNotificationOverviewComponent;
@@ -57,7 +61,11 @@ describe('CourseNotificationOverviewComponent', () => {
                 MockComponent(CourseNotificationComponent),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: CourseNotificationService, useValue: courseNotificationService }],
+            providers: [
+                { provide: CourseNotificationService, useValue: courseNotificationService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CourseNotificationOverviewComponent);

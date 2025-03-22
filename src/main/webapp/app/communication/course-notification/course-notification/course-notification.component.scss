@@ -14,6 +14,7 @@ $notification-padding-x: 1.2rem;
     padding: $notification-padding-y $notification-padding-x $notification-padding-y $notification-padding-x;
     position: relative;
     border-radius: 0.3rem;
+    height: 6.5rem;
     width: 20rem;
     background-color: var(--module-bg);
     border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
@@ -22,13 +23,13 @@ $notification-padding-x: 1.2rem;
 .course-notification-close {
     color: var(--secondary);
     position: absolute;
-    top: 0.2rem;
-    right: 0.2rem;
+    top: 0.35rem;
+    right: 0.35rem;
     opacity: 0;
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    font-size: 0.5rem;
+    font-size: 0.8rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -82,8 +83,8 @@ $notification-padding-x: 1.2rem;
 .course-notification-content {
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     font-size: 90%;
 }

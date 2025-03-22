@@ -190,7 +190,7 @@
         "courseNotification": {
             "newPostNotification": {
                 "title": "New Message",
-                "content": "{{authorName}} wrote a new message in {{courseName}}.",
+                "content": "{{postMarkdownContent}}",
                 "settingsTitle": "New Message"
             },
             "temporal": {
@@ -214,6 +214,8 @@
             "overview": {
                 "title": "Notifications",
                 "emptyTitle": "All done!",
+                "settingsTooltip": "Go to settings",
+                "archiveAllTooltip": "Archive all notifications",
                 "emptyMessage": "Currently there are no notifications for this category."
             },
             "category": {

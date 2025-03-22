@@ -191,7 +191,7 @@
             "newPostNotification": {
                 "settingsTitle": "Neue Nachricht",
                 "title": "Neue Nachricht",
-                "content": "{{authorName}} hat eine neue Nachricht in {{courseName}} geschrieben."
+                "content": "{{postMarkdownContent}}"
             },
             "temporal": {
                 "now": "Jetzt",
@@ -214,6 +214,8 @@
             "overview": {
                 "title": "Benachrichtigungen",
                 "emptyTitle": "Alles erledigt!",
+                "settingsTooltip": "Zu den Einstellungen",
+                "archiveAllTooltip": "Alle archivieren",
                 "emptyMessage": "Momentan gibt es keine Benachrichtigungen in dieser Kategorie."
             },
             "category": {

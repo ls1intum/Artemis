@@ -215,7 +215,7 @@ public class ConversationMessagingService extends PostingService {
             courseNotificationService.sendCourseNotification(
                     new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
                             conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId()),
-                    recipientSummaries.stream().map((summary) -> {
+                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
                         var user = new User(summary.userId());
                         user.setLogin(summary.userLogin());
                         return user;

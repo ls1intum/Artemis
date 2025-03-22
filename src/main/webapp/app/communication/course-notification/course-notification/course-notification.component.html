@@ -25,7 +25,7 @@
             }
         </div>
 
-        <div class="course-notification-content-wrap">
+        <div class="course-notification-content-wrap w-100">
             <strong [jhiTranslate]="'artemisApp.courseNotification.' + notificationType + '.title'" [translateValues]="notificationParameters"></strong>
             <div
                 class="course-notification-content"
@@ -34,9 +34,11 @@
             ></div>
         </div>
 
-        <div class="course-notification-date">
-            <span [jhiTranslate]="notificationTimeTranslationKey" [translateValues]="notificationTimeTranslationParameters"></span>
-        </div>
+        @if (!isHideTime()) {
+            <div class="course-notification-date">
+                <span [jhiTranslate]="notificationTimeTranslationKey" [translateValues]="notificationTimeTranslationParameters"></span>
+            </div>
+        }
 
         @if (displayTimeInMilliseconds() !== undefined) {
             <div [ngStyle]="{ 'animation-duration': displayTimeInMilliseconds() + 'ms' }" class="course-notification-loading-indicator"></div>

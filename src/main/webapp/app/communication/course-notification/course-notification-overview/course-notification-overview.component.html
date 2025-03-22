@@ -12,8 +12,20 @@
             <h4 class="course-notification-overview-overlay-headline mb-0" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
 
             <div>
-                <button class="btn btn-outline-secondary btn-sm" (click)="archiveClicked()">
-                    <fa-icon [icon]="faArchive" />
+                <button
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="archiveClicked()"
+                    [ngbTooltip]="'artemisApp.courseNotification.overview.archiveAllTooltip' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
+                <button
+                    routerLink="settings"
+                    routerLinkActive="active"
+                    class="btn btn-outline-secondary btn-sm"
+                    [ngbTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faCog" />
                 </button>
             </div>
         </div>

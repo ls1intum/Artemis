@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { faArchive, faBell, faEnvelopeOpen, faEye, faFilter, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseNotificationBubbleComponent } from 'app/communication/course-notification/course-notification-bubble/course-notification-bubble.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -12,10 +12,13 @@ import { Subscription, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-course-notification-overview',
-    imports: [FontAwesomeModule, CourseNotificationBubbleComponent, CommonModule, TranslateDirective, CourseNotificationComponent],
+    imports: [FontAwesomeModule, CourseNotificationBubbleComponent, CommonModule, TranslateDirective, CourseNotificationComponent, ArtemisTranslatePipe, NgbTooltip, RouterLink],
     templateUrl: './course-notification-overview.component.html',
     styleUrls: ['./course-notification-overview.component.scss'],
     animations: [
@@ -33,9 +36,9 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     private courseNotificationService = inject(CourseNotificationService);
 
     // Icons
-    protected readonly faArchive = faArchive;
+    protected readonly faTrash = faTrash;
     protected readonly faBell = faBell;
-    protected readonly faEye = faEye;
+    protected readonly faCog = faCog;
     protected readonly faFilter = faFilter;
     protected readonly faEnvelopeOpen = faEnvelopeOpen;
     protected readonly faSpinner = faSpinner;

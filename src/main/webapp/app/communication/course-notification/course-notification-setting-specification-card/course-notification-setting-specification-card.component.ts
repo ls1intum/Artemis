@@ -45,7 +45,10 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     authorName: 'Maria Muster',
                     courseName: 'Patterns in Software Engineering',
                     courseTitle: 'Patterns in Software Engineering',
+                    postMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
+                    answerPostMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
                     courseIconUrl: null,
+                    channelName: 'tech-support',
                 },
             );
             this.channels = this.settingSpecification().channelSetting;

@@ -23,7 +23,7 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
     ],
 })
 export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestroy {
-    protected readonly popupTimeInMilliseconds = 20000;
+    protected readonly popupTimeInMilliseconds = 40000;
 
     private readonly courseNotificationWebsocketService = inject(CourseNotificationWebsocketService);
     private readonly courseNotificationService = inject(CourseNotificationService);
