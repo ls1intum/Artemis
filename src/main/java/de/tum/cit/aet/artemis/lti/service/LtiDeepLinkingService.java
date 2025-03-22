@@ -244,23 +244,22 @@ public class LtiDeepLinkingService {
      * Build a content URL for deep linking.
      */
     String buildContentUrl(String courseId, String resourceType, String resourceId) {
-        String baseUrl = String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
-
         if ("groupedExercises".equals(resourceType)) {
             List<Long> exerciseIds = Arrays.stream(resourceId.split(",")).map(String::trim).map(Long::valueOf).toList();
 
             // Take the smallest exercise ID for the base URL to establish it as "starting" exercise for LTI view
             Long smallestExerciseId = exerciseIds.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No exercise IDs provided", "LTI", "noExerciseIds"));
 
-            baseUrl = String.format("%s/courses/%s/exercises/%d", artemisServerUrl, courseId, smallestExerciseId);
+            String baseUrl = String.format("%s/courses/%s/exercises/%d", artemisServerUrl, courseId, smallestExerciseId);
 
             // Include all exercise IDs in the query parameter for sidebar content
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("exerciseIDs", resourceId);
 
             return uriBuilder.toUriString();
         }
-
-        return baseUrl;
+        else {
+            return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+        }
     }
 
     String buildContentUrl(String courseId, String resourceType) {
