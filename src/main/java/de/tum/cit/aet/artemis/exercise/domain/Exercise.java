@@ -337,7 +337,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return the course class member
      */
     @JsonInclude
-    protected Course getCourse() {
+    public Course getCourse() {
         return course;
     }
 
