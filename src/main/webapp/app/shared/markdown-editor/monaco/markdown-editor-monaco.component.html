@@ -172,7 +172,7 @@
                                                 >
                                                     {{ unit.name }}
                                                 </button>
-                                                @for (slide of unit.slides; track slide.id; let index = $index) {
+                                                @for (slide of unit.slides; track slide.id) {
                                                     <button
                                                         class="ps-1 me-1"
                                                         mat-menu-item
@@ -182,12 +182,11 @@
                                                                 lecture,
                                                                 slide,
                                                                 attachmentUnit: unit,
-                                                                slideIndex: index + 1,
                                                             })
                                                         "
                                                         type="button"
                                                     >
-                                                        <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: index + 1 }"></span>
+                                                        <span [jhiTranslate]="'artemisApp.markdownEditor.slideWithNumber'" [translateValues]="{ number: slide.slideNumber }"></span>
                                                     </button>
                                                 } @empty {
                                                     <ng-container [ngTemplateOutlet]="noItemsAvailable" />

@@ -164,19 +164,26 @@ public class SlideSplitterService {
             });
 
             Map<String, Map<String, Object>> hiddenPagesMap = new HashMap<>();
-            List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
-            });
+            if (hiddenPages != null && !hiddenPages.isEmpty()) {
+                try {
+                    List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
+                    });
 
-            hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
-                Map<String, Object> data = new HashMap<>();
-                String dateStr = (String) page.get("date");
-                data.put("date", Timestamp.from(Instant.parse(dateStr)));
+                    hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
+                        Map<String, Object> data = new HashMap<>();
+                        String dateStr = (String) page.get("date");
+                        data.put("date", Timestamp.from(Instant.parse(dateStr)));
 
-                if (page.get("exerciseId") != null) {
-                    data.put("exerciseId", page.get("exerciseId"));
+                        if (page.get("exerciseId") != null) {
+                            data.put("exerciseId", page.get("exerciseId"));
+                        }
+                        return data;
+                    }));
                 }
-                return data;
-            }));
+                catch (Exception e) {
+                    log.warn("Failed to parse hidden pages data: {}", e.getMessage());
+                }
+            }
 
             List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
             Map<String, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), slide -> slide));
@@ -234,6 +241,35 @@ public class SlideSplitterService {
                                 .resolve(String.valueOf(order)).resolve(filename));
 
                         slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                    }
+                }
+                else {
+                    String oldPath = slideEntity.getSlideImagePath();
+                    if (oldPath != null && !oldPath.isEmpty()) {
+                        Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath));
+
+                        String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+
+                        try {
+                            File existingFile = originalPath.toFile();
+                            if (existingFile.exists()) {
+                                BufferedImage image = ImageIO.read(existingFile);
+                                byte[] imageInByte = bufferedImageToByteArray(image, "png");
+
+                                MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
+                                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString())
+                                        .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
+
+                                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                                existingFile.delete();
+                            }
+                            else {
+                                log.warn("Could not find existing slide file at path: {}", originalPath);
+                            }
+                        }
+                        catch (IOException e) {
+                            log.error("Failed to update slide image for reordering", e);
+                        }
                     }
                 }
 
