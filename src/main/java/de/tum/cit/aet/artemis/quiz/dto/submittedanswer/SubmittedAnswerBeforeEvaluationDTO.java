@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.dto.submittedanswer;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
@@ -8,6 +9,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSolutionDTO quizQuestion,
         @JsonUnwrapped MultipleChoiceSubmittedAnswerWithoutSolutionDTO multipleChoiceSubmittedAnswer, @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer,
         @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer) {

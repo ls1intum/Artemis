@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DropLocationDTO(Long id, Double posX, Double posY, Double width, Double height, Boolean invalid) {
 
     public static DropLocationDTO of(DropLocation dropLocation) {
