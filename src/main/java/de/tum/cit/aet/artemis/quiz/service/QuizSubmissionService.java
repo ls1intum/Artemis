@@ -107,7 +107,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
         // create result
-        Result result = new Result().participation(participation);
+        Result result = new Result();
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -167,7 +167,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
             participation.setInitializationState(InitializationState.FINISHED);
 
-            Result result = new Result().participation(participation);
+            Result result = new Result();
             result.setRated(true);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(quizSubmission.getSubmissionDate());

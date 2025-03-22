@@ -225,7 +225,6 @@ public class ModelingSubmissionService extends SubmissionService {
         Result automaticResult = compassService.getSuggestionResult(modelingSubmission, modelingExercise);
         if (automaticResult != null) {
             automaticResult.setSubmission(null);
-            automaticResult.setParticipation(modelingSubmission.getParticipation());
             automaticResult = resultRepository.save(automaticResult);
 
             automaticResult.setSubmission(modelingSubmission);

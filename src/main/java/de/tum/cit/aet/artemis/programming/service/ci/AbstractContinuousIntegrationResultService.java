@@ -7,7 +7,6 @@ import java.util.function.Predicate;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
@@ -47,7 +46,6 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         result.setCompletionDate(buildResult.buildRunDate());
         // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.buildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
-        result.setParticipation((Participation) participation);
 
         addFeedbackToResult(result, buildResult);
         return result;
@@ -61,7 +59,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
      */
     private void addFeedbackToResult(Result result, BuildResultNotification buildResult) {
         final var jobs = buildResult.jobs();
-        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
+        final var programmingExercise = (ProgrammingExercise) result.getSubmission().getParticipation().getExercise();
 
         // 1) add feedback for failed and passed test cases
         addTestCaseFeedbacksToResult(result, jobs, programmingExercise);

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -98,7 +97,6 @@ public class QuizParticipationResource {
             result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
         }
 
-        participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
         var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));

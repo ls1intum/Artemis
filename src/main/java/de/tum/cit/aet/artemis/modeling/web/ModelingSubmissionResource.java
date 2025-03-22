@@ -343,9 +343,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
-            participation.setResults(null);
-        }
 
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
@@ -355,6 +352,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
             // We want to have the preliminary feedback before the assessment due date too
+            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             Set<Result> participationResults = participation.getResults();
             if (participationResults != null) {
                 List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();

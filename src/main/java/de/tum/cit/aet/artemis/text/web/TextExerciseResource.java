@@ -418,6 +418,7 @@ public class TextExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
+        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
         if (participation.getResults().isEmpty()) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
@@ -425,6 +426,7 @@ public class TextExerciseResource {
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
             // We want to have the preliminary feedback before the assessment due date too
+            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
                     .collect(Collectors.toSet());
             participation.setResults(athenaResults);

@@ -642,6 +642,7 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
         return participation.getResults().stream().filter(this::checkForAssessedResult).collect(Collectors.toSet());
     }
 

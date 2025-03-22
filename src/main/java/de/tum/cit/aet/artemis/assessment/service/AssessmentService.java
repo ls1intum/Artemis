@@ -187,7 +187,6 @@ public class AssessmentService {
 
         // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
         if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
-            participation.removeResult(result);
             resultService.deleteResult(result, true);
         }
     }
@@ -246,7 +245,7 @@ public class AssessmentService {
         if (ltiNewResultService.isPresent()) {
             // Note: we always need to report the result (independent of the assessment due date) over LTI, if LTI is configured.
             // Otherwise, it might never become visible in the external system
-            ltiNewResultService.get().onNewResult((StudentParticipation) result.getParticipation());
+            ltiNewResultService.get().onNewResult((StudentParticipation) result.getSubmission().getParticipation());
         }
         return result;
     }
@@ -334,7 +333,7 @@ public class AssessmentService {
         }
 
         if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
+            resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
         }
         return result;
     }

@@ -473,7 +473,6 @@ public class TeamResource {
         else {
             // for other tutors and for students: submissions not needed, hide results
             participations = studentParticipationRepository.findAllByCourseIdAndTeamShortName(course.getId(), teamShortName);
-            participations.forEach(participation -> participation.setResults(null));
         }
 
         // Set the submission count for all participations

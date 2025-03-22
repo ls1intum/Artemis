@@ -187,7 +187,7 @@ public class ParticipantScoreScheduleService {
 
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
-            if (result.getParticipation() instanceof StudentParticipation studentParticipation) {
+            if (result.getSubmission().getParticipation() instanceof StudentParticipation studentParticipation) {
                 var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();
                 scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified, null);
             }

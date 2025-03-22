@@ -147,6 +147,7 @@ public class QuizResultService {
 
                 participation.setInitializationState(InitializationState.FINISHED);
 
+                // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                 Optional<Result> existingRatedResult = participation.getResults().stream().filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
 
                 if (existingRatedResult.isPresent()) {
@@ -156,7 +157,7 @@ public class QuizResultService {
                 }
                 else {
                     // No rated result exists; create a new one
-                    Result result = new Result().participation(participation).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+                    Result result = new Result().rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
                     // Associate submission with result
                     result.setSubmission(quizSubmission);
@@ -171,10 +172,6 @@ public class QuizResultService {
                     // Save entities individually
                     submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
-
-                    // Update participation with new result
-                    participation.addResult(result);
-                    studentParticipationRepository.save(participation);
 
                     // Re-associate result with submission and save
                     result.setSubmission(quizSubmission);

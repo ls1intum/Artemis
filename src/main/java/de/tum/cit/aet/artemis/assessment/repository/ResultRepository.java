@@ -684,8 +684,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         Result savedResult = save(result);
         // Workaround to prevent the assessor or participant turning into a proxy object after saving
         savedResult.setAssessor(result.getAssessor());
-        // Workaround to prevent the team students of a student participation turning into a proxy object after saving
-        savedResult.setParticipation(result.getParticipation());
         return savedResult;
     }
 

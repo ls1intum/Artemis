@@ -196,6 +196,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         participation.setParticipant(participation.getParticipant());
 
         if (invalidatePreviousResults) {
+            // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
             var participationResults = participation.getResults();
             participationResults.forEach(participationResult -> participationResult.setRated(false));
             this.resultRepository.saveAll(participationResults);

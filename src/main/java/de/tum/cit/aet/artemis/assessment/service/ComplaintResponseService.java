@@ -248,8 +248,8 @@ public class ComplaintResponseService {
 
     private void validateResponseTextLimit(String responseText, Complaint originalComplaint) {
         if (responseText != null) {
-            Course course = originalComplaint.getResult().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
-            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getParticipation().getExercise());
+            Course course = originalComplaint.getResult().getSubmission().getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember();
+            int maxLength = course.getMaxComplaintResponseTextLimitForExercise(originalComplaint.getResult().getSubmission().getParticipation().getExercise());
             if (responseText.length() > maxLength) {
                 throw new BadRequestAlertException("You cannot submit a complaint response that exceeds the maximum number of " + maxLength + " characters", ENTITY_NAME,
                         "exceededComplaintResponseTextLimit");
@@ -281,7 +281,7 @@ public class ComplaintResponseService {
         }
 
         Result originalResult = complaintResponseRepresentingLock.getComplaint().getResult();
-        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getParticipation();
+        StudentParticipation studentParticipation = (StudentParticipation) originalResult.getSubmission().getParticipation();
 
         return complaintResponseRepresentingLock.isCurrentlyLocked()
                 && !(authorizationCheckService.isAtLeastInstructorForExercise(studentParticipation.getExercise()) || complaintResponseRepresentingLock.getReviewer().equals(user));
@@ -310,7 +310,7 @@ public class ComplaintResponseService {
 
         Result originalResult = complaint.getResult();
         User assessor = originalResult.getAssessor();
-        StudentParticipation participation = (StudentParticipation) originalResult.getParticipation();
+        StudentParticipation participation = (StudentParticipation) originalResult.getSubmission().getParticipation();
 
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user);
         if (isAtLeastInstructor) {

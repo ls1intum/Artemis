@@ -364,7 +364,6 @@ public class SubmissionService {
         // do not send old submissions or old results to the client
         if (submission.getParticipation() != null) {
             submission.getParticipation().setSubmissions(null);
-            submission.getParticipation().setResults(null);
 
             Exercise exercise = submission.getParticipation().getExercise();
             if (exercise != null) {
@@ -394,7 +393,6 @@ public class SubmissionService {
      */
     public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
-        result.setParticipation(submission.getParticipation());
         result = resultRepository.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
@@ -446,7 +444,6 @@ public class SubmissionService {
             return saveNewEmptyResult(submission);
         }
         Result newResult = new Result();
-        newResult.setParticipation(submission.getParticipation());
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -464,7 +461,6 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
@@ -506,8 +502,8 @@ public class SubmissionService {
      */
     public Result saveNewResult(Submission submission, final Result result) {
         result.setSubmission(null);
-        if (result.getParticipation() == null) {
-            result.setParticipation(submission.getParticipation());
+        if (result.getSubmission().getParticipation() == null) {
+            result.getSubmission().setParticipation(submission.getParticipation());
         }
         var savedResult = resultRepository.save(result);
         savedResult.setSubmission(submission);
@@ -535,7 +531,6 @@ public class SubmissionService {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
                 Result result = new Result();
-                result.setParticipation(studentParticipation);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
                 result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
@@ -642,7 +637,6 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getLatestResult()).ifPresent(result -> participation.setResults(Set.of(result)));
             }
             else {
                 participation.setSubmissions(Set.of());
@@ -809,7 +803,7 @@ public class SubmissionService {
      * @param complaint the complaint which gets prepared
      */
     private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {
-        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
         studentParticipation.setParticipant(null);
         studentParticipation.setExercise(null);
         complaint.setParticipant(null);

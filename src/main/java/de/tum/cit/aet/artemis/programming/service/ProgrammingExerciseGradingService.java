@@ -341,12 +341,9 @@ public class ProgrammingExerciseGradingService {
 
         // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.cit.aet.artemis.domain.Submission.results
         processedResult.setSubmission(null);
-        // workaround to avoid scheduling the participant score update twice. The update will only run when a participation is present.
-        processedResult.setParticipation(null);
 
         processedResult = resultRepository.save(processedResult);
         processedResult.setSubmission(programmingSubmission);
-        processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
@@ -380,7 +377,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.setPassedTestCaseCount(newAutomaticResult.getPassedTestCaseCount());
         latestSemiAutomaticResult.setCodeIssueCount(newAutomaticResult.getCodeIssueCount());
 
-        Exercise exercise = latestSemiAutomaticResult.getParticipation().getExercise();
+        Exercise exercise = latestSemiAutomaticResult.getSubmission().getParticipation().getExercise();
         latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(),
                 exercise.getCourseViaExerciseGroupOrCourseMember());
 
@@ -575,7 +572,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Result result) {
-        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getParticipation());
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getSubmission().getParticipation());
 
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }
@@ -612,7 +609,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         public Participation participation() {
-            return result.getParticipation();
+            return result.getSubmission().getParticipation();
         }
     }
 

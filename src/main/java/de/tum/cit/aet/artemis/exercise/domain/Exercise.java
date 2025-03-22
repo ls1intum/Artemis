@@ -586,6 +586,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return latest result or null
      */
     public Result findLatestResultWithCompletionDate(Participation participation) {
+        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
         if (participation.getResults() == null) {
             return null;
         }
@@ -617,6 +618,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (!isAssessmentOver) {
             // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
             if (this instanceof TextExercise || this instanceof ModelingExercise) {
+                // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                 return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
             }
             return Set.of();

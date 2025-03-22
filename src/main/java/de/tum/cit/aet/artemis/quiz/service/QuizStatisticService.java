@@ -168,7 +168,7 @@ public class QuizStatisticService {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        List<Result> allResultsForParticipation = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId());
+        List<Result> allResultsForParticipation = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getSubmission().getParticipation().getId());
         for (Result result : allResultsForParticipation) {
             // find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)

@@ -458,6 +458,7 @@ public class ParticipationResource {
      *
      * @param participation The participation to which the latest result should get added
      */
+    // TODO Michal Kawka I think we don't need this method anymore
     private void addLatestResultToParticipation(StudentParticipation participation) {
         // Load results of participation as they are not contained in the current object
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
@@ -621,6 +622,7 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
+                // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                 if (participation.getResults() != null && !participation.getResults().isEmpty()
                         && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
                     participation.setSubmissions(null);
@@ -807,13 +809,7 @@ public class ParticipationResource {
             if (participation == null) {
                 return null;
             }
-            // avoid problems due to bidirectional associations between submission and result during serialization
-            for (Result result : participation.getResults()) {
-                if (result.getSubmission() != null) {
-                    result.getSubmission().setResults(null);
-                    result.getSubmission().setParticipation(null);
-                }
-            }
+
             return new MappingJacksonValue(participation);
         }
         quizExercise.setQuizBatches(null); // not available here
@@ -1000,7 +996,6 @@ public class ParticipationResource {
             StudentParticipation participation = optionalParticipation.get();
             // add exercise
             participation.setExercise(quizExercise);
-            participation.setResults(new HashSet<>());
 
             // add the appropriate result
             Result result = resultRepository.findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
@@ -1009,7 +1004,6 @@ public class ParticipationResource {
                 var quizSubmission = (QuizSubmission) result.getSubmission();
                 var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
                 quizSubmission.setSubmittedAnswers(submittedAnswers);
-                participation.addResult(result);
             }
             return participation;
         }
@@ -1019,6 +1013,7 @@ public class ParticipationResource {
 
         StudentParticipation participation = optionalParticipation.get();
         Optional<Submission> optionalSubmission = submissionRepository.findByParticipationIdOrderBySubmissionDateDesc(participation.getId());
+        // TODO Michal Kawka not sure what to do here
         if (optionalSubmission.isPresent()) {
             Result result = new Result().submission(optionalSubmission.get());
             participation.setResults(Set.of(result));

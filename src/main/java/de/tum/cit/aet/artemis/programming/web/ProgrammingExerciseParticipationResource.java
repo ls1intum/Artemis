@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -133,11 +132,9 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         hasAccessToParticipationElseThrow(participation);
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.setResults(Set.of());
-        }
 
         // hide details that should not be shown to the students
+        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
     }
@@ -156,11 +153,9 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
-        if (shouldHideExamExerciseResults(participation)) {
-            participation.setResults(Set.of());
-        }
 
         // hide details that should not be shown to the students
+        // TODO Michal Kawka not sure if we still need the line below
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
         return ResponseEntity.ok(participation);
     }

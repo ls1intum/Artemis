@@ -7,7 +7,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -992,6 +991,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
                     }
                     else {
+                        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
                         resultsOfParticipation = participation.getResults();
                     }
                     // search for the relevant result by filtering out irrelevant results using the continue keyword
@@ -1015,7 +1015,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         relevantResults.clear();
                         relevantResults.add(correctResult);
                     }
-                    participation.setResults(new HashSet<>(relevantResults));
                 }).toList();
     }
 
