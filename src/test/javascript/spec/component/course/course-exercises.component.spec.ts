@@ -52,10 +52,6 @@ describe('CourseExercisesComponent', () => {
         queryParams: queryParamsSubject,
     } as any as ActivatedRoute;
 
-    class MockExerciseService {
-        find = jest.fn().mockReturnValue(of({ body: new Exercise() }));
-    }
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
