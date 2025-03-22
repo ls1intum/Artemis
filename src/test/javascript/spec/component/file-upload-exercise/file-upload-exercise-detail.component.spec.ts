@@ -2,13 +2,13 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { FileUploadExerciseDetailComponent } from 'app/file-upload/manage/file-upload-exercise-detail.component';
+import { FileUploadExerciseDetailComponent } from 'app/fileupload/manage/file-upload-exercise-detail.component';
 import { MockFileUploadExerciseService, fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';

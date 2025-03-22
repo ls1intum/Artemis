@@ -22,7 +22,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { FileUploadExercisePagingService } from 'app/file-upload/manage/file-upload-exercise-paging.service';
+import { FileUploadExercisePagingService } from 'app/fileupload/manage/file-upload-exercise-paging.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
