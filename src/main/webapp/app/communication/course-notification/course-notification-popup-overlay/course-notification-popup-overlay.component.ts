@@ -10,6 +10,11 @@ import { CommonModule } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
+/**
+ * Component that displays real-time notification popups.
+ * Shows notifications received via websocket in a collapsible overlay.
+ * Handles automatic timeout and manual dismissal of notifications.
+ */
 @Component({
     selector: 'jhi-course-notification-popup-overlay',
     imports: [CourseNotificationComponent, CommonModule, FaIconComponent],
@@ -50,6 +55,12 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         this.courseNotificationWebsocketSubscription.unsubscribe();
     }
 
+    /**
+     * Removes a notification from the display.
+     * If all notifications are removed, collapses the overlay.
+     *
+     * @param notificationId - The ID of the notification to remove
+     */
     removeNotification(notificationId: number): void {
         const indexToRemove = this.notifications.findIndex((notification) => notification.notificationId === notificationId);
 
@@ -62,6 +73,13 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         }
     }
 
+    /**
+     * Handles the close button click for a notification.
+     * Marks the notification as seen both in local state and on server.
+     * Updates notification count and removes it from display.
+     *
+     * @param notification - The notification being closed
+     */
     closeClicked(notification: CourseNotification) {
         this.courseNotificationService.setNotificationStatus(notification.courseId!, [notification.notificationId!], CourseNotificationViewingStatus.SEEN);
         this.courseNotificationService.setNotificationStatusInMap(notification.courseId!, [notification.notificationId!], CourseNotificationViewingStatus.SEEN);
@@ -69,6 +87,10 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         this.removeNotification(notification.notificationId!);
     }
 
+    /**
+     * Handles clicks on the notification overlay.
+     * Expands the overlay if it's not already expanded and there are multiple notifications.
+     */
     overlayClicked() {
         if (this.isExpanded || this.notifications.length <= 1) {
             return;
@@ -77,6 +99,11 @@ export class CourseNotificationPopupOverlayComponent implements OnInit, OnDestro
         this.isExpanded = true;
     }
 
+    /**
+     * Handles clicks on the collapse button.
+     * Collapses the expanded overlay using a timeout to avoid
+     * conflicts with the overlay click handler.
+     */
     collapseOverlayClicked() {
         if (!this.isExpanded) {
             return;

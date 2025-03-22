@@ -13,6 +13,10 @@ import { CourseNotificationInfo } from 'app/entities/course-notification/course-
 import { CourseNotificationSettingInfo } from 'app/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationSettingsMap } from 'app/entities/course-notification/course-notification-settings-map';
 
+/**
+ * Component that manages notification settings for a course.
+ * Extends CourseSettingCategoryDirective to integrate with the course settings framework.
+ */
 @Component({
     selector: 'jhi-notification-settings',
     imports: [TranslateDirective, FaIconComponent, CourseNotificationPresetPickerComponent, CourseNotificationSettingSpecificationCardComponent],
@@ -41,6 +45,10 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         super();
     }
 
+    /**
+     * Initializes component values once both settingInfo and info are available.
+     * Sets up selectable presets, current preset, and notification specifications.
+     */
     initializeValues() {
         this.selectableSettingPresets = this.info!.presets;
 
@@ -52,6 +60,12 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         this.isLoading = false;
     }
 
+    /**
+     * Handles selection of a notification preset.
+     * Updates UI and schedules settings update to server with debouncing.
+     *
+     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
+     */
     presetSelected(presetTypeId: number) {
         if (this.putPresetTimeout) {
             clearTimeout(this.putPresetTimeout);
@@ -68,6 +82,12 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         }, 2000);
     }
 
+    /**
+     * Handles changes to individual notification settings.
+     * Resets selected preset to custom and schedules settings update with debouncing.
+     *
+     * @param specification - The notification specification that was changed
+     */
     optionChanged(specification: CourseNotificationSettingSpecification) {
         this.selectedSettingPreset = null;
         this.settingSpecificationsToUpload.push(specification);
@@ -81,8 +101,18 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         }
     }
 
+    /**
+     * Lifecycle hook from CourseSettingCategoryDirective.
+     * Called when the course information becomes available.
+     * Empty implementation as initialization is handled in onCourseIdAvailable.
+     */
     onCourseAvailable(): void {}
 
+    /**
+     * Lifecycle hook from CourseSettingCategoryDirective.
+     * Called when the course ID becomes available.
+     * Fetches notification settings and info from the server.
+     */
     onCourseIdAvailable(): void {
         this.courseNotificationSettingService.getSettingInfo(this.courseId).subscribe((settingInfo) => {
             this.settingInfo = settingInfo.body;
@@ -113,6 +143,13 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         }
     }
 
+    /**
+     * Creates notification specifications from a notification map.
+     * Used to update the UI based on either user selections or preset values.
+     *
+     * @param notificationMap - Map of notification types to channel settings
+     * @param useValue - Whether to use the value (true) or key (false) as the lookup in the map
+     */
     private updateSpecificationArrayByNotificationMap(notificationMap: CourseNotificationSettingsMap, useValue: boolean) {
         this.notificationSpecifications = [];
         Object.entries(this.info!.notificationTypes!).forEach(([key, value]) => {

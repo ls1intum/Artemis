@@ -16,6 +16,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
 
+/**
+ * Component that displays a comprehensive overview of course notifications.
+ * Features a dropdown interface with category filtering, infinite scrolling,
+ * and notification status management.
+ */
 @Component({
     selector: 'jhi-course-notification-overview',
     imports: [FontAwesomeModule, CourseNotificationBubbleComponent, CommonModule, TranslateDirective, CourseNotificationComponent, ArtemisTranslatePipe, NgbTooltip, RouterLink],
@@ -121,6 +126,11 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
     }
 
+    /**
+     * Toggles the visibility of the notification overlay.
+     * When shown, may trigger loading of additional notifications.
+     * When hidden, marks visible notifications as seen.
+     */
     protected toggleOverlay() {
         this.isShown = !this.isShown;
 
@@ -134,10 +144,23 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
     }
 
+    /**
+     * Checks if a category is currently selected.
+     *
+     * @param categoryString - The category name to check
+     * @returns Whether the specified category is currently selected
+     */
     protected isCategorySelected(categoryString: string) {
         return CourseNotificationCategory[categoryString as keyof typeof CourseNotificationCategory] == this.selectedCategory;
     }
 
+    /**
+     * Handles selection of a notification category.
+     * Updates notification list, marks current notifications as seen,
+     * and may trigger loading of additional notifications.
+     *
+     * @param categoryString - The category name to select
+     */
     protected selectCategory(categoryString: string) {
         this.updateCurrentCategoryNotificationsToSeenOnClient();
 
@@ -152,6 +175,12 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
     }
 
+    /**
+     * Host listener that handles clicks outside the notification panel.
+     * Closes the panel and marks notifications as seen when appropriate.
+     *
+     * @param target - The element that was clicked
+     */
     @HostListener('document:click', ['$event.target'])
     protected onClickOutside(target: any) {
         const clickedInside = this.elementRef.nativeElement.contains(target);
@@ -161,6 +190,10 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
     }
 
+    /**
+     * Handles when scrolling reaches the bottom of the notification list.
+     * Triggers loading of the next page of notifications if available.
+     */
     protected onScrollReachBottom() {
         if (this.pagesFinished || this.isLoading) {
             return;
@@ -170,16 +203,32 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         this.queryCurrentCategory();
     }
 
+    /**
+     * Handles click on the archive button.
+     * Archives all notifications for the course both on server and in local state.
+     */
     protected archiveClicked() {
         this.courseNotificationService.archiveAll(this.courseId());
         this.courseNotificationService.archiveAllInMap(this.courseId());
     }
 
+    /**
+     * Handles click on the close button for a notification.
+     * Archives the notification and removes it from the display.
+     *
+     * @param notification - The notification to close
+     */
     protected closeClicked(notification: CourseNotification) {
         this.courseNotificationService.setNotificationStatus(notification.courseId!, [notification.notificationId!], CourseNotificationViewingStatus.ARCHIVED);
         this.courseNotificationService.removeNotificationFromMap(notification.courseId!, notification);
     }
 
+    /**
+     * Updates notification status to SEEN in the local state.
+     * Decreases notification count accordingly.
+     *
+     * @private
+     */
     private updateCurrentCategoryNotificationsToSeenOnClient() {
         // On the client, we want to update the status as soon as the user is done viewing them
         const visibleUnseenNotificationIds = this.getVisibleUnseenNotificationIds();
@@ -192,6 +241,12 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         this.courseNotificationService.decreaseNotificationCountBy(this.courseId(), visibleUnseenNotificationIds.length);
     }
 
+    /**
+     * Updates notification status to SEEN on the server.
+     * Called when notifications become visible in the UI.
+     *
+     * @private
+     */
     private updateCurrentCategoryNotificationsToSeenOnServer() {
         // On the server, we always want to update the status as soon as they are loaded
         const visibleUnseenNotificationIds = this.getVisibleUnseenNotificationIds();
@@ -203,6 +258,12 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         this.courseNotificationService.setNotificationStatus(this.courseId(), visibleUnseenNotificationIds, CourseNotificationViewingStatus.SEEN);
     }
 
+    /**
+     * Gets IDs of all visible notifications with UNSEEN status.
+     *
+     * @returns Array of notification IDs
+     * @private
+     */
     private getVisibleUnseenNotificationIds(): number[] {
         return this.notificationsForSelectedCategory
             .filter((notification) => {
@@ -211,6 +272,12 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
             .map((notification: CourseNotification) => notification.notificationId!);
     }
 
+    /**
+     * Filters notifications to match the currently selected category.
+     * Updates the notificationsForSelectedCategory array.
+     *
+     * @private
+     */
     private filterNotificationsIntoCurrentCategory() {
         if (this.notifications && this.notifications.length > 0) {
             this.notificationsForSelectedCategory = this.notifications.filter((notification) => {
@@ -221,6 +288,12 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
     }
 
+    /**
+     * Fetches the next page of notifications for the current category.
+     * Manages loading state and scroll position preservation.
+     *
+     * @private
+     */
     private queryCurrentCategory() {
         if (this.pagesFinished) {
             return;
@@ -238,6 +311,11 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
         }
     }
 
+    /**
+     * Checks if the user has scrolled to the bottom of the notification list.
+     *
+     * @returns Whether the scroll position is at or near the bottom
+     */
     private isScrolledToBottom(): boolean {
         const element = this.scrollContainer()!.nativeElement;
         return Math.round(element.scrollTop + element.clientHeight) >= element.scrollHeight - 20;

@@ -11,6 +11,11 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DomSanitizer } from '@angular/platform-browser';
 
+/**
+ * Component for displaying a single course notification.
+ * Renders notification content, metadata, and handles interaction events.
+ * Supports various display modes through input properties.
+ */
 @Component({
     selector: 'jhi-course-notification',
     imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule],
@@ -79,6 +84,10 @@ export class CourseNotificationComponent {
         });
     }
 
+    /**
+     * Handles the close button click event.
+     * Emits an event to notify parent components.
+     */
     protected closeClicked() {
         this.onCloseClicked.emit();
     }

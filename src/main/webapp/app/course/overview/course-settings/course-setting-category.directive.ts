@@ -4,6 +4,11 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription } from 'rxjs';
 
+/**
+ * Base directive for course setting category components.
+ * Handles common functionality such as course retrieval and lifecycle management.
+ * Child components should implement the abstract methods to respond to course data availability.
+ */
 @Directive({
     selector: '[jhiCourseSettingCategory]',
 })
@@ -42,6 +47,15 @@ export abstract class CourseSettingCategoryDirective implements OnInit, OnDestro
         }
     }
 
+    /**
+     * Called when course data becomes available or is updated.
+     * Child classes should implement this method to handle course data.
+     */
     abstract onCourseAvailable(): void;
+
+    /**
+     * Called when course ID becomes available from route parameters.
+     * Child classes should implement this method to initialize based on course ID.
+     */
     abstract onCourseIdAvailable(): void;
 }

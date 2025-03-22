@@ -6,6 +6,10 @@ import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingPreset } from 'app/entities/course-notification/course-notification-setting-preset';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
+/**
+ * Component for selecting notification setting presets.
+ * Displays a dropdown with available presets and handles selection events.
+ */
 @Component({
     selector: 'jhi-course-notification-preset-picker',
     imports: [TranslateDirective, FaIconComponent, NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle],
@@ -32,6 +36,12 @@ export class CourseNotificationPresetPickerComponent {
         });
     }
 
+    /**
+     * Handles preset selection from the dropdown.
+     * Emits the selected preset's type ID to the parent component.
+     *
+     * @param presetTypeId - The type ID of the selected preset
+     */
     protected presetSelected(presetTypeId: number) {
         this.onPresetSelected.emit(presetTypeId);
     }

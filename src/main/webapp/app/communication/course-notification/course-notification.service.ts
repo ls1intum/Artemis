@@ -11,6 +11,11 @@ import { CourseNotificationCategory } from 'app/entities/course-notification/cou
 import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
 
+/**
+ * Service for managing course notifications.
+ * Handles fetching, storing, updating, and tracking notification data for courses.
+ * Provides observables for notification counts and content.
+ */
 @Injectable({
     providedIn: 'root',
 })
@@ -45,10 +50,22 @@ export class CourseNotificationService {
         this.notificationCountSubject.next(this.courseNotificationCountMap);
     }
 
+    /**
+     * Retrieves notification configuration information.
+     *
+     * @returns Observable with notification information
+     */
     public getInfo(): Observable<HttpResponse<CourseNotificationInfo>> {
         return this.http.get<CourseNotificationInfo>(this.apiEndpoint + '/info', { observe: 'response' });
     }
 
+    /**
+     * Fetches the next page of notifications for a course.
+     * Updates the internal notification state and notifies subscribers.
+     *
+     * @param courseId - The ID of the course
+     * @returns Boolean indicating if more pages are available
+     */
     public getNextNotificationPage(courseId: number): boolean {
         if (this.courseNotificationPageMap[courseId]) {
             // We return false here in case we reached the final page, so that components can react accordingly.
@@ -81,6 +98,13 @@ export class CourseNotificationService {
         return true;
     }
 
+    /**
+     * Updates the status of multiple notifications on the server.
+     *
+     * @param courseId - The ID of the course
+     * @param notificationIds - Array of notification IDs to update
+     * @param statusType - The new status to set
+     */
     public setNotificationStatus(courseId: number, notificationIds: number[], statusType: CourseNotificationViewingStatus): void {
         this.http
             .put(this.apiEndpoint + courseId + '/status', {
@@ -90,16 +114,34 @@ export class CourseNotificationService {
             .subscribe();
     }
 
+    /**
+     * Archives all notifications for a course on the server.
+     *
+     * @param courseId - The ID of the course
+     */
     public archiveAll(courseId: number): void {
         this.http.put<void>(this.apiEndpoint + courseId + '/archive-all', {}).subscribe();
     }
 
+    /**
+     * Clears all notifications for a course from the local state.
+     * Updates count and notifies subscribers.
+     *
+     * @param courseId - The ID of the course
+     */
     public archiveAllInMap(courseId: number): void {
         this.courseNotificationMap[courseId] = [];
         this.updateNotificationCountMap(courseId, 0);
         this.notifyNotificationSubscribers();
     }
 
+    /**
+     * Updates the status of multiple notifications in the local state.
+     *
+     * @param courseId - The ID of the course
+     * @param notificationIds - Array of notification IDs to update
+     * @param statusType - The new status to set
+     */
     public setNotificationStatusInMap(courseId: number, notificationIds: number[], statusType: CourseNotificationViewingStatus) {
         // This will set the notifications to seen on the frontend.
         for (let i = 0; i < this.courseNotificationMap[courseId].length; i++) {
@@ -111,6 +153,13 @@ export class CourseNotificationService {
         this.notifyNotificationSubscribers();
     }
 
+    /**
+     * Adds a new notification to the local state.
+     * Initializes course notification array if needed.
+     *
+     * @param courseId - The ID of the course
+     * @param notification - The notification to add
+     */
     public addNotification(courseId: number, notification: CourseNotification) {
         if (!this.courseNotificationMap[courseId]) {
             this.courseNotificationMap[courseId] = [];
@@ -120,6 +169,13 @@ export class CourseNotificationService {
         this.incrementNotificationCount(courseId);
     }
 
+    /**
+     * Removes a notification from the local state.
+     * Updates count and notifies subscribers if found.
+     *
+     * @param courseId - The ID of the course
+     * @param notification - The notification to remove
+     */
     public removeNotificationFromMap(courseId: number, notification: CourseNotification) {
         if (!this.courseNotificationMap[courseId]) {
             return;
@@ -136,6 +192,13 @@ export class CourseNotificationService {
         }
     }
 
+    /**
+     * Sets the notification count for a course.
+     * Only updates if the count has changed.
+     *
+     * @param courseId - The ID of the course
+     * @param count - The new notification count
+     */
     public updateNotificationCountMap(courseId: number, count: number) {
         if (this.courseNotificationCountMap[courseId] === count) {
             return;
@@ -145,6 +208,12 @@ export class CourseNotificationService {
         this.notifyCountSubscribers();
     }
 
+    /**
+     * Increments the notification count for a course by 1.
+     * Initializes count if not already set.
+     *
+     * @param courseId - The ID of the course
+     */
     public incrementNotificationCount(courseId: number) {
         if (this.courseNotificationCountMap[courseId] === undefined) {
             this.courseNotificationCountMap[courseId] = 0;
@@ -154,6 +223,12 @@ export class CourseNotificationService {
         this.notifyCountSubscribers();
     }
 
+    /**
+     * Decreases the notification count for a course.
+     *
+     * @param courseId - The ID of the course
+     * @param count - The amount to decrease by
+     */
     public decreaseNotificationCountBy(courseId: number, count: number) {
         if (this.courseNotificationCountMap[courseId] === undefined) {
             return;
@@ -163,10 +238,20 @@ export class CourseNotificationService {
         this.notifyCountSubscribers();
     }
 
+    /**
+     * Notifies subscribers of changes to notification counts.
+     * Creates a new object to ensure change detection.
+     */
     private notifyCountSubscribers(): void {
         this.notificationCountSubject.next({ ...this.courseNotificationCountMap });
     }
 
+    /**
+     * Creates an Observable for the notification count of a specific course.
+     *
+     * @param courseId - The ID of the course
+     * @returns Observable that emits the notification count for the course
+     */
     public getNotificationCountForCourse$(courseId: number): Observable<number> {
         return new Observable<number>((observer) => {
             const subscription = this.notificationCount$.subscribe((map) => {
@@ -177,10 +262,20 @@ export class CourseNotificationService {
         });
     }
 
+    /**
+     * Notifies subscribers of changes to notifications.
+     * Creates a new object to ensure change detection.
+     */
     private notifyNotificationSubscribers(): void {
         this.notificationSubject.next({ ...this.courseNotificationMap });
     }
 
+    /**
+     * Creates an Observable for the notifications of a specific course.
+     *
+     * @param courseId - The ID of the course
+     * @returns Observable that emits the notifications for the course
+     */
     public getNotificationsForCourse$(courseId: number): Observable<CourseNotification[]> {
         return new Observable<CourseNotification[]>((observer) => {
             const subscription = this.notifications$.subscribe((map) => {
@@ -191,6 +286,13 @@ export class CourseNotificationService {
         });
     }
 
+    /**
+     * Gets the icon for a notification type.
+     * Falls back to a default icon if type is not recognized.
+     *
+     * @param type - The notification type
+     * @returns The icon for the notification type
+     */
     public getIconFromType(type: string | undefined) {
         if (type === undefined || !CourseNotificationService.NOTIFICATION_TYPE_ICON_MAP.hasOwnProperty(type)) {
             return faComments;
@@ -199,6 +301,13 @@ export class CourseNotificationService {
         return CourseNotificationService.NOTIFICATION_TYPE_ICON_MAP[type as keyof typeof CourseNotificationService.NOTIFICATION_TYPE_ICON_MAP];
     }
 
+    /**
+     * Determines the translation key for a notification's timestamp.
+     * Returns different keys based on how recent the notification is.
+     *
+     * @param notification - The notification
+     * @returns The translation key for the notification's timestamp
+     */
     public getDateTranslationKey(notification: CourseNotification): string {
         const now = dayjs();
         const date = notification.creationDate!;
@@ -229,6 +338,13 @@ export class CourseNotificationService {
         return `artemisApp.courseNotification.temporal.${key}`;
     }
 
+    /**
+     * Gets the parameters for a notification's timestamp translation.
+     * Includes various time formats based on the notification date.
+     *
+     * @param notification - The notification
+     * @returns Parameters for translating the notification's timestamp
+     */
     public getDateTranslationParams(notification: CourseNotification): Record<string, string | number> {
         const now = dayjs();
         const date = notification.creationDate!;
@@ -243,6 +359,13 @@ export class CourseNotificationService {
         };
     }
 
+    /**
+     * Adds a notification to the course map if it doesn't already exist.
+     *
+     * @param courseId - The ID of the course
+     * @param notification - The notification to add
+     * @param prepend - Whether to add the notification to the beginning of the array
+     */
     private addNotificationIfNotDuplicate(courseId: number, notification: CourseNotification, prepend: boolean) {
         let notificationDuplicate = false;
 
@@ -262,6 +385,13 @@ export class CourseNotificationService {
         }
     }
 
+    /**
+     * Converts server response notification data to the expected format.
+     * Parses dates and enums, and extracts metadata from parameters.
+     *
+     * @param res - The HTTP response from the server
+     * @returns The processed HTTP response
+     */
     private convertResponseFromServer(res: HttpResponse<CourseNotificationPage>): HttpResponse<CourseNotificationPage> {
         if (res.body && res.body.content) {
             res.body.content.forEach((notification) => {

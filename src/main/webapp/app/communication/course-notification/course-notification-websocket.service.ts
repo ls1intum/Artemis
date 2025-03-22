@@ -8,6 +8,11 @@ import { CourseNotificationViewingStatus } from 'app/entities/course-notificatio
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
+/**
+ * Service for handling course notification websocket connections.
+ * Manages websocket subscriptions for course notifications and propagates
+ * received notifications to the appropriate services.
+ */
 @Injectable({
     providedIn: 'root',
 })
@@ -35,6 +40,14 @@ export class CourseNotificationWebsocketService {
         });
     }
 
+    /**
+     * Creates a websocket subscription for the specified course.
+     * Handles incoming notifications by converting them to CourseNotification objects,
+     * adding them to the notification service, and emitting them via subject.
+     *
+     * @param courseId - The ID of the course to subscribe to
+     * @returns The websocket subscription
+     */
     private subscribeToCourseTopic(courseId: number): Subscription {
         if (this.courseWebsocketSubscriptions[courseId]) {
             return this.courseWebsocketSubscriptions[courseId];

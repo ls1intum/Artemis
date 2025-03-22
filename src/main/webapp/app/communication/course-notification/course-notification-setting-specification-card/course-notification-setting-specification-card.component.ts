@@ -11,6 +11,10 @@ import { CourseNotificationCategory } from 'app/entities/course-notification/cou
 import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 
+/**
+ * Component for configuring notification settings for a specific notification type.
+ * Displays a preview notification and allows toggling different notification channels.
+ */
 @Component({
     selector: 'jhi-course-notification-setting-specification-card',
     imports: [TranslateDirective, CourseNotificationComponent, FormsModule],
@@ -55,10 +59,21 @@ export class CourseNotificationSettingSpecificationCardComponent {
         });
     }
 
+    /**
+     * Emits an event when a notification channel option is changed.
+     * Creates a new specification object with the updated channel settings.
+     */
     optionChanged() {
         this.onOptionChanged.emit(new CourseNotificationSettingSpecification(this.titleLangKey, this.typeId, this.channels));
     }
 
+    /**
+     * Determines if a specific notification channel should be disabled for this notification type.
+     *
+     * @param option - The notification channel to check
+     * @param identifier - The notification type identifier
+     * @returns Whether the channel option should be disabled
+     */
     isDisabled(option: string, identifier: string) {
         return CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES[identifier].includes(option as CourseNotificationChannel);
     }
