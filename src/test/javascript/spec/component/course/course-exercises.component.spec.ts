@@ -29,7 +29,7 @@ import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, HttpResponse } from '@angular/common/http';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
@@ -96,7 +96,13 @@ describe('CourseExercisesComponent', () => {
                 course.exercises = [exercise];
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
                 courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-                exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: exercise }));
+                exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: exercise,
+                        }),
+                    ),
+                );
 
                 fixture.detectChanges();
             });
