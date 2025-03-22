@@ -23,7 +23,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -581,26 +580,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
                     quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
                 }
             }
-        }
-    }
-
-    /**
-     * get the view for students in the given quiz
-     *
-     * @param batch The batch that the student that the view is for is currently a part of
-     * @return the view depending on the current state of the quiz
-     */
-    @JsonIgnore
-    @NotNull
-    public Class<?> viewForStudentsInQuizExercise(@Nullable QuizBatch batch) {
-        if (isQuizEnded()) {
-            return QuizView.After.class;
-        }
-        else if (batch != null && batch.isStarted()) {
-            return QuizView.During.class;
-        }
-        else {
-            return QuizView.Before.class;
         }
     }
 

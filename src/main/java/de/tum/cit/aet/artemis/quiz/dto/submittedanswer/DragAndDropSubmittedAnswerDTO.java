@@ -9,10 +9,10 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.DragAndDropMappingDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record DragAndDropSubmittedAnswerDTO(Set<DragAndDropMappingDTO> mappings) {
+public record DragAndDropSubmittedAnswerDTO(Set<DragAndDropMappingDTO> mappings, String type) {
 
     public static DragAndDropSubmittedAnswerDTO of(DragAndDropSubmittedAnswer answer) {
-        return new DragAndDropSubmittedAnswerDTO(answer.getMappings().stream().map(DragAndDropMappingDTO::of).collect(Collectors.toSet()));
+        return new DragAndDropSubmittedAnswerDTO(answer.getMappings().stream().map(DragAndDropMappingDTO::of).collect(Collectors.toSet()), "drag-and-drop");
     }
 
 }

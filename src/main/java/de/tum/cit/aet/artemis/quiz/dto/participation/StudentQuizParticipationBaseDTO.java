@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.core.dto.DomainObjectDTO;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
-record StudentQuizParticipationBaseDTO(Long id, InitializationState initializationState, ZonedDateTime initializationDate, DomainObjectDTO student) {
+record StudentQuizParticipationBaseDTO(Long id, String type, InitializationState initializationState, ZonedDateTime initializationDate, DomainObjectDTO student) {
 
     public static StudentQuizParticipationBaseDTO of(final StudentParticipation studentParticipation) {
         User student = studentParticipation.getStudent().orElse(null);
@@ -15,8 +15,8 @@ record StudentQuizParticipationBaseDTO(Long id, InitializationState initializati
         if (student != null) {
             domainObjectDTO = DomainObjectDTO.of(student);
         }
-        return new StudentQuizParticipationBaseDTO(studentParticipation.getId(), studentParticipation.getInitializationState(), studentParticipation.getInitializationDate(),
-                domainObjectDTO);
+        return new StudentQuizParticipationBaseDTO(studentParticipation.getId(), studentParticipation.getType(), studentParticipation.getInitializationState(),
+                studentParticipation.getInitializationDate(), domainObjectDTO);
     }
 
 }
