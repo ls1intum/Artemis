@@ -6,7 +6,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

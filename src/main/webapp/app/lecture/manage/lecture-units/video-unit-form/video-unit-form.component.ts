@@ -3,7 +3,7 @@ import { Component, computed, effect, inject, input, output, untracked, viewChil
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
