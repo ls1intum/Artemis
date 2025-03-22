@@ -145,20 +145,13 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     prepareSidebarData() {
         const exercises: Exercise[] = [];
-        console.log('this.isMultiLaunch', this.isMultiLaunch);
-        console.log('this.multiLaunchExerciseIDs', this.multiLaunchExerciseIDs);
 
         if (this.isMultiLaunch && this.multiLaunchExerciseIDs?.length > 0) {
-            console.log('multi launch exercises', this.multiLaunchExerciseIDs);
-
-            const exerciseObservables = this.multiLaunchExerciseIDs.map((exerciseId) =>
-                this.exerciseService.find(exerciseId)
-            );
+            const exerciseObservables = this.multiLaunchExerciseIDs.map((exerciseId) => this.exerciseService.find(exerciseId));
 
             forkJoin(exerciseObservables).subscribe((exerciseResponses) => {
                 exerciseResponses.forEach((response) => {
                     exercises.push(response.body!);
-                    console.log('logged exercise', response.body);
                 });
 
                 this.processExercises(exercises);

@@ -149,7 +149,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     replaceWindowLocationWrapper(url: string): void {
-        console.log('Replacing window location with ' + url);
         this.ltiService.setShownViaLti(true);
         this.themeService.applyThemePreference(Theme.LIGHT);
 
@@ -165,8 +164,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                 queryParams[key] = value;
             });
         }
-
-        console.log('Redirecting to ' + path + ' with query params:', queryParams);
         this.router.navigate([path], { queryParams: queryParams, replaceUrl: true });
     }
 }
