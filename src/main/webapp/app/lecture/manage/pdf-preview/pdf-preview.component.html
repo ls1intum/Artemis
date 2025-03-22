@@ -134,7 +134,7 @@
                 [orderedPages]="pageOrder()"
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (hiddenPagesOutput)="hiddenPages.set($event)"
-                (pageOrderOutput)="pageOrder.set($event)"
+                (pageOrderOutput)="onPageOrderChange($event)"
             />
         } @else {
             <div class="empty-pdf-container">
@@ -153,12 +153,7 @@
                 (onConfirm)="navigateToCourseManagement()"
                 class="mx-1"
             />
-            <button
-                type="submit"
-                (click)="updateAttachmentWithFile()"
-                class="btn btn-primary"
-                [disabled]="isSaving() || ((isPdfLoading() || totalPages() === 0 || !isFileChanged()) && !hiddenPagesChanged() && !pageOrderChanged())"
-            >
+            <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isSaving() || isPdfLoading() || totalPages() === 0 || !hasChanges()">
                 @if (isSaving()) {
                     <div class="spinner-border spinner-border-sm me-1" role="status">
                         <span class="visually-hidden" jhiTranslate="loading"></span>

@@ -26,6 +26,7 @@ interface LectureAttachmentReferenceActionArgs {
     attachmentUnit?: AttachmentUnit;
     slide?: Slide;
     attachment?: Attachment;
+    slideIndex?: number;
 }
 
 /**
@@ -107,8 +108,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
+                if (args.attachmentUnit && args.slide && args.slideIndex) {
+                    this.insertSlideReference(editor, args.attachmentUnit, args.slide, args.slideIndex);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -136,9 +137,9 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number): void {
         // Using the new pattern that directly references the slide by ID with # prefix
-        this.replaceTextAtCurrentSelection(editor, `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(#${slide.id})[/slide]`);
+        this.replaceTextAtCurrentSelection(editor, `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slideIndex}(#${slide.id})[/slide]`);
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {

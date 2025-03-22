@@ -30,6 +30,12 @@ import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-p
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 
+interface PdfOperation {
+    type: 'MERGE' | 'DELETE' | 'HIDE' | 'SHOW' | 'REORDER';
+    timestamp: dayjs.Dayjs;
+    data: any;
+}
+
 export interface PDFSource {
     id: string;
     pdfDocument: PDFDocument;
@@ -89,6 +95,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
+    // Track operations in sequential order
+    private operations: PdfOperation[] = [];
+
     // Signals
     course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
@@ -105,6 +114,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     isSaving = signal<boolean>(false);
     pageOrder = signal<OrderedPage[]>([]);
     sourcePDFs = signal<Map<string, PDFSource>>(new Map());
+    hasOperations = signal<boolean>(false);
 
     // Computed properties
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
@@ -114,6 +124,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hasHiddenPages = computed(() => Object.keys(this.hiddenPages()).length > 0);
     hasHiddenSelectedPages = computed(() => {
         return Array.from(this.selectedPages()).some((page) => this.hiddenPages()[page.slideId]);
+    });
+
+    hasChanges = computed(() => {
+        return this.hasOperations() || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
     });
 
     // Injected services
@@ -229,6 +243,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.totalPages.set(this.totalPages() + pageCount);
 
             if (append) {
+                this.operations.push({
+                    type: 'MERGE',
+                    timestamp: dayjs(),
+                    data: {
+                        sourceId,
+                        pageCount,
+                    },
+                });
+                this.hasOperations.set(true);
+
                 const currentPageCount = this.pageOrder().length;
                 const newPages: OrderedPage[] = [];
 
@@ -246,6 +270,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 }
 
                 this.pageOrder.update((pages) => [...pages, ...newPages]);
+                this.isFileChanged.set(true);
             } else {
                 const orderedPages: OrderedPage[] = [];
 
@@ -320,6 +345,215 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Applies the operations directly to the original PDF document
+     * Operations are applied sequentially: deletions, merges, and reordering
+     * Hidden slides are only removed in the student version
+     * @param studentVersion Whether to create a student version
+     * @returns A Promise that resolves to an object with instructor and student PDFs
+     */
+    async applyOperations(studentVersion: boolean = false): Promise<{
+        instructorPdf: PDFDocument;
+        studentPdf: PDFDocument | null;
+    }> {
+        const originalSource = this.sourcePDFs().get('original');
+        if (!originalSource) {
+            throw new Error('Original PDF source not found');
+        }
+
+        const instructorPdf = await PDFDocument.load(await originalSource.pdfDocument.save());
+
+        const slideToPageMap = new Map();
+        this.pageOrder()
+            .filter((page) => page.sourcePdfId === 'original')
+            .forEach((page) => {
+                slideToPageMap.set(page.slideId, page.sourceIndex);
+            });
+
+        const sortedOperations = [...this.operations].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
+
+        for (const operation of sortedOperations) {
+            switch (operation.type) {
+                case 'DELETE': {
+                    const { slideIds } = operation.data;
+
+                    const pageIndicesToDelete = [];
+
+                    for (const slideId of slideIds) {
+                        const originalIndex = slideToPageMap.get(slideId);
+                        if (originalIndex !== undefined) {
+                            pageIndicesToDelete.push(originalIndex);
+                        }
+                    }
+
+                    pageIndicesToDelete.sort((a, b) => b - a);
+
+                    for (const pageIndex of pageIndicesToDelete) {
+                        instructorPdf.removePage(pageIndex);
+                    }
+
+                    for (const slideId of slideIds) {
+                        slideToPageMap.delete(slideId);
+                    }
+
+                    const currentPageOrder = [...this.pageOrder()];
+                    const updatedPageOrder = currentPageOrder.filter((page) => !slideIds.includes(page.slideId));
+
+                    updatedPageOrder.sort((a, b) => a.order - b.order);
+                    updatedPageOrder.forEach((page, index) => {
+                        page.order = index + 1;
+                        page.pageIndex = index + 1;
+                    });
+
+                    this.operations.push({
+                        type: 'REORDER',
+                        timestamp: operation.timestamp.add(1, 'millisecond'), // Just after the DELETE
+                        data: {
+                            pageOrder: updatedPageOrder.map((page) => ({
+                                slideId: page.slideId,
+                                order: page.order,
+                            })),
+                        },
+                    });
+
+                    const remainingSlides = Array.from(slideToPageMap.entries());
+                    for (const [slideId, pageIndex] of remainingSlides) {
+                        const newIndex = pageIndex - pageIndicesToDelete.filter((delIndex) => delIndex < pageIndex).length;
+                        slideToPageMap.set(slideId, newIndex);
+                    }
+                    break;
+                }
+
+                case 'MERGE': {
+                    const { sourceId } = operation.data;
+                    const sourcePdf = this.sourcePDFs().get(sourceId);
+                    if (sourcePdf) {
+                        const pageIndices = Array.from({ length: sourcePdf.pdfDocument.getPageCount() }, (_, i) => i);
+                        const copiedPages = await instructorPdf.copyPages(sourcePdf.pdfDocument, pageIndices);
+                        for (const page of copiedPages) {
+                            instructorPdf.addPage(page);
+                        }
+                    }
+
+                    const mergePages = this.pageOrder().filter((page) => page.sourcePdfId === sourceId);
+
+                    const baseIndex = instructorPdf.getPageCount() - mergePages.length;
+
+                    mergePages.forEach((page, index) => {
+                        slideToPageMap.set(page.slideId, baseIndex + index);
+                    });
+                    break;
+                }
+
+                case 'REORDER': {
+                    const { pageOrder } = operation.data;
+
+                    const totalPages = instructorPdf.getPageCount();
+                    const pageObjects = Array.from({ length: totalPages }, (_, i) => instructorPdf.getPage(i));
+
+                    for (let i = totalPages - 1; i >= 0; i--) {
+                        instructorPdf.removePage(i);
+                    }
+
+                    const slideToOrderMap = new Map();
+                    pageOrder.forEach((item: { slideId: string; order: number }) => {
+                        slideToOrderMap.set(item.slideId, item.order);
+                    });
+
+                    const reorderEntries = Array.from(slideToPageMap.entries()).map(([slideId, originalIndex]) => [
+                        slideId,
+                        originalIndex,
+                        slideToOrderMap.get(slideId) || Number.MAX_SAFE_INTEGER,
+                    ]);
+
+                    reorderEntries.sort((a, b) => (a[2] as number) - (b[2] as number));
+
+                    for (const [_slideId, originalIndex] of reorderEntries) {
+                        if (originalIndex !== undefined && originalIndex < pageObjects.length) {
+                            instructorPdf.addPage(pageObjects[originalIndex as number]);
+                        }
+                    }
+
+                    reorderEntries.forEach(([slideId, _, __], newIndex) => {
+                        slideToPageMap.set(slideId, newIndex);
+                    });
+                    break;
+                }
+            }
+        }
+
+        // Create student version if requested
+        let studentPdf = null;
+        if (studentVersion) {
+            const hiddenSlideIds = Object.keys(this.hiddenPages());
+
+            if (hiddenSlideIds.length > 0) {
+                studentPdf = await PDFDocument.load(await instructorPdf.save());
+
+                const finalPageOrder = await this.getFinalPageOrder();
+                const studentPageMap = new Map();
+                let studentIndex = 0;
+
+                for (const page of finalPageOrder) {
+                    if (!this.hiddenPages()[page.slideId]) {
+                        studentPageMap.set(page.slideId, studentIndex++);
+                    }
+                }
+
+                const hiddenPageIndices = hiddenSlideIds
+                    .map((slideId) => {
+                        const pageIndex = finalPageOrder.findIndex((page) => page.slideId === slideId);
+                        return pageIndex !== -1 ? pageIndex : undefined;
+                    })
+                    .filter((index) => index !== undefined)
+                    .sort((a, b) => (b as number) - (a as number)); // Sort in descending order
+
+                for (const pageIndex of hiddenPageIndices) {
+                    if (pageIndex !== undefined) {
+                        studentPdf.removePage(pageIndex);
+                    }
+                }
+            }
+        }
+
+        return { instructorPdf, studentPdf };
+    }
+
+    /**
+     * Calculate the final page order after applying all operations
+     */
+    async getFinalPageOrder(): Promise<OrderedPage[]> {
+        let workingPageOrder = [...this.pageOrder()];
+
+        const sortedOperations = [...this.operations].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
+
+        for (const operation of sortedOperations) {
+            if (operation.type === 'DELETE') {
+                workingPageOrder = workingPageOrder.filter((page) => !operation.data.slideIds.includes(page.slideId));
+            } else if (operation.type === 'REORDER') {
+                const orderMap = new Map();
+                operation.data.pageOrder.forEach((item: { slideId: string; order: number }) => {
+                    orderMap.set(item.slideId, item.order);
+                });
+
+                workingPageOrder.forEach((page) => {
+                    if (orderMap.has(page.slideId)) {
+                        page.order = orderMap.get(page.slideId);
+                    }
+                });
+            }
+        }
+
+        workingPageOrder.sort((a, b) => a.order - b.order);
+
+        workingPageOrder = workingPageOrder.map((page, index) => ({
+            ...page,
+            pageIndex: index + 1,
+        }));
+
+        return workingPageOrder;
+    }
+
+    /**
      * Updates the existing attachment file or creates a student version of the attachment with hidden files.
      */
     async updateAttachmentWithFile(): Promise<void> {
@@ -327,9 +561,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         try {
             const pdfName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
-            const pdfFile = await this.createPdf(pdfName);
+            const { instructorPdf, studentPdf } = await this.applyOperations(true);
 
-            if (pdfFile.size > MAX_FILE_SIZE) {
+            const instructorBytes = await instructorPdf.save();
+            const instructorPdfFile = new File([instructorBytes], `${pdfName}.pdf`, { type: 'application/pdf' });
+
+            if (instructorPdfFile.size > MAX_FILE_SIZE) {
                 this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
                 this.isSaving.set(false);
                 return;
@@ -340,9 +577,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.attachmentToBeEdited()!.version!++;
                 this.attachmentToBeEdited()!.uploadDate = dayjs();
 
-                this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
+                this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, instructorPdfFile).subscribe({
                     next: () => {
                         this.isSaving.set(false);
+                        this.operations = [];
+                        this.hasOperations.set(false);
+                        this.isFileChanged.set(false);
                         this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                         this.navigateToCourseManagement();
                     },
@@ -356,13 +596,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.attachmentToBeEdited()!.uploadDate = dayjs();
 
                 const formData = new FormData();
-                formData.append('file', pdfFile);
+                formData.append('file', instructorPdfFile);
                 formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
                 formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+
+                const finalPageOrder = await this.getFinalPageOrder();
+
                 formData.append(
                     'pageOrder',
                     JSON.stringify(
-                        this.pageOrder().map((page) => ({
+                        finalPageOrder.map((page) => ({
                             pageIndex: page.pageIndex,
                             slideId: page.slideId,
                             order: page.order,
@@ -370,18 +613,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     ),
                 );
 
-                const finalHiddenPages = this.getHiddenPages();
+                const hiddenPages = this.getHiddenPages();
 
-                if (finalHiddenPages.length > 0) {
-                    const studentVersionFile = await this.createPdf(pdfName, true);
-
-                    formData.append('studentVersion', studentVersionFile);
-                    formData.append('hiddenPages', JSON.stringify(finalHiddenPages));
+                // Add student version if it exists
+                if (studentPdf) {
+                    const studentBytes = await studentPdf.save();
+                    const studentPdfFile = new File([studentBytes], `${pdfName}_student.pdf`, { type: 'application/pdf' });
+                    formData.append('studentVersion', studentPdfFile);
+                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
                 }
 
                 this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                     next: () => {
                         this.isSaving.set(false);
+                        this.operations = [];
+                        this.hasOperations.set(false);
+                        this.isFileChanged.set(false);
                         this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                         this.navigateToCourseManagement();
                     },
@@ -433,6 +680,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isPdfLoading.set(true);
             const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
 
+            this.operations.push({
+                type: 'DELETE',
+                timestamp: dayjs(),
+                data: { slideIds },
+            });
+            this.hasOperations.set(true);
+
             this.pageOrder.update((pages) => {
                 const remainingPages = pages.filter((page) => !slideIds.includes(page.slideId));
 
@@ -467,7 +721,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
 
-        if (file!.type !== 'application/pdf') {
+        if (!file || file.type !== 'application/pdf') {
             this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
             input.value = '';
             return;
@@ -476,14 +730,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.isPdfLoading.set(true);
         this.appendFile.set(true);
         try {
-            const newPdfBytes = await file!.arrayBuffer();
-            const objectUrl = URL.createObjectURL(file!);
+            const newPdfBytes = await file.arrayBuffer();
+            const objectUrl = URL.createObjectURL(file);
 
             const mergeSourceId = `merge_${Date.now()}`;
             await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
 
             this.selectedPages.set(new Set());
-            this.isFileChanged.set(true);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {
@@ -493,43 +746,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Creates a PDF file by copying pages from their source PDFs based on page order
-     * @param fileName Name to use for the generated PDF file
-     * @param studentVersion Whether to create a student version (excluding hidden pages)
-     * @returns A Promise that resolves to a File object containing the generated PDF
-     */
-    async createPdf(fileName: string, studentVersion: boolean = false): Promise<File> {
-        const pdfDoc = await PDFDocument.create();
-        const hiddenPagesMap = this.hiddenPages();
-        const sources = this.sourcePDFs();
-
-        const pagesToInclude = this.pageOrder().filter((page) => !(studentVersion && hiddenPagesMap[page.slideId]));
-
-        pagesToInclude.sort((a, b) => a.order - b.order);
-
-        for (const page of pagesToInclude) {
-            const source = sources.get(page.sourcePdfId);
-            const sourceDoc = source!.pdfDocument;
-            const [copiedPage] = await pdfDoc.copyPages(sourceDoc, [page.sourceIndex]);
-            pdfDoc.addPage(copiedPage);
-        }
-
-        const newPdfBytes = await pdfDoc.save();
-        return new File([newPdfBytes], `${fileName}.pdf`, { type: 'application/pdf' });
-    }
-
-    /**
      * Shows previously hidden pages by removing them from the hidden pages map
      * @param selectedPages The set of pages to be made visible
      */
     showPages(selectedPages: Set<OrderedPage>): void {
+        const slideIds = Array.from(selectedPages).map((page) => page.slideId);
+
+        this.operations.push({
+            type: 'SHOW',
+            timestamp: dayjs(),
+            data: { slideIds },
+        });
+        this.hasOperations.set(true);
+
         this.hiddenPages.update((current) => {
             const updated = { ...current };
-
-            Array.from(selectedPages).forEach((page) => {
-                delete updated[page.slideId];
-            });
-
+            slideIds.forEach((id) => delete updated[id]);
             return updated;
         });
 
@@ -543,20 +775,45 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hidePages(hiddenPageData: HiddenPage | HiddenPage[]): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
 
+        this.operations.push({
+            type: 'HIDE',
+            timestamp: dayjs(),
+            data: { pages },
+        });
+        this.hasOperations.set(true);
+
         this.hiddenPages.update((currentMap) => {
             const updatedMap = { ...currentMap };
-
             pages.forEach((page) => {
                 updatedMap[page.slideId] = {
                     date: page.date,
                     exerciseId: page.exerciseId,
                 };
             });
-
             return updatedMap;
         });
 
         this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Handles page order changes from the thumbnail grid component
+     * @param newOrder The new page order
+     */
+    onPageOrderChange(newOrder: OrderedPage[]): void {
+        this.operations.push({
+            type: 'REORDER',
+            timestamp: dayjs(),
+            data: {
+                pageOrder: newOrder.map((page) => ({
+                    slideId: page.slideId,
+                    order: page.order,
+                })),
+            },
+        });
+        this.hasOperations.set(true);
+
+        this.pageOrder.set(newOrder);
     }
 
     /**

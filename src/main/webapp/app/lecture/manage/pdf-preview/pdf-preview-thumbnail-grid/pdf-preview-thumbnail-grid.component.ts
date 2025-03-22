@@ -168,16 +168,22 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         const checkbox = event.target as HTMLInputElement;
         const page = this.findPageBySlideId(slideId);
 
-        if (checkbox.checked) {
-            this.selectedPages().add(page!);
-        } else {
-            this.selectedPages().forEach((selectedPage) => {
-                if (selectedPage.slideId === slideId) {
-                    this.selectedPages().delete(selectedPage);
-                }
-            });
+        if (page) {
+            const newSelection = new Set(this.selectedPages());
+
+            if (checkbox.checked) {
+                newSelection.add(page);
+            } else {
+                newSelection.forEach((selectedPage) => {
+                    if (selectedPage.slideId === slideId) {
+                        newSelection.delete(selectedPage);
+                    }
+                });
+            }
+
+            this.selectedPages.set(newSelection);
+            this.selectedPagesOutput.emit(newSelection);
         }
-        this.selectedPagesOutput.emit(this.selectedPages());
     }
 
     /**
