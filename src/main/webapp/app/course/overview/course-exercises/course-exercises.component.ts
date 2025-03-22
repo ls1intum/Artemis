@@ -147,10 +147,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         console.log('this.isMultiLaunch', this.isMultiLaunch);
         console.log('this.multiLaunchExerciseIDs', this.multiLaunchExerciseIDs);
 
-        if (this.isMultiLaunch && this.multiLaunchExerciseIDs.length > 0) {
+        if (this.isMultiLaunch && this.multiLaunchExerciseIDs?.length > 0) {
+            console.log('multi launch exercises', this.multiLaunchExerciseIDs);
             for (const exerciseId of this.multiLaunchExerciseIDs) {
                 this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
                     exercises.push(exerciseResponse.body!);
+                    console.log('logged exercise', exerciseResponse.body);
                 });
             }
             this.processExercises(exercises);
