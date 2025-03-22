@@ -14,6 +14,7 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/course-overview.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
+import { forkJoin } from 'rxjs';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -149,13 +150,19 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         if (this.isMultiLaunch && this.multiLaunchExerciseIDs?.length > 0) {
             console.log('multi launch exercises', this.multiLaunchExerciseIDs);
-            for (const exerciseId of this.multiLaunchExerciseIDs) {
-                this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
-                    exercises.push(exerciseResponse.body!);
-                    console.log('logged exercise', exerciseResponse.body);
+
+            const exerciseObservables = this.multiLaunchExerciseIDs.map((exerciseId) =>
+                this.exerciseService.find(exerciseId)
+            );
+
+            forkJoin(exerciseObservables).subscribe((exerciseResponses) => {
+                exerciseResponses.forEach((response) => {
+                    exercises.push(response.body!);
+                    console.log('logged exercise', response.body);
                 });
-            }
-            this.processExercises(exercises);
+
+                this.processExercises(exercises);
+            });
         } else {
             if (!this.course?.exercises) {
                 return;
