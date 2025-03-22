@@ -56,7 +56,7 @@ export class CourseNotificationService {
      * @returns Observable with notification information
      */
     public getInfo(): Observable<HttpResponse<CourseNotificationInfo>> {
-        return this.http.get<CourseNotificationInfo>(this.apiEndpoint + '/info', { observe: 'response' });
+        return this.http.get<CourseNotificationInfo>(this.apiEndpoint + 'info', { observe: 'response' });
     }
 
     /**
