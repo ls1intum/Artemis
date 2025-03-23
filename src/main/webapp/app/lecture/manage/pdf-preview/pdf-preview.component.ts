@@ -721,7 +721,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
 
-        if (!file || file.type !== 'application/pdf') {
+        if (file!.type !== 'application/pdf') {
             this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
             input.value = '';
             return;
@@ -730,8 +730,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.isPdfLoading.set(true);
         this.appendFile.set(true);
         try {
-            const newPdfBytes = await file.arrayBuffer();
-            const objectUrl = URL.createObjectURL(file);
+            const newPdfBytes = await file!.arrayBuffer();
+            const objectUrl = URL.createObjectURL(file!);
 
             const mergeSourceId = `merge_${Date.now()}`;
             await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
