@@ -231,6 +231,7 @@ public class ParticipationResource {
             }
         }
 
+        // Check if the user is allowed to start the exercise (= create a participation)
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             // fetch additional objects needed for the startExercise method below
