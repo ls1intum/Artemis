@@ -59,6 +59,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private ltiSubscription: Subscription;
+    private groupedUnitViewSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
     course?: Course;
@@ -107,6 +108,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.isShownViaLti = isShownViaLti;
         });
 
+        this.groupedUnitViewSubscription = this.ltiService.isGroupedUnitView$.subscribe((groupedUnitView) => {
+            if (!this.isMultiLaunch) {
+                this.isMultiLaunch = groupedUnitView;
+            }
+        });
+
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
         this.navigateToExercise();
     }
@@ -146,7 +153,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     prepareSidebarData() {
         const exercises: Exercise[] = [];
 
-        if (this.isMultiLaunch && this.multiLaunchExerciseIDs?.length > 0) {
+        if (this.isMultiLaunch) {
+            this.ltiService.setGroupedUnitView(true);
+        }
+
+        if (this.multiLaunchExerciseIDs?.length > 0) {
             const exerciseObservables = this.multiLaunchExerciseIDs.map((exerciseId) => this.exerciseService.find(exerciseId));
 
             forkJoin(exerciseObservables).subscribe((exerciseResponses) => {

@@ -297,19 +297,6 @@ class LtiDeepLinkingServiceTest {
                 .matches(exception -> "LTI".equals(exception.getEntityName()) && "noCourseAnalyticsDashboard".equals(exception.getErrorKey()));
     }
 
-    /*
-     * @Test
-     * void buildContentUrl_withResourceId() {
-     * String url = ltiDeepLinkingService.buildContentUrl("1", "exercises", "2");
-     * assertThat(url).isEqualTo("http://artemis.com/courses/1/exercises/2");
-     * }
-     * @Test
-     * void buildContentUrl_withoutResourceId() {
-     * String url = ltiDeepLinkingService.buildContentUrl("1", "competencies");
-     * assertThat(url).isEqualTo("http://artemis.com/courses/1/competencies");
-     * }
-     */
-
     private void createMockOidcIdToken() throws MalformedURLException, URISyntaxException {
         Map<String, Object> mockSettings = new TreeMap<>();
         mockSettings.put("deep_link_return_url", "test_return_url");
