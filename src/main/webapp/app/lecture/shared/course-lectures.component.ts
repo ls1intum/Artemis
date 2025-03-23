@@ -37,7 +37,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
-    styleUrls: ['../../overview/course-overview.scss'],
+    styleUrls: ['../../core/course/overview/course-overview.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
