@@ -3,7 +3,7 @@ import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atl
 
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

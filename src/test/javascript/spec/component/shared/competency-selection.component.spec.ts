@@ -8,7 +8,7 @@ import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';

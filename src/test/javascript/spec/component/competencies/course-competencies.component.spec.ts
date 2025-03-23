@@ -15,7 +15,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

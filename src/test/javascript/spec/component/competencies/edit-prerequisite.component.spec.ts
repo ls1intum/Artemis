@@ -11,7 +11,7 @@ import { LectureService } from 'app/lecture/manage/lecture.service';
 import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { EditPrerequisiteComponent } from 'app/atlas/manage/edit/edit-prerequisite.component';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';

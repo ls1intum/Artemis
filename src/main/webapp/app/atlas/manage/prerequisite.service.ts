@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 
 type EntityResponseType = HttpResponse<Prerequisite>;
