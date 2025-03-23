@@ -19,7 +19,7 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';

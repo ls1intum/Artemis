@@ -3,7 +3,7 @@ import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';

@@ -12,8 +12,8 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { Course } from 'app/core/shared/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';

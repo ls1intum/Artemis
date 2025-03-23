@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';

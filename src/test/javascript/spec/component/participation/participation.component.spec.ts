@@ -5,7 +5,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { of, throwError } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
