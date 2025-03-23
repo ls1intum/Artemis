@@ -3,7 +3,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ModelingExerciseDetailComponent } from 'app/modeling/manage/modeling-exercise-detail.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

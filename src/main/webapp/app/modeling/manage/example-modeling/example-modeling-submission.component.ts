@@ -10,8 +10,8 @@ import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';

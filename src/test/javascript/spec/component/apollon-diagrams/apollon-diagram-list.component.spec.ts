@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ApollonDiagramListComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';

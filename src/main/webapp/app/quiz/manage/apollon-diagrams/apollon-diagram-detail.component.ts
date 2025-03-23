@@ -5,7 +5,7 @@ import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';

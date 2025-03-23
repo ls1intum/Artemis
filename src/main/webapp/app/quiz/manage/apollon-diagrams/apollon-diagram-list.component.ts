@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Course } from 'app/core/shared/entities/course.model';

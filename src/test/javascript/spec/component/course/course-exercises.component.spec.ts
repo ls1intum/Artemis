@@ -13,7 +13,7 @@ import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exer
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
