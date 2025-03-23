@@ -3,9 +3,6 @@
 # ===================================================================
 
 artemis:
-    atlas:
-        enabled: true
-
     course-archives-path: ./exports/server-integration-test/courses # a folder in which archived courses and exams are stored.
     legal-path: ./legal/server-integration-test                     # a folder in which legal files (privacy statement, imprint) are stored.
     repo-clone-path: ./repos/server-integration-test
