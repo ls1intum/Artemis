@@ -32,7 +32,6 @@ export class ProfileService {
                         const displayRibbonOnProfiles = data.ribbonEnv?.split(',') ?? [];
 
                         this.mapGuidedTourConfig(data, profileInfo);
-                        this.mapAllowedOrionVersions(data, profileInfo);
                         this.mapTestServer(data, profileInfo);
                         ProfileService.mapSaml2Config(data, profileInfo);
 
@@ -103,10 +102,6 @@ export class ProfileService {
         }
 
         return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
-    }
-
-    private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
     }
 
     private mapTestServer(data: any, profileInfo: ProfileInfo) {

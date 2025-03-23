@@ -11,7 +11,7 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';

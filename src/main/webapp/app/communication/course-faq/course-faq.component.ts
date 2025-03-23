@@ -24,7 +24,7 @@ import { CommonModule } from '@angular/common';
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrls: ['../../overview/course-overview.scss', 'course-faq.component.scss'],
+    styleUrls: ['../../core/course/overview/course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, NgbModule, TranslateDirective, FontAwesomeModule, CommonModule],
 })

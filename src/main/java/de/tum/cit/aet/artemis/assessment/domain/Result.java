@@ -671,6 +671,16 @@ public class Result extends DomainObject implements Comparable<Result> {
         setCodeIssueCount(originalResult.getCodeIssueCount());
     }
 
+    /**
+     * Checks if this result has been assessed.
+     *
+     * @return true if there is a completion date, false otherwise
+     */
+    @JsonIgnore
+    public boolean isAssessmentComplete() {
+        return completionDate != null;
+    }
+
     @Override
     public int compareTo(Result other) {
         if (getCompletionDate() == null || other.getCompletionDate() == null || Objects.equals(getCompletionDate(), other.getCompletionDate())) {
