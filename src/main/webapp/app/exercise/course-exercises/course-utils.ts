@@ -1,7 +1,7 @@
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Observable } from 'rxjs';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';

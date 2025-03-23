@@ -1,12 +1,12 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
+import { EditCourseLtiConfigurationComponent } from 'app/core/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { Course } from 'app/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';

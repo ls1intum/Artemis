@@ -13,7 +13,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission.component';
 import { createFileUploadSubmission, fileUploadParticipation, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
