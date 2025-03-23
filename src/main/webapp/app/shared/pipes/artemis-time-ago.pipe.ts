@@ -1,6 +1,5 @@
 import { ChangeDetectorRef, NgZone, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import 'dayjs/esm/locale/de';
 import { isDate } from 'app/shared/util/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';

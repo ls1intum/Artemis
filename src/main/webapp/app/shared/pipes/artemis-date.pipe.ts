@@ -2,7 +2,6 @@ import { OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import 'dayjs/esm/locale/de';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/shared/util/date.utils';
 import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
 
