@@ -119,7 +119,8 @@ public class ShortAnswerQuestion extends QuizQuestion {
         this.similarityValue = similarityValue;
     }
 
-    public Boolean matchLetterCase() {
+    @JsonInclude
+    public Boolean getMatchLetterCase() {
         return this.matchLetterCase;
     }
 

@@ -96,7 +96,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
         }
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) submittedAnswer.getQuizQuestion();
         int similarityValue = Objects.requireNonNullElse(saQuestion.getSimilarityValue(), 85); // default value
-        if (Boolean.TRUE.equals(saQuestion.matchLetterCase())) {
+        if (Boolean.TRUE.equals(saQuestion.getMatchLetterCase())) {
             // only trim whitespace left and right
             return FuzzySearch.ratio(submittedText.trim(), solution.trim()) >= similarityValue;
         }

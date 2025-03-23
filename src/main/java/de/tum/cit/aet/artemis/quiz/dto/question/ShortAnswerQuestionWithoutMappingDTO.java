@@ -13,7 +13,7 @@ public record ShortAnswerQuestionWithoutMappingDTO(List<ShortAnswerSpotDTO> spot
 
     public static ShortAnswerQuestionWithoutMappingDTO of(ShortAnswerQuestion question) {
         return new ShortAnswerQuestionWithoutMappingDTO(question.getSpots().stream().map(ShortAnswerSpotDTO::of).toList(),
-                question.getSolutions().stream().map(ShortAnswerSolutionDTO::of).toList(), question.getSimilarityValue(), question.matchLetterCase());
+                question.getSolutions().stream().map(ShortAnswerSolutionDTO::of).toList(), question.getSimilarityValue(), question.getMatchLetterCase());
     }
 
 }
