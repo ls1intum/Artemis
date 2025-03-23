@@ -21,7 +21,7 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
-import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
+import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
