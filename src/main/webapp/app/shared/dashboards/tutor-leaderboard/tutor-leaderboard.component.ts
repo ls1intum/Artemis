@@ -3,7 +3,7 @@ import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard
 import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { SortDirective } from '../../sort/sort.directive';
 import { SortByDirective } from '../../sort/sort-by.directive';

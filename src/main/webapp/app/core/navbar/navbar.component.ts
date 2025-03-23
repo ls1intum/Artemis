@@ -50,7 +50,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';

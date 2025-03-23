@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamSession } from 'app/entities/exam/exam-session.model';
+import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';

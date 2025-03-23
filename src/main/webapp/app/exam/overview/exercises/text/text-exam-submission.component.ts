@@ -8,7 +8,7 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
@@ -15,7 +15,7 @@ import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';

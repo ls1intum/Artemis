@@ -7,9 +7,9 @@ import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficul
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import dayjs from 'dayjs/esm';

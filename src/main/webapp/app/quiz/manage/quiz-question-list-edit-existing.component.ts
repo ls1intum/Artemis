@@ -9,7 +9,7 @@ import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';

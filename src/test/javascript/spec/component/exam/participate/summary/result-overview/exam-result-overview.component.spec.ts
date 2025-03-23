@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { User } from 'app/core/user/user.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-overview/exam-result-overview.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';

@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamSession } from 'app/entities/exam/exam-session.model';
+import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';

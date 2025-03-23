@@ -10,7 +10,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/inc
 import { ExerciseTypePipe } from 'app/shared/pipes/exercise-type.pipe';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';

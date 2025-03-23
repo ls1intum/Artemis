@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';

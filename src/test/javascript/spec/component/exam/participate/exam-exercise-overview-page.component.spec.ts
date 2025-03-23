@@ -3,7 +3,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';

@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Submission } from 'app/entities/submission.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Observable, of } from 'rxjs';

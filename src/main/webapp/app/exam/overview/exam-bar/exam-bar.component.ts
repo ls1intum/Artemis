@@ -5,8 +5,8 @@ import { ExamParticipationService } from 'app/exam/overview/exam-participation.s
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faDoorClosed } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/exam-live-events-button.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

@@ -7,7 +7,7 @@ import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-t
 import { TeamService } from 'app/exercise/team/team.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Router, RouterLink } from '@angular/router';
 import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';

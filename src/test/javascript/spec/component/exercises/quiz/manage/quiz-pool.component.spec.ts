@@ -14,7 +14,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { QuizGroup } from 'app/quiz/shared/entities/quiz-group.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizPoolMappingComponent } from 'app/quiz/manage/quiz-pool-mapping.component';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';

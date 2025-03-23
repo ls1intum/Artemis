@@ -18,7 +18,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
