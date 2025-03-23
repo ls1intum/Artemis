@@ -242,21 +242,21 @@ public class ParticipationResource {
             }
             exercise = programmingExercise;
         }
+        else {
+            ZonedDateTime exerciseDueDate = exercise.getDueDate();
+            boolean userMightHaveIndividualWorkingTime = exercise.isExamExercise();
+            boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
+            if (!userMightHaveIndividualWorkingTime && isDueDateInPast) {
+                throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME,
+                        "dueDateOver.noParticipationPossible");
+            }
+        }
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
         if (exercise.isTeamMode()) {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "teamExercise.cannotStart"));
-        }
-
-        ZonedDateTime exerciseDueDate = exercise.getDueDate();
-        boolean userMightHaveIndividualWorkingTime = exercise.isExamExercise();
-        boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
-        boolean isAtLeastEditorInProgrammingExercise = exercise instanceof ProgrammingExercise && authCheckService.isAtLeastEditorForExercise(exercise, user);
-        if (!isAtLeastEditorInProgrammingExercise && !userMightHaveIndividualWorkingTime && isDueDateInPast) {
-            String errorMessageKey = exercise instanceof ProgrammingExercise ? "dueDateOver.participationInPracticeMode" : "dueDateOver.noParticipationPossible";
-            throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME, errorMessageKey);
         }
 
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
