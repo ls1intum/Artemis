@@ -1,4 +1,4 @@
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 
 export class CourseNotificationPage {
     content: CourseNotification[];

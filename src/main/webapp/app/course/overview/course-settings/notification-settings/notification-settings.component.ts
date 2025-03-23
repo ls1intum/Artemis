@@ -3,15 +3,15 @@ import { CourseSettingCategoryDirective } from 'app/course/overview/course-setti
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBell, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CourseNotificationSettingPreset } from 'app/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
 import { CourseNotificationSettingSpecificationCardComponent } from 'app/communication/course-notification/course-notification-setting-specification-card/course-notification-setting-specification-card.component';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseNotificationInfo } from 'app/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationSettingsMap } from 'app/entities/course-notification/course-notification-settings-map';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingsMap } from 'app/communication/shared/entities/course-notification/course-notification-settings-map';
 
 /**
  * Component that manages notification settings for a course.

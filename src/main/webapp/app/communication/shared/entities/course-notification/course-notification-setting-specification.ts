@@ -1,4 +1,4 @@
-import { CourseNotificationChannelSetting } from 'app/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
 
 export class CourseNotificationSettingSpecification {
     identifier: string;

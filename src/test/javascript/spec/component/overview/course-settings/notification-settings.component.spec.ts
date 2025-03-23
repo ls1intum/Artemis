@@ -5,11 +5,11 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { CourseNotificationSettingPreset } from 'app/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationSettingInfo } from 'app/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationInfo } from 'app/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
@@ -17,7 +17,7 @@ import { CourseNotificationSettingSpecificationCardComponent } from 'app/communi
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseNotificationSettingsMap } from 'app/entities/course-notification/course-notification-settings-map';
+import { CourseNotificationSettingsMap } from 'app/communication/shared/entities/course-notification/course-notification-settings-map';
 
 describe('NotificationSettingsComponent', () => {
     let component: NotificationSettingsComponent;

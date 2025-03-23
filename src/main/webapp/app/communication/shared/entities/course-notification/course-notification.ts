@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 
 export class CourseNotification {
     public notificationId?: number;

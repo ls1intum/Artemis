@@ -1,4 +1,4 @@
-import { CourseNotificationSettingsMap } from 'app/entities/course-notification/course-notification-settings-map';
+import { CourseNotificationSettingsMap } from 'app/communication/shared/entities/course-notification/course-notification-settings-map';
 
 class CourseNotificationSettingPreset {
     identifier: string;

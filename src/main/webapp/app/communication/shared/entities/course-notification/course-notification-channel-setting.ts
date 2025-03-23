@@ -1,4 +1,4 @@
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 
 export interface CourseNotificationChannelSetting {
     [CourseNotificationChannel.PUSH]: boolean;

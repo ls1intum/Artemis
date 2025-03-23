@@ -4,9 +4,9 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { Course } from 'app/core/shared/entities/course.model';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 
 describe('CourseNotificationWebsocketService', () => {
