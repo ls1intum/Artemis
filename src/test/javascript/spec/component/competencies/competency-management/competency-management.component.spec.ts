@@ -21,7 +21,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
 import {

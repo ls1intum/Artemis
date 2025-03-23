@@ -12,7 +12,7 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { Faq } from 'app/entities/faq.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 

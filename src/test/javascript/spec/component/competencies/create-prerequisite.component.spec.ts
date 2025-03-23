@@ -17,7 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CreatePrerequisiteComponent } from 'app/atlas/manage/create/create-prerequisite.component';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 
 describe('CreatePrerequisite', () => {
     let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;
