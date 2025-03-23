@@ -18,6 +18,12 @@
                 "iris": {
                     "header": "Iris hinzufügen",
                     "selector": "Bestätige, ob du eine Verknüpfung zu Iris hinzufügen willst"
+                },
+                "groupedContent": {
+                    "groupedExercises": {
+                        "header": "Gruppierung von Übungen aktivieren:",
+                        "selector": "Beim Auswählen mehrere Übungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Übungsansicht angezeigt."
+                    }
                 }
             },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung, falls du dein Artemis-Passwort bisher nicht erhalten hast.",
