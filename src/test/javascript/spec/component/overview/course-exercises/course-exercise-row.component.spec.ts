@@ -16,7 +16,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';

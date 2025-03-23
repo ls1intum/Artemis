@@ -27,7 +27,7 @@ import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/athena.service';

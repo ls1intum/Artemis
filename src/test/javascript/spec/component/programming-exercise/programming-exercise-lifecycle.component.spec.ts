@@ -7,7 +7,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';

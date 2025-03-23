@@ -7,7 +7,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';

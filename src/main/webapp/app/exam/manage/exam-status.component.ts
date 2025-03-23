@@ -5,7 +5,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

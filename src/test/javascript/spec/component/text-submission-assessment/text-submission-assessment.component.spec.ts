@@ -18,7 +18,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';

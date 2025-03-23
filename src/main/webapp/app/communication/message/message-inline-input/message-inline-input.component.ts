@@ -9,7 +9,7 @@ import { PostingCreateEditDirective } from 'app/communication/posting-create-edi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-message-inline-input',

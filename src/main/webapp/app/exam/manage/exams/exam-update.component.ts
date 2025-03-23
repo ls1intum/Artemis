@@ -11,7 +11,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';

@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Observable, of, Subject } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';

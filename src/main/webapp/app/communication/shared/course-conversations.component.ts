@@ -21,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';

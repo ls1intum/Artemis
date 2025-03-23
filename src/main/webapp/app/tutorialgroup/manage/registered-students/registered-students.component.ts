@@ -4,7 +4,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

@@ -3,7 +3,7 @@ import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

@@ -5,7 +5,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/communication/course-conversations/other/conversation.util';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';

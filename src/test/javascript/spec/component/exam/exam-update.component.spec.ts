@@ -13,7 +13,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam/exam.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';

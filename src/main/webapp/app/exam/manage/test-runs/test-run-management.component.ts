@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/entities/exam/exam.model';

@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
 import { GraphColors } from 'app/entities/statistics.model';

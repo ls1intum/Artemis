@@ -32,7 +32,7 @@ import { of } from 'rxjs';
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { provideHttpClient } from '@angular/common/http';

@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';

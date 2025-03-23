@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/core/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,

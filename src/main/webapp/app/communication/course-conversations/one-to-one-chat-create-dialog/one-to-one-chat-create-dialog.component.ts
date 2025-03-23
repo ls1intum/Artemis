@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

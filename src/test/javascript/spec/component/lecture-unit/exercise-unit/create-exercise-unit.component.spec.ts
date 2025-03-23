@@ -9,7 +9,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';

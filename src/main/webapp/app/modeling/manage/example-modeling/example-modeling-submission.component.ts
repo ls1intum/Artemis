@@ -21,7 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { forkJoin } from 'rxjs';

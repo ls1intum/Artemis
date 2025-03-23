@@ -68,7 +68,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ElementRef, signal } from '@angular/core';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';

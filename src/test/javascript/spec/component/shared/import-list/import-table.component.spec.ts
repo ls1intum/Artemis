@@ -1,7 +1,7 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PagingService } from 'app/exercise/manage/paging.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

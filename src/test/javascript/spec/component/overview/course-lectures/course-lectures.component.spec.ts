@@ -5,7 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';

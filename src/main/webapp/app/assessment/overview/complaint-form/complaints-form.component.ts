@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';

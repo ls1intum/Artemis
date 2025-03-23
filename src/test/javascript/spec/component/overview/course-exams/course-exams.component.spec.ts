@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';

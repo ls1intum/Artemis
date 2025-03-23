@@ -6,7 +6,7 @@ import { ChannelService } from 'app/communication/conversations/channel.service'
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../helpers/conversationExampleModels';
 import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

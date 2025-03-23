@@ -1,6 +1,6 @@
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 
 export class GradingScale implements BaseEntity {

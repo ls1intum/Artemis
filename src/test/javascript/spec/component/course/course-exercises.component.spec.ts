@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';

@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';

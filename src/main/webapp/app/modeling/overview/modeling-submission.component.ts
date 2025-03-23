@@ -31,7 +31,7 @@ import { omit } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../manage/assess/modeling-assessment.util';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';

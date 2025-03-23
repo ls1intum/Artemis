@@ -17,7 +17,7 @@ import { CourseDetailLineChartComponent } from 'app/core/course/manage/detail/co
 import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

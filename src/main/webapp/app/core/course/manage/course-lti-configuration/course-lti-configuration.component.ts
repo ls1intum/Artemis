@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';

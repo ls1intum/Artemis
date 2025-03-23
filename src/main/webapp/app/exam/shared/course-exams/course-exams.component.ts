@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd } from '@angular/router';
 import { Subscription, interval, lastValueFrom } from 'rxjs';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';

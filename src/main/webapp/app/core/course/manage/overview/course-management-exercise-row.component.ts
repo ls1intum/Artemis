@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/c
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { faBook, faExclamationTriangle, faFileSignature, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faCalendarAlt } from '@fortawesome/free-regular-svg-icons';

@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { User } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';

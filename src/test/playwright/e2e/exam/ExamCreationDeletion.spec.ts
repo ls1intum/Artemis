@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';

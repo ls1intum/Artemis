@@ -24,7 +24,7 @@ import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exe
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/button.component';

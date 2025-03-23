@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular
 import { Router, RouterLink } from '@angular/router';
 import { Color, NgxChartsModule, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';

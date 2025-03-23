@@ -8,7 +8,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 
 describe('ExerciseUnitService', () => {

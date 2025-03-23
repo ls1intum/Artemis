@@ -5,7 +5,7 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Observable, combineLatestWith } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

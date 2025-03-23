@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { input } from '@angular/core';

@@ -17,7 +17,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { SubmissionType } from 'app/entities/submission.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';

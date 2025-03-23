@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { combineLatest, finalize } from 'rxjs';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, EventEmitter, OnChanges, OnDestroy, OnIni
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';

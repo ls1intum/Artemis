@@ -29,7 +29,7 @@ import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 import { CsvExportOptions } from 'app/shared/export/export-modal.component';

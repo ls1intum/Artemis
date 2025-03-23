@@ -11,7 +11,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';

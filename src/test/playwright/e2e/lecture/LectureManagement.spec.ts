@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 
 import { admin, instructor } from '../../support/users';

@@ -7,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';

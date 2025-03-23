@@ -6,7 +6,7 @@ import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGr
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';

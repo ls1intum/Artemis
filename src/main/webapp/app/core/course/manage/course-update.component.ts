@@ -6,7 +6,7 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR, PROFILE_ATHENA, PROFILE_ATLAS, PROFILE_LTI } from 'app/app.constants';

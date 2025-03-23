@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { EntityArrayResponseType } from 'app/core/course/manage/course-management.service';
 

@@ -6,7 +6,7 @@ import { CourseUsersSelectorComponent } from 'app/communication/course-users-sel
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChatDTO } from '../../../../../../../../../main/webapp/app/entities/metis/conversation/group-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';

@@ -10,7 +10,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { Component, Input, QueryList, SimpleChange, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-stub.component';
-import { Course, Language } from 'app/entities/course.model';
+import { Course, Language } from 'app/core/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

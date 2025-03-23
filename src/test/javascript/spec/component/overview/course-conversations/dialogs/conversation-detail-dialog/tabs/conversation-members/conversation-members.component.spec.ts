@@ -5,7 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { input, signal } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';

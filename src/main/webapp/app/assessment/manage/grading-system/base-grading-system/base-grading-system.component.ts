@@ -8,7 +8,7 @@ import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';

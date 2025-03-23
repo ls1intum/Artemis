@@ -9,7 +9,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';

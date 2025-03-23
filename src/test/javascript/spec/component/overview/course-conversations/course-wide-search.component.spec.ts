@@ -4,7 +4,7 @@ import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communica
 import { MetisService } from 'app/communication/metis.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

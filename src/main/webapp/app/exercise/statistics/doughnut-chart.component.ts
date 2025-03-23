@@ -4,7 +4,7 @@ import { DoughnutChartType } from 'app/core/course/manage/detail/course-detail.c
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';

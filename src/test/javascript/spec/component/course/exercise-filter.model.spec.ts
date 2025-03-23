@@ -1,5 +1,5 @@
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

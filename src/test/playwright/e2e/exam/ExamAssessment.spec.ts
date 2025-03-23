@@ -3,7 +3,7 @@ import { Exercise, ExerciseType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { Page, expect } from '@playwright/test';
 
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';

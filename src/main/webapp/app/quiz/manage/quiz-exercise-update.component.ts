@@ -17,7 +17,7 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';

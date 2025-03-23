@@ -3,7 +3,7 @@ import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown,
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/communication/metis.service';

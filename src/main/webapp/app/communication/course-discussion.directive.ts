@@ -4,7 +4,7 @@ import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTim
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ButtonType } from '../shared/components/button.component';
 import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Subscription } from 'rxjs';
 import { MetisService } from 'app/communication/metis.service';
 

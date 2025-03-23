@@ -1,6 +1,6 @@
 import { Component, Input, inject, output } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';

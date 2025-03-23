@@ -1,7 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/metis.service';

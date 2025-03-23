@@ -10,7 +10,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';

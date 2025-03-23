@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

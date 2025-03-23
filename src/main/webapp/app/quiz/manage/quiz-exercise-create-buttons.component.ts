@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { faCheckDouble, faFileExport, faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseType } from 'app/entities/exercise.model';

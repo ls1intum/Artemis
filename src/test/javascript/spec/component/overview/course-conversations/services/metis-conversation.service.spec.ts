@@ -6,7 +6,7 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { AccountService } from 'app/core/auth/account.service';

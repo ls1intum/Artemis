@@ -23,7 +23,7 @@ import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { MetisService } from 'app/communication/metis.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';

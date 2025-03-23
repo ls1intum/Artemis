@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 
 export abstract class ActiveStudentsChart {

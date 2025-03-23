@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';

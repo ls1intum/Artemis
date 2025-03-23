@@ -3,7 +3,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentWithTeam, Team, TeamAssignmentPayload, TeamImportStrategyType } from 'app/entities/team.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';

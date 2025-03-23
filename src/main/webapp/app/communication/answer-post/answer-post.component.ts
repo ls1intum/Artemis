@@ -29,7 +29,7 @@ import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content.components';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

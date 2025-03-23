@@ -1,7 +1,7 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

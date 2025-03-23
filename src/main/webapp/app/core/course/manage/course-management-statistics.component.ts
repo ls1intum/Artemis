@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';

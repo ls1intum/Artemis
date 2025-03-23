@@ -8,7 +8,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';

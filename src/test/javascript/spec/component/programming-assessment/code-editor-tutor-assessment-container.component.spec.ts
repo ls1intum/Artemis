@@ -27,7 +27,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';

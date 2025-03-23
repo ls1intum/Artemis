@@ -12,7 +12,7 @@ import {
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
 } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';

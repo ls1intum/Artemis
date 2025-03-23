@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';

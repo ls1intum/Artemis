@@ -26,7 +26,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import dayjs from 'dayjs/esm';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { MetisConversationService } from '../metis-conversation.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations/forward-message-dialog/forward-message-dialog.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
