@@ -35,8 +35,8 @@ import {
     TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE,
     TUTORIAL_GROUP_UNASSIGNED_TITLE,
     TUTORIAL_GROUP_UPDATED_TITLE,
-} from 'app/entities/notification.model';
-import { GroupNotification } from 'app/entities/group-notification.model';
+} from 'app/core/shared/entities/notification.model';
+import { GroupNotification } from 'app/core/shared/entities/group-notification.model';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject } from 'rxjs';

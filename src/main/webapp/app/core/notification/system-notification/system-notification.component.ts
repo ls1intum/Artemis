@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
+import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { User } from 'app/core/user/user.model';
