@@ -8,8 +8,8 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammingExerciseTriggerAllButtonComponent,
-} from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+} from 'app/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

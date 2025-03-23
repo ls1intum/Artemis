@@ -1,5 +1,5 @@
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';

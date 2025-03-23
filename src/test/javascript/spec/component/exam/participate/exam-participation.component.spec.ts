@@ -4,10 +4,10 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -26,25 +26,24 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
-import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
-import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
-import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
-import { ExamNavigationSidebarComponent } from 'app/exam/participate/exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
-import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
-import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
-import { ProgrammingExamSubmissionComponent } from 'app/exam/participate/exercises/programming/programming-exam-submission.component';
-import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
-import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { ExamResultSummaryComponent } from 'app/exam/participate/summary/exam-result-summary.component';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
+import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
+import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
+import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
+import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
+import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/overview/exam-participation-live-events.service';
+import { ExamParticipationComponent } from 'app/exam/overview/exam-participation.component';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
+import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
+import { ProgrammingExamSubmissionComponent } from 'app/exam/overview/exercises/programming/programming-exam-submission.component';
+import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
+import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
+import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
+import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -62,6 +61,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -292,7 +292,7 @@ describe('ExamParticipationComponent', () => {
         expect(comp.exam).toEqual(studentExam.exam);
     });
 
-    it('should load existing testExam if studentExam id is defined', () => {
+    it('should load existing testExam if studentExam id is start', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
         studentExam.exam.testExam = true;
@@ -301,7 +301,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.id = 4;
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 4;
-        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '4' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: 'start' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         comp.ngOnInit();
@@ -321,14 +321,20 @@ describe('ExamParticipationComponent', () => {
         studentExam.id = 3;
         const studentExamWithExercises = new StudentExam();
         studentExamWithExercises.id = 3;
-        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+        (activatedRoute as any).firstChild = {
+            snapshot: {
+                params: { studentExamId: '3' },
+            },
+        };
+        activatedRoute.params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
         studentExam.exam.course = new Course();
         studentExam.ended = true;
         studentExam.submitted = true;
         comp.ngOnInit();
-        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamSpy).not.toHaveBeenCalled();
         expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExamWithExercises);
         expect(comp.studentExam).not.toEqual(studentExam);
@@ -366,7 +372,7 @@ describe('ExamParticipationComponent', () => {
         });
         const course: Course = { isAtLeastTutor: true };
 
-        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '4' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => httpError));
         const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
         comp.ngOnInit();
@@ -382,7 +388,7 @@ describe('ExamParticipationComponent', () => {
         });
         const course: Course = { isAtLeastTutor: true };
 
-        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '4' });
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(throwError(() => httpError));
         const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
         const courseServiceSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
@@ -1090,7 +1096,6 @@ describe('ExamParticipationComponent', () => {
 
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = false;
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
         studentExam.id = 3;
@@ -1099,8 +1104,9 @@ describe('ExamParticipationComponent', () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
         jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
-
         comp.ngOnInit();
+
+        comp.testExam = false;
         comp.loadAndDisplaySummary();
 
         expect(examLayoutStub).toHaveBeenCalledOnce();
@@ -1110,7 +1116,6 @@ describe('ExamParticipationComponent', () => {
         const examLayoutStub = jest.spyOn(examParticipationService, 'resetExamLayout');
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
-        studentExam.exam.testExam = true;
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
         studentExam.id = 3;
@@ -1119,8 +1124,9 @@ describe('ExamParticipationComponent', () => {
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
         jest.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
         jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
-
         comp.ngOnInit();
+
+        comp.testExam = true;
         comp.loadAndDisplaySummary();
 
         expect(examLayoutStub).not.toHaveBeenCalledOnce();

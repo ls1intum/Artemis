@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
+import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';

@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockParticipationService } from '../helpers/mocks/service/mock-participation.service';
 

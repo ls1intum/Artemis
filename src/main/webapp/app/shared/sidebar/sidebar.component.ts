@@ -7,7 +7,7 @@ import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarI
 import { SidebarEventService } from './sidebar-event.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
-import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/types/exercise-filter';
+import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/shared/types/exercise-filter';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
     getExerciseCategoryFilterOptions,

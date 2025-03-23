@@ -6,9 +6,9 @@ import { BehaviorSubject, Observable, OperatorFunction } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { extend, reduce } from 'lodash-es';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
@@ -33,7 +33,6 @@ export class ProfileService {
                         const displayRibbonOnProfiles = data.ribbonEnv?.split(',') ?? [];
 
                         this.mapGuidedTourConfig(data, profileInfo);
-                        this.mapAllowedOrionVersions(data, profileInfo);
                         this.mapTestServer(data, profileInfo);
                         ProfileService.mapSaml2Config(data, profileInfo);
 
@@ -104,10 +103,6 @@ export class ProfileService {
         }
 
         return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
-    }
-
-    private mapAllowedOrionVersions(data: any, profileInfo: ProfileInfo) {
-        profileInfo.allowedMinimumOrionVersion = data['allowed-minimum-orion-version'];
     }
 
     private mapTestServer(data: any, profileInfo: ProfileInfo) {

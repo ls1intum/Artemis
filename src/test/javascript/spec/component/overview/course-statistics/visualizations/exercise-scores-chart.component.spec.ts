@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockModule, MockProvider } from 'ng-mocks';
-import { ChartNode, ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
+import { ChartNode, ExerciseScoresChartComponent } from 'app/core/course/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
+import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/overview/visualizations/exercise-scores-chart.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/entities/statistics.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 
 class MockActivatedRoute {
     parent: any;

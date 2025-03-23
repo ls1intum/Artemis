@@ -51,7 +51,6 @@
                   "shallowequal",
                   "markdown-it-class",
                   "smoothscroll-polyfill",
-                  "sockjs-client",
                   "use-sync-external-store/shim",
                   "use-sync-external-store/shim/with-selector",
                   "webcola",
@@ -167,8 +166,8 @@
               ],
               "fileReplacements": [
                 {
-                  "replace": "src/main/webapp/app/environments/environment.ts",
-                  "with": "src/main/webapp/app/environments/environment.override.ts"
+                  "replace": "src/main/webapp/app/core/environments/environment.ts",
+                  "with": "src/main/webapp/app/core/environments/environment.override.ts"
                 }
               ]
             },
@@ -179,8 +178,8 @@
               "namedChunks": true,
               "fileReplacements": [
                 {
-                  "replace": "src/main/webapp/app/environments/environment.ts",
-                  "with": "src/main/webapp/app/environments/environment.override.ts"
+                  "replace": "src/main/webapp/app/core/environments/environment.ts",
+                  "with": "src/main/webapp/app/core/environments/environment.override.ts"
                 }
               ]
             }

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/problem/programming-exercise-problem.component';
+import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

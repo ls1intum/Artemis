@@ -1,9 +1,9 @@
-import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
-import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
+import { CreateVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-video-unit/create-video-unit.component';
+import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';

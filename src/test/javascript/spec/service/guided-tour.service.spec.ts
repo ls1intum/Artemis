@@ -5,25 +5,18 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/guided-tour/guided-tour.constants';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { GuidedTourMapping, GuidedTourSetting } from 'app/guided-tour/guided-tour-setting.model';
-import { AssessmentTaskTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/guided-tour/guided-tour-step.model';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { MockTranslateService, TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/guided-tour/guided-tour-task.model';
-import { completedTour } from 'app/guided-tour/tours/general-tour';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';
@@ -37,6 +30,13 @@ import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.direc
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { GuidedTourState, Orientation, ResetParticipation, UserInteractionEvent } from 'app/core/guided-tour/guided-tour.constants';
+import { AssessmentTaskTourStep, ModelingTaskTourStep, TextTourStep, UserInterActionTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { AssessmentObject, GuidedTourAssessmentTask, GuidedTourModelingTask, personUML } from 'app/core/guided-tour/guided-tour-task.model';
+import { GuidedTourMapping, GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
+import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { completedTour } from 'app/core/guided-tour/tours/general-tour';
 
 class MockRouterWithEvents {
     public url = 'courses';

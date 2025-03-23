@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
-import { Detail } from 'app/detail-overview-list/detail.model';
+import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Router } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
