@@ -164,9 +164,12 @@ export class CourseNotificationService {
         if (!this.courseNotificationMap[courseId]) {
             this.courseNotificationMap[courseId] = [];
         }
-        this.addNotificationIfNotDuplicate(courseId, notification, true);
-        this.notifyNotificationSubscribers();
-        this.incrementNotificationCount(courseId);
+        const duplicate = this.addNotificationIfNotDuplicate(courseId, notification, true);
+
+        if (!duplicate) {
+            this.notifyNotificationSubscribers();
+            this.incrementNotificationCount(courseId);
+        }
     }
 
     /**
@@ -366,7 +369,7 @@ export class CourseNotificationService {
      * @param notification - The notification to add
      * @param prepend - Whether to add the notification to the beginning of the array
      */
-    private addNotificationIfNotDuplicate(courseId: number, notification: CourseNotification, prepend: boolean) {
+    private addNotificationIfNotDuplicate(courseId: number, notification: CourseNotification, prepend: boolean): boolean {
         let notificationDuplicate = false;
 
         for (const existingNotification of this.courseNotificationMap[courseId]) {
@@ -383,6 +386,8 @@ export class CourseNotificationService {
                 this.courseNotificationMap[courseId].push(notification);
             }
         }
+
+        return notificationDuplicate;
     }
 
     /**
