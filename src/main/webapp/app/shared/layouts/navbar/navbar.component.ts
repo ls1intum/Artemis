@@ -7,7 +7,7 @@ import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalR
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -54,18 +54,18 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { NotificationSidebarComponent } from '../../notification/notification-sidebar/notification-sidebar.component';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
 import { ActiveMenuDirective } from './active-menu.directive';
-import { JhiConnectionWarningComponent } from '../../connection-warning/connection-warning.component';
-import { LoadingNotificationComponent } from '../../notification/loading-notification/loading-notification.component';
-import { SystemNotificationComponent } from '../../notification/system-notification/system-notification.component';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 
 @Component({
     selector: 'jhi-navbar',

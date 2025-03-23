@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { iconsAsHTML } from 'app/utils/icons.utils';
+import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { UserService } from 'app/core/user/shared/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';

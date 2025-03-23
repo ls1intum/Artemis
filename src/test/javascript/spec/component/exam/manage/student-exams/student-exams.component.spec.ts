@@ -4,7 +4,7 @@ import { StudentExamsComponent } from 'app/exam/manage/student-exams/student-exa
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';

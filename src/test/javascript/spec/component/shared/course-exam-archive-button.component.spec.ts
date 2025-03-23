@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';

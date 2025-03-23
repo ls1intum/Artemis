@@ -4,7 +4,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { ActivatedRoute } from '@angular/router';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { CommitHistoryComponent } from 'app/programming/shared/commit-history/commit-history.component';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { of } from 'rxjs';

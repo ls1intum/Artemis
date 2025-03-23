@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -36,9 +35,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 /**
  * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
@@ -327,53 +324,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     @Override
-    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
-        for (StudentParticipation participation : participations) {
-            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
-                // in quiz exercises we don't care about the InitializationState
-                // => return the first participation we find
-                return Set.of(participation);
-            }
-        }
-        return Collections.emptySet();
-    }
-
-    @Override
-    @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
-        // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
-        // In exams, all results should be seen as relevant as they will only be created once the exam is over
-        if (shouldFilterForStudents() && !isExamExercise()) {
-            // results are never relevant before quiz has ended => return null
-            return null;
-        }
-        else {
-            // only rated results are considered relevant
-            Submission latestSubmission = null;
-            if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
-                return null;
-            }
-            // we get the results over the submissions
-            for (var submission : participation.getSubmissions()) {
-                var result = submission.getLatestResult();
-                if (result == null) {
-                    continue;
-                }
-                if (Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null) {
-                    // take the first found result that fulfills the above requirements
-                    // or
-                    // take newer results and thus disregard older ones
-                    // this should actually not be the case for quiz exercises, because they only should have one rated result
-                    if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                        latestSubmission = submission;
-                    }
-                }
-            }
-            return latestSubmission;
-        }
-    }
-
-    @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
@@ -613,5 +563,4 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
                 + getAllowedNumberOfAttempts() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='"
                 + getDuration() + "'" + ", dueDate='" + getDueDate() + "'" + "}";
     }
-
 }

@@ -16,7 +16,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming/manage
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -13,7 +13,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
