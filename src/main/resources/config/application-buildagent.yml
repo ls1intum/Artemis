@@ -7,8 +7,8 @@
 # This configuration overrides the application.yml file.
 # ===================================================================
 artemis:
-  atlas:
-    enabled: false
+    atlas:
+      enabled: false
 
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
