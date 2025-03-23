@@ -16,7 +16,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { AssessmentObject } from './guided-tour-task.model';
 import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
 import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/core/guided-tour/guided-tour-step.model';
 import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/core/guided-tour/guided-tour.utils';

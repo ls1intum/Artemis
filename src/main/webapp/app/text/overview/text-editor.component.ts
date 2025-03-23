@@ -7,7 +7,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { TextEditorService } from 'app/text/overview/text-editor.service';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
@@ -37,7 +37,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -50,7 +50,7 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-c
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { onTextEditorTab } from 'app/utils/text.utils';
+import { onTextEditorTab } from 'app/shared/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -194,7 +194,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
+                this.loadIrisSettings();
             });
+    }
+
+    /**
+     * Loads Iris settings for the current exercise if Iris is available and the exercise is not in exam mode.
+     *
+     * This method retrieves the application profile settings and checks if `PROFILE_IRIS` is active.
+     * If active and the exercise is not in exam mode, it fetches the Iris settings for the given exercise ID.
+     */
+    private loadIrisSettings(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // only load the settings if Iris is available and this is not an exam exercise
             if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {
