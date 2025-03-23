@@ -1,7 +1,7 @@
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { Post } from 'app/entities/metis/post.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/communication/entities/post.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
 
 export class Reaction {
     public id?: number;

@@ -2,12 +2,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { ChannelDTO } from '../../../../../../../main/webapp/app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/conversation.service';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationUserDTO } from 'app/communication/entities/conversation/conversation-user-dto.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';

@@ -4,7 +4,7 @@ import { User } from 'app/core/user/user.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
 
 export class TutorialGroup implements BaseEntity {
     public id?: number;

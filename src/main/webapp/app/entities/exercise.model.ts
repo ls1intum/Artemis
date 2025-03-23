@@ -6,7 +6,7 @@ import { TutorParticipation } from 'app/entities/participation/tutor-participati
 import { Course } from 'app/core/shared/entities/course.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';

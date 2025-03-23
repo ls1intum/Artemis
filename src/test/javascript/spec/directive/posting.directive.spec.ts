@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/entities/posting.model';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { PostingDirective } from 'app/communication/posting.directive';
 import { MetisService } from 'app/communication/metis.service';

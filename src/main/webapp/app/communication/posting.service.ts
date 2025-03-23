@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/entities/posting.model';
 import { Observable } from 'rxjs';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 

@@ -6,7 +6,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { initializeDialog } from '../dialog-test-helpers';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
