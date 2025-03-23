@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, inject } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';

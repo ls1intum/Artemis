@@ -9,7 +9,7 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutoria
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
+import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';

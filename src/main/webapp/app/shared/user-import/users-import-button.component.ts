@@ -5,7 +5,7 @@ import { UsersImportDialogComponent } from 'app/shared/user-import/users-import-
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ButtonComponent } from '../components/button.component';
 
 @Component({

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 
 type EntityResponseType = HttpResponse<TutorialGroupsConfiguration>;
 

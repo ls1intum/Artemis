@@ -6,7 +6,7 @@ import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';

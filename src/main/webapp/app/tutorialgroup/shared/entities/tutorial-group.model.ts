@@ -1,9 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupRegistration } from 'app/entities/tutorial-group/tutorial-group-registration.model';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 export class TutorialGroup implements BaseEntity {

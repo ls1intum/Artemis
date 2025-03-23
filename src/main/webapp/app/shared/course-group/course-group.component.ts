@@ -9,7 +9,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 import { UsersImportButtonComponent } from '../user-import/users-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

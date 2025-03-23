@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';

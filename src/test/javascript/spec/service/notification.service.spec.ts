@@ -26,7 +26,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { MockProvider } from 'ng-mocks';

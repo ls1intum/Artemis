@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import dayjs from 'dayjs/esm';
 
 export class TutorialGroupSchedule implements BaseEntity {

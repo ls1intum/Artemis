@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { RouterLink } from '@angular/router';
