@@ -35,8 +35,8 @@ import {
     TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE,
     TUTORIAL_GROUP_UNASSIGNED_TITLE,
     TUTORIAL_GROUP_UPDATED_TITLE,
-} from 'app/entities/notification.model';
-import { GroupNotification } from 'app/entities/group-notification.model';
+} from 'app/core/shared/entities/notification.model';
+import { GroupNotification } from 'app/core/shared/entities/group-notification.model';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting } from 'app/shared/user-settings/user-settings.model';

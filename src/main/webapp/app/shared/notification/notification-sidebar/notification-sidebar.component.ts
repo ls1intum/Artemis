@@ -2,8 +2,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
-import { GroupNotification } from 'app/entities/group-notification.model';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import { GroupNotification } from 'app/core/shared/entities/group-notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/core/shared/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { Subscription } from 'rxjs';

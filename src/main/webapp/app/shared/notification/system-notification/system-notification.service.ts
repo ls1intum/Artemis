@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Observable } from 'rxjs';

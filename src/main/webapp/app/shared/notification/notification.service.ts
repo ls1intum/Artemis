@@ -8,7 +8,7 @@ import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { User } from 'app/core/user/user.model';
-import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
+import { GroupNotification, GroupNotificationType } from 'app/core/shared/entities/group-notification.model';
 import {
     CONVERSATION_ADD_USER_CHANNEL_TITLE,
     CONVERSATION_ADD_USER_GROUP_CHAT_TITLE,
@@ -39,7 +39,7 @@ import {
     PLAGIARISM_CASE_REPLY_TITLE,
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
-} from 'app/entities/notification.model';
+} from 'app/core/shared/entities/notification.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';

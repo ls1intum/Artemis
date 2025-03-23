@@ -16,8 +16,8 @@ import {
     NEW_REPLY_MESSAGE_TITLE,
     Notification,
     QUIZ_EXERCISE_STARTED_TITLE,
-} from 'app/entities/notification.model';
-import { GroupNotification } from 'app/entities/group-notification.model';
+} from 'app/core/shared/entities/notification.model';
+import { GroupNotification } from 'app/core/shared/entities/group-notification.model';
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { RouteComponents } from 'app/communication/metis.util';

@@ -13,7 +13,7 @@ import {
     NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
     Notification,
-} from 'app/entities/notification.model';
+} from 'app/core/shared/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';

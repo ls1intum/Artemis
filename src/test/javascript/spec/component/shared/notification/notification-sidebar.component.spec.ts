@@ -10,7 +10,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ATTACHMENT_CHANGE_TITLE, EXERCISE_SUBMISSION_ASSESSED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import { ATTACHMENT_CHANGE_TITLE, EXERCISE_SUBMISSION_ASSESSED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/core/shared/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';

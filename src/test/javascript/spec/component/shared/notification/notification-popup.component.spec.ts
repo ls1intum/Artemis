@@ -9,7 +9,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
+import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/core/shared/entities/notification.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';

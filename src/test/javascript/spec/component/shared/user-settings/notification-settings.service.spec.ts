@@ -2,7 +2,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
-import { COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE } from 'app/entities/notification.model';
+import { COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE } from 'app/core/shared/entities/notification.model';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { of } from 'rxjs';
