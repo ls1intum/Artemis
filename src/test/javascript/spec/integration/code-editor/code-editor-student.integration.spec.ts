@@ -20,7 +20,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';

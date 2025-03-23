@@ -9,7 +9,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 const generateExerciseCategory = (type: ExerciseType, index: number) => {
     return { category: type + index.toString(), color: '#9f34eb' };

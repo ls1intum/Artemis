@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

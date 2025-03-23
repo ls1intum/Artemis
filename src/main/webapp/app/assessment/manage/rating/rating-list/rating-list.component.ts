@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RatingService } from 'app/exercise/rating/rating.service';
-import { Rating } from 'app/entities/rating.model';
+import { RatingService } from 'app/assessment/shared/rating.service';
+import { Rating } from 'app/assessment/shared/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseType } from 'app/entities/exercise.model';

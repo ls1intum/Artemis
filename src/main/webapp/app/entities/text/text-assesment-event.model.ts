@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { FeedbackType } from 'app/entities/feedback.model';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
 
 export enum TextAssessmentEventType {

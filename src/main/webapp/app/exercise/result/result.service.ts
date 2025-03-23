@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';

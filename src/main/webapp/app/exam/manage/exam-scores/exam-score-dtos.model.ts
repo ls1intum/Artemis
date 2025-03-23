@@ -1,7 +1,7 @@
 import { ExerciseType } from 'app/entities/exercise.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { BonusResult } from 'app/entities/bonus.model';
+import { BonusResult } from 'app/assessment/shared/entities/bonus.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
 export class ExamScoreDTO {

@@ -6,7 +6,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } fro
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionErrorType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionErrorType } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

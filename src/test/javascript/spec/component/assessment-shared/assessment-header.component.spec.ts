@@ -13,11 +13,11 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { of } from 'rxjs';
-import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import '@angular/localize/init';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';

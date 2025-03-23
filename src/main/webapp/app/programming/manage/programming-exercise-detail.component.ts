@@ -20,7 +20,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';

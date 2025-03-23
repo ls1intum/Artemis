@@ -4,7 +4,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

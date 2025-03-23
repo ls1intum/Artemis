@@ -9,7 +9,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';

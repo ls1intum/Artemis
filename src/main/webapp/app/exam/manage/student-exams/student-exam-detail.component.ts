@@ -10,7 +10,7 @@ import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-contro
 import dayjs from 'dayjs/esm';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';

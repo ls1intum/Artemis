@@ -8,12 +8,12 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.com
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';

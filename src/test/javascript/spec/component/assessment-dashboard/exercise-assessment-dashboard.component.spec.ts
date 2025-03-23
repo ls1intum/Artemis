@@ -27,7 +27,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Language } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -44,7 +44,7 @@ import { ExtensionPointDirective } from 'app/shared/extension-point/extension-po
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

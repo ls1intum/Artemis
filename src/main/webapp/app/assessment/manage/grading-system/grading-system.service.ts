@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { map } from 'rxjs/operators';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular';

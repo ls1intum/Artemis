@@ -18,7 +18,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { Course } from 'app/entities/course.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {
     let component: HeaderExercisePageWithDetailsComponent;

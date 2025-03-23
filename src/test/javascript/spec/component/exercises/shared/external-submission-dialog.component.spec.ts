@@ -5,7 +5,7 @@ import { Result } from 'app/entities/result.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, throwError } from 'rxjs';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/shared/service/event-manager.service';

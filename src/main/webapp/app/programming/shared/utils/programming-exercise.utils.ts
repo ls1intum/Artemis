@@ -5,7 +5,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercise/result/result.utils';
 

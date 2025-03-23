@@ -1,13 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { EntityResponseType, ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
+import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';

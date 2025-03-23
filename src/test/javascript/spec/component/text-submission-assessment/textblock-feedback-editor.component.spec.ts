@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
-import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';

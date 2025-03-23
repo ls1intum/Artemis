@@ -10,7 +10,7 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';

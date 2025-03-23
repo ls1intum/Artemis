@@ -7,7 +7,7 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exe
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

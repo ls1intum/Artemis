@@ -16,8 +16,8 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';

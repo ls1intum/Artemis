@@ -11,7 +11,7 @@ import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Submission, SubmissionExerciseType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/entities/participation/participation.model';

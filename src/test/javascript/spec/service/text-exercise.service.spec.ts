@@ -14,7 +14,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TutorEffort } from 'app/entities/tutor-effort.model';
+import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 
 describe('TextExercise Service', () => {

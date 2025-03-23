@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;

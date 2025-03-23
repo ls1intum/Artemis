@@ -14,7 +14,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -24,7 +24,7 @@ import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';

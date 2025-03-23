@@ -3,8 +3,8 @@ import { ParticipantScoresDistributionComponent } from 'app/shared/participant-s
 import { MockProvider } from 'ng-mocks';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GraphColors } from 'app/entities/statistics.model';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

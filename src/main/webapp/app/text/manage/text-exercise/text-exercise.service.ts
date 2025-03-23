@@ -8,7 +8,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { TutorEffort } from 'app/entities/tutor-effort.model';
+import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<TextExercise>;

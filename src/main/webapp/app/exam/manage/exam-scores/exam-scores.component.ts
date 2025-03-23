@@ -23,7 +23,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
@@ -57,7 +57,7 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { BonusStrategy } from 'app/entities/bonus.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/exam-scores-average-scores-graph.component';
 
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';

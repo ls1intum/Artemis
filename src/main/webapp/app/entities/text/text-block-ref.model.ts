@@ -1,5 +1,5 @@
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 
 export class TextBlockRef {
     public block?: TextBlock;

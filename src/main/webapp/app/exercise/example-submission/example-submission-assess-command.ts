@@ -1,6 +1,6 @@
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { FeedbackCorrectionError } from 'app/entities/feedback.model';
+import { FeedbackCorrectionError } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';

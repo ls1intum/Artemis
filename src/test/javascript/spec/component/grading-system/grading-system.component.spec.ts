@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { GradingSystemComponent } from 'app/assessment/manage/grading-system/grading-system.component';

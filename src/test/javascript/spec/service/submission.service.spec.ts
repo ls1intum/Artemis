@@ -8,11 +8,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import dayjs from 'dayjs/esm';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 
 describe('Submission Service', () => {
     let service: SubmissionService;

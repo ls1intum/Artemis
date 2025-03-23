@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
 export class Bonus implements BaseEntity {

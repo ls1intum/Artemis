@@ -7,7 +7,7 @@ import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.s
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

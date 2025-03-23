@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -11,8 +11,8 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ComplaintService', () => {

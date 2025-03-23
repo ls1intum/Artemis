@@ -14,7 +14,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -24,7 +24,7 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { assessmentNavigateBack } from 'app/exercise/navigate-back.util';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';

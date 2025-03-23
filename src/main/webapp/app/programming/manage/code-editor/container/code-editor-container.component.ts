@@ -20,7 +20,7 @@ import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/a
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';

@@ -3,9 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('Modeling Assessment Service', () => {
