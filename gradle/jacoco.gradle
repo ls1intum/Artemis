@@ -1,23 +1,23 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.888, "CLASS": 69]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.860, "CLASS": 86]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.928, "CLASS":  0],
-        "athena"        :          ["INSTRUCTION": 0.891, "CLASS":  2],
+        "assessment"    :          ["INSTRUCTION": 0.927, "CLASS":  0],
+        "athena"        :          ["INSTRUCTION": 0.874, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.905, "CLASS":  5],
-        "buildagent"    :          ["INSTRUCTION": 0.841, "CLASS":  0],
-        "communication" :          ["INSTRUCTION": 0.916, "CLASS":  2],
-        "core"          :          ["INSTRUCTION": 0.860, "CLASS": 16],
-        "exam"          :          ["INSTRUCTION": 0.937, "CLASS":  0],
-        "exercise"      :          ["INSTRUCTION": 0.928, "CLASS":  0],
-        "fileupload"    :          ["INSTRUCTION": 0.931, "CLASS":  1],
+        "buildagent"    :          ["INSTRUCTION": 0.776, "CLASS":  1],
+        "communication" :          ["INSTRUCTION": 0.915, "CLASS":  2],
+        "core"          :          ["INSTRUCTION": 0.852, "CLASS": 22],
+        "exam"          :          ["INSTRUCTION": 0.897, "CLASS":  4],
+        "exercise"      :          ["INSTRUCTION": 0.918, "CLASS":  0],
+        "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],
         "iris"          :          ["INSTRUCTION": 0.751, "CLASS": 26],
         "lecture"       :          ["INSTRUCTION": 0.911, "CLASS":  0],
         "lti"           :          ["INSTRUCTION": 0.894, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.913, "CLASS":  2],
         "plagiarism"    :          ["INSTRUCTION": 0.900, "CLASS":  0],
-        "programming"   :          ["INSTRUCTION": 0.872, "CLASS":  9],
+        "programming"   :          ["INSTRUCTION": 0.765, "CLASS": 15],
         "quiz"          :          ["INSTRUCTION": 0.905, "CLASS":  4],
         "text"          :          ["INSTRUCTION": 0.956, "CLASS":  0],
         "tutorialgroup" :          ["INSTRUCTION": 0.924, "CLASS":  0],

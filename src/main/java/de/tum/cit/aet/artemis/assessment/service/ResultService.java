@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionFilterService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.modeling.service.compass.strategy.NameSimilarity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -130,6 +131,8 @@ public class ResultService {
 
     private static final double SIMILARITY_THRESHOLD = 0.7;
 
+    private final SubmissionFilterService submissionFilterService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
@@ -138,7 +141,8 @@ public class ResultService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
             BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionFilterService submissionFilterService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -160,6 +164,7 @@ public class ResultService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.submissionFilterService = submissionFilterService;
     }
 
     /**
@@ -358,9 +363,8 @@ public class ResultService {
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
         Exam exam = exercise.getExerciseGroup().getExam();
         boolean shouldResultsBePublished = exam.resultsPublished();
-        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation studentParticipation) {
-            var participant = studentParticipation.getParticipant();
-            var studentExamOptional = studentExamRepository.findByExamIdAndUserId(exam.getId(), participant.getId());
+        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation) {
+            var studentExamOptional = studentExamRepository.findByExamIdAndParticipationId(exam.getId(), participation.getId());
             if (studentExamOptional.isPresent()) {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }
@@ -407,12 +411,11 @@ public class ResultService {
     /**
      * Get the successful results for an exercise, ordered ascending by build completion date.
      *
-     * @param exercise        which the results belong to.
-     * @param participations  the participations for which the results should be returned
+     * @param participations  the participations with references to the exercises for which the results should be returned
      * @param withSubmissions true, if each result should also contain the submissions.
      * @return a list of results as described above for the given exercise.
      */
-    public List<Result> resultsForExercise(Exercise exercise, Set<StudentParticipation> participations, boolean withSubmissions) {
+    public List<Result> resultsForExercise(Set<StudentParticipation> participations, boolean withSubmissions) {
         final List<Result> results = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {
@@ -421,16 +424,16 @@ public class ResultService {
                 continue;
             }
 
-            Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
-            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getLatestResult() == null) {
+            Optional<Submission> optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(participation.getSubmissions(), true);
+            if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() == null) {
                 continue;
             }
-
+            var submission = optionalSubmission.get();
             participation.setSubmissionCount(participation.getSubmissions().size());
             if (withSubmissions) {
-                relevantSubmissionWithResult.getLatestResult().setSubmission(relevantSubmissionWithResult);
+                submission.getLatestResult().setSubmission(submission);
             }
-            results.add(relevantSubmissionWithResult.getLatestResult());
+            results.add(submission.getLatestResult());
         }
 
         if (withSubmissions) {
