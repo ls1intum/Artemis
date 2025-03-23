@@ -9,7 +9,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
@@ -49,7 +49,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';

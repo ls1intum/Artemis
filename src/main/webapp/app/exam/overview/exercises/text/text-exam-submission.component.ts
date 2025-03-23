@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
 import { TextEditorService } from 'app/text/overview/text-editor.service';
 import { Subject } from 'rxjs';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/string-count.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';

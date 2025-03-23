@@ -14,12 +14,12 @@ import { TextResultComponent } from 'app/text/overview/text-result/text-result.c
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
 import { Language } from 'app/entities/course.model';

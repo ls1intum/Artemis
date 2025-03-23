@@ -16,13 +16,13 @@ import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-ba
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';

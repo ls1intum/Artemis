@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text/text-block.model';
-import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
+import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';

@@ -11,7 +11,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

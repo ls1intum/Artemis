@@ -6,7 +6,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { MockProvider } from 'ng-mocks';

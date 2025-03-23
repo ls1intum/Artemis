@@ -8,7 +8,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Example Submission Import Paging Service', () => {

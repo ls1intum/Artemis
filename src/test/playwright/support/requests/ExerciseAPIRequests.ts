@@ -4,7 +4,7 @@ import { Page } from 'playwright-core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';

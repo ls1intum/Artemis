@@ -11,7 +11,7 @@ import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-p
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
@@ -34,7 +34,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';

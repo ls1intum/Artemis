@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

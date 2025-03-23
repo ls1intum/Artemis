@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';

@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';

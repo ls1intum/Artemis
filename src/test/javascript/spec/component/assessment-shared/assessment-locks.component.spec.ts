@@ -8,7 +8,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';

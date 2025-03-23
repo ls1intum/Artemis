@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';

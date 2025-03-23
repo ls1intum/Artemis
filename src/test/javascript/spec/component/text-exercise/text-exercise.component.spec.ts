@@ -6,7 +6,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';

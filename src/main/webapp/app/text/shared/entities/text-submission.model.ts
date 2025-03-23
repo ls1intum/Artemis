@@ -1,4 +1,4 @@
-import { TextBlock } from 'app/entities/text/text-block.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Language } from 'app/entities/course.model';
 

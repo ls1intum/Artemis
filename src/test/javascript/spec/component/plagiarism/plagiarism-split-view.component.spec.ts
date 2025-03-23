@@ -7,7 +7,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComp
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { PlagiarismMatch, SimpleMatch } from 'app/plagiarism/shared/types/PlagiarismMatch';

@@ -3,7 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { take } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';

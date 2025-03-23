@@ -1,6 +1,6 @@
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';

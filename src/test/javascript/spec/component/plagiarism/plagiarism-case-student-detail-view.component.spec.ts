@@ -8,7 +8,7 @@ import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
