@@ -8,7 +8,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockProvider } from 'ng-mocks';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/programming/shared/entities/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { JobTimingInfo } from 'app/programming/shared/entities/job-timing-info.model';
 import { BuildConfig } from 'app/programming/shared/entities/build-config.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';

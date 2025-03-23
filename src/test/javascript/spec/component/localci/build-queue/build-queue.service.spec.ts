@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BuildJob, BuildJobStatistics, SpanType } from 'app/programming/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { JobTimingInfo } from 'app/programming/shared/entities/job-timing-info.model';
 import { BuildConfig } from 'app/programming/shared/entities/build-config.model';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { provideHttpClient } from '@angular/common/http';

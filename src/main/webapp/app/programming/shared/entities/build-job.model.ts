@@ -1,6 +1,6 @@
 import { StringBaseEntity } from 'app/shared/model/base-entity';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
-import { JobTimingInfo } from 'app/entities/job-timing-info.model';
+import { JobTimingInfo } from 'app/programming/shared/entities/job-timing-info.model';
 import { BuildConfig } from 'app/programming/shared/entities/build-config.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
