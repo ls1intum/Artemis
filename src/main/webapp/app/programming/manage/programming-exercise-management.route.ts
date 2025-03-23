@@ -5,9 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
-import { isOrion } from 'app/shared/orion/orion';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
-import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
 
 export const routes: Routes = [
     {
@@ -129,7 +127,7 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',

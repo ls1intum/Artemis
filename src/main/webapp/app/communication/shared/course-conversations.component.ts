@@ -31,8 +31,8 @@ import { ChannelsCreateDialogComponent } from 'app/communication/course-conversa
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
-import { CourseOverviewService } from 'app/course/overview/course-overview.service';
-import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';

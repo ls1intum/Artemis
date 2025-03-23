@@ -23,7 +23,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';

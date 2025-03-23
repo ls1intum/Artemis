@@ -32,7 +32,7 @@ export class FileUploadSubmissionService {
             .post<FileUploadSubmission>(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.submissionService.convertSubmissionResponseFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertFileSubmissionResponseFromServer(res)));
     }
 
     /**
@@ -52,7 +52,7 @@ export class FileUploadSubmissionService {
         }
         return this.http
             .get<FileUploadSubmission>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.submissionService.convertSubmissionResponseFromServer(res)));
+            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertFileSubmissionResponseFromServer(res)));
     }
 
     /**
@@ -96,7 +96,7 @@ export class FileUploadSubmissionService {
                 if (!res) {
                     return undefined;
                 }
-                return this.submissionService.convertSubmissionFromServer(res);
+                return this.convertFileSubmissionFromServer(res);
             }),
         );
     }
@@ -111,9 +111,24 @@ export class FileUploadSubmissionService {
             .pipe(map((res: FileUploadSubmission) => this.convertFileSubmissionFromServer(res)));
     }
 
+    /**
+     * In {@link submissionService.convertSubmissionFromServer} {@link object.assign} is used, which means that we never actually call the
+     * constructor of the {@link FileUploadSubmission} class, which would set {@link FileUploadSubmission.filePathUrl}, therefore we need to set it manually here.
+     */
     private convertFileSubmissionFromServer(res: FileUploadSubmission) {
         const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res);
         convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
+        return convertedBaseSubmission;
+    }
+
+    /**
+     * See {@link convertFileSubmissionFromServer}
+     */
+    private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmission>): HttpResponse<FileUploadSubmission> {
+        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(res);
+        if (convertedBaseSubmission.body) {
+            convertedBaseSubmission.body.filePathUrl = addPublicFilePrefix(convertedBaseSubmission.body.filePath);
+        }
         return convertedBaseSubmission;
     }
 }
