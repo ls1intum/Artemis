@@ -19,7 +19,7 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
-import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
