@@ -6,13 +6,13 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';

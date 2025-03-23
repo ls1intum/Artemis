@@ -9,7 +9,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -17,7 +17,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';

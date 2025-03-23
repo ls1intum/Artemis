@@ -34,8 +34,8 @@ import { Submission, SubmissionExerciseType } from 'app/entities/submission.mode
 import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercise/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercise/dashboards/tutor/language-table-cell/language-table-cell.component';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';

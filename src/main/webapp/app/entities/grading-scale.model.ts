@@ -1,7 +1,7 @@
 import { GradeStep } from 'app/entities/grade-step.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 export class GradingScale implements BaseEntity {
     public static readonly DEFAULT_PLAGIARISM_GRADE = 'U'; // This should be the same as the corresponding constant in GradingScale.java

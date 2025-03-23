@@ -34,7 +34,7 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FileService } from 'app/shared/http/file.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

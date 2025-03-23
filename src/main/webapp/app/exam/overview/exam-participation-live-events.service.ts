@@ -7,7 +7,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { User } from 'app/core/user/user.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 const EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY = 'examLastAcknowledgedEvent';
 

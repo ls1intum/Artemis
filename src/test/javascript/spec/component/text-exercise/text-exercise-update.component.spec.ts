@@ -7,13 +7,13 @@ import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';

@@ -8,7 +8,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';

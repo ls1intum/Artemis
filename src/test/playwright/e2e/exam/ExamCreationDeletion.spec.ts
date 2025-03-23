@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 /*
  * Common primitives

@@ -7,8 +7,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
@@ -25,7 +25,7 @@ import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fort
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideRouter } from '@angular/router';
 import { input } from '@angular/core';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;

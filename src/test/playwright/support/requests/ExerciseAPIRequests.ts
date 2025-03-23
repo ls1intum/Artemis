@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 
@@ -34,7 +34,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Team } from 'app/entities/team.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';

@@ -33,7 +33,7 @@ import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exer
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

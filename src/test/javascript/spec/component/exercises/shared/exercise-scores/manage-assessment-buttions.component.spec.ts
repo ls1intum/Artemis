@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';

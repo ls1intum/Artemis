@@ -8,7 +8,7 @@ import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 /**
  * A class which encapsulates all API requests related to course management.

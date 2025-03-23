@@ -15,7 +15,7 @@ import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-lis
 import { onError } from 'app/shared/util/global.utils';
 import { computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/quiz/shared/quiz-manage-util.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

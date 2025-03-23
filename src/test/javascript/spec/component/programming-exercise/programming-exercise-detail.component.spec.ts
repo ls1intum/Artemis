@@ -10,7 +10,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';

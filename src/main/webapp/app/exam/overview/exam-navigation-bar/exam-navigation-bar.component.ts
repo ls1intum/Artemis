@@ -12,10 +12,10 @@ import { CommitState, DomainChange, DomainType } from 'app/programming/shared/co
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { ExamSession } from 'app/entities/exam/exam-session.model';
+import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';

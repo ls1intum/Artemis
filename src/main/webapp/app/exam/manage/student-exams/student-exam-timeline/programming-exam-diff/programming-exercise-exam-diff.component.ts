@@ -20,7 +20,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Submission } from 'app/entities/submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-programming-exam-diff',

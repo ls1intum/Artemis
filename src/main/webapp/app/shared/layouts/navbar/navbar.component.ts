@@ -50,7 +50,7 @@ import {
 import { Exercise } from 'app/entities/exercise.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';

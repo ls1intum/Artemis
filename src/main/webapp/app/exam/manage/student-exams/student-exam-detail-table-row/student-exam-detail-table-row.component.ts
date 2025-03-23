@@ -5,7 +5,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

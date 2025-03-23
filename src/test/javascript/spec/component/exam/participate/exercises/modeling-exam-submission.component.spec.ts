@@ -11,7 +11,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';

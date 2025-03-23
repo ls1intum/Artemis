@@ -2,7 +2,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';

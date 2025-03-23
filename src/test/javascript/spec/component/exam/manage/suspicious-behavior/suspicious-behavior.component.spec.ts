@@ -11,7 +11,7 @@ import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-beh
 import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

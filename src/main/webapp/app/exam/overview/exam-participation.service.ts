@@ -2,12 +2,12 @@ import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angula
 import { Injectable, inject } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/exercise.service';

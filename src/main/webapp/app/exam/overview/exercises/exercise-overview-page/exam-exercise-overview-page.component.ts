@@ -1,8 +1,8 @@
 import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overview-item.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamExerciseOverviewItem } from 'app/exam/shared/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseButtonStatus } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';

@@ -30,7 +30,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';

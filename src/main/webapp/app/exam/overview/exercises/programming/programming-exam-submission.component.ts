@@ -10,7 +10,7 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { ProgrammingSubmissionPolicyStatusComponent } from 'app/programming/overview/programming-submission-policy-status';

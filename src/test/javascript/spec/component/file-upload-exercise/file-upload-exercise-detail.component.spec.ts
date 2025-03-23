@@ -9,7 +9,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

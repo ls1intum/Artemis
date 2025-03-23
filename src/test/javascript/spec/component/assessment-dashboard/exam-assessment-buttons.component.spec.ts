@@ -7,8 +7,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';

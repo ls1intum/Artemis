@@ -12,7 +12,7 @@ import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -22,8 +22,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { User } from 'app/core/user/user.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

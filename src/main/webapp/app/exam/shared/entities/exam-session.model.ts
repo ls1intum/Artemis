@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { StudentExam } from '../student-exam.model';
+import { StudentExam } from './student-exam.model';
 
 export enum SuspiciousSessionReason {
     DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS = 'DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS',

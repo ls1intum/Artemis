@@ -1,8 +1,8 @@
-import { ExamUser } from 'app/entities/exam/exam-user.model';
+import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class Exam implements BaseEntity {

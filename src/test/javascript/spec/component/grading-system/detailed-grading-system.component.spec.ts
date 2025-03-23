@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

@@ -1,6 +1,6 @@
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { BonusResult } from 'app/entities/bonus.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 

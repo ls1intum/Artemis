@@ -1,7 +1,7 @@
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';

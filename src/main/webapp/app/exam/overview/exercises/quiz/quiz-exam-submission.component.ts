@@ -10,7 +10,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';

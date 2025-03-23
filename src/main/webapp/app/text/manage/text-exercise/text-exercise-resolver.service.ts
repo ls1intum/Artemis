@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 
 @Injectable({ providedIn: 'root' })

@@ -11,8 +11,8 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';

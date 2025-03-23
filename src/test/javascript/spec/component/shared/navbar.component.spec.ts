@@ -27,7 +27,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import dayjs from 'dayjs/esm';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -10,7 +10,7 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';

@@ -10,7 +10,7 @@ import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/moc
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { createFileUploadSubmission } from '../../../../helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';

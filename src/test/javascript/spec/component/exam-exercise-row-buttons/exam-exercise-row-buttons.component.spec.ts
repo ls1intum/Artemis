@@ -3,7 +3,7 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';

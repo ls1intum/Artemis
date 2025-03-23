@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.mo
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizConfiguration } from 'app/entities/quiz/quiz-configuration.model';
 import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
 
