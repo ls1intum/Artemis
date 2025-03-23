@@ -8,7 +8,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { Course } from 'app/entities/course.model';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';

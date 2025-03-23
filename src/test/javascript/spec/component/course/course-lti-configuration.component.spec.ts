@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
