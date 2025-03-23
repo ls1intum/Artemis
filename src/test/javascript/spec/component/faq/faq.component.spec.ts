@@ -8,11 +8,11 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/communication/entities/faq.model';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/communication/faq/faq.component';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/entities/faq-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';

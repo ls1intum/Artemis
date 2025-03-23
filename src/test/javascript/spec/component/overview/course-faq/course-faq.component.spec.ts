@@ -15,8 +15,8 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
-import { Faq, FaqState } from 'app/entities/faq.model';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { Faq, FaqState } from 'app/communication/entities/faq.model';
+import { FaqCategory } from 'app/communication/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { ElementRef, signal } from '@angular/core';

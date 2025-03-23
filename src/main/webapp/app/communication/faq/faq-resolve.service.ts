@@ -4,7 +4,7 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { Faq } from 'app/entities/faq.model';
+import { Faq } from 'app/communication/entities/faq.model';
 
 @Injectable({ providedIn: 'root' })
 export class FaqResolve implements Resolve<Faq> {

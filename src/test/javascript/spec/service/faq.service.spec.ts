@@ -7,8 +7,8 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
-import { Faq, FaqState } from 'app/entities/faq.model';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { Faq, FaqState } from 'app/communication/entities/faq.model';
+import { FaqCategory } from 'app/communication/entities/faq-category.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 
 describe('Faq Service', () => {

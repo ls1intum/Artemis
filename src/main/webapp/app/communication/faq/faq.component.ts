@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/communication/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
@@ -8,7 +8,7 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';

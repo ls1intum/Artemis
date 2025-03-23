@@ -13,7 +13,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { Faq } from 'app/entities/faq.model';
+import { Faq } from 'app/communication/entities/faq.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 export enum CourseInformationSharingConfiguration {

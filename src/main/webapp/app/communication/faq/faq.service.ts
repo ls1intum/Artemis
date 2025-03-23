@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Faq, FaqState } from 'app/entities/faq.model';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { Faq, FaqState } from 'app/communication/entities/faq.model';
+import { FaqCategory } from 'app/communication/entities/faq-category.model';
 
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;

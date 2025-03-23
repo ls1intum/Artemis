@@ -3,7 +3,7 @@ import type { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { CommonModule } from '@angular/common';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/entities/faq-category.model';
 
 type CategoryFontSize = 'default' | 'small';
 

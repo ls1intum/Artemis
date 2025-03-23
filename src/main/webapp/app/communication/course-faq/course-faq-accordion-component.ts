@@ -1,5 +1,5 @@
 import { Component, OnDestroy, input } from '@angular/core';
-import { Faq } from 'app/entities/faq.model';
+import { Faq } from 'app/communication/entities/faq.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { Subject } from 'rxjs/internal/Subject';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
