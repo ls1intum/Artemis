@@ -7,7 +7,6 @@ import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
@@ -24,8 +23,6 @@ export interface SidebarItem {
     title: string;
     testId?: string;
     translation: string;
-    hasInOrionProperty?: boolean;
-    showInOrionWindow?: boolean;
     guidedTour?: boolean;
     featureToggle?: FeatureToggle;
     hidden: boolean;
@@ -47,7 +44,6 @@ export interface SidebarItem {
         NgbTooltip,
         RouterLink,
         SecuredImageComponent,
-        OrionFilterDirective,
         RouterLinkActive,
         FeatureToggleHideDirective,
         SlicePipe,

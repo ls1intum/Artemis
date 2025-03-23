@@ -135,7 +135,7 @@ interface ProgrammingTimelineDetail extends DetailBase {
     data: { exercise: ProgrammingExercise; isExamMode?: boolean };
 }
 
-interface ProgrammingBuildStatisticsDetail extends DetailBase {
+export interface ProgrammingBuildStatisticsDetail extends DetailBase {
     type: DetailType.ProgrammingBuildStatistics;
     data: {
         buildLogStatistics: BuildLogStatisticsDTO;

@@ -94,7 +94,7 @@ export const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadComponent: () => import('app/orion/overview/orion-course-exercise-details.component').then((m) => m.OrionCourseExerciseDetailsComponent),
+                        loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         pathMatch: 'full',
                     },
                 ],

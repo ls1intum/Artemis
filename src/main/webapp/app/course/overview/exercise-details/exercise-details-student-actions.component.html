@@ -109,8 +109,6 @@
                 <!-- TODO: The exam mode reuses the whole component at the moment. We need the code button but not the open
                     code editor button. We should think about defining a component that contains only the code button. -->
                 @if (shouldDisplayIDEButtons()) {
-                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                    <!--                    <ng-container *jhiExtensionPoint="overrideCodeAndOnlineEditorButton; context: { exercise: exercise }">-->
                     @if (!examMode && programmingExercise?.allowOnlineEditor) {
                         <jhi-open-code-editor-button
                             [loading]="!!exercise.loading"

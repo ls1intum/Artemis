@@ -352,8 +352,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faChalkboardUser,
             title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return lecturesItem;
@@ -366,8 +364,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             title: 'Exams',
             testId: 'exam-tab',
             translation: 'artemisApp.courseOverview.menu.exams',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return examsItem;
@@ -379,8 +375,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faComments,
             title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return communicationsItem;
@@ -392,8 +386,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faPersonChalkboard,
             title: 'Tutorials',
             translation: 'artemisApp.courseOverview.menu.tutorialGroups',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.TutorialGroups,
             hidden: false,
         };
@@ -406,8 +398,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faFlag,
             title: 'Competencies',
             translation: 'artemisApp.courseOverview.menu.competencies',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             hidden: false,
         };
         return competenciesItem;
@@ -419,8 +409,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faNetworkWired,
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.LearningPaths,
             hidden: false,
         };
@@ -433,8 +421,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faChartBar,
             title: 'Dashboard',
             translation: 'artemisApp.courseOverview.menu.dashboard',
-            hasInOrionProperty: false,
-            showInOrionWindow: false,
             featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
             hidden: false,
         };
@@ -447,8 +433,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faQuestion,
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
-            hasInOrionProperty: false,
-            showInOrionWindow: false,
             hidden: false,
         };
         return faqItem;
@@ -473,8 +457,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            hasInOrionProperty: true,
-            showInOrionWindow: false,
             guidedTour: true,
             hidden: false,
         };
