@@ -8,7 +8,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';

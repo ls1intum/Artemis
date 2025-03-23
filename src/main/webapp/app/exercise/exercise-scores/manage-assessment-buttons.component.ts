@@ -12,7 +12,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { areManualResultsAllowed } from 'app/exercise/exercise.utils';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

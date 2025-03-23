@@ -1,0 +1,205 @@
+@if (exercise) {
+    <div id="course-exercise-details" class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+        <div class="d-flex align-items-center my-2 justify-content-between">
+            <div class="d-flex">
+                @if (exerciseIcon) {
+                    <h5 class="mb-0" id="exercise-header"><fa-icon class="me-2" [icon]="exerciseIcon" />{{ exercise.title }}</h5>
+                }
+            </div>
+            <div class="d-flex gap-1">
+                @if (exercise.isAtLeastTutor) {
+                    <div ngbDropdown class="d-inline">
+                        <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+                            <fa-icon [icon]="faWrench" />
+                            <span class="d-none d-md-inline">
+                                {{ 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate }}</span
+                            >
+                        </button>
+                        <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
+                            @for (instructorActionItem of instructorActionItems; track instructorActionItem) {
+                                <a class="btn" [routerLink]="instructorActionItem.routerLink" ngbDropdownItem>
+                                    @if (instructorActionItem.icon) {
+                                        <fa-icon [fixedWidth]="true" [icon]="instructorActionItem.icon" class="ms-2 me-3" />
+                                    }
+                                    <span [jhiTranslate]="instructorActionItem.translation"></span>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+                <jhi-exercise-details-student-actions class="col" [courseId]="courseId" [exercise]="exercise" />
+                @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
+                    <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
+                        @if (!plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
+                        }
+                        @if (plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
+                        }
+                    </a>
+                }
+            </div>
+        </div>
+
+        <hr class="my-0" />
+        <div class="my-3">
+            <jhi-exercise-headers-information
+                [exercise]="exercise"
+                [studentParticipation]="gradedStudentParticipation"
+                [submissionPolicy]="submissionPolicy"
+                [course]="exercise.course"
+            />
+        </div>
+
+        <!-- <hr class="mt-0" /> -->
+        <div class="row">
+            <div class="col flex-grow-1">
+                <!-- RESULTS START -->
+                @if ((this.sortedHistoryResults?.length && this.sortedHistoryResults.length > 1) || this.practiceStudentParticipation?.results?.length) {
+                    <div class="row">
+                        <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
+                            <div class="col-auto">
+                                <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.recentResults"></h3>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise" />
+                        </div>
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <a class="text-primary" (click)="showMoreResults = !showMoreResults">
+                                    {{ 'artemisApp.courseOverview.exerciseDetails.' + (showMoreResults ? 'hideResults' : 'showResults') | artemisTranslate }}
+                                    <fa-icon [icon]="showMoreResults ? faAngleUp : faAngleDown" />
+                                </a>
+                            </div>
+                        </div>
+                        @if (showMoreResults) {
+                            <div class="row mb-2 mt-2 align-items-baseline">
+                                <div class="col-auto">
+                                    <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.allResults"></h3>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-md-12">
+                                    @for (result of sortedHistoryResults; track result; let i = $index) {
+                                        <div>
+                                            @if (
+                                                result.submission &&
+                                                result.submission.submissionDate &&
+                                                (i === 0 ||
+                                                    !sortedHistoryResults[i - 1].submission ||
+                                                    !sortedHistoryResults[i - 1].submission?.submissionDate ||
+                                                    !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
+                                            ) {
+                                                <h4 class="mt-2">
+                                                    {{ result.submission.submissionDate | artemisDate: 'long-date' }}
+                                                </h4>
+                                            }
+                                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
+                                        </div>
+                                    }
+                                    @if (!sortedHistoryResults) {
+                                        <div class="no-results" jhiTranslate="artemisApp.courseOverview.exerciseDetails.noResults"></div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                <!-- RESULTS END -->
+                <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!" />
+                @if (exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length) {
+                    <jhi-reset-repo-button [exercise]="exercise" [participations]="exercise.studentParticipations" [smallButtons]="false" />
+                }
+                @if (exampleSolutionInfo?.exampleSolutionPublished) {
+                    <div class="row mb-2 mt-2 align-items-baseline">
+                        <div class="control-label" (click)="changeExampleSolution()">
+                            <span class="h3 pe-2" jhiTranslate="artemisApp.exercise.exampleSolution"></span>
+                            <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp" />
+                        </div>
+                    </div>
+                    @if (!exampleSolutionCollapsed) {
+                        <dl class="row-md jh-entity-details markdown-preview">
+                            @if (exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise) {
+                                <dd>
+                                    <jhi-modeling-editor
+                                        [readOnly]="true"
+                                        [diagramType]="exampleSolutionInfo?.modelingExercise?.diagramType"
+                                        [umlModel]="exampleSolutionInfo?.exampleSolutionUML"
+                                        [withExplanation]="!!exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation"
+                                        [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
+                                    />
+                                </dd>
+                            }
+                            @if (exampleSolutionInfo?.exampleSolution) {
+                                <dd class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
+                            }
+                            @if (exercise?.type === PROGRAMMING) {
+                                <dd class="editor-outline-background">
+                                    <jhi-programming-exercise-example-solution-repo-download
+                                        class="ms-2"
+                                        [exerciseId]="exercise.id!"
+                                        [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
+                                    />
+                                </dd>
+                                @if (exampleSolutionInfo?.programmingExercise?.releaseTestsWithExampleSolution) {
+                                    <dd class="editor-outline-background">
+                                        <jhi-programming-exercise-example-solution-repo-download
+                                            class="ms-2"
+                                            [exerciseId]="exercise.id!"
+                                            [includeTests]="true"
+                                            [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
+                                            ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
+                                        />
+                                    </dd>
+                                }
+                            }
+                        </dl>
+                    }
+                }
+                <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" />
+                @if (
+                    exercise &&
+                    exercise.type === PROGRAMMING &&
+                    !!gradedStudentParticipation &&
+                    !!latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
+                        latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
+                        allowComplaintsForAutomaticAssessments)
+                ) {
+                    <jhi-complaint-student-view
+                        class="mb-2 mt-2 ms-3"
+                        [exercise]="exercise"
+                        [participation]="gradedStudentParticipation!"
+                        [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
+                    />
+                }
+                @if (
+                    exercise?.type === PROGRAMMING &&
+                    gradedStudentParticipation &&
+                    latestRatedResult &&
+                    (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+                ) {
+                    <div class="row">
+                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
+                    </div>
+                }
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" [isChatGptWrapper]="isChatGptWrapper" />
+                    <!-- TODO TW: This "feature" is only temporary for a paper. -->
+                }
+                @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
+                    <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">
+                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase"></span>
+                    </a>
+                }
+            </div>
+            <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
+                @if (exercise.course && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course))) {
+                    <jhi-discussion-section [exercise]="exercise" />
+                }
+            </div>
+        </div>
+        <jhi-lti-initializer />
+    </div>
+}

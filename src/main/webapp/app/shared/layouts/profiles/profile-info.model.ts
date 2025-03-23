@@ -20,7 +20,6 @@ export class ProfileInfo {
     public externalUserManagementName: string;
     public contact: string;
     public testServer?: boolean;
-    public allowedMinimumOrionVersion: string;
     public registrationEnabled?: boolean;
     public needsToAcceptTerms?: boolean;
     public allowedEmailPattern?: string;

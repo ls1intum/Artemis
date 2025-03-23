@@ -6,7 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
