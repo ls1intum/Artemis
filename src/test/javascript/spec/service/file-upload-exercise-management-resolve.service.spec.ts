@@ -8,7 +8,7 @@ import { MockCourseManagementService } from '../helpers/mocks/service/mock-cours
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { MockProvider } from 'ng-mocks';
 import { Observable, of, take } from 'rxjs';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 

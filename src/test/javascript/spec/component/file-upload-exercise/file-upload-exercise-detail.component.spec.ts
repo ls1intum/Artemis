@@ -10,7 +10,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';

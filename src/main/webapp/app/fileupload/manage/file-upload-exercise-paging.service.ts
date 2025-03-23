@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ExercisePagingService } from 'app/exercise/manage/exercise-paging.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExercisePagingService extends ExercisePagingService<FileUploadExercise> {
