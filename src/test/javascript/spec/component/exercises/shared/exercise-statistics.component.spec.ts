@@ -8,7 +8,7 @@ import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-st
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

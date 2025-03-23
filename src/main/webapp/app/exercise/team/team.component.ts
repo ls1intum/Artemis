@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Team } from 'app/entities/team.model';
+import { Team } from 'app/exercise/entities/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { User } from 'app/core/user/user.model';
 import { ButtonSize } from 'app/shared/components/button.component';

@@ -2,7 +2,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/entities/cour
 import { User } from 'app/core/user/user.model';
 import { VOTE_EMOJI_ID } from 'app/communication/metis.util';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';

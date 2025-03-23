@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';

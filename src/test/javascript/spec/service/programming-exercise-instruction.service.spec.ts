@@ -1,4 +1,4 @@
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import dayjs from 'dayjs/esm';
 

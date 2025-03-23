@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

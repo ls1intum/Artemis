@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute, Router } from '@angular/router';

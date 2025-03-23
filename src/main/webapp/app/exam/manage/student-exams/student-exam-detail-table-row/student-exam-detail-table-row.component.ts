@@ -1,10 +1,10 @@
 import { Component, OnChanges, input } from '@angular/core';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/entities/exercise.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Course } from 'app/entities/course.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

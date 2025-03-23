@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, OnInit, ViewEncapsulation } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

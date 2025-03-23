@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { DoughnutChartComponent } from './doughnut-chart.component';
 

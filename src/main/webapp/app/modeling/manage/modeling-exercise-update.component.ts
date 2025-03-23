@@ -9,12 +9,12 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { cloneDeep, isEmpty } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';

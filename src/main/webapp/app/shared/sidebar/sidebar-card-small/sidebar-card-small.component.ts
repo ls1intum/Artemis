@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { DifficultyLevel } from 'app/entities/exercise.model';
+import { DifficultyLevel } from 'app/exercise/entities/exercise.model';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';

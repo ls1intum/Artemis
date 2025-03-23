@@ -1,5 +1,5 @@
 import { POINTS_KEY, SCORE_KEY } from 'app/shared/export/export-constants';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
 

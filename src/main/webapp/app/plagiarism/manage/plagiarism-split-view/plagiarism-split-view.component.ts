@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
-import { Exercise, ExerciseType, getCourseId } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getCourseId } from 'app/exercise/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';

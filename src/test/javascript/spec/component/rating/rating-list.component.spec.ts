@@ -3,10 +3,10 @@ import { RatingListComponent } from 'app/exercise/rating/rating-list/rating-list
 import { RatingService } from 'app/exercise/rating/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { lastValueFrom, of } from 'rxjs';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { Rating } from 'app/entities/rating.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/exercise/rating/star-rating/star-rating.component';

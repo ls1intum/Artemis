@@ -10,7 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { ExerciseFilter } from 'app/exercise/entities/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

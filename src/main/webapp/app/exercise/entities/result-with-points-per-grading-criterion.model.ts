@@ -1,4 +1,4 @@
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 
 type GradingCriterionId = number;
 type Points = number;

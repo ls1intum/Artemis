@@ -10,7 +10,7 @@ import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { of } from 'rxjs';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';

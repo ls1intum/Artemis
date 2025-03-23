@@ -4,7 +4,7 @@ import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute } from '@angular/router';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
 import { Course } from 'app/entities/course.model';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';

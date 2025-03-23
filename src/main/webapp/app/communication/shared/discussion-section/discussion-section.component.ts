@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild, viewChildren } from '@angular/core';
 import interact from 'interactjs';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';

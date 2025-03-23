@@ -1,4 +1,4 @@
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 
 type ExerciseId = number;
 

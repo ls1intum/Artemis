@@ -4,12 +4,12 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitF
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';

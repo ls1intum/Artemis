@@ -1,5 +1,5 @@
 import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overview-item.model';

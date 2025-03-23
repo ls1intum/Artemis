@@ -1,7 +1,7 @@
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 
 describe('ScoresStorageService', () => {
     it('should filter the correct result from the stored participation results', () => {

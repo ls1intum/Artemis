@@ -8,7 +8,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { Course } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

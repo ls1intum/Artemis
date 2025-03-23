@@ -3,11 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { TextAssessmentEvent } from 'app/entities/text/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

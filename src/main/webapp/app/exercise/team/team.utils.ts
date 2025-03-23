@@ -1,4 +1,4 @@
-import { Team } from 'app/entities/team.model';
+import { Team } from 'app/exercise/entities/team.model';
 
 /**
  * Formats a team for displaying it in an autocomplete search

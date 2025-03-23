@@ -1,6 +1,6 @@
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 

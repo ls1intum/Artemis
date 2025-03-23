@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { Router } from '@angular/router';
 
 describe('DoughnutChartComponent', () => {

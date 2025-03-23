@@ -1,14 +1,14 @@
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TestBed } from '@angular/core/testing';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
+import { InitializationState } from 'app/exercise/entities/participation/participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const generateExerciseCategory = (type: ExerciseType, index: number) => {

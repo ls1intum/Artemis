@@ -1,7 +1,7 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 
 /**
  * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyType } from 'app/exercise/entities/submission-policy.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

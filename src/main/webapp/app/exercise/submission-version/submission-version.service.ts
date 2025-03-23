@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { SubmissionVersion } from 'app/entities/submission-version.model';

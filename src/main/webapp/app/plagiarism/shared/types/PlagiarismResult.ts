@@ -1,6 +1,6 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
 import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/types/PlagiarismSubmissionElement';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 
 /**

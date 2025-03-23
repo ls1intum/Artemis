@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
-import { Team } from 'app/entities/team.model';
+import { Team } from 'app/exercise/entities/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';

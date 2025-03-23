@@ -4,8 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 
 describe('Exercise Info Component', () => {

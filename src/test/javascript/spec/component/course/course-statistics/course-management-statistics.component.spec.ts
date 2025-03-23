@@ -11,7 +11,7 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

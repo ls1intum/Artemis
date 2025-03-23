@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { DebugElement, TemplateRef } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Observable, of } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';

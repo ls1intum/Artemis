@@ -1,7 +1,7 @@
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { Observable } from 'rxjs';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

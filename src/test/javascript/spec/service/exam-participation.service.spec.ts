@@ -12,10 +12,10 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { Result } from 'app/exercise/entities/result.model';
+import { getLatestSubmissionResult } from 'app/exercise/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';

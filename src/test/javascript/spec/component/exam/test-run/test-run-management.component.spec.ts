@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';

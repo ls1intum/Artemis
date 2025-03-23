@@ -4,7 +4,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/entities/exercise.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';

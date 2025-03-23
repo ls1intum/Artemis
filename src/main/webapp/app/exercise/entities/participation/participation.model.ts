@@ -1,12 +1,12 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { Submission } from 'app/entities/submission.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/entities/participation/template-programming-exercise-participation.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { Result } from 'app/exercise/entities/result.model';
 
 export enum InitializationState {
     /**

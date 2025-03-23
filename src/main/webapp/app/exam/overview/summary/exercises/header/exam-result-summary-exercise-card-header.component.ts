@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
-import { SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/exercise/entities/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

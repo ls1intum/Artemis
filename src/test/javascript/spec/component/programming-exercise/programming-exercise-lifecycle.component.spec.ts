@@ -5,7 +5,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QueryList, SimpleChange } from '@angular/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
 import { Subject, of } from 'rxjs';

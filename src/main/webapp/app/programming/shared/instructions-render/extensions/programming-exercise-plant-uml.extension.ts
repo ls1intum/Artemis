@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/service/programming-exercise-plant-uml.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import DOMPurify from 'dompurify';
 
 // This regex is the same as in the server: ProgrammingExerciseTaskService.java

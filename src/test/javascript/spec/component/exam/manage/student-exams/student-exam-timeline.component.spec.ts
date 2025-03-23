@@ -23,7 +23,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
@@ -31,7 +31,7 @@ import { signal } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

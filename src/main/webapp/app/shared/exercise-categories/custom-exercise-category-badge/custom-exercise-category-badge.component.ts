@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import type { ExerciseCategory } from 'app/entities/exercise-category.model';
+import type { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { CommonModule } from '@angular/common';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

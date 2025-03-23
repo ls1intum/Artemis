@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';

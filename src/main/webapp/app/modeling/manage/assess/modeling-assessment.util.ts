@@ -1,4 +1,4 @@
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { UMLElementType, UMLModelCompat, UMLRelationshipType, findElement, findRelationship } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback.model';
 

@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -13,7 +13,7 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';

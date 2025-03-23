@@ -5,8 +5,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseFilter } from 'app/exercise/entities/exercise-filter.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 interface DeletionServiceInterface {
     delete: (id: number) => Observable<HttpResponse<any>>;

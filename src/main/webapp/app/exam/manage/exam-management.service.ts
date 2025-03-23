@@ -14,12 +14,12 @@ import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model'
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
+import { Submission, reconnectSubmissions } from 'app/exercise/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 

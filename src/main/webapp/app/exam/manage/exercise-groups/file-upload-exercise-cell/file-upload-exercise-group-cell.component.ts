@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 @Component({

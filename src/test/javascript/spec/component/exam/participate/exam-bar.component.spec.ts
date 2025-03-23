@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ExamBarComponent } from 'app/exam/overview/exam-bar/exam-bar.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { Exam } from 'app/entities/exam/exam.model';

@@ -1,6 +1,6 @@
 import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';

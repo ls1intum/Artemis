@@ -1,7 +1,7 @@
 import { SimpleChanges } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { InitializationState, Participation } from 'app/exercise/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -12,7 +12,7 @@ import { ExerciseServicable } from 'app/exercise/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/entities/participation/student-participation.model';
 
 export enum EditType {
     IMPORT,

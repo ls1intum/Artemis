@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { Result } from 'app/exercise/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
 import { ActivatedRoute } from '@angular/router';

@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { IProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 

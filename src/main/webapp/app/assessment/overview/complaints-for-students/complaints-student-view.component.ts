@@ -1,14 +1,14 @@
 import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';

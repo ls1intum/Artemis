@@ -6,7 +6,7 @@ import { PostingCreateEditModalDirective } from 'app/communication/posting-creat
 import { Post } from 'app/entities/metis/post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/communication/metis.util';

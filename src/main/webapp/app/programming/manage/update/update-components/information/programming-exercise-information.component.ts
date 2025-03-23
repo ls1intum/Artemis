@@ -28,7 +28,7 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 

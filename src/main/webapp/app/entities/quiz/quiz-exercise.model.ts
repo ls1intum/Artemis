@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, resetForImport } from 'app/exercise/entities/exercise.model';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';

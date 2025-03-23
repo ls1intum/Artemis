@@ -1,5 +1,5 @@
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 
 export class ExerciseFilter {
     exerciseNameSearch: string;

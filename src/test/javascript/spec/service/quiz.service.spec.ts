@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 

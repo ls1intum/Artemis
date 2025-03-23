@@ -1,11 +1,11 @@
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { cloneDeep } from 'lodash-es';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/exercise/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -13,10 +13,10 @@ import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/fre
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercise/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { Participation, ParticipationType } from 'app/exercise/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
 
 /**

@@ -2,10 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

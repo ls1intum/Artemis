@@ -3,7 +3,7 @@ import { GraphColors, SpanType } from 'app/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';

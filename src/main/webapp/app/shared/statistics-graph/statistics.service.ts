@@ -7,7 +7,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {

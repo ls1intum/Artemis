@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -9,7 +9,7 @@ import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exerci
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { ExerciseFilter } from 'app/exercise/entities/exercise-filter.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';

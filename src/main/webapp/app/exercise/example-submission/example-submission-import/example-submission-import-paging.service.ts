@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { PagingService } from 'app/exercise/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';

@@ -4,7 +4,7 @@ import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarData } from 'app/types/sidebar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
-import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';

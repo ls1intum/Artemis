@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -11,12 +11,12 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { areManualResultsAllowed } from 'app/exercise/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { faCodeBranch, faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';

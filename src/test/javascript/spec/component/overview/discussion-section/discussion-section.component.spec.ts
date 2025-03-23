@@ -36,7 +36,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';

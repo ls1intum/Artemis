@@ -5,7 +5,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { SubmissionExerciseType, SubmissionType } from 'app/exercise/entities/submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { TextSelectDirective } from 'app/text/manage/assess/text-select.directive';

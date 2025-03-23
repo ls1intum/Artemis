@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { RouterLink } from '@angular/router';

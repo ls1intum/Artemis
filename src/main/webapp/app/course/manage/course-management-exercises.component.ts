@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { ExerciseFilter } from 'app/exercise/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseManagementExercisesSearchComponent } from './course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

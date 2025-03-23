@@ -5,7 +5,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

@@ -19,12 +19,12 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { getFirstResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { getFirstResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/exercise/entities/submission.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { routes } from 'app/fileupload/manage/assess/file-upload-assessment.route';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/entities/participation/participation.model';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';

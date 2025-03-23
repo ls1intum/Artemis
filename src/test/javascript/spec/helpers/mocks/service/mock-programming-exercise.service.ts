@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { RepositoryType } from '../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 

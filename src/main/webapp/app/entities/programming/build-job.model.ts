@@ -2,7 +2,7 @@ import { StringBaseEntity } from 'app/shared/model/base-entity';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 

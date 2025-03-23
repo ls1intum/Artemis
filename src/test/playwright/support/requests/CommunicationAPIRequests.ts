@@ -5,7 +5,7 @@ import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { UserCredentials } from '../users';
 import { Post } from 'app/entities/metis/post.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 
 /**

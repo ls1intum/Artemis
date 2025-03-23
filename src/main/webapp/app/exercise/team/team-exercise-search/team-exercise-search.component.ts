@@ -3,7 +3,7 @@ import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { orderBy } from 'lodash-es';

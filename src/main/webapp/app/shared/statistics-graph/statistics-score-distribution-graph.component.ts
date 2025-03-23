@@ -3,7 +3,7 @@ import { round } from 'app/shared/util/utils';
 import { GraphColors } from 'app/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from '../language/translate.directive';
 

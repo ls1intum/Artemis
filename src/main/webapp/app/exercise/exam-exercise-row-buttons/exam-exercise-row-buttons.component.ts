@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';

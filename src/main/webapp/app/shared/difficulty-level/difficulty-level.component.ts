@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { DifficultyLevel } from 'app/entities/exercise.model';
+import { DifficultyLevel } from 'app/exercise/entities/exercise.model';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';

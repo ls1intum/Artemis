@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/header-exercise-page-with-details.component';

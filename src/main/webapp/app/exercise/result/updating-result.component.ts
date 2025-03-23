@@ -5,12 +5,12 @@ import { ParticipationWebsocketService } from 'app/course/shared/participation-w
 import { RepositoryService } from 'app/exercise/result/repository.service';
 import dayjs from 'dayjs/esm';
 import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Submission, SubmissionType } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { Submission, SubmissionType } from 'app/exercise/entities/submission.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';

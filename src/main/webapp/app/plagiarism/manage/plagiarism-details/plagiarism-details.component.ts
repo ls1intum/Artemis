@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
 import { PlagiarismHeaderComponent } from '../plagiarism-header/plagiarism-header.component';

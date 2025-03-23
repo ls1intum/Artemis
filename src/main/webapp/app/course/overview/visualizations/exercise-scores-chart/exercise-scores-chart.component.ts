@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/entities/statistics.model';

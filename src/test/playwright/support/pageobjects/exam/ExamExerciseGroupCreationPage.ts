@@ -7,7 +7,7 @@ import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '..
 import { generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 
 export class ExamExerciseGroupCreationPage {

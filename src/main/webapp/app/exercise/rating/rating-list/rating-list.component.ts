@@ -3,7 +3,7 @@ import { RatingService } from 'app/exercise/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';

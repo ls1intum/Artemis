@@ -16,7 +16,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { TranslateDirective } from '../language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

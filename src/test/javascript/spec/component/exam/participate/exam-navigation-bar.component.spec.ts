@@ -1,12 +1,12 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { Submission } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';

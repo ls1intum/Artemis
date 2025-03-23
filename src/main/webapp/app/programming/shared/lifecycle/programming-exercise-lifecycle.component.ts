@@ -6,7 +6,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';

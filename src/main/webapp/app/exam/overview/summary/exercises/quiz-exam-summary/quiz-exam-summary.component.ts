@@ -10,7 +10,7 @@ import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-subm
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

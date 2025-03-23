@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Team } from 'app/entities/team.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Team } from 'app/exercise/entities/team.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';

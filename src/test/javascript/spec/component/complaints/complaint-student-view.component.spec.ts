@@ -1,13 +1,13 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { Observable, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';

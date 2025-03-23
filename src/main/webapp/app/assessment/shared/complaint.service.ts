@@ -4,12 +4,12 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { map } from 'rxjs/operators';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { Result } from 'app/entities/result.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
 
 export type EntityResponseType = HttpResponse<Complaint>;

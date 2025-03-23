@@ -5,7 +5,7 @@ import { MockModule } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { DifficultyLevel } from 'app/entities/exercise.model';
+import { DifficultyLevel } from 'app/exercise/entities/exercise.model';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardMediumComponent', () => {

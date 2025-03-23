@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
 import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';

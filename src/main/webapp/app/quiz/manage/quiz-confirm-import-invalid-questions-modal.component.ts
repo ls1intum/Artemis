@@ -1,7 +1,7 @@
 import { Component, EventEmitter, inject } from '@angular/core';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ValidationReason } from 'app/entities/exercise.model';
+import { ValidationReason } from 'app/exercise/entities/exercise.model';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

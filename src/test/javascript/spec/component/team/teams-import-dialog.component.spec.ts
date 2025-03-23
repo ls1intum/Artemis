@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { Team, TeamImportStrategyType } from 'app/entities/team.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
+import { Team, TeamImportStrategyType } from 'app/exercise/entities/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
 import { flatMap } from 'lodash-es';

@@ -9,7 +9,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
@@ -19,7 +19,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { TeamAssignmentPayload } from 'app/exercise/entities/team.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';

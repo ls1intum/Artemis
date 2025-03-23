@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { Observable } from 'rxjs';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TeamStudentsOnlineListComponent } from './team-students-online-list.component';

@@ -1,4 +1,4 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';

@@ -1,7 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';

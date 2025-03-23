@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/exercise/entities/example-submission.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { map } from 'rxjs/operators';
-import { Submission } from 'app/entities/submission.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/string-count.service';

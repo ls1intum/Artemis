@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';

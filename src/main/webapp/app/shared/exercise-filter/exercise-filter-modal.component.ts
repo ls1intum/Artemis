@@ -20,8 +20,8 @@ import {
     RangeFilter,
 } from 'app/types/exercise-filter';
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

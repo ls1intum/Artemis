@@ -11,7 +11,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
@@ -29,12 +29,12 @@ import {
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/shared/constants/input.constants';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyType } from 'app/exercise/entities/submission-policy.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';

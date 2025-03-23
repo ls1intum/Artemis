@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';

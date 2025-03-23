@@ -10,7 +10,7 @@ import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exa
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
 

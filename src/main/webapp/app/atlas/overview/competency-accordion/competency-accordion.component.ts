@@ -6,7 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { round } from 'app/shared/util/utils';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
 import { isStartPracticeAvailable } from 'app/exercise/exercise.utils';

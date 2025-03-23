@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import dayjs from 'dayjs/esm';
 
 export class SubmissionVersion implements BaseEntity {

@@ -12,9 +12,9 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Team } from 'app/entities/team.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
+import { Team } from 'app/exercise/entities/team.model';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';

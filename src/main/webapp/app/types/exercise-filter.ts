@@ -1,5 +1,5 @@
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { SidebarData } from 'app/types/sidebar';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 

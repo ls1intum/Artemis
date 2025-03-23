@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Input, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';

@@ -7,7 +7,7 @@ import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboa
 import { SortService } from 'app/shared/service/sort.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

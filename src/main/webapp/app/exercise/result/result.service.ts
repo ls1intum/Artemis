@@ -2,12 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/entities/result.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { Result } from 'app/exercise/entities/result.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/entities/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/entities/feedback.model';
-import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/entities/participation/student-participation.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
@@ -17,7 +17,7 @@ import { isResultPreliminary } from 'app/programming/shared/utils/programming-ex
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { captureException } from '@sentry/angular';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import {
     isAIResultAndFailed,

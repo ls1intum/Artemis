@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import {
     areManualResultsAllowed,
     getExerciseDueDate,
@@ -10,8 +10,8 @@ import {
     isStartPracticeAvailable,
 } from 'app/exercise/exercise.utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { InitializationState } from 'app/exercise/entities/participation/participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ExerciseUtils', () => {

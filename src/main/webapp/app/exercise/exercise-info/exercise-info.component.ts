@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';

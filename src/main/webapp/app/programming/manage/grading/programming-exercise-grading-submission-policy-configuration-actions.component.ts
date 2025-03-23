@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyType } from 'app/exercise/entities/submission-policy.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 

@@ -6,7 +6,7 @@ import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.s
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
+import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/exercise/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { MetisService } from 'app/communication/metis.service';
 import { PageType } from 'app/communication/metis.util';

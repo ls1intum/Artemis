@@ -3,11 +3,11 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import { InitializationState } from 'app/exercise/entities/participation/participation.model';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';

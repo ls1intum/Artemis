@@ -10,7 +10,7 @@ import { ParticipationComponent } from 'app/exercise/participation/participation
 import { ExerciseScoresComponent } from 'app/exercise/exercise-scores/exercise-scores.component';
 
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { exerciseTypes } from 'app/exercise/entities/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 

@@ -4,7 +4,7 @@ import { ConsistencyCheckService } from 'app/shared/consistency-check/consistenc
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { getCourseId } from 'app/entities/exercise.model';
+import { getCourseId } from 'app/exercise/entities/exercise.model';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

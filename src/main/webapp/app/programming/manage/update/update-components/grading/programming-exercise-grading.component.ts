@@ -1,9 +1,9 @@
 import { AfterContentInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyType } from 'app/exercise/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
-import { IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
+import { IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';

@@ -5,7 +5,7 @@ import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/exercise/entities/example-submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 
 test.describe('Text exercise management', { tag: '@fast' }, () => {

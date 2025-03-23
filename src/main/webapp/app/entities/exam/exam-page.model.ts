@@ -1,4 +1,4 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 export class ExamPage {
     public isOverviewPage?: boolean;

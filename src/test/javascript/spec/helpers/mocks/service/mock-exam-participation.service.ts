@@ -1,5 +1,5 @@
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Observable } from 'rxjs';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';

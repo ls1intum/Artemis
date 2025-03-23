@@ -1,5 +1,5 @@
-import { Submission } from 'app/entities/submission.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { Directive, input } from '@angular/core';
 import { SubmissionVersion } from 'app/entities/submission-version.model';

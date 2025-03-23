@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { input } from '@angular/core';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
     let component: ProgrammingExerciseExamDiffComponent;

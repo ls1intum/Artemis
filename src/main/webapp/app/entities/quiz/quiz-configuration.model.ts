@@ -1,5 +1,5 @@
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 export interface QuizConfiguration {

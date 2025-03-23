@@ -1,6 +1,6 @@
 import { Component, DoCheck, Input, OnDestroy, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { Subscription } from 'rxjs';

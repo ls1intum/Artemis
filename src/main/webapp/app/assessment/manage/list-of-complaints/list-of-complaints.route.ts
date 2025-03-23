@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { exerciseTypes } from 'app/exercise/entities/exercise.model';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 
 export const listOfComplaintsRoute: Routes = [

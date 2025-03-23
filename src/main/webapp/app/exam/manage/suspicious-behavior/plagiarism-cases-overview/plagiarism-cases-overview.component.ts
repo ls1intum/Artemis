@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { Exercise, getExerciseUrlSegment } from 'app/entities/exercise.model';
+import { Exercise, getExerciseUrlSegment } from 'app/exercise/entities/exercise.model';
 import { Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

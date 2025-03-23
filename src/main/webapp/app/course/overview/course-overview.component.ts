@@ -51,7 +51,7 @@ import { facSidebar } from 'app/icons/icons';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { TeamAssignmentPayload } from 'app/exercise/entities/team.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

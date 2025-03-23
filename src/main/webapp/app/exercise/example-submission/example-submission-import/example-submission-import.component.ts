@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';

@@ -9,14 +9,20 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.com
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/exercise/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Submission, SubmissionExerciseType, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
+import {
+    Submission,
+    SubmissionExerciseType,
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    setLatestSubmissionResult,
+} from 'app/exercise/entities/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
@@ -29,8 +35,8 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam/exam.model';

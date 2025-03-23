@@ -1,4 +1,4 @@
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 
 describe('ExerciseCategory', () => {
     describe('equals', () => {

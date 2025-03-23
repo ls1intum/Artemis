@@ -3,23 +3,23 @@ import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/t
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/entities/participation/participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { Observable, Subject, of } from 'rxjs';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
+import { SubmissionSyncPayload } from 'app/exercise/entities/submission-sync-payload.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { SubmissionPatchPayload } from 'app/entities/submission-patch-payload.model';
-import { SubmissionPatch } from 'app/entities/submission-patch.model';
+import { SubmissionPatchPayload } from 'app/exercise/entities/submission-patch-payload.model';
+import { SubmissionPatch } from 'app/exercise/entities/submission-patch.model';
 
 describe('Team Submission Sync Component', () => {
     let fixture: ComponentFixture<TeamSubmissionSyncComponent>;

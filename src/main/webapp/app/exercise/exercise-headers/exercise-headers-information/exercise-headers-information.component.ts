@@ -1,13 +1,13 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
+import { SubmissionPolicy } from 'app/exercise/entities/submission-policy.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/exercise/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';

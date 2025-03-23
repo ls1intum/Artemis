@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
+import { Result } from 'app/exercise/entities/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';

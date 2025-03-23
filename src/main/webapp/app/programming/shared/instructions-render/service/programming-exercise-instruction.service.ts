@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 
 /**
  * Enumeration defining state of the test case.

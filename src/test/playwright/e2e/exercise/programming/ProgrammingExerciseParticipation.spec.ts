@@ -17,9 +17,9 @@ import { createFileWithContent } from '../../../support/utils';
 import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { UserCredentials, admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
-import { Team } from 'app/entities/team.model';
+import { Team } from 'app/exercise/entities/team.model';
 import { GitCloneMethod, ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 
 test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
     let course: Course;

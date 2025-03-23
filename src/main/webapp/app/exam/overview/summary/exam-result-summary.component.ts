@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
@@ -16,8 +16,8 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
-import { Submission } from 'app/entities/submission.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Submission } from 'app/exercise/entities/submission.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';

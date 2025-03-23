@@ -8,11 +8,11 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/exercise/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

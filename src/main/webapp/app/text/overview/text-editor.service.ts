@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { francAll } from 'franc-min';
 import { Language } from 'app/entities/course.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 
 @Injectable({ providedIn: 'root' })

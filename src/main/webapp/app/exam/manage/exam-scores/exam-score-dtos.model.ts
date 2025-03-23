@@ -1,4 +1,4 @@
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { BonusResult } from 'app/entities/bonus.model';

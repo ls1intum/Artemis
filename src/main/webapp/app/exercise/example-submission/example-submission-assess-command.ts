@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorParticipationService } from '../dashboards/tutor/tutor-participation.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/exercise/entities/example-submission.model';
 
 export interface FeedbackMarker {
     markWrongFeedback(errors: FeedbackCorrectionError[]): void;

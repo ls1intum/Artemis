@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-exercise-overview-tour';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { LtiService } from 'app/shared/service/lti.service';

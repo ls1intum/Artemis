@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DifficultyLevel, Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';

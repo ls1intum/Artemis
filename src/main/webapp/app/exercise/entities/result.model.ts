@@ -1,8 +1,8 @@
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Submission } from 'app/entities/submission.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { AssessmentNote } from 'app/entities/assessment-note.model';

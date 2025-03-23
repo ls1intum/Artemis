@@ -1,6 +1,6 @@
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 /**

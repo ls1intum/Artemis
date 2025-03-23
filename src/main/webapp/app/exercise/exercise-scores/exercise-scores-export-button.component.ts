@@ -1,14 +1,14 @@
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/entities/exercise.model';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { ResultService } from 'app/exercise/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { TestCaseResult } from 'app/entities/programming/test-case-result.model';

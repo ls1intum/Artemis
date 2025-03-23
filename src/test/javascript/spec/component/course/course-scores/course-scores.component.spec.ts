@@ -16,9 +16,9 @@ import {
 } from 'app/shared/export/export-constants';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

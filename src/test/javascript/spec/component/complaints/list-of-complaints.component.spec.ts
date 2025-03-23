@@ -10,8 +10,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { SortService } from 'app/shared/service/sort.service';

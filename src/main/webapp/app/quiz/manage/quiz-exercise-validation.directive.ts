@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Directive, inject } from '@angular/core';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ValidationReason } from 'app/entities/exercise.model';
+import { ValidationReason } from 'app/exercise/entities/exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/shared/constants/input.constants';
 import { InvalidFlaggedQuestions, checkForInvalidFlaggedQuestions, computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/quiz/shared/quiz-manage-util.service';

@@ -3,11 +3,11 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, On
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/programming/build-log.model';
-import { Participation, getExercise } from 'app/entities/participation/participation.model';
+import { Participation, getExercise } from 'app/exercise/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';

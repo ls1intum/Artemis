@@ -2,7 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess } from 'app/icons/icons';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

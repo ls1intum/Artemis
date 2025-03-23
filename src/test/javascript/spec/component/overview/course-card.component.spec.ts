@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCardComponent } from 'app/course/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';

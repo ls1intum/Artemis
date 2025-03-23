@@ -1,8 +1,8 @@
 import { omit, sum } from 'lodash-es';
 import { captureException } from '@sentry/angular';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 export function cleanString(str?: string): string {
     if (!str) {

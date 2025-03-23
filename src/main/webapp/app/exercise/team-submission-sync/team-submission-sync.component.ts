@@ -1,16 +1,16 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { throttleTime } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
-import { SubmissionSyncPayload, isSubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
+import { SubmissionSyncPayload, isSubmissionSyncPayload } from 'app/exercise/entities/submission-sync-payload.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/entities/submission.model';
 import { Observable } from 'rxjs';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { SubmissionPatch } from 'app/entities/submission-patch.model';
-import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/entities/submission-patch-payload.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
+import { SubmissionPatch } from 'app/exercise/entities/submission-patch.model';
+import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/entities/submission-patch-payload.model';
 
 @Component({
     selector: 'jhi-team-submission-sync',

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 @Pipe({ name: 'courseTitle' })
 export class ExerciseCourseTitlePipe implements PipeTransform {

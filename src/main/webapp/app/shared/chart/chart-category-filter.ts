@@ -1,8 +1,8 @@
 import { ChartFilter } from 'app/shared/chart/chart-filter';
 import { Injectable } from '@angular/core';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 type CategoryFilterOperatingType = CourseManagementStatisticsModel | Exercise;
 

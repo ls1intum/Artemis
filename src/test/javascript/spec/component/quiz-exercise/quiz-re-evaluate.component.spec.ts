@@ -15,7 +15,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { SimpleChange } from '@angular/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';

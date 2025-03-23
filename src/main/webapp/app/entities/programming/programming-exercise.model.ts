@@ -1,14 +1,14 @@
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, resetForImport } from 'app/exercise/entities/exercise.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/entities/participation/template-programming-exercise-participation.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { SubmissionPolicy } from 'app/exercise/entities/submission-policy.model';
 import dayjs from 'dayjs/esm';
 
 export enum ProgrammingLanguage {

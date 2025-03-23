@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

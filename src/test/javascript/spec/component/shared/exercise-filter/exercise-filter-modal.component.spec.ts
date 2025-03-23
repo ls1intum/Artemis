@@ -9,11 +9,11 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { RangeFilter } from 'app/types/exercise-filter';
-import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/entities/exercise.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { SidebarCardElement } from 'app/types/sidebar';
-import { Result } from 'app/entities/result.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/entities/result.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

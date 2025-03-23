@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

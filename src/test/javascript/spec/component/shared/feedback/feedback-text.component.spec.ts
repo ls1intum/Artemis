@@ -6,7 +6,7 @@ import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Feedback } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 
 describe('FeedbackTextComponent', () => {
     let fixture: ComponentFixture<FeedbackTextComponent>;

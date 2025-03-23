@@ -1,4 +1,4 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 export class ExamExerciseOverviewItem {

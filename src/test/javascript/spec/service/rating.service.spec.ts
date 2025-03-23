@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { RatingService } from 'app/exercise/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Rating Service', () => {

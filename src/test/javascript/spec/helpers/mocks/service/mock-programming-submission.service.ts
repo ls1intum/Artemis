@@ -1,7 +1,7 @@
 import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { EMPTY, Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 export class MockProgrammingSubmissionService implements IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId = (participationId: number) =>

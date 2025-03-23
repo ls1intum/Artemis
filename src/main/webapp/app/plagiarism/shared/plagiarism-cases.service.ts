@@ -7,7 +7,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComp
 import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/types/PlagiarismSubmissionElement';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;

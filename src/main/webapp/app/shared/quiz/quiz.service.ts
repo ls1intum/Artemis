@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import { InitializationState } from 'app/exercise/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';

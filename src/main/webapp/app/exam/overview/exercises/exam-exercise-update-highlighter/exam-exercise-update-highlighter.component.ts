@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

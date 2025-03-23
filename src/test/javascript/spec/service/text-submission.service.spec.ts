@@ -5,7 +5,7 @@ import { TextSubmissionService } from 'app/text/overview/text-submission.service
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TextSubmission Service', () => {

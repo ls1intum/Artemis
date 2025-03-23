@@ -25,12 +25,12 @@ import { ParticipationWebsocketService } from 'app/course/shared/participation-w
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { problemStatementHasChanged } from 'app/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';

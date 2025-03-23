@@ -3,7 +3,7 @@ import { ManualTextSelectionComponent } from 'app/text/manage/assess/manual-text
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { SubmissionExerciseType, SubmissionType } from 'app/exercise/entities/submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextBlockRefGroup } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';

@@ -14,7 +14,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-feedback-groups';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 

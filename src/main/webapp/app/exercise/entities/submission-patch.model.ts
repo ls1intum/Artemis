@@ -1,5 +1,5 @@
 import { Operation } from 'fast-json-patch';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/entities/participation/participation.model';
 
 /**
  * A patch for a submission. It contains a list of operations that should be applied to the submission,

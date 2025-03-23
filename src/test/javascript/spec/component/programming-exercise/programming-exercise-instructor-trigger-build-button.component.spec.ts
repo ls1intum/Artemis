@@ -8,10 +8,10 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { of } from 'rxjs';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/exercise/entities/submission.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';

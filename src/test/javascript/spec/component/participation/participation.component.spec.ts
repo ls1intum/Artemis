@@ -4,13 +4,13 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { of, throwError } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
-import { Team } from 'app/entities/team.model';
+import { Team } from 'app/exercise/entities/team.model';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { ExerciseService } from 'app/exercise/exercise.service';

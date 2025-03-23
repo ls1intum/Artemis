@@ -1,12 +1,12 @@
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { SubmissionType } from 'app/exercise/entities/submission.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { isPracticeMode } from 'app/entities/participation/student-participation.model';
+import { isPracticeMode } from 'app/exercise/entities/participation/student-participation.model';
 import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercise/result/result.utils';
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {

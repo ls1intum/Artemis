@@ -24,7 +24,7 @@ import * as dateUtils from 'app/utils/date.utils';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/entities/exercise.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 
 describe('CompetencyService', () => {

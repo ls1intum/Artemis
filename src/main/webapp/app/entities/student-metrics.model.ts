@@ -1,7 +1,7 @@
 import { CompetencyJol, CompetencyTaxonomy } from 'app/entities/competency.model';
-import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/entities/exercise-category.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export class StudentMetrics {
