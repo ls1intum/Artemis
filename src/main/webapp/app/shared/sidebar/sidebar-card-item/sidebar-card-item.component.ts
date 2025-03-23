@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../../language/translate.directive';

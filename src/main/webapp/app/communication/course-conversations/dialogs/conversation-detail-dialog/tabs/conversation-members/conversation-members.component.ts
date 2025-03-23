@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
@@ -8,8 +8,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, from, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ConversationUserDTO } from 'app/communication/entities/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

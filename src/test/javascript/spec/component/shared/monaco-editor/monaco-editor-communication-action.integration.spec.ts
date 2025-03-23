@@ -19,7 +19,7 @@ import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, m
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelIdAndNameDTO } from 'app/communication/entities/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';

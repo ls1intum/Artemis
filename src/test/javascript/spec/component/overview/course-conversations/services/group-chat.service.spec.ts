@@ -7,7 +7,7 @@ import { MockAccountService } from '../../../../helpers/mocks/service/mock-accou
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';

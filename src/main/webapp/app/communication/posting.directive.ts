@@ -1,4 +1,4 @@
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/entities/posting.model';
 import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MetisService } from 'app/communication/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';

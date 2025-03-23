@@ -22,10 +22,10 @@ import {
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Post } from 'app/entities/metis/post.model';
-import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { Post } from 'app/communication/entities/post.model';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/communication/entities/posting.model';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations/course-wide-search/course-wide-search.component';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
@@ -39,7 +39,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/button.compon
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MetisService } from 'app/communication/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';

@@ -1,19 +1,19 @@
 import { ChangeDetectorRef, Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input, output } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { EMPTY, Subject, from, takeUntil } from 'rxjs';
-import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/communication/metis.service';
 import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
-import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { getAsOneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
+import { ConversationUserDTO } from 'app/communication/entities/conversation/conversation-user-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';

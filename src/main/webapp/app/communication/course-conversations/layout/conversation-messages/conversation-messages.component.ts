@@ -20,17 +20,17 @@ import {
     output,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { Subject, forkJoin, map, takeUntil } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { Course } from 'app/entities/course.model';
 import { PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { MetisService } from 'app/communication/metis.service';
-import { Channel, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { GroupChat, isGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { OneToOneChat, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
@@ -43,9 +43,9 @@ import { NgClass } from '@angular/common';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { ForwardedMessageDTO } from 'app/communication/entities/forwarded-message.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { Posting, PostingType } from 'app/communication/entities/posting.model';
 import { canCreateNewMessageInConversation } from 'app/communication/conversations/conversation-permissions.utils';
 
 interface PostGroup {

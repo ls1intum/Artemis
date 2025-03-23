@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, input } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';

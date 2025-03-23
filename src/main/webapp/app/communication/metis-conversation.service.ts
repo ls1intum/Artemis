@@ -5,19 +5,19 @@ import { ConversationService } from 'app/communication/conversations/conversatio
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
+import { ConversationWebsocketDTO } from 'app/communication/entities/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { OneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { MetisPostDTO } from 'app/communication/entities/metis-post-dto.model';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 

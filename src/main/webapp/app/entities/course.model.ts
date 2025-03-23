@@ -6,7 +6,7 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Competency } from 'app/entities/competency.model';
 import { Organization } from 'app/entities/organization.model';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';

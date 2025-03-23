@@ -4,7 +4,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType } from 'app/communication/entities/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';

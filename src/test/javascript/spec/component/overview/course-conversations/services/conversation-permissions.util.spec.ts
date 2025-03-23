@@ -14,7 +14,7 @@ import {
     canRevokeChannelModeratorRole,
 } from 'app/communication/conversations/conversation-permissions.utils';
 import { Course } from 'app/entities/course.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
 
 describe('ConversationPermissionUtils', () => {
     describe('channels', () => {

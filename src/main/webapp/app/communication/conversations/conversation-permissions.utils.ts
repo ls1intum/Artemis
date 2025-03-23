@@ -1,8 +1,8 @@
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { ChannelDTO, isChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { Course } from 'app/entities/course.model';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 
 export function canAddUsersToConversation(conversation: ConversationDTO): boolean {
     if (!conversation) {

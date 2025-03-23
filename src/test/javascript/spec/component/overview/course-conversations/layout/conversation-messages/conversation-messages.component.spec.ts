@@ -10,21 +10,21 @@ import { MessageInlineInputComponent } from 'app/communication/message/message-i
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/communication/metis.service';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
-import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { Directive, ElementRef, EventEmitter, input, Input, Output, QueryList, runInInjectionContext } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingType } from '../../../../../../../../main/webapp/app/entities/metis/posting.model';
+import { ForwardedMessage } from 'app/communication/entities/forwarded-message.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { PostingType } from 'app/communication/entities/posting.model';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),

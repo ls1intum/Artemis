@@ -7,7 +7,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { Observable, of } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from '../../../../helpers/sample/metis-sample-data';

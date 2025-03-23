@@ -10,7 +10,7 @@ import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entit
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { MetisService } from 'app/communication/metis.service';
 import { PageType } from 'app/communication/metis.util';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';

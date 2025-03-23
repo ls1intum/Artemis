@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
 import { PostingService } from 'app/communication/posting.service';
 import { map } from 'rxjs/operators';
 

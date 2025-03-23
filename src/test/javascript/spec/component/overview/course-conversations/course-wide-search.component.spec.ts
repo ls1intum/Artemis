@@ -3,7 +3,7 @@ import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations/course-wide-search/course-wide-search.component';
 import { MetisService } from 'app/communication/metis.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { Course } from 'app/entities/course.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

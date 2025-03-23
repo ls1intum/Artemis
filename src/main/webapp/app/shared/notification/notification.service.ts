@@ -50,8 +50,8 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { MetisPostDTO } from 'app/communication/entities/metis-post-dto.model';
+import { getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
 
 const notificationsPerPage = 25;
 

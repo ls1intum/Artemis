@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';

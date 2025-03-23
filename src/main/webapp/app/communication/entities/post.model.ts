@@ -1,5 +1,5 @@
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { Posting } from 'app/communication/entities/posting.model';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 

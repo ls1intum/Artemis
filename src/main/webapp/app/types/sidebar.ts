@@ -2,7 +2,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 export type SidebarCardSize = 'S' | 'M' | 'L';

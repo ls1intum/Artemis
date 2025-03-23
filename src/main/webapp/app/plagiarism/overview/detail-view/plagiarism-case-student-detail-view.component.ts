@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
 import { Subscription, combineLatest } from 'rxjs';
 import { MetisService } from 'app/communication/metis.service';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/entities/post.model';
 import { PageType } from 'app/communication/metis.util';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';

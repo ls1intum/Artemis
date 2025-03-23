@@ -1,5 +1,5 @@
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
+import { GroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';

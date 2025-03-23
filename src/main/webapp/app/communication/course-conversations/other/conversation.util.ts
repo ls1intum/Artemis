@@ -1,7 +1,7 @@
 import { NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
-import { ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ConversationUserDTO } from 'app/communication/entities/conversation/conversation-user-dto.model';
+import { ChannelSubType } from 'app/communication/entities/conversation/channel.model';
 
 export function getUserLabel({ firstName, lastName, login }: User | ConversationUserDTO, showLogin = true) {
     let label = '';

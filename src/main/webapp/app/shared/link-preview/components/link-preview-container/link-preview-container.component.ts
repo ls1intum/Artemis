@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, s
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
 
 @Component({

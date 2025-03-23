@@ -11,14 +11,14 @@ import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCat
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO, ConversationType } from 'app/communication/entities/conversation/conversation.model';
+import { ChannelSubType, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faBookmark, faBoxArchive, faBullhorn, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
+import { isGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { SavedPostStatusMap } from 'app/communication/entities/posting.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 

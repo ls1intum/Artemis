@@ -1,9 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { Reaction } from 'app/entities/metis/reaction.model';
+import { Reaction } from 'app/communication/entities/reaction.model';
 import { UserRole } from 'app/communication/metis.util';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation } from 'app/communication/entities/conversation/conversation.model';
 
 export enum SavedPostStatus {
     PROGRESS = 0,

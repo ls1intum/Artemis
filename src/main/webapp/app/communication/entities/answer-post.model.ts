@@ -1,5 +1,5 @@
-import { Post } from 'app/entities/metis/post.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Post } from 'app/communication/entities/post.model';
+import { Posting } from 'app/communication/entities/posting.model';
 
 export class AnswerPost extends Posting {
     public resolvesPost?: boolean;

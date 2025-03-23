@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
-import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO, shouldNotifyRecipient } from 'app/communication/entities/conversation/conversation.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
@@ -9,10 +9,10 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations/other/conversation.util';
 import { MetisService } from 'app/communication/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';

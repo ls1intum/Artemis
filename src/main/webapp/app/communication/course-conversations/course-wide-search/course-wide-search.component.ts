@@ -4,12 +4,12 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/entities/course.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { Post } from 'app/entities/metis/post.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { Post } from 'app/communication/entities/post.model';
 import { MetisService } from 'app/communication/metis.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

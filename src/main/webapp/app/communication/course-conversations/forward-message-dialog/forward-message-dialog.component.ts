@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { Post } from 'app/entities/metis/post.model';
+import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { Post } from 'app/communication/entities/post.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';

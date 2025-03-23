@@ -5,12 +5,12 @@ import { ChannelService } from 'app/communication/conversations/channel.service'
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
-import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ChannelDTO, isChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { GroupChatDTO, isGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { channelRegex } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { HttpResponse } from '@angular/common/http';

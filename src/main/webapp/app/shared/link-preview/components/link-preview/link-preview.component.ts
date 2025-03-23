@@ -3,7 +3,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/communication/metis.service';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/entities/posting.model';
 import { urlRegex } from 'app/shared/link-preview/services/linkify.service';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

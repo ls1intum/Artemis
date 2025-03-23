@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Post } from 'app/communication/entities/post.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/entities/posting.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ConversationType } from 'app/communication/entities/conversation/conversation.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
 
 @Injectable({
     providedIn: 'root',

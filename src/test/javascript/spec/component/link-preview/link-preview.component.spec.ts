@@ -9,8 +9,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { Post } from 'app/entities/metis/post.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/communication/entities/post.model';
+import { AnswerPost } from 'app/communication/entities/answer-post.model';
 
 describe('LinkPreviewComponent', () => {
     let component: LinkPreviewComponent;
