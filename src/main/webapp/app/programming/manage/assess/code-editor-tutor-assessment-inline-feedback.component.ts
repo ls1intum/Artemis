@@ -37,6 +37,19 @@ import { QuotePipe } from 'app/shared/pipes/quote.pipe';
     ],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly Feedback = Feedback;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly MANUAL = FeedbackType.MANUAL;
+
+    // Expose the function to the template
+    protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
@@ -44,11 +57,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Input() get feedback(): Feedback {
         return this._feedback;
     }
+
     set feedback(feedback: Feedback | undefined) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
     }
+
     private _feedback: Feedback;
 
     @Input() selectedFile: string;
@@ -63,24 +78,10 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     @Output() onDeleteFeedback = new EventEmitter<Feedback>();
     @Output() onEditFeedback = new EventEmitter<number>();
 
-    // Expose the function to the template
-    readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    protected readonly Feedback = Feedback;
-    readonly ButtonSize = ButtonSize;
-    readonly MANUAL = FeedbackType.MANUAL;
-
     viewOnly: boolean;
     oldFeedback: Feedback;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faQuestionCircle = faQuestionCircle;
-    faPencilAlt = faPencilAlt;
-    faTrashAlt = faTrashAlt;
-    faExclamationTriangle = faExclamationTriangle;
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
@@ -102,7 +103,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * When an inline feedback already exists, we set it back and display it the viewOnly mode.
-     * Otherwise the component is not displayed anymore in the parent component
+     * Otherwise, the component is not displayed anymore in the parent component
      */
     cancelFeedback() {
         this.feedback = this.oldFeedback;
@@ -149,5 +150,25 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     public buildFeedbackTextForCodeEditor(feedback: Feedback): string {
         return buildFeedbackTextForReview(feedback, false);
+    }
+
+    /**
+     * This method prevents the propagation to global event listeners (especially the monaco event listener), so the backspace key can be used.
+     *
+     * As this component is rendered within the monaco code editor, the monaco keydown event listener is attached to input fields
+     * in this component.
+     * In the assessment the code editor is readonly, so it will prevent the default behavior of the backspace key.
+     *
+     * To verify that the assumption of the side effects of the monaco code editor do still hold, use Chromes developer tools:
+     * 1. Inspect the textarea element
+     * 2. Go to the Event Listeners pane
+     * 3. Expand the keydown events to see which functions are bound to these events
+     * 4. Check if the monaco editor is bound to the keydown event and causes the issue when not using the handleKeydown method
+     * 5. You should observe, that when deleting the monaco event listener and NOT using the handleKeydown method, the backspace key works as expected
+     */
+    protected handleKeydown(event: KeyboardEvent) {
+        if (event.key === 'Backspace') {
+            event.stopPropagation();
+        }
     }
 }
