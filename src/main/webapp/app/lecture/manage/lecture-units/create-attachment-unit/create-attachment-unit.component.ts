@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';

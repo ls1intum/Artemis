@@ -2,7 +2,7 @@ import { CompetencyJol, CompetencyTaxonomy } from 'app/atlas/shared/entities/com
 import { DifficultyLevel, ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 export class StudentMetrics {
     public exerciseMetrics?: ExerciseMetrics;

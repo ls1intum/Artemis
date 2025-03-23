@@ -8,7 +8,7 @@ import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/comp
 import { CompetencyMetrics, ExerciseInformation, ExerciseMetrics, LectureUnitInformation, LectureUnitStudentMetricsDTO, StudentMetrics } from 'app/entities/student-metrics.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CompetencyAccordionComponent', () => {
     let fixture: ComponentFixture<CompetencyAccordionComponent>;

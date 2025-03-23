@@ -8,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetenciesComponent } from 'app/atlas/overview/course-competencies/course-competencies.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 

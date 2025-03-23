@@ -37,7 +37,7 @@ import { ChannelService } from 'app/communication/conversations/channel.service'
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';

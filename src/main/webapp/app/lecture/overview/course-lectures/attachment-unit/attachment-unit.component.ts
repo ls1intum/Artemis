@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';

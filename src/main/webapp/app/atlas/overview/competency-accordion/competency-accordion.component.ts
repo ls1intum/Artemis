@@ -8,7 +8,7 @@ import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'a
 import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { isStartPracticeAvailable } from 'app/exercise/exercise.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

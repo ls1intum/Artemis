@@ -10,7 +10,7 @@ import { CreateAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
