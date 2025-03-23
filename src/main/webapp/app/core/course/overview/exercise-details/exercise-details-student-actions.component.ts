@@ -54,15 +54,22 @@ import { HttpErrorResponse } from '@angular/common/http';
     templateUrl: './exercise-details-student-actions.component.html',
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faUsers = faUsers;
+    protected readonly faEye = faEye;
+    protected readonly faPlayCircle = faPlayCircle;
+    protected readonly faRedo = faRedo;
+    protected readonly faDesktop = faDesktop;
+
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
+
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
-
-    readonly FeatureToggle = FeatureToggle;
-    readonly ExerciseType = ExerciseType;
-    readonly InitializationState = InitializationState;
-    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -90,14 +97,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     theiaEnabled = false;
     theiaPortalURL: string;
-
-    // Icons
-    readonly faFolderOpen = faFolderOpen;
-    readonly faUsers = faUsers;
-    readonly faEye = faEye;
-    readonly faPlayCircle = faPlayCircle;
-    readonly faRedo = faRedo;
-    readonly faDesktop = faDesktop;
 
     ngOnInit(): void {
         if (this.exercise.type === ExerciseType.QUIZ) {
