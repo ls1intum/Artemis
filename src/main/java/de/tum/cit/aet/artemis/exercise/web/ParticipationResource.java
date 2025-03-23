@@ -209,6 +209,41 @@ public class ParticipationResource {
     }
 
     /**
+     * Checks if a participation can be started for the given exercise and user.<br>
+     *
+     * This method verifies if the participation can be started based on the exercise type and user permissions.
+     * For programming exercises, it checks if the feature is enabled and if the user has the necessary permissions.
+     * For other exercises, it checks if the due date has passed and if the user has individual working time.
+     *
+     * @param exercise for which the participation is to be started
+     * @param user     attempting to start the participation
+     * @return the exercise, potentially cast to a more specific type if it is a programming exercise
+     * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
+     */
+    public Exercise checkIfParticipationCanBeStarted(Exercise exercise, User user) {
+        // Also don't allow participations if the feature is disabled
+        if (exercise instanceof ProgrammingExercise) {
+            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+            if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
+                    || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
+                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
+            }
+            return programmingExercise;
+        }
+        else {
+            ZonedDateTime exerciseDueDate = exercise.getDueDate();
+            boolean userMightHaveIndividualWorkingTime = exercise.isExamExercise();
+            boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
+            if (!userMightHaveIndividualWorkingTime && isDueDateInPast) {
+                throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME,
+                        "dueDateOver.noParticipationPossible");
+            }
+        }
+
+        return exercise;
+    }
+
+    /**
      * POST /exercises/:exerciseId/participations : start the "participationId" exercise for the current user.
      *
      * @param exerciseId the participationId of the exercise for which to init a participation
@@ -231,27 +266,7 @@ public class ParticipationResource {
             }
         }
 
-        // Check if the user is allowed to start the exercise (= create a participation)
-        // Also don't allow participations if the feature is disabled
-        if (exercise instanceof ProgrammingExercise) {
-            // fetch additional objects needed for the startExercise method below
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            // only editors and instructors have permission to trigger participation after due date passed
-            if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
-                    || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
-                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
-            }
-            exercise = programmingExercise;
-        }
-        else {
-            ZonedDateTime exerciseDueDate = exercise.getDueDate();
-            boolean userMightHaveIndividualWorkingTime = exercise.isExamExercise();
-            boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
-            if (!userMightHaveIndividualWorkingTime && isDueDateInPast) {
-                throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME,
-                        "dueDateOver.noParticipationPossible");
-            }
-        }
+        exercise = checkIfParticipationCanBeStarted(exercise, user);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
