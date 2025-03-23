@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
+import { TutorialGroupRegistrationImportDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/shared/service/alert.service';

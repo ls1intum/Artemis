@@ -11,11 +11,11 @@ import {
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
 } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { Course } from 'app/core/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSessionFormComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
