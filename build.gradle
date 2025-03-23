@@ -18,7 +18,7 @@ plugins {
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.52.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.4.4"
+    id "com.google.cloud.tools.jib" version "3.4.5"
     id "com.gorylenko.gradle-git-properties" version "2.5.0"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.5.6"
@@ -156,7 +156,7 @@ dependencies {
 
     // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.4.2"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.3"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.9"
@@ -294,7 +294,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation "org.springframework.data:spring-data-jpa:3.4.4"
+    implementation "org.springframework.data:spring-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -304,9 +304,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
+    implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    implementation "org.springframework.data:spring-data-ldap:3.4.4"
-
+    
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
@@ -358,13 +358,13 @@ dependencies {
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.9"
     implementation "org.apache.pdfbox:pdfbox:3.0.4"
-    implementation "org.apache.commons:commons-csv:1.13.0"
+    implementation "org.apache.commons:commons-csv:1.14.0"
     implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.4.0-jre"
+    implementation "com.google.guava:guava:33.4.5-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -374,7 +374,7 @@ dependencies {
     runtimeOnly "com.opencsv:opencsv:5.10"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.36.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.37.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
