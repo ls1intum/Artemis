@@ -2,7 +2,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';

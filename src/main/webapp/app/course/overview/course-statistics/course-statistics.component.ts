@@ -7,8 +7,8 @@ import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-d
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { GradeDTO } from 'app/entities/grade-step.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { GraphColors } from 'app/entities/statistics.model';

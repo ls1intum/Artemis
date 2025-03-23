@@ -6,15 +6,15 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
-import { Bonus } from 'app/entities/bonus.model';
+import { Bonus } from 'app/assessment/shared/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';

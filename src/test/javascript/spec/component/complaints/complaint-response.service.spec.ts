@@ -3,14 +3,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
+import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 
 describe('ComplaintResponseService', () => {
     let complaintResponseService: ComplaintResponseService;

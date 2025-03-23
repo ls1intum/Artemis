@@ -17,7 +17,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/entities/cour
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

@@ -13,7 +13,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

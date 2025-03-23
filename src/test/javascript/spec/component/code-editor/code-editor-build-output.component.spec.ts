@@ -15,7 +15,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';

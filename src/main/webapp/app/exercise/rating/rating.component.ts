@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
-import { RatingService } from 'app/exercise/rating/rating.service';
-import { StarRatingComponent } from 'app/exercise/rating/star-rating/star-rating.component';
+import { RatingService } from 'app/assessment/shared/rating.service';
+import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';

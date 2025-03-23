@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faCommentDots } from '@fortawesome/free-regular-svg-icons';

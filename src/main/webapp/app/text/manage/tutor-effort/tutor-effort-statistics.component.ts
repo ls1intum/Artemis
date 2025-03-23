@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { TutorEffort } from 'app/entities/tutor-effort.model';
+import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';

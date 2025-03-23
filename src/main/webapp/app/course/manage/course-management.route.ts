@@ -214,7 +214,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'ratings',
-                        loadComponent: () => import('app/exercise/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
+                        loadComponent: () => import('app/assessment/manage/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.ratingList.pageTitle',

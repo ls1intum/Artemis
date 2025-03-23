@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { captureException } from '@sentry/angular';

@@ -3,7 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
 import { Team } from 'app/entities/team.model';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 export enum ComplaintType {
     COMPLAINT = 'COMPLAINT',

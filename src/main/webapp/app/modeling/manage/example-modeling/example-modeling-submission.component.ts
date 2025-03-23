@@ -2,13 +2,13 @@ import { Component, OnInit, ViewChild, computed, effect, inject, signal, untrack
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
 import { Result } from 'app/entities/result.model';
 import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';

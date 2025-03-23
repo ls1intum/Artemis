@@ -15,7 +15,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseUtils URL utils', () => {

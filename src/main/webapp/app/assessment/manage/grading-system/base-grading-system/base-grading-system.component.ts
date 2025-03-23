@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { ButtonSize } from 'app/shared/components/button.component';

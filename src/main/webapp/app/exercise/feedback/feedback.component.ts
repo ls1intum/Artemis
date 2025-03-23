@@ -4,7 +4,7 @@ import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/programming/build-log.model';
-import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
+import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -13,7 +13,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';

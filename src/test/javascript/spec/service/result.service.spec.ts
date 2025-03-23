@@ -18,14 +18,14 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import {
     FeedbackType,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-} from 'app/entities/feedback.model';
+} from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors

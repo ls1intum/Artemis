@@ -3,9 +3,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Submission } from 'app/entities/submission.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 
 export class Result implements BaseEntity {
     public id?: number;

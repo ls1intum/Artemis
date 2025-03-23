@@ -1,10 +1,10 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { SCORE_PATTERN } from 'app/app.constants';

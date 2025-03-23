@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';

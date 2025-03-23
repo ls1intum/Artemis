@@ -9,7 +9,7 @@ import {
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-} from 'app/entities/feedback.model';
+} from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-feedback-groups';

@@ -6,7 +6,7 @@ import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/programming/buil
 import { Participation, getExercise } from 'app/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/service/code-editor-submission.service';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -15,7 +15,7 @@ import { findLatestResult } from 'app/shared/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

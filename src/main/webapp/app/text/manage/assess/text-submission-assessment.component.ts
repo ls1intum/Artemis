@@ -8,10 +8,10 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Result } from 'app/entities/result.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { notUndefined, onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
@@ -27,7 +27,7 @@ import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessm
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';

@@ -1,4 +1,4 @@
-import { ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 
 export class ComplaintRequestDTO {
     public resultId?: number;

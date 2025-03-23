@@ -36,7 +36,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { FileService } from 'app/shared/http/file.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
