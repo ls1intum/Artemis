@@ -36,8 +36,8 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisLectureIngestionSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })

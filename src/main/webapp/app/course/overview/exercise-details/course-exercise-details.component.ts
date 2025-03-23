@@ -33,7 +33,7 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseIn
 import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { ICER_PAPER_FLAG, PROFILE_IRIS } from 'app/app.constants';

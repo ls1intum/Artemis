@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisChatSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockVariants } from './mock-settings';
-import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { of } from 'rxjs';

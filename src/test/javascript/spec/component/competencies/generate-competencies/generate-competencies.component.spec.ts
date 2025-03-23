@@ -21,7 +21,7 @@ import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

@@ -21,7 +21,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';

@@ -1,4 +1,4 @@
-import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
+import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 
 export class IrisStatusDTO {
     active: boolean;

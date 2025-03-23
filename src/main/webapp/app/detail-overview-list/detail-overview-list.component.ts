@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
