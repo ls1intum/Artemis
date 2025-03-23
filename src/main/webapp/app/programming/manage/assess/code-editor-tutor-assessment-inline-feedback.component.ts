@@ -45,6 +45,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faTrashAlt = faTrashAlt;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faTimes = faTimes;
     protected readonly Feedback = Feedback;
     protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
@@ -87,15 +88,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     oldFeedback: Feedback;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faQuestionCircle = faQuestionCircle;
-    faPencilAlt = faPencilAlt;
-    faTrashAlt = faTrashAlt;
-    faExclamationTriangle = faExclamationTriangle;
-    faTimes = faTimes;
 
     /**
      * Updates the current feedback and sets props and emits the feedback to parent component
