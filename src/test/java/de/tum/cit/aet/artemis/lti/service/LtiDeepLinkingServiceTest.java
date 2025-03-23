@@ -263,6 +263,32 @@ class LtiDeepLinkingServiceTest {
     }
 
     @Test
+    void testPerformDeepLinkingWithGroupedExercises() throws MalformedURLException, URISyntaxException {
+        createMockOidcIdToken();
+        when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
+
+        long courseId = 1L;
+        long exerciseId1 = 2L;
+        long exerciseId2 = 3L;
+
+        Exercise exercise1 = createMockExercise(exerciseId1, courseId);
+        Exercise exercise2 = createMockExercise(exerciseId2, courseId);
+
+        when(exerciseRepository.findById(exerciseId1)).thenReturn(Optional.of(exercise1));
+        when(exerciseRepository.findById(exerciseId2)).thenReturn(Optional.of(exercise2));
+
+        Set<Long> exerciseIds = new HashSet<>();
+        exerciseIds.add(exerciseId1);
+        exerciseIds.add(exerciseId2);
+
+        String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, exerciseIds, DeepLinkingType.GROUPED_EXERCISE);
+
+        assertThat(deepLinkResponse).isNotNull();
+        assertThat(deepLinkResponse).contains("test_jwt");
+
+    }
+
+    @Test
     void testPerformDeepLinkingWithInvalidCourseId() throws MalformedURLException, URISyntaxException {
         createMockOidcIdToken();
         when(courseRepository.findById(anyLong())).thenReturn(Optional.empty());
