@@ -22,7 +22,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { assessmentNavigateBack } from 'app/exercise/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultById } from 'app/entities/submission.model';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';

@@ -51,7 +51,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-short-answer-question-edit',
     templateUrl: './short-answer-question-edit.component.html',
-    styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,
@@ -90,20 +90,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.shortAnswerQuestion = quizQuestion as ShortAnswerQuestion;
     }
 
-    @Input()
-    questionIndex: number;
-    @Input()
-    reEvaluationInProgress: boolean;
+    @Input() questionIndex: number;
+    @Input() reEvaluationInProgress: boolean;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
-    @Output()
-    questionMoveUp = new EventEmitter();
-    @Output()
-    questionMoveDown = new EventEmitter();
+    @Output() questionMoveUp = new EventEmitter();
+    @Output() questionMoveDown = new EventEmitter();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 

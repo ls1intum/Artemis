@@ -14,13 +14,13 @@ import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagi
 import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/types/PlagiarismResultDTO';
-import { ImportOptions } from 'app/types/programming-exercises';
+import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 

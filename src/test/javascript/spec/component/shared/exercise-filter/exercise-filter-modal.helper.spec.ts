@@ -10,7 +10,7 @@ import {
     satisfiesPointsFilter,
     satisfiesScoreFilter,
 } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
-import { FilterDetails, RangeFilter } from 'app/types/exercise-filter';
+import { FilterDetails, RangeFilter } from 'app/shared/types/exercise-filter';
 
 const EXERCISE_1 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 10, type: ExerciseType.TEXT } as Exercise;
 const EXERCISE_2 = { categories: [new ExerciseCategory('category3', '#0d3cc2'), new ExerciseCategory('category4', '#6ae8ac')], maxPoints: 5 } as Exercise;

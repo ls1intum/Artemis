@@ -4,8 +4,8 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Attachment } from 'app/entities/attachment.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
 

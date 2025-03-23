@@ -18,7 +18,7 @@ import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-que
 import { ShortAnswerSpotCounter } from 'app/entities/quiz/short-answer-spot-counter.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

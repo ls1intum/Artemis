@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { PresentationType } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
