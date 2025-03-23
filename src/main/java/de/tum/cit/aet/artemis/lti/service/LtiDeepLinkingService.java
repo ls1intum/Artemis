@@ -243,7 +243,7 @@ public class LtiDeepLinkingService {
     /**
      * Build a content URL for deep linking.
      */
-    String buildContentUrl(String courseId, String resourceType, String resourceId) {
+    private String buildContentUrl(String courseId, String resourceType, String resourceId) {
         if ("groupedExercises".equals(resourceType)) {
             List<Long> exerciseIds = Arrays.stream(resourceId.split(",")).map(String::trim).map(Long::valueOf).toList();
 
@@ -262,7 +262,7 @@ public class LtiDeepLinkingService {
         }
     }
 
-    String buildContentUrl(String courseId, String resourceType) {
+    private String buildContentUrl(String courseId, String resourceType) {
         return String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
     }
 

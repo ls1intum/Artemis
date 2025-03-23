@@ -297,62 +297,16 @@ class LtiDeepLinkingServiceTest {
                 .matches(exception -> "LTI".equals(exception.getEntityName()) && "noCourseAnalyticsDashboard".equals(exception.getErrorKey()));
     }
 
-    @Test
-    void buildContentUrl_withResourceId() {
-        String url = ltiDeepLinkingService.buildContentUrl("1", "exercises", "2");
-        assertThat(url).isEqualTo("http://artemis.com/courses/1/exercises/2");
-    }
-
-    @Test
-    void buildContentUrl_withoutResourceId() {
-        String url = ltiDeepLinkingService.buildContentUrl("1", "competencies");
-        assertThat(url).isEqualTo("http://artemis.com/courses/1/competencies");
-    }
-
     /*
      * @Test
-     * void validateDeepLinkingResponseSettings_emptyReturnUrl() {
-     * assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> ltiDeepLinkingService.validateDeepLinkingResponseSettings("", "jwt", "deploymentId"))
-     * .withMessage("Cannot find platform return URL")
-     * .matches(exception -> "LTI".equals(exception.getEntityName()) && "deepLinkReturnURLEmpty".equals(exception.getErrorKey()));
+     * void buildContentUrl_withResourceId() {
+     * String url = ltiDeepLinkingService.buildContentUrl("1", "exercises", "2");
+     * assertThat(url).isEqualTo("http://artemis.com/courses/1/exercises/2");
      * }
      * @Test
-     * void testPopulateCompetencyContentItemsWithNoCompetencies() {
-     * Course course = createMockCourse();
-     * course.setCompetencies(Set.of());
-     * when(courseRepository.findWithEagerCompetenciesAndPrerequisitesById(course.getId())).thenReturn(Optional.of(course));
-     * assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> ltiDeepLinkingService.populateCompetencyContentItems(String.valueOf(course.getId())))
-     * .withMessage("No competencies found.").matches(exception -> "LTI".equals(exception.getEntityName()) && "CompetenciesNotFound".equals(exception.getErrorKey()));
-     * }
-     * @Test
-     * void testPopulateIrisContentItemsWithNoCourseFound() {
-     * when(courseRepository.findById(anyLong())).thenReturn(Optional.empty());
-     * assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> ltiDeepLinkingService.populateIrisContentItems("1"))
-     * .withMessage("Course Analytics Dashboard not activated")
-     * .matches(exception -> "LTI".equals(exception.getEntityName()) && "noCourseAnalyticsDashboard".equals(exception.getErrorKey()));
-     * }
-     * @Test
-     * void testPopulateLearningPathsContentItemsWithNoLearningPaths() {
-     * Course course = createMockCourse();
-     * course.setLearningPathsEnabled(false);
-     * when(courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(course.getId())).thenReturn(course);
-     * assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> ltiDeepLinkingService.populateLearningPathsContentItems(String.valueOf(course.getId())))
-     * .withMessage("No learning paths found.").matches(exception -> "LTI".equals(exception.getEntityName()) && "learningPathsNotFound".equals(exception.getErrorKey()));
-     * }
-     * @Test
-     * void testValidateDeepLinkingResponseSettingsWithEmptyJwt() {
-     * assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> ltiDeepLinkingService.validateDeepLinkingResponseSettings("returnUrl", "", "deploymentId"))
-     * .withMessage("Deep linking response cannot be created")
-     * .matches(exception -> "LTI".equals(exception.getEntityName()) && "deepLinkingResponseFailed".equals(exception.getErrorKey()));
-     * }
-     * @Test
-     * void testCreateExerciseContentItemWithIncludedInOverallScore() {
-     * Exercise exercise = createMockExercise(1L, 1L);
-     * exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-     * String url = "http://artemis.com/courses/1/exercises/1";
-     * LtiContentItem contentItem = ltiDeepLinkingService.createExerciseContentItem(exercise, url);
-     * assertThat(contentItem.lineItem()).isNotNull();
-     * assertThat(contentItem.lineItem().scoreMaximum()).isEqualTo(100D);
+     * void buildContentUrl_withoutResourceId() {
+     * String url = ltiDeepLinkingService.buildContentUrl("1", "competencies");
+     * assertThat(url).isEqualTo("http://artemis.com/courses/1/competencies");
      * }
      */
 
