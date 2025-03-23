@@ -543,9 +543,6 @@
                 "submissionBuildPlan": "Submission build plan",
                 "solutionBuildPlan": "Solution build plan"
             },
-            "orion": {
-                "openEditor": "Open Editor"
-            },
             "reEvaluate": "Re-evaluate all",
             "reEvaluateTooltip": "Re-evaluate the automatic results of all participants' latest submissions. Manual results are not affected.",
             "reEvaluateSuccessful": "{{number}} automatic results were successfully updated, including the template and solution.",

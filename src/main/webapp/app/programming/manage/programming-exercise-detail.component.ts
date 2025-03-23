@@ -60,7 +60,6 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exerc
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/programming/shared/actions/programming-exercise-instructor-exercise-download.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -79,7 +78,6 @@ import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
         DocumentationButtonComponent,
         RouterLink,
         FaIconComponent,
-        OrionFilterDirective,
         FeatureToggleLinkDirective,
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
