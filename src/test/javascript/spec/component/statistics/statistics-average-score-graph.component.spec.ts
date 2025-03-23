@@ -3,7 +3,7 @@ import { MockProvider } from 'ng-mocks';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { GraphColors } from 'app/entities/statistics.model';
-import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';

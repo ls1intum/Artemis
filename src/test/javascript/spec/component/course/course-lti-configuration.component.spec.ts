@@ -10,7 +10,7 @@ import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-co
 import { SortService } from 'app/shared/service/sort.service';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';

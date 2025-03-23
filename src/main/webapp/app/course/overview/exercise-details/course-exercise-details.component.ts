@@ -20,7 +20,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { AlertService } from 'app/shared/service/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';

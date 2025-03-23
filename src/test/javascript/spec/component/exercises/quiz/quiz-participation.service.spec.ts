@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { QuizParticipationService } from 'app/quiz/overview/quiz-participation.service';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

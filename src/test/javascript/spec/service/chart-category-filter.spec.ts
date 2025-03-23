@@ -4,7 +4,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';

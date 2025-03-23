@@ -33,7 +33,7 @@ import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-web
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { QuizPoolService } from 'app/quiz/manage/quiz-pool.service';
-import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
+import { QuizPool } from 'app/quiz/shared/entities/quiz-pool.model';
 import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

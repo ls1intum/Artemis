@@ -9,7 +9,7 @@ import {
     isStartExerciseAvailable,
     isStartPracticeAvailable,
 } from 'app/exercise/exercise.utils';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';

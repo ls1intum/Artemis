@@ -22,7 +22,7 @@ import { Course } from 'app/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';

@@ -8,7 +8,7 @@ import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-ov
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Result } from 'app/entities/result.model';

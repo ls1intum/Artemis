@@ -10,7 +10,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';

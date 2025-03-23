@@ -13,7 +13,7 @@ import { faArrowLeft, faDownload, faQuestionCircle, faX } from '@fortawesome/fre
 import { generateDragAndDropQuizExercise } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { lastValueFrom } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';

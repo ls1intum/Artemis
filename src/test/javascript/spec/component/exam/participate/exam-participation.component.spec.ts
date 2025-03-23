@@ -17,8 +17,8 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Submission } from 'app/entities/submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

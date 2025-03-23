@@ -42,7 +42,7 @@ import {
 } from 'app/entities/notification.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MetisService } from 'app/communication/metis.service';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Result } from 'app/entities/result.model';
 import { map } from 'rxjs/operators';
 import { SubmissionService } from 'app/exercise/submission/submission.service';

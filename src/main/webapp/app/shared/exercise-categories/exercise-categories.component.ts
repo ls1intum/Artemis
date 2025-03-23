@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NotReleasedTagComponent } from '../components/not-released-tag.component';

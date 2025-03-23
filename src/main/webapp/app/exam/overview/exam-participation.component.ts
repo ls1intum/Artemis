@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';

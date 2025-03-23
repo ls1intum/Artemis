@@ -7,9 +7,9 @@ import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.compo
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash-es';

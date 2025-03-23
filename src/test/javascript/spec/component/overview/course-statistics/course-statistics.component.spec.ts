@@ -12,7 +12,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CourseStatisticsComponent, NgxExercise } from 'app/course/overview/course-statistics/course-statistics.component';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';

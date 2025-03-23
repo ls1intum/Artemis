@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/exercise.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
