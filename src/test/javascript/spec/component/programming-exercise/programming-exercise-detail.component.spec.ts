@@ -27,7 +27,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

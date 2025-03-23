@@ -16,8 +16,8 @@ import { MockAccountService } from '../helpers/mocks/service/mock-account.servic
 import { Course } from 'app/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';

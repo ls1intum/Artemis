@@ -4,7 +4,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';

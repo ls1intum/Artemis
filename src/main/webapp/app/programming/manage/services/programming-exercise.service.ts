@@ -13,7 +13,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';

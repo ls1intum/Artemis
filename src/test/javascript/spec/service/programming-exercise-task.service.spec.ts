@@ -9,7 +9,7 @@ import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/program
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingExerciseGradingService } from '../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
-import { ProgrammingExerciseServerSideTask } from '../../../../main/webapp/app/entities/programming-exercise-task.model';
+import { ProgrammingExerciseServerSideTask } from 'app/programming/shared/entities/programming-exercise-task.model';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { firstValueFrom, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';

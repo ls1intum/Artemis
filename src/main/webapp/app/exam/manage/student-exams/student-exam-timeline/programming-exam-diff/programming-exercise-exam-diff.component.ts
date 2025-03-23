@@ -10,7 +10,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';

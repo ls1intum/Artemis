@@ -12,7 +12,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/programming/manage/commit-details-view/commit-details-view.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report.component';
