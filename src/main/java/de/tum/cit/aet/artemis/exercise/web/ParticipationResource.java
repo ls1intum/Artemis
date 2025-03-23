@@ -238,7 +238,7 @@ public class ParticipationResource {
             // only editors and instructors have permission to trigger participation after due date passed
             if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
                     || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
-                throw new AccessForbiddenException("Not allowed");
+                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
             }
             exercise = programmingExercise;
         }
