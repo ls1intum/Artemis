@@ -20,7 +20,6 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -156,7 +155,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         });
     }
 
-    @Disabled // TODO hazelcast caching issue - see CacheConfiguration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUploadExamUserImages() throws Exception {
@@ -223,8 +221,6 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         assertThat(examUser.getSigningImagePath()).isNotNull();
     }
 
-    // TODO enable again - figure out why for one exercise the participations are not created
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVerifyExamUserAttendance() throws Exception {
