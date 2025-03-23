@@ -144,7 +144,6 @@ class CourseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegration
         courseTestService.testUpdateCourseGroups();
     }
 
-    // TODO: enable or remove the test
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithCourseImage() throws Exception {
