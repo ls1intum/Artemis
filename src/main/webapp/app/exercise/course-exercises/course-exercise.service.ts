@@ -1,7 +1,7 @@
 import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

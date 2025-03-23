@@ -28,7 +28,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

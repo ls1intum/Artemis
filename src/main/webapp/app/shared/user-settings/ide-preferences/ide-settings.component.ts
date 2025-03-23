@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';

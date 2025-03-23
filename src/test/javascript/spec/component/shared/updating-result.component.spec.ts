@@ -7,7 +7,7 @@ import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionSta
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/entities/result.model';

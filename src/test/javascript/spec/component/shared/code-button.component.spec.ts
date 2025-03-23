@@ -14,7 +14,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ExerciseActionButtonComponent } from '../../../../../main/webapp/app/shared/components/exercise-action-button.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

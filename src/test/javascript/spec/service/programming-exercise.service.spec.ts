@@ -2,14 +2,14 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -18,7 +18,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 

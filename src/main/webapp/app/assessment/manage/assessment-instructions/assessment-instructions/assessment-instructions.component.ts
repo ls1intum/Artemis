@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';

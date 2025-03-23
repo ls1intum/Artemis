@@ -1,10 +1,10 @@
 import { StringBaseEntity } from 'app/shared/model/base-entity';
-import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
-import { BuildConfig } from 'app/entities/programming/build-config.model';
+import { BuildConfig } from 'app/programming/shared/entities/build-config.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
-import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { BuildAgent } from 'app/programming/shared/entities/build-agent.model';
 
 export class BuildJob implements StringBaseEntity {
     public id?: string;

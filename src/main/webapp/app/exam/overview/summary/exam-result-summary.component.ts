@@ -22,7 +22,7 @@ import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } fro
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -7,7 +7,7 @@ import { StandaloneFeedbackComponent } from 'app/exercise/feedback/standalone-fe
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 describe('StandaloneFeedbackComponent', () => {

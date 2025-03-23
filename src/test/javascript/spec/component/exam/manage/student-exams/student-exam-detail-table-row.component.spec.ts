@@ -12,7 +12,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

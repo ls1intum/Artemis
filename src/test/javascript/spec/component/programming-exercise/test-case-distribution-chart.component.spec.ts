@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { TestCaseDistributionChartComponent } from 'app/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { MockProvider } from 'ng-mocks';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { TestCaseStatsMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 

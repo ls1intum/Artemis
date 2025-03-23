@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
-import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
+import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/programming/manage/grading/charts/programming-grading-charts.directive';

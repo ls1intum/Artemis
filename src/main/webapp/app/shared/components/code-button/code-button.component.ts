@@ -1,5 +1,5 @@
 import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';

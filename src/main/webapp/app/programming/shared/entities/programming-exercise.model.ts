@@ -5,9 +5,9 @@ import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.mo
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import dayjs from 'dayjs/esm';
 

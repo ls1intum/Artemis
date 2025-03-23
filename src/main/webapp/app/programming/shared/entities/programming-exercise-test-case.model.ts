@@ -1,4 +1,4 @@
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { TestCaseStats } from './programming-exercise-test-case-statistics.model';
 

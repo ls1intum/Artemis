@@ -14,7 +14,7 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

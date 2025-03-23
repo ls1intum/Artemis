@@ -8,7 +8,7 @@ import { TextSubmissionService } from 'app/text/overview/text-submission.service
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';

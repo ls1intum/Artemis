@@ -1,4 +1,4 @@
-import { WindFile } from 'app/entities/programming/wind.file';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
 
 export class ProgrammingExerciseBuildConfig {
     public sequentialTestRuns?: boolean;

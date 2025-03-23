@@ -4,7 +4,7 @@ import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubm
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { FileWithHasMatch } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class TheiaService {

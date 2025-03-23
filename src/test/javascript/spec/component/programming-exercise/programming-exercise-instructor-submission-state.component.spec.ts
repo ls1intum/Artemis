@@ -11,7 +11,7 @@ import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmi
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/overview/programming-build-run.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/programming-exercise-trigger-all-button.component';

@@ -7,7 +7,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';

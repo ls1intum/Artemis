@@ -15,7 +15,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';

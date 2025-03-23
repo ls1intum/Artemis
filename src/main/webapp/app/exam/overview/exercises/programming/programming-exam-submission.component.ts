@@ -3,7 +3,7 @@ import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';

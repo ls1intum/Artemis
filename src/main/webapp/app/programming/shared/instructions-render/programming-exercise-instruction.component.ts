@@ -15,12 +15,12 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { PluginSimple } from 'markdown-it';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';

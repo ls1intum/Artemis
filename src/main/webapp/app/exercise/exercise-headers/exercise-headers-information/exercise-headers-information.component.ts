@@ -5,10 +5,10 @@ import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/ent
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';

@@ -6,7 +6,7 @@ import { RepositoryService } from 'app/exercise/result/repository.service';
 import dayjs from 'dayjs/esm';
 import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

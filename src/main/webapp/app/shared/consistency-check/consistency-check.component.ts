@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from '../language/translate.directive';

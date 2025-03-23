@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CommitInfo } from 'app/entities/programming/programming-submission.model';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';

@@ -12,7 +12,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';

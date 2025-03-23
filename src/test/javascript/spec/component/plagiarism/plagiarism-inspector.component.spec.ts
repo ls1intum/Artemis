@@ -10,7 +10,7 @@ import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
 import { WebsocketService } from 'app/shared/service/websocket.service';

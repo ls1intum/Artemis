@@ -7,7 +7,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';

@@ -1,4 +1,4 @@
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 export interface Ide {
     name: string;

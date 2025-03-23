@@ -1,4 +1,4 @@
-import { AeolusResult } from 'app/entities/programming/aeolus.result';
+import { AeolusResult } from 'app/programming/shared/entities/aeolus.result';
 
 export class BuildAction {
     name: string;

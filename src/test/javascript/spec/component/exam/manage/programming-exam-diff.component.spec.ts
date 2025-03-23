@@ -3,7 +3,7 @@ import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-ex
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
 import { ProgrammingExerciseGitDiffReport } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

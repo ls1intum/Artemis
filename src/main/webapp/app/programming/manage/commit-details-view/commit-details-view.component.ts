@@ -4,7 +4,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { CommitInfo } from 'app/entities/programming/programming-submission.model';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report.component';
