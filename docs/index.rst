@@ -27,6 +27,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/lectures
    user/exam_mode
    user/communication
+   user/faqs
    user/tutorialgroups
    user/plagiarism-check
    user/learning-analytics
