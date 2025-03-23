@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';

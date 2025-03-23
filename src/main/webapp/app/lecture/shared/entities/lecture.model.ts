@@ -3,8 +3,8 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 
 export class Lecture implements BaseEntity {
     id?: number;

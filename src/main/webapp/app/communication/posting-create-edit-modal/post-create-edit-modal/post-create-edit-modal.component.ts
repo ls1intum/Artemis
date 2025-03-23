@@ -5,7 +5,7 @@ import { PostingButtonComponent } from 'app/communication/posting-button/posting
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';

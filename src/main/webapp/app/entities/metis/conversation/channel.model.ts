@@ -1,6 +1,6 @@
 import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exam } from 'app/entities/exam/exam.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with

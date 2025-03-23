@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';

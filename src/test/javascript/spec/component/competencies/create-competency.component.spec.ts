@@ -12,8 +12,8 @@ import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';

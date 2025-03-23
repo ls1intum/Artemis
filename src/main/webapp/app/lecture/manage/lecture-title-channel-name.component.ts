@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, viewChild } from '@angular/core';
 import { isCommunicationEnabled } from 'app/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 @Component({

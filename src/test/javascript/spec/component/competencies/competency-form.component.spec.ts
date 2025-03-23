@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';

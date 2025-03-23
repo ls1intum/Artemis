@@ -6,7 +6,7 @@ import { UserCredentials } from '../users';
 import { Post } from 'app/entities/metis/post.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 /**
  * A class which encapsulates all API requests related to communications.

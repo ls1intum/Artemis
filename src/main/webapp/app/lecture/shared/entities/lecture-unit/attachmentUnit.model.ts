@@ -1,6 +1,6 @@
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
-import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 
 export class AttachmentUnit extends LectureUnit {
     public description?: string;

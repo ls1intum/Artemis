@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { EditTextUnitComponent } from 'app/lecture/manage/lecture-units/edit-text-unit/edit-text-unit.component';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/shared/service/alert.service';

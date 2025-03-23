@@ -1,4 +1,4 @@
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
