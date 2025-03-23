@@ -341,13 +341,17 @@ Adjust ``dockerFlags`` and ``mavenFlags`` only for student submissions, like thi
 Timeout Options
 ^^^^^^^^^^^^^^^
 
+This setting is relevant only when using :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
 You can adjust possible :ref:`timeout options<edit_build_duration>` for the build process in :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
 These values will determine what is the minimum, maximum, and default value for the build timeout in seconds that can be set in the Artemis UI.
 The max value is the upper limit for the timeout, if the value is set higher than the max value, the max value will be used.
 
 If you want to change these values, you need to change them in ``localci`` and ``buildagent`` nodes.
 The corresponding configuration files are ``application-localci.yml`` and ``application-buildagent.yml``.
+Ensure that the values are consistent across these files. In a :ref:`multi-node setup<setup_distributed>`, also verify that both core nodes and build agent nodes use the same values.
 
+Default values have already been set, and modifying these values is not required unless a specific adjustment is needed.
 
     .. code-block:: yaml
 
@@ -357,3 +361,62 @@ The corresponding configuration files are ``application-localci.yml`` and ``appl
                     min: <value>
                     max: <value>
                     default: <value>
+
+
+Build Log Configuration
+^^^^^^^^^^^^^^^^^^^^^^^
+
+This setting is relevant only when using :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
+The build log settings control the amount of log data stored per build job.
+These values define the maximum number of lines and the maximum number of characters per line that can be retained in the logs.
+The `Java Docker client <https://github.com/docker-java/docker-java>`_ imposes a hard limit of 1024 characters per line.
+If a lower value is configured, logs exceeding this limit will be truncated, and excess characters will be lost.
+These settings only need to be adjusted in the buildagent configuration file, ``application-buildagent.yml``.
+
+Default values have already been set, and modifying these values is not required unless a specific adjustment is needed.
+
+    .. code-block:: yaml
+
+        artemis:
+            continuous-integration:
+                build-logs:
+                    max-lines-per-job: <value>
+                    max-chars-per-line: <value>
+
+Container Resource Restrictions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This setting is relevant only when using :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
+Instructors can edit the resources allocated to containers resulting from a programming exercise.
+These restrictions ensure that assigned values do not exceed predefined limits.
+To enforce these constraints, update the buildagent configuration files, ``application-buildagent.yml``.
+Ensure that these values remain consistent across all nodes in :ref:`multi-node setups<setup_distributed>` to maintain uniform resource allocation.
+
+Default values have already been set, and modifying these values is not required unless a specific adjustment is needed.
+
+    .. code-block:: yaml
+
+        artemis:
+            continuous-integration:
+                container-flags-limit:
+                    max-cpu-count: <value>
+                    max-memory: <value>
+                    max-memory-swap: <value>
+
+Pause Grace Period
+^^^^^^^^^^^^^^^^^^^^^^
+
+This setting is relevant only when using :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+
+The pause grace period determines how long the build agent waits after being paused before canceling all currently running jobs on that agent and adding them back to the queue.
+This setting should be adjusted only if the default grace period is unsuitable for the specific environment. The configuration is set in the buildagent configuration file, ``application-buildagent.yml``.
+
+Default values have already been set, and modifying these values is not required unless a specific adjustment is needed.
+
+    .. code-block:: yaml
+
+        artemis:
+            continuous-integration:
+                pause-grace-period-seconds: <value>
