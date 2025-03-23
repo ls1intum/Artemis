@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Course } from 'app/core/shared/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject } from 'rxjs';
