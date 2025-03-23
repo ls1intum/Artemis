@@ -18,7 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
-    styleUrls: ['../../../overview/course-overview.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview.scss'],
     imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {

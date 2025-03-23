@@ -46,7 +46,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../overview/course-overview.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,

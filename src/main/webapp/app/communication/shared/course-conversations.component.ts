@@ -116,7 +116,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../core/course/overview/course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService, LinkifyService, LinkPreviewService],
     imports: [
