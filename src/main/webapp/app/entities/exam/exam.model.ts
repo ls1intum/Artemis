@@ -1,6 +1,6 @@
 import { ExamUser } from 'app/entities/exam/exam-user.model';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { BaseEntity } from 'app/shared/model/base-entity';

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/co
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/communication/course-conversations/other/conversation.util';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { get } from 'lodash-es';
 import {

@@ -28,7 +28,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';

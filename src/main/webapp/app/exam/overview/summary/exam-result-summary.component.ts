@@ -24,7 +24,7 @@ import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamGeneralInformationComponent } from '../general-information/exam-general-information.component';

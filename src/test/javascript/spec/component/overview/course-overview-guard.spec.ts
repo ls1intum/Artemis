@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview-guard';
 import { Exam } from 'app/entities/exam/exam.model';

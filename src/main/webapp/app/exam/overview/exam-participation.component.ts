@@ -18,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam/exam-page.model';

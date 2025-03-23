@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

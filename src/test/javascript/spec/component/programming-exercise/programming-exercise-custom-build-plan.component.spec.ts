@@ -5,7 +5,7 @@ import { WindFile } from 'app/entities/programming/wind.file';
 import { WindMetadata } from 'app/entities/programming/wind.metadata';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Renderer2 } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

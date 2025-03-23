@@ -7,7 +7,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { User } from 'app/core/user/user.model';
 import { CourseCardComponent } from 'app/course/overview/course-card.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';

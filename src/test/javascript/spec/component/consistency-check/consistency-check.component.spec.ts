@@ -1,7 +1,7 @@
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';

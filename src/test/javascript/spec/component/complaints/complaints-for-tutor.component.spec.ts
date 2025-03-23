@@ -14,7 +14,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';

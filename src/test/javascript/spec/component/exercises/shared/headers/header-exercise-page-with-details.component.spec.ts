@@ -17,7 +17,7 @@ import { ProgrammingSubmission } from 'app/entities/programming/programming-subm
 import { SubmissionType } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('HeaderExercisePageWithDetails', () => {

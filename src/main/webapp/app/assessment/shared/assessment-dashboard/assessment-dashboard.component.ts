@@ -8,7 +8,7 @@ import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/e
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';

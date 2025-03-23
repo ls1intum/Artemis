@@ -9,7 +9,7 @@ import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-u
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';

@@ -14,10 +14,10 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
 import { MockMetisConversationService } from '../helpers/mocks/service/mock-metis-conversation.service';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
-import * as courseModel from 'app/entities/course.model';
+import * as courseModel from 'app/core/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 
 class MockOneToOneChatService {
@@ -86,8 +86,8 @@ describe('PostingDirective', () => {
 
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
-        jest.mock('app/entities/course.model', () => ({
-            ...jest.requireActual('app/entities/course.model'),
+        jest.mock('app/core/shared/entities/course.model', () => ({
+            ...jest.requireActual('app/core/shared/entities/course.model'),
             isMessagingEnabled: jest.fn(),
         }));
         mockReactionsBar = new MockReactionsBar();

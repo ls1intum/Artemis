@@ -5,7 +5,7 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { catchError, takeUntil } from 'rxjs/operators';

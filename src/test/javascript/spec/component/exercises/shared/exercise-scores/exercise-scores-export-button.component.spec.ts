@@ -9,7 +9,7 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

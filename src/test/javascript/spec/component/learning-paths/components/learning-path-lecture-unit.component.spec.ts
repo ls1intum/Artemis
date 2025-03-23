@@ -17,7 +17,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { of } from 'rxjs';
-import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { MockComponent, MockInstance } from 'ng-mocks';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';

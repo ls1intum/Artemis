@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercise/manage/paging.service';
 import { Column } from 'app/shared/import/import.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import {
     CourseCompetencyImportSettings,
     ImportCourseCompetenciesSettingsComponent,

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';

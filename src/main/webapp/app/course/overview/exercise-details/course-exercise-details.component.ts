@@ -31,7 +31,7 @@ import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature,
 import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
 import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';

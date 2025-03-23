@@ -19,7 +19,7 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {

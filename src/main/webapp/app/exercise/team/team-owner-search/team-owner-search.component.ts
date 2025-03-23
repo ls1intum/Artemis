@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject } fro
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Team } from 'app/entities/team.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

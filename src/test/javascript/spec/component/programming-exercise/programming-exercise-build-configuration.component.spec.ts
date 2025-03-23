@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise, ProgrammingLanguage } from '../../../../../main/webapp/app/entities/programming/programming-exercise.model';
-import { Course } from '../../../../../main/webapp/app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ProgrammingExerciseBuildConfig } from '../../../../../main/webapp/app/entities/programming/programming-exercise-build.config';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

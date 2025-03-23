@@ -6,7 +6,7 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

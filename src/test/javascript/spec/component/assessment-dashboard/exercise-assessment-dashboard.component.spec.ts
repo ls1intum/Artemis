@@ -29,7 +29,7 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Language } from 'app/entities/course.model';
+import { Language } from 'app/core/shared/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { Participation } from 'app/entities/participation/participation.model';

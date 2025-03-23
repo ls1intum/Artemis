@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, ViewEncapsulation } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
 @Component({

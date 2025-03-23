@@ -1,5 +1,5 @@
 import { Notification, NotificationType } from 'app/core/shared/entities/notification.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 
 export const enum GroupNotificationType {
     INSTRUCTOR = 'INSTRUCTOR',

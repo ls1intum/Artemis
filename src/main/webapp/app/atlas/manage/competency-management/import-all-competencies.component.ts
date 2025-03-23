@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course, CourseForImportDTO } from 'app/entities/course.model';
+import { Course, CourseForImportDTO } from 'app/core/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
 import { CourseCompetencyType } from 'app/entities/competency.model';

@@ -10,7 +10,7 @@ import { ConversationHeaderComponent } from 'app/communication/course-conversati
 import { CourseWideSearchComponent } from 'app/communication/course-conversations/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';

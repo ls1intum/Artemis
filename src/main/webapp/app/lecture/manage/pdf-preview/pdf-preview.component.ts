@@ -7,7 +7,7 @@ import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachme
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';

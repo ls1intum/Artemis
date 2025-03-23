@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CoursePrerequisitesButtonComponent } from 'app/course/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 import { CourseRegistrationButtonComponent } from 'app/course/overview/course-registration/course-registration-button/course-registration-button.component';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { lastValueFrom, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';

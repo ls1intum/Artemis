@@ -4,7 +4,7 @@ import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-
 import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';

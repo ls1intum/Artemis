@@ -11,7 +11,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 export type Detail = NotShownDetail | ShownDetail;

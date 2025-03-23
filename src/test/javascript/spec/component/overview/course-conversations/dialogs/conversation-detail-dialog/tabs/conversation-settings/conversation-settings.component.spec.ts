@@ -4,7 +4,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../..
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';

@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizStatisticsFooterComponent } from 'app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

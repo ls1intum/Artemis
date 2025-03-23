@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';

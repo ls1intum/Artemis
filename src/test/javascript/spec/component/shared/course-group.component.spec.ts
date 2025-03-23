@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { CourseGroupComponent, GroupUserInformationRow } from 'app/shared/course-group/course-group.component';
-import { CourseGroup } from 'app/entities/course.model';
+import { CourseGroup } from 'app/core/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable, of, throwError } from 'rxjs';

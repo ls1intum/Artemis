@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { Selection, UMLModel, UMLModelElement, findElement } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import {

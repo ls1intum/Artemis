@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, f
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/communication/answer-post.service';

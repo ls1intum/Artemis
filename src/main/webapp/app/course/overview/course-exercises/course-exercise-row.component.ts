@@ -3,7 +3,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';

@@ -21,7 +21,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { provideRouter } from '@angular/router';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';

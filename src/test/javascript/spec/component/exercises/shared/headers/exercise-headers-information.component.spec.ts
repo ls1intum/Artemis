@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';

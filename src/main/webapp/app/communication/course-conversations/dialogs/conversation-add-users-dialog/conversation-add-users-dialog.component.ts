@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';

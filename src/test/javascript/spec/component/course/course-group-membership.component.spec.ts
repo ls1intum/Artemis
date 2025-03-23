@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseGroup } from 'app/entities/course.model';
+import { CourseGroup } from 'app/core/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';

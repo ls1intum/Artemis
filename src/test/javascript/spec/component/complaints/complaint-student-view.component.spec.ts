@@ -10,7 +10,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { Submission } from 'app/entities/submission.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { Observable, of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';

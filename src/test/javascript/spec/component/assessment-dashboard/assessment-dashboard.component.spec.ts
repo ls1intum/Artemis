@@ -18,7 +18,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { AccountService } from 'app/core/auth/account.service';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';

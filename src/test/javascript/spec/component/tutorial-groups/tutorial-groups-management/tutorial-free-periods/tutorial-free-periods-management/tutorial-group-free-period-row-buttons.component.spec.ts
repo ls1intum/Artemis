@@ -13,7 +13,7 @@ import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutoria
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';

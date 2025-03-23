@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { francAll } from 'franc-min';
-import { Language } from 'app/entities/course.model';
+import { Language } from 'app/core/shared/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 

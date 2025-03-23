@@ -3,7 +3,7 @@ import { GraphColors, Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import * as shape from 'd3-shape';
 import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
 import { RouterLink } from '@angular/router';

@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { of, throwError } from 'rxjs';

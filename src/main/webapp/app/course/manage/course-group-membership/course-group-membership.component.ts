@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
+import { Course, CourseGroup, courseGroups } from 'app/core/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Router } from '@angular/router';

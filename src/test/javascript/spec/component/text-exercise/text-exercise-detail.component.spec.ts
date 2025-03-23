@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TextExerciseDetailComponent } from 'app/text/manage/text-exercise/text-exercise-detail.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';

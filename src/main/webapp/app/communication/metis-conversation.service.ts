@@ -11,7 +11,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';

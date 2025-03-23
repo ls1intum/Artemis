@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { User } from 'app/core/user/user.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';

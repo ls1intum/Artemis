@@ -10,7 +10,7 @@ import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleMod
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';

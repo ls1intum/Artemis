@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
