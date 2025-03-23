@@ -9,8 +9,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';

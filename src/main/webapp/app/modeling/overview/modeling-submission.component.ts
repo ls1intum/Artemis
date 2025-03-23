@@ -5,8 +5,8 @@ import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelation
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';

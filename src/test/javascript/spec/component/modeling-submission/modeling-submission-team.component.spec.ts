@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,7 +15,7 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';

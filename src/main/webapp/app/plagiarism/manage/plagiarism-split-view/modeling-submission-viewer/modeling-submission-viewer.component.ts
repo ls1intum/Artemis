@@ -3,8 +3,8 @@ import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submis
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
 

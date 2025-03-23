@@ -30,7 +30,7 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';

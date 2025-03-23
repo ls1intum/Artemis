@@ -9,7 +9,7 @@ import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ModelElementCount } from 'app/entities/modeling-submission.model';
+import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

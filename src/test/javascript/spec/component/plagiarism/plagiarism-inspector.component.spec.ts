@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { Range } from 'app/shared/util/utils';
 import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';

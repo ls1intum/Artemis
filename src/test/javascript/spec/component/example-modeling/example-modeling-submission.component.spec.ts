@@ -1,11 +1,11 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of, throwError } from 'rxjs';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';

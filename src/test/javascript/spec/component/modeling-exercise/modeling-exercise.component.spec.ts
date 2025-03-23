@@ -4,7 +4,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/entities/course.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';

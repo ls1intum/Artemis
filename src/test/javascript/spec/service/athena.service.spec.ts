@@ -10,7 +10,7 @@ import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedback
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('AthenaService', () => {

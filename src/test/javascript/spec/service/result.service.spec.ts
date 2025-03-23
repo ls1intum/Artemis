@@ -26,7 +26,7 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/entities/feedback.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {

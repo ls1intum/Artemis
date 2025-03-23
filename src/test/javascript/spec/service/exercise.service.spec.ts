@@ -13,7 +13,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';

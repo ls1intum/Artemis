@@ -13,7 +13,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';

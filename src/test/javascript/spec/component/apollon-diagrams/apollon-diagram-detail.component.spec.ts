@@ -6,7 +6,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';

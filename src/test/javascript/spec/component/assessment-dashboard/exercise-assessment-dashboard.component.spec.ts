@@ -8,8 +8,8 @@ import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manag
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/header-exercise-page-with-details.component';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ExerciseType } from 'app/entities/exercise.model';

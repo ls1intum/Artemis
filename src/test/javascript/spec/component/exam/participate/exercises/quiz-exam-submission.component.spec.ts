@@ -19,7 +19,7 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { provideRouter } from '@angular/router';

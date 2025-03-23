@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, Subject } from 'rxjs';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';

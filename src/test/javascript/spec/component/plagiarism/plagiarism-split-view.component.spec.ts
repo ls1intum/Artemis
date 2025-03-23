@@ -6,7 +6,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';

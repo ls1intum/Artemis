@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/string-count.service';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;

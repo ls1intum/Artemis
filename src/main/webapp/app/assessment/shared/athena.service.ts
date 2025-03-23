@@ -9,7 +9,7 @@ import { TextBlock } from 'app/entities/text/text-block.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { PROFILE_ATHENA } from 'app/app.constants';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {

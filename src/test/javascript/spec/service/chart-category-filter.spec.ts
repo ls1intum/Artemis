@@ -2,7 +2,7 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
