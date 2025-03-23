@@ -4,7 +4,7 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { RouterLink } from '@angular/router';
 import { NgStyle } from '@angular/common';
-import { getContrastingTextColor } from 'app/utils/color.utils';
+import { getContrastingTextColor } from 'app/shared/util/color.utils';
 
 @Component({
     selector: 'jhi-overview-lti-course-card',

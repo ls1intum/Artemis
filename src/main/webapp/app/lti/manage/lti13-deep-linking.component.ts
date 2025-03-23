@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';

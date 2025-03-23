@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnInit, input } from '@angular/core';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
-import { getInitialsFromString } from 'app/utils/text.utils';
-import { getBackgroundColorHue } from 'app/utils/color.utils';
+import { getInitialsFromString } from 'app/shared/util/text.utils';
+import { getBackgroundColorHue } from 'app/shared/util/color.utils';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

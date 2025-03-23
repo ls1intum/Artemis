@@ -13,7 +13,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash-es';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
