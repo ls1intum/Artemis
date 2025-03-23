@@ -3,7 +3,7 @@ import { IProgrammingExerciseParticipationService } from 'app/programming/manage
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
-import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
+import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 
 export class MockProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback = (participationId: number, withSubmission: boolean) => of({} as Result);

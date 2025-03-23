@@ -8,7 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, map, tap } from 'rxjs';
-import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
+import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
