@@ -17,7 +17,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewSection } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -29,7 +29,7 @@ import {
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',

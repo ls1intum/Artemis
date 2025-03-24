@@ -8,7 +8,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

@@ -19,7 +19,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

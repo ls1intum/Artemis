@@ -27,7 +27,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { FileService } from 'app/shared/http/file.service';
 import { onError } from 'app/shared/util/global.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { filter, finalize } from 'rxjs/operators';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';

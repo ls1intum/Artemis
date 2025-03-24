@@ -1,4 +1,4 @@
-import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
