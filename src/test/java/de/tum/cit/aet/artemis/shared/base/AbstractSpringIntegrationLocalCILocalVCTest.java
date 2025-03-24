@@ -203,6 +203,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @BeforeEach
+    void clearBuildJobsBefore() {
+        buildJobRepository.deleteAll();
+    }
+
+    @BeforeEach
     protected void mockBuildAgentServices() {
         when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
         this.dockerClient = dockerClientMock;
@@ -216,7 +221,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @AfterEach
-    void clearBuildJobs() {
+    void clearBuildJobsAfter() {
         buildJobRepository.deleteAll();
     }
 
