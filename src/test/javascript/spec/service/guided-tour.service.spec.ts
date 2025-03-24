@@ -16,7 +16,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { User } from 'app/core/user/user.model';

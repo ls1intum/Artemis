@@ -11,7 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { EventManager } from 'app/shared/service/event-manager.service';

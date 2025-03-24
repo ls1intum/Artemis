@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { onTextEditorTab } from 'app/utils/text.utils';
+import { onTextEditorTab } from 'app/shared/util/text.utils';
 
 @Component({
     selector: 'jhi-modeling-explanation-editor',
