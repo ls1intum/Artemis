@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';

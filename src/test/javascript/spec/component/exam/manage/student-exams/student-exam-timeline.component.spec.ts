@@ -17,10 +17,10 @@ import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directiv
 import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Submission } from 'app/entities/submission.model';

@@ -16,7 +16,7 @@ import { UserService } from 'app/core/user/shared/user.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent } from 'ng-mocks';
-import { iconsAsHTML } from 'app/utils/icons.utils';
+import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('OrganizationManagementDetailComponent', () => {

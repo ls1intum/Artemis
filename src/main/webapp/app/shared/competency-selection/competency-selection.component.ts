@@ -12,7 +12,7 @@ import {
     getIcon,
 } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Subscription, finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
