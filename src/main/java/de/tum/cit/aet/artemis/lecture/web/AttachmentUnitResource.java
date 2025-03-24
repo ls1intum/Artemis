@@ -300,7 +300,15 @@ public class AttachmentUnitResource {
         }
     }
 
-    @PutMapping("/lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
+    /**
+     * PUT lectures/:lectureId/attachment-units/:attachmentUnitId/student-version : Updates the student version file for an existing attachment unit
+     *
+     * @param lectureId          the id of the lecture to which the attachment unit belongs
+     * @param attachmentUnitId   the id of the attachment unit to update
+     * @param studentVersionFile the file containing the student version of the attachment
+     * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
+     */
+    @PutMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
