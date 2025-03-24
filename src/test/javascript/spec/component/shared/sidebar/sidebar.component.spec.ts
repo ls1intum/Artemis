@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
-import { ExerciseFilterResults } from 'app/types/exercise-filter';
+import { ExerciseFilterResults } from 'app/shared/types/exercise-filter';
 import { EventEmitter, input, runInInjectionContext } from '@angular/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseType } from 'app/entities/exercise.model';

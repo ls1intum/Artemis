@@ -10,7 +10,7 @@ import { MetisService } from 'app/communication/metis.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

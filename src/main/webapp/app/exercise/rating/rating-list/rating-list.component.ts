@@ -14,7 +14,6 @@ import { StarRatingComponent } from '../star-rating/star-rating.component';
 @Component({
     selector: 'jhi-rating-list',
     templateUrl: './rating-list.component.html',
-    styleUrls: [],
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, StarRatingComponent],
 })
 export class RatingListComponent implements OnInit {
