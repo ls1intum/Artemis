@@ -13,7 +13,7 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programm
 import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
-import { ImportOptions } from 'app/types/programming-exercises';
+import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

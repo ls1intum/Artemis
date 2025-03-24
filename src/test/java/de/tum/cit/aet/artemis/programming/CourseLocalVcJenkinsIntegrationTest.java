@@ -393,7 +393,7 @@ class CourseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testGetCoursesForDashboardPracticeRepositories() throws Exception {
         courseTestService.testGetCoursesForDashboardPracticeRepositories();
     }

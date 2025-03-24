@@ -5,7 +5,7 @@ import { NgbDateParserFormatter, NgbTimeAdapter, NgbTimepicker } from '@ng-boots
 import { Course } from 'app/entities/course.model';
 import * as _ from 'lodash-es';
 import dayjs from 'dayjs/esm';
-import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
+import { dayOfWeekZeroSundayToZeroMonday } from 'app/shared/util/date.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
