@@ -5,7 +5,7 @@ import { ExamParticipationService } from 'app/exam/overview/exam-participation.s
 import dayjs from 'dayjs/esm';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 

@@ -17,7 +17,7 @@ import { Subscription, of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';

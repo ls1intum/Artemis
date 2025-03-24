@@ -6,7 +6,7 @@ import { Course, CourseGroup } from 'app/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/utils/icons.utils';
+import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faDownload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
