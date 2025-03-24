@@ -7,9 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -27,16 +23,10 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
-class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "peinttest";
 
@@ -51,18 +41,16 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
 
         jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-        gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), true);
-        gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), true);
 
         var programmingExerciseCountBefore = programmingExerciseRepository.count();
 
-        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedProgrammingExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class,
+                HttpStatus.OK);
 
         // The result from the put response should be updated with the new data.
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -98,7 +86,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProblemStatement_courseExercise() throws Exception {
         final var newProblem = "a new problem statement";
-        final var endpoint = "/api/programming-exercises/" + programmingExerciseId + "/problem-statement";
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExerciseId + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -118,7 +106,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
         examUtilService.addExerciseToStudentExam(studentExam, programmingExercise);
 
         final var newProblem = "a new problem statement";
-        final var endpoint = "/api/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         ProgrammingExercise updatedProgrammingExercise = request.patchWithResponseBody(endpoint, newProblem, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
         assertThat(updatedProgrammingExercise.getProblemStatement()).isEqualTo(newProblem);
@@ -172,80 +160,11 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
 
         if (assessmentType == AssessmentType.AUTOMATIC) {
             jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-            gitlabRequestMockProvider.enableMockingOfRequests();
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
-            gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(), true);
-            gitlabRequestMockProvider.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(), true);
         }
 
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void findAppropriateSubmissionRespectingIndividualDueDate(boolean isSubmissionAfterIndividualDueDate) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        exercise.setDueDate(ZonedDateTime.now());
-        exercise = programmingExerciseRepository.save(exercise);
-
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission.setType(SubmissionType.OTHER);
-        if (isSubmissionAfterIndividualDueDate) {
-            submission.setSubmissionDate(ZonedDateTime.now().plusHours(26));
-        }
-        else {
-            // submission time after exercise due date but before individual due date
-            submission.setSubmissionDate(ZonedDateTime.now().plusHours(1));
-        }
-        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
-
-        ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1")
-                .orElseThrow();
-        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
-        submission.setParticipation(participation);
-
-        Submission latestValidSubmission = exercise.findAppropriateSubmissionByResults(Set.of(submission));
-        if (isSubmissionAfterIndividualDueDate) {
-            assertThat(latestValidSubmission).isNull();
-        }
-        else {
-            assertThat(latestValidSubmission).isEqualTo(submission);
-        }
-    }
-
-    @Test
-    void testFindRelevantParticipations() {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-
-        StudentParticipation gradedParticipationInitialized = new StudentParticipation();
-        gradedParticipationInitialized.setInitializationState(InitializationState.INITIALIZED);
-        gradedParticipationInitialized.setExercise(exercise);
-        StudentParticipation gradedParticipationFinished = new StudentParticipation();
-        gradedParticipationFinished.setInitializationState(InitializationState.FINISHED);
-        gradedParticipationFinished.setExercise(exercise);
-        StudentParticipation practiceParticipation = new StudentParticipation();
-        practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setExercise(exercise);
-        List<StudentParticipation> allParticipations = List.of(gradedParticipationInitialized, gradedParticipationFinished, practiceParticipation);
-
-        // Create all possible combinations of the entries in allParticipations
-        for (int i = 0; i < 2 << allParticipations.size(); i++) {
-            Set<StudentParticipation> participationsToTest = new HashSet<>();
-            for (int j = 0; j < allParticipations.size(); j++) {
-                if (((i >> j) & 1) == 1) {
-                    participationsToTest.add(allParticipations.get(j));
-                }
-            }
-            Set<StudentParticipation> expectedParticipations = new HashSet<>(participationsToTest);
-            if (expectedParticipations.contains(gradedParticipationInitialized)) {
-                expectedParticipations.remove(gradedParticipationFinished);
-            }
-
-            Set<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
-            assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
-        }
     }
 
     @Test
@@ -255,7 +174,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitla
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
         Channel exerciseChannel = exerciseUtilService.addChannelToExercise(programmingExercise);
 
-        request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
+        request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();

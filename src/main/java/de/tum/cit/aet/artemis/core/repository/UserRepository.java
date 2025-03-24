@@ -85,6 +85,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 
+    List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByEmailIgnoreCase(String email);
 
@@ -594,6 +596,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(Set<String> logins);
+
+    List<User> findAllByIdIn(List<Long> ids);
 
     /**
      * Searches for users by their login or full name.
@@ -1146,33 +1150,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default boolean isCurrentUser(String login) {
         return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
-
-    /**
-     * Finds all users which a non-null VCS access token that expires before some given date.
-     *
-     * @param expirationDate the maximal expiration date of the retrieved users
-     * @return all users with expiring VCS access tokens before the given date
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-            WHERE user.vcsAccessToken IS NOT NULL
-                AND user.vcsAccessTokenExpiryDate IS NOT NULL
-                AND user.vcsAccessTokenExpiryDate <= :date
-            """)
-    Set<User> getUsersWithAccessTokenExpirationDateBefore(@Param("date") ZonedDateTime expirationDate);
-
-    /**
-     * Finds all users with VCS access tokens set to null.
-     *
-     * @return all users without VCS access tokens
-     */
-    @Query("""
-            SELECT user
-            FROM User user
-            WHERE user.vcsAccessToken IS NULL
-            """)
-    Set<User> getUsersWithAccessTokenNull();
 
     @Query("""
             SELECT user.login

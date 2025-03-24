@@ -7,9 +7,9 @@ import { Exercise } from 'app/entities/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statistics/exercise-detail-statistics.component';
-import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { DoughnutChartComponent } from 'app/exercises/shared/statistics/doughnut-chart.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
+import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
+import { DoughnutChartComponent } from 'app/exercise/statistics/doughnut-chart.component';
 
 describe('ExerciseDetailStatisticsComponent', () => {
     let fixture: ComponentFixture<ExerciseDetailStatisticsComponent>;

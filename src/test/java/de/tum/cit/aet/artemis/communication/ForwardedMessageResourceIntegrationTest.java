@@ -54,7 +54,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 0);
 
         exampleCourse = courses.get(0);
@@ -62,8 +62,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 
         testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        ConversationFactory factory = new ConversationFactory();
-        Conversation conversation = factory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
+        Conversation conversation = ConversationFactory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
         conversationRepository.save(conversation);
 
         testPost = ConversationFactory.createBasicPost(1, testUser);

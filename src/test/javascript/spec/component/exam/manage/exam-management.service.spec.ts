@@ -8,8 +8,8 @@ import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -134,9 +134,9 @@ describe('Exam Management Service Tests', () => {
         // THEN
         const req = httpMock.expectOne({
             method: 'GET',
-            url: `api/exams/${mockExam.id}`,
+            url: `api/exam/exams/${mockExam.id}`,
         });
-        expect(req.request.url).toBe(`api/exams/${mockExam.id}`);
+        expect(req.request.url).toBe(`api/exam/exams/${mockExam.id}`);
 
         // CLEANUP
         req.flush(expected);
@@ -560,41 +560,6 @@ describe('Exam Management Service Tests', () => {
         tick();
     }));
 
-    it('should unlock all repositories', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockRepoCount = 1;
-        const expected = 1;
-        // WHEN
-        service.unlockAllRepositories(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockRepoCount));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/unlock-all-repositories`,
-        });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should lock all repositories', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockRepoCount = 1;
-        const expected = 1;
-
-        // WHEN
-        service.lockAllRepositories(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockRepoCount));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/lock-all-repositories`,
-        });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should update order', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
@@ -654,7 +619,7 @@ describe('Exam Management Service Tests', () => {
 
         const windowSpy = jest.spyOn(window, 'open').mockImplementation();
         service.downloadExamArchive(course.id!, mockExam.id!);
-        expect(windowSpy).toHaveBeenCalledWith('api/courses/456/exams/1/download-archive', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith('api/exam/courses/456/exams/1/download-archive', '_blank');
     }));
 
     it('should archive the exam', fakeAsync(() => {
@@ -704,7 +669,7 @@ describe('Exam Management Service Tests', () => {
 
         const exercises = [textExercise, modelingExercise, programmingExercise];
         service.getExercisesWithPotentialPlagiarismForExam(1, 1).subscribe((resp) => expect(resp).toEqual(exercises));
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/courses/1/exams/1/exercises-with-potential-plagiarism' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/1/exercises-with-potential-plagiarism' });
         req.flush(exercises);
         tick();
     }));

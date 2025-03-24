@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -112,7 +112,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
@@ -198,7 +198,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         // Set programming exercise due date in future.
         exerciseUtilService.updateExerciseDueDate(studentParticipation.getExercise().getId(), ZonedDateTime.now().plusHours(10));
 
-        List<Feedback> feedbacks = request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
+        List<Feedback> feedbacks = request.getList("/api/assessment/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK,
                 Feedback.class);
 
         assertThat(feedbacks).isEqualTo(result.getFeedbacks());
@@ -210,7 +210,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
 
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
+        request.getList("/api/assessment/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
 
     @Test
@@ -218,7 +218,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
+        request.getList("/api/assessment/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
 
     @Test
@@ -226,8 +226,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
         participationUtilService.addSampleFeedbackToResults(result);
-        request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details", HttpStatus.NOT_FOUND,
-                Feedback.class);
+        request.getList("/api/assessment/participations/" + result.getParticipation().getId() + "/results/" + UUID.randomUUID().getMostSignificantBits() + "/details",
+                HttpStatus.NOT_FOUND, Feedback.class);
     }
 
     @Test
@@ -235,7 +235,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void shouldReturnBadRequestForNonMatchingParticipationId() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, solutionParticipation);
         participationUtilService.addSampleFeedbackToResults(result);
-        request.getList("/api/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
+        request.getList("/api/assessment/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -309,8 +309,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         List<Result> results = fileUploadExercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
                 .flatMap(submission -> submission.getResults().stream()).toList();
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
-                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
@@ -332,8 +332,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         List<Result> results = fileUploadExercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
                 .flatMap(submission -> submission.getResults().stream()).toList();
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
-                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(NUMBER_OF_STUDENTS / 2);
@@ -449,7 +449,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void getResult() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
-        Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
+        Result returnedResult = request.get("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull().isEqualTo(result);
     }
 
@@ -457,15 +457,16 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getResult_asStudent() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
-        request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
+        request.get("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsWithPointsForExamExercise() throws Exception {
         List<Result> results = setupExamModelingExerciseWithResults();
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request
-                .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
+        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList(
+                "/api/assessment/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK,
+                ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(NUMBER_OF_STUDENTS);
@@ -483,7 +484,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetResultsWithPointsForExamExercise_asTutor() throws Exception {
         setupExamModelingExerciseWithResults();
-        request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
+        request.getList("/api/assessment/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.FORBIDDEN, Result.class);
     }
 
     private List<Result> setupExamModelingExerciseWithResults() {
@@ -532,9 +533,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
-        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
+        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -543,7 +544,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
         long randomId = 1653;
-        request.delete("/api/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
+        request.delete("/api/assessment/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
         assertThat(resultRepository.existsById(result.getId())).isTrue();
     }
 
@@ -552,15 +553,16 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void deleteResultStudent() throws Exception {
         Result result = participationUtilService.addResultToParticipation(null, null, studentParticipation);
         result = participationUtilService.addSampleFeedbackToResults(result);
-        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/assessment/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmission() throws Exception {
         Result result = new Result().rated(false);
-        var createdResult = request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=" + TEST_PREFIX + "student1",
-                result, Result.class, HttpStatus.CREATED);
+        var createdResult = request.postWithResponseBody(
+                "/api/assessment/exercises/" + modelingExercise.getId() + "/external-submission-results?studentLogin=" + TEST_PREFIX + "student1", result, Result.class,
+                HttpStatus.CREATED);
         assertThat(createdResult).isNotNull();
         assertThat(createdResult.isRated()).isFalse();
         // TODO: we should assert that the result has been created with all corresponding objects in the database
@@ -571,7 +573,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void createResultForExternalSubmission_wrongExerciseId() throws Exception {
         Result result = new Result().rated(false);
         long randomId = 2145;
-        var createdResult = request.postWithResponseBody("/api/exercises/" + randomId + "/external-submission-results", result, Result.class, HttpStatus.BAD_REQUEST);
+        var createdResult = request.postWithResponseBody("/api/assessment/exercises/" + randomId + "/external-submission-results", result, Result.class, HttpStatus.BAD_REQUEST);
         assertThat(createdResult).isNull();
     }
 
@@ -613,12 +615,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createResultForExternalSubmissionExam() throws Exception {
         Result result = new Result().rated(false);
-        request.postWithResponseBody("/api/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
+        request.postWithResponseBody("/api/assessment/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result, Result.class,
                 HttpStatus.BAD_REQUEST);
     }
 
     private String externalResultPath(long exerciseId, String studentLogin) {
-        return "/api/exercises/" + exerciseId + "/external-submission-results?studentLogin=" + studentLogin;
+        return "/api/assessment/exercises/" + exerciseId + "/external-submission-results?studentLogin=" + studentLogin;
     }
 
     @Test
@@ -747,7 +749,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
                 + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
@@ -789,7 +791,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback3.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback3, result1);
 
-        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
                 + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
@@ -837,7 +839,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback2.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback2, result2);
 
-        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
                 + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=true";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
@@ -870,7 +872,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        long maxCount = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
+        long maxCount = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
 
         assertThat(maxCount).isEqualTo(1);
     }
@@ -895,7 +897,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback2.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback2, result2);
 
-        long maxCount = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
+        long maxCount = request.get("/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
 
         assertThat(maxCount).isEqualTo(2);
     }
@@ -915,7 +917,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedback.getId();
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedback.getId();
 
         var response = request.get(url, HttpStatus.OK, List.class);
         assertThat(response).hasSize(1);

@@ -16,11 +16,11 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -621,6 +621,9 @@ describe('ExamUpdateComponent', () => {
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
             alertService = fixture.debugElement.injector.get(AlertService);
+            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                return new MockResizeObserver(callback);
+            });
         });
 
         it('should initialize without id and dates set', () => {
@@ -686,7 +689,7 @@ describe('ExamUpdateComponent', () => {
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
             // Only import one of two exercises
-            component.examExerciseImportComponent.selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
             const alertSpy = jest.spyOn(alertService, 'error');
             const navigateSpy = jest.spyOn(router, 'navigate');
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
@@ -733,9 +736,9 @@ describe('ExamUpdateComponent', () => {
 
             component.exam = examWithError;
             TestBed.runInInjectionContext(() => {
-                component.examExerciseImportComponent.exam = input(examWithError);
+                component.examExerciseImportComponent().exam = input(examWithError);
             });
-            component.examExerciseImportComponent.ngOnInit();
+            component.examExerciseImportComponent().ngOnInit();
 
             fixture.detectChanges();
             component.save();

@@ -68,7 +68,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
@@ -173,7 +173,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            return versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+            return versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
         }
         else {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);

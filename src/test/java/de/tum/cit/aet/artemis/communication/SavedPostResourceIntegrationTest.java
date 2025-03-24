@@ -51,15 +51,15 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnPostsWhenGetSavedPostIsCalled() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/saved-posts/" + exampleCourseId + "/" + SavedPostStatus.IN_PROGRESS.getDatabaseKey()))
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/saved-posts/" + exampleCourseId + "/" + SavedPostStatus.IN_PROGRESS.getDatabaseKey()))
                 .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].id").value(testPost.getId()));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenWrongStatusIsSupplied() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/saved-posts/" + exampleCourseId + "/" + 999)).andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/saved-posts/" + exampleCourseId + "/" + 999))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
     }
 
     @Test
@@ -69,7 +69,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
         newTestPost.setConversation(conversation);
         conversationMessageRepository.save(newTestPost);
 
-        request.performMvcRequest(MockMvcRequestBuilders.post("/api/saved-posts/{postId}/{type}", newTestPost.getId(), PostingType.POST.getDatabaseKey()))
+        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}/{type}", newTestPost.getId(), PostingType.POST.getDatabaseKey()))
                 .andExpect(MockMvcResultMatchers.status().isCreated());
 
         conversationMessageRepository.delete(newTestPost);
@@ -78,8 +78,8 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenWrongTypeIsSupplied() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.post("/api/saved-posts/{postId}/{type}", testPost.getId(), 999)).andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("error.savedPostTypeDoesNotExist"));
+        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}/{type}", testPost.getId(), 999))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostTypeDoesNotExist"));
     }
 
     @Test
@@ -94,7 +94,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
             savedPosts.add(savedPost);
         }
 
-        request.performMvcRequest(MockMvcRequestBuilders.post("/api/saved-posts/{postId}/{type}", testPost.getId(), PostingType.POST.getDatabaseKey()))
+        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}/{type}", testPost.getId(), PostingType.POST.getDatabaseKey()))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostMaxReached"));
 
         // Cleanup
@@ -104,21 +104,22 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnOkWhenUpdatingProperStatus() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/saved-posts/{postId}/{type}?status={status}", testPost.getId(), PostingType.POST.getDatabaseKey(),
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/saved-posts/{postId}/{type}?status={status}", testPost.getId(), PostingType.POST.getDatabaseKey(),
                 SavedPostStatus.COMPLETED.getDatabaseKey())).andExpect(MockMvcResultMatchers.status().isOk());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenUpdatingAndWrongStatusIsSupplied() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/saved-posts/{postId}/{type}?status={status}", testPost.getId(), PostingType.POST.getDatabaseKey(), 999))
+        request.performMvcRequest(
+                MockMvcRequestBuilders.put("/api/communication/saved-posts/{postId}/{type}?status={status}", testPost.getId(), PostingType.POST.getDatabaseKey(), 999))
                 .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNoContentWhenDeletingSavedPost() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/saved-posts/{postId}/{type}", testPost.getId(), PostingType.POST.getDatabaseKey()))
+        request.performMvcRequest(MockMvcRequestBuilders.delete("/api/communication/saved-posts/{postId}/{type}", testPost.getId(), PostingType.POST.getDatabaseKey()))
                 .andExpect(MockMvcResultMatchers.status().isNoContent());
     }
 

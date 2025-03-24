@@ -8,10 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Result } from 'app/entities/result.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
-import { AssessmentNamesForModelId, getNamesForAssessments } from 'app/exercises/modeling/assess/modeling-assessment.util';
+import { AssessmentNamesForModelId, getNamesForAssessments } from 'app/modeling/manage/assess/modeling-assessment.util';
 
 const assessmentNames: AssessmentNamesForModelId = {
     '6': {
@@ -149,7 +149,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling-submissions/${submissionId}/result/${1}/assessment`,
+                    url: `api/modeling/modeling-submissions/${submissionId}/result/${1}/assessment`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -175,7 +175,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling-submissions/${exampleSubmissionId}/example-assessment`,
+                    url: `api/modeling/modeling-submissions/${exampleSubmissionId}/example-assessment`,
                     method: 'PUT',
                 });
                 req.flush(returnedFromService);
@@ -190,7 +190,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/modeling-submissions/${submissionId}/result`,
+                    url: `api/modeling/modeling-submissions/${submissionId}/result`,
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
@@ -206,7 +206,7 @@ describe('ModelingAssessmentService', () => {
                     .pipe(take(1))
                     .subscribe((resp) => (expectedResult = resp));
                 const req = httpMock.expectOne({
-                    url: `api/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`,
+                    url: `api/modeling/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`,
                     method: 'GET',
                 });
                 req.flush(returnedFromService);
@@ -235,7 +235,7 @@ describe('ModelingAssessmentService', () => {
                     .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId)
                     .pipe(take(1))
                     .subscribe((resp) => (httpExpectedResult = resp));
-                const req = httpMock.expectOne({ url: `api/modeling-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
+                const req = httpMock.expectOne({ url: `api/modeling/modeling-submissions/${submissionId}/assessment-after-complaint`, method: 'PUT' });
                 req.flush(returnedFromService);
                 expect(httpExpectedResult.body).toEqual(expected);
             });

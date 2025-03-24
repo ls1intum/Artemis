@@ -41,9 +41,11 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DELETED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
@@ -53,6 +55,9 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UPDATED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRES_SOON;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
@@ -149,6 +154,18 @@ public class NotificationConstants {
     public static final String TUTORIAL_GROUP_ASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupAssigned";
 
     public static final String TUTORIAL_GROUP_UNASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupUnassigned";
+
+    public static final String SSH_KEY_ADDED_TITLE = "artemisApp.singleUserNotification.title.sshKeyAdded";
+
+    public static final String SSH_KEY_EXPIRES_SOON_TITLE = "artemisApp.singleUserNotification.title.sshKeyExpiresSoon";
+
+    public static final String SSH_KEY_HAS_EXPIRED_TITLE = "artemisApp.singleUserNotification.title.sshKeyHasExpired";
+
+    public static final String VCS_ACCESS_TOKEN_ADDED_TITLE = "artemisApp.singleUserNotification.title.vcsAccessTokenAdded";
+
+    public static final String VCS_ACCESS_TOKEN_EXPIRED_TITLE = "artemisApp.singleUserNotification.title.vcsAccessTokenExpired";
+
+    public static final String VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE = "artemisApp.singleUserNotification.title.vcsAccessTokenExpiresSoon";
 
     // Texts
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT = "artemisApp.groupNotification.text.liveExamExerciseUpdate";
@@ -285,6 +302,18 @@ public class NotificationConstants {
 
     public static final String CONVERSATION_DELETE_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.deleteChannel";
 
+    public static final String SSH_KEY_ADDED_TEXT = "artemisApp.singleUserNotification.text.sshKeyAdded";
+
+    public static final String SSH_KEY_EXPIRES_SOON_TEXT = "artemisApp.singleUserNotification.text.sshKeyExpiresSoon";
+
+    public static final String SSH_KEY_HAS_EXPIRED_TEXT = "artemisApp.singleUserNotification.text.sshKeyHasExpired";
+
+    public static final String VCS_ACCESS_TOKEN_ADDED_TEXT = "artemisApp.singleUserNotification.text.vcsAccessTokenAdded";
+
+    public static final String VCS_ACCESS_TOKEN_EXPIRED_TEXT = "artemisApp.singleUserNotification.text.vcsAccessTokenExpired";
+
+    public static final String VCS_ACCESS_TOKEN_EXPIRES_SOON_TEXT = "artemisApp.singleUserNotification.text.vcsAccessTokenExpiresSoon";
+
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(EXERCISE_SUBMISSION_ASSESSED, EXERCISE_SUBMISSION_ASSESSED_TITLE).put(ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
@@ -310,7 +339,9 @@ public class NotificationConstants {
             .put(CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT_TITLE).put(CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
             .put(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE).put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE)
             .put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE).put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE)
-            .put(PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_REPOSITORY_LOCKS_TITLE).put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE).build();
+            .put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE).put(SSH_KEY_ADDED, SSH_KEY_ADDED_TITLE).put(SSH_KEY_EXPIRES_SOON, SSH_KEY_EXPIRES_SOON_TITLE)
+            .put(SSH_KEY_HAS_EXPIRED, SSH_KEY_HAS_EXPIRED_TITLE).put(VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_ADDED_TITLE)
+            .put(VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRED_TITLE).put(VCS_ACCESS_TOKEN_EXPIRES_SOON, VCS_ACCESS_TOKEN_EXPIRES_SOON_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

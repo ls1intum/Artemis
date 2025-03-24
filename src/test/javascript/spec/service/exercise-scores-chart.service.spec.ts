@@ -5,7 +5,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
-import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
+import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/overview/visualizations/exercise-scores-chart.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Scores Chart Service', () => {

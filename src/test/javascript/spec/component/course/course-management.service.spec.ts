@@ -4,31 +4,31 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CourseScores } from 'app/course/course-scores/course-scores';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
-import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
+import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
+import { CoursesForDashboardDTO } from 'app/core/course/manage/courses-for-dashboard-dto';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
+import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -45,7 +45,7 @@ describe('Course Management Service', () => {
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
 
-    const resourceUrl = 'api/courses';
+    const resourceUrl = 'api/core/courses';
 
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
@@ -165,7 +165,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/online-course-configuration` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/lti/courses/1/online-course-configuration` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -292,7 +292,7 @@ describe('Course Management Service', () => {
             .findAllParticipationsWithResults(course.id!)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(participations));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/participations` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/exercise/courses/${course.id}/participations` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -454,7 +454,7 @@ describe('Course Management Service', () => {
     it('should download course archive', () => {
         const windowSpy = jest.spyOn(window, 'open').mockImplementation();
         courseManagementService.downloadCourseArchive(1);
-        expect(windowSpy).toHaveBeenCalledWith('api/courses/1/download-archive', '_blank');
+        expect(windowSpy).toHaveBeenCalledWith(`${resourceUrl}/1/download-archive`, '_blank');
     });
 
     it('should archive the course', fakeAsync(() => {
@@ -538,7 +538,7 @@ describe('Course Management Service', () => {
         });
 
         const res = httpMock.expectOne({ method: 'GET' });
-        expect(res.request.url).toBe(`api/courses/${courseId}/allowed-complaints?teamMode=true`);
+        expect(res.request.url).toBe(`${resourceUrl}/${courseId}/allowed-complaints?teamMode=true`);
 
         res.flush(expectedCount);
     });

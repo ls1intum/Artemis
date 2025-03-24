@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
-@Profile("gitlabci | jenkins")
+@Profile("jenkins")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class BuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPlanResource.class);

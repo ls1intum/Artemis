@@ -6,15 +6,15 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import type { EntityResponseType, ExerciseDetailsType } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockProvider } from 'ng-mocks';
@@ -410,7 +410,7 @@ describe('Exercise Service', () => {
         });
         const expectedReturnedExercise = { id: exercise.id } as Exercise;
 
-        const expectedUrl = `api/exercises`;
+        const expectedUrl = `api/exercise/exercises`;
         let result$: Observable<EntityResponseType>;
         let method: string;
         if (action === 'create') {
@@ -463,7 +463,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExerciseDetails = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/details`,
+            url: `api/exercise/exercises/${exerciseId}/details`,
             method: 'GET',
         });
 
@@ -490,7 +490,7 @@ describe('Exercise Service', () => {
         result.subscribe((exerciseResponse) => (actualReturnedExercise = exerciseResponse.body!));
 
         const testRequest = httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/example-solution`,
+            url: `api/exercise/exercises/${exerciseId}/example-solution`,
             method: 'GET',
         });
 
@@ -507,7 +507,7 @@ describe('Exercise Service', () => {
         service.reset(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/reset`,
+            url: `api/exercise/exercises/${exerciseId}/reset`,
             method: 'DELETE',
         });
     });
@@ -518,7 +518,7 @@ describe('Exercise Service', () => {
         service.toggleSecondCorrection(exerciseId).subscribe();
 
         httpMock.expectOne({
-            url: `api/exercises/${exerciseId}/toggle-second-correction`,
+            url: `api/exercise/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
         });
     });

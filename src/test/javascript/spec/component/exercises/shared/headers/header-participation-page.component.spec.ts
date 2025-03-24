@@ -3,15 +3,15 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
+import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 
@@ -109,5 +109,19 @@ describe('HeaderParticipationPage', () => {
         component.participation = { results: [{ score: 42, rated: true } as Result] } as StudentParticipation;
         component.ngOnChanges();
         expect(component.achievedPoints).toBe(42);
+    });
+
+    it('should select the result with later completion date even if its id is lower', () => {
+        component.exercise.maxPoints = 100;
+        const earlierDate = dayjs().subtract(2, 'hours');
+        const laterDate = dayjs().subtract(1, 'hours');
+
+        const resultWithLowerId = { id: 1, score: 80, rated: true, completionDate: laterDate } as Result;
+        const resultWithHigherId = { id: 2, score: 50, rated: true, completionDate: earlierDate } as Result;
+
+        component.participation = { results: [resultWithHigherId, resultWithLowerId] } as StudentParticipation;
+
+        component.ngOnChanges();
+        expect(component.achievedPoints).toBe(80);
     });
 });

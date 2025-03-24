@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -94,9 +95,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
-        ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+        ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
                 ExamUser.class, HttpStatus.OK);
-        byte[] getUserSignatureResponse = request.get(updateExamUserResponse.getSigningImagePath(), HttpStatus.OK, byte[].class);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, updateExamUserResponse.getSigningImagePath());
+        byte[] getUserSignatureResponse = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         assertThat(getUserSignatureResponse).isEqualTo(file.getBytes());
     }
@@ -104,18 +106,18 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetTemplateFile() throws Exception {
-        String javaReadme = request.get("/api/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
+        String javaReadme = request.get("/api/core/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
-        String cReadme = request.get("/api/files/templates/C/GCC", HttpStatus.OK, String.class);
+        String cReadme = request.get("/api/core/files/templates/C/GCC", HttpStatus.OK, String.class);
         assertThat(cReadme).isNotEmpty();
-        String pythonReadme = request.get("/api/files/templates/PYTHON", HttpStatus.OK, String.class);
+        String pythonReadme = request.get("/api/core/files/templates/PYTHON", HttpStatus.OK, String.class);
         assertThat(pythonReadme).isNotEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCodeOfConductTemplate() throws Exception {
-        var template = request.get("/api/files/templates/code-of-conduct", HttpStatus.OK, String.class);
+        var template = request.get("/api/core/files/templates/code-of-conduct", HttpStatus.OK, String.class);
         assertThat(template).startsWith("<!-- Code of Conduct Template");
     }
 
@@ -136,7 +138,8 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentRepo.save(attachment);
         attachmentUnit = attachmentUnitRepo.save(attachmentUnit);
 
-        request.get(attachmentUnit.getAttachment().getLink(), HttpStatus.OK, String.class);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentUnit.getAttachment().getLink());
+        request.get(requestUrl, HttpStatus.OK, String.class);
     }
 
     @Test
@@ -145,7 +148,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         // upload file
-        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -154,7 +157,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
         // upload file
-        JsonNode response = request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class,
                 HttpStatus.CREATED);
         String responsePath = response.get("path").asText();
         assertThat(responsePath).contains("markdown");
@@ -166,13 +169,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // create file
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
         // upload file
-        request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
-        request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+        request.get("/api/core/files/attachments/lecture/" + 999999999 + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
     }
 
     @Test
@@ -260,7 +263,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private PDDocument retrieveMergeResult(Lecture lecture) throws Exception {
-        byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf", HttpStatus.OK, byte[].class);
+        byte[] receivedFile = request.get("/api/core/files/attachments/lecture/" + lecture.getId() + "/merge-pdf", HttpStatus.OK, byte[].class);
 
         assertThat(receivedFile).isNotEmpty();
         return Loader.loadPDF(receivedFile);
@@ -318,7 +321,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachment.setAttachmentUnit(null);
         MockMultipartFile attachmentFile = new MockMultipartFile("attachment", "", "application/json", objectMapper.writeValueAsBytes(attachment));
 
-        return request.postWithMultipartFiles("/api/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
+        return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
                 AttachmentUnit.class, expectedStatus);
     }
 
@@ -337,7 +340,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
 
-        request.get("/api/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
+        request.get("/api/core/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
     }
 
     @Test
@@ -356,7 +359,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Long courseId = lecture.getCourse().getId();
         Long attachmentUnitId = attachmentUnit.getId();
 
-        request.get("/api/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
+        request.get("/api/core/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
     }
 
     @Test
@@ -381,7 +384,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachmentUnitRepo.save(attachmentUnit);
 
         String unsanitizedFilename = unsanitizedName + ".pdf";
-        String url = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
+        String url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
             filePathServiceMock.when(() -> FilePathService.actualPathForPublicPathOrThrow(Mockito.any(URI.class))).thenReturn(tempFile);

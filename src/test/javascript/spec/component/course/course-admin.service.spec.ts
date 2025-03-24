@@ -10,14 +10,14 @@ import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;
     let httpMock: HttpTestingController;
-    const resourceUrl = 'api/admin/courses';
+    const resourceUrl = 'api/core/admin/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;

@@ -4,18 +4,18 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CoursesForDashboardDTO } from 'app/core/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { CourseCardComponent } from 'app/overview/course-card.component';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CoursesComponent } from 'app/overview/courses.component';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { CourseCardComponent } from 'app/core/course/overview/course-card.component';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
+import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
+import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
+import { CoursesComponent } from 'app/core/course/overview/courses.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,14 +26,14 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -166,7 +166,7 @@ describe('CoursesComponent', () => {
         it('should handle an empty response body correctly when fetching all courses for dashboard', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-dashboard` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/core/courses/for-dashboard` });
             component.ngOnInit();
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();

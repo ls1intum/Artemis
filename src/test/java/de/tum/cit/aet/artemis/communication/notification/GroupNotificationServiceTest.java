@@ -48,17 +48,17 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -76,13 +76,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     private static final String TEST_PREFIX = "groupnotificationservice";
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private GroupNotificationScheduleService groupNotificationScheduleService;
@@ -231,12 +231,12 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // store the current notification count to let tests work even if notifications are created in other tests
-        notificationCountBeforeTest = notificationRepository.findAll().size();
+        notificationCountBeforeTest = notificationTestRepository.findAll().size();
     }
 
     @AfterEach
     void tearDown() {
-        notificationRepository.deleteAllInBatch();
+        notificationTestRepository.deleteAllInBatch();
     }
 
     /**
@@ -262,10 +262,10 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
         await().untilAsserted(
-                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                () -> assertThat(notificationTestRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
                         .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
 
-        List<Notification> capturedNotifications = notificationRepository.findAll();
+        List<Notification> capturedNotifications = notificationTestRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
 
@@ -440,10 +440,10 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     @Test
     void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
-        var countBefore = notificationRepository.count();
+        var countBefore = notificationTestRepository.count();
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        var countAfter = notificationRepository.count();
+        var countAfter = notificationTestRepository.count();
         assertThat(countAfter).as("No notification should be created/saved").isEqualTo(countBefore);
     }
 

@@ -18,8 +18,8 @@ plugins {
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.52.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.4.4"
-    id "com.gorylenko.gradle-git-properties" version "2.4.2"
+    id "com.google.cloud.tools.jib" version "3.4.5"
+    id "com.gorylenko.gradle-git-properties" version "2.5.0"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.5.6"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
@@ -37,7 +37,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "8.13-rc-2"
+    gradleVersion = "8.13"
 }
 
 node {
@@ -105,6 +105,7 @@ configurations.configureEach {
     exclude group: "javax.xml.bind", module: "jaxb-api"
 
     exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+    exclude group: "junit", module: "junit"
     exclude group: "com.vaadin.external.google", module: "android-json"
     exclude group: "org.xmlunit", module: "xmlunit-core"
 
@@ -155,10 +156,11 @@ dependencies {
 
     // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.4.2"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.3"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.8"
+    implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
+    implementation "org.glassfish.jersey.core:jersey-common:3.1.10"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -216,14 +218,14 @@ dependencies {
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
-    // NOTE: the following six dependencies use the newer versions explicitly to avoid other dependencies to use older versions
+    // NOTE: the following dependencies use the newer versions explicitly to avoid other dependencies to use older versions
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
 
     // required by Saml2, should NOT be used in other places
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
-    implementation "org.jsoup:jsoup:1.18.3"
+    implementation "org.jsoup:jsoup:1.19.1"
     implementation "commons-codec:commons-codec:1.18.0"   // needed for spring security saml2
 
     // use the latest version to avoid security vulnerabilities
@@ -295,6 +297,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
+    implementation "org.springframework.data:spring-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -304,15 +307,15 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
+    implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    implementation "org.springframework.data:spring-data-ldap:3.4.3"
-
+    
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty:1.2.3"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.4"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -326,7 +329,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.0.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.0.2"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -354,20 +357,20 @@ dependencies {
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
-    implementation "com.ibm.icu:icu4j-charset:76.1"
+    implementation "com.ibm.icu:icu4j-charset:77.1"
     // Required by exam session service
     implementation "com.github.seancfoley:ipaddress:5.5.1"
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.9"
     implementation "org.apache.pdfbox:pdfbox:3.0.4"
-    implementation "org.apache.commons:commons-csv:1.13.0"
+    implementation "org.apache.commons:commons-csv:1.14.0"
     implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.4.0-jre"
+    implementation "com.google.guava:guava:33.4.5-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -377,7 +380,7 @@ dependencies {
     runtimeOnly "com.opencsv:opencsv:5.10"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.36.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.37.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") { version {              strictly byte_buddy_version } }
@@ -415,7 +418,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.12.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.13"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
@@ -429,7 +432,14 @@ dependencies {
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250107"
 
+    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine:${junit_version}"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${junit_version}"
+
     // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
+    testImplementation "org.junit.platform:junit-platform-commons:${junit_platform_version}"
+    testImplementation "org.junit.platform:junit-platform-engine:${junit_platform_version}"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
 

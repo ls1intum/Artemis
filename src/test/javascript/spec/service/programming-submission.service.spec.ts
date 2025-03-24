@@ -8,18 +8,18 @@ import {
     ProgrammingSubmissionService,
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
-} from 'app/exercises/programming/participate/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+} from 'app/programming/overview/programming-submission.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
@@ -335,7 +335,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // This load the submissions for participation 1 and 2, but not for 3.
         lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
-        const request = httpMock.expectOne('api/programming-exercises/3/latest-pending-submissions');
+        const request = httpMock.expectOne('api/programming/programming-exercises/3/latest-pending-submissions');
 
         // When retrieving the status of participation 1 we should wait until a result of the exercise request is present
         submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
@@ -376,7 +376,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(submissionState);
         expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith(`api/programming-exercises/${exerciseId}/latest-pending-submissions`);
+        expect(httpGetStub).toHaveBeenCalledWith(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
     it('should correctly return the submission state based on the servers response', () => {
@@ -396,7 +396,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(expectedSubmissionState);
         expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith(`api/programming-exercises/${exerciseId}/latest-pending-submissions`);
+        expect(httpGetStub).toHaveBeenCalledWith(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`);
     });
 
     it('should recalculate the result eta based on the number of open submissions', () => {
@@ -420,7 +420,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(fetchLatestPendingSubmissionsByExerciseIdSpy).toHaveBeenCalledWith(exerciseId);
         expect(receivedSubmissionState).toEqual(expectedSubmissionState);
         expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith(`api/programming-exercises/${exerciseId}/latest-pending-submissions`);
+        expect(httpGetStub).toHaveBeenCalledWith(`api/programming/programming-exercises/${exerciseId}/latest-pending-submissions`);
 
         let resultEta = -1;
         submissionService.getResultEtaInMs().subscribe((eta) => (resultEta = eta));

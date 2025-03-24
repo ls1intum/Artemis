@@ -1,6 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { QuizReEvaluateService } from 'app/exercises/quiz/manage/re-evaluate/quiz-re-evaluate.service';
+import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -28,7 +28,7 @@ describe('QuizReEvaluateService', () => {
             expect(res.body).toEqual(quizExercise);
         });
 
-        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz-exercises/1/re-evaluate' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1/re-evaluate' });
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.getAll('exercise')).toBeArrayOfSize(1);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);

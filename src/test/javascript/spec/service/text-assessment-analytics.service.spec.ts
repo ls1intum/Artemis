@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Params, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { throwError } from 'rxjs';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
@@ -66,13 +66,13 @@ describe('TextAssessmentAnalytics Service', () => {
     it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = true;
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectOne({ url: `api/event-insights/text-assessment/events`, method: 'POST' });
+        httpMock.expectOne({ url: `api/text/event-insights/text-assessment/events`, method: 'POST' });
     }));
 
     it('should not send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = false;
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectNone({ url: 'api/event-insights/text-assessment/events', method: 'POST' });
+        httpMock.expectNone({ url: 'api/text/event-insights/text-assessment/events', method: 'POST' });
     }));
 
     it('should not send assessment event if on example submission path', fakeAsync(() => {
@@ -80,7 +80,7 @@ describe('TextAssessmentAnalytics Service', () => {
         location = TestBed.inject(Location);
         const pathSpy = jest.spyOn(location, 'path').mockReturnValue('/course/1/exercise/1/participation/1/example-submissions/1');
         service.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
-        httpMock.expectNone({ url: 'api/event-insights/text-assessment/events', method: 'POST' });
+        httpMock.expectNone({ url: 'api/text/event-insights/text-assessment/events', method: 'POST' });
         expect(pathSpy).toHaveBeenCalledOnce();
     }));
 

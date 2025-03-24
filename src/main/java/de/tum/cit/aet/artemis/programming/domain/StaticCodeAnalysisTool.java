@@ -41,6 +41,7 @@ public enum StaticCodeAnalysisTool {
         map.put(ProgrammingLanguage.RUBY, List.of(RUBOCOP));
         map.put(ProgrammingLanguage.RUST, List.of(CLIPPY));
         map.put(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT));
+        map.put(ProgrammingLanguage.TYPESCRIPT, List.of(ESLINT));
 
         TOOLS_OF_PROGRAMMING_LANGUAGE = Collections.unmodifiableMap(map);
     }

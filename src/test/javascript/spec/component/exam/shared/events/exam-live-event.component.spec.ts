@@ -7,9 +7,10 @@ import {
     ExamWideAnnouncementEvent,
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
-} from 'app/exam/participate/exam-participation-live-events.service';
+} from 'app/exam/overview/exam-participation-live-events.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { input } from '@angular/core';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -25,24 +26,29 @@ describe('ExamLiveEventComponent', () => {
     });
 
     it('should display the correct event type and author', () => {
-        component.event = {
+        const event = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            createdBy: 'John Doe',
         } as ExamLiveEvent;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(event);
+        });
 
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
-        const authorElement = fixture.debugElement.query(By.css('.author > span:last-child')).nativeElement;
 
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.examWideAnnouncement');
-        expect(authorElement.textContent).toBe('John Doe');
     });
 
     it('should display the attendance check event', () => {
-        component.event = {
+        const event = {
             eventType: ExamLiveEventType.EXAM_ATTENDANCE_CHECK,
         } as ExamLiveEvent;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(event);
+        });
 
         fixture.detectChanges();
 
@@ -51,10 +57,14 @@ describe('ExamLiveEventComponent', () => {
     });
 
     it('should display exam-wide announcement text when event is of type EXAM_WIDE_ANNOUNCEMENT', () => {
-        component.event = {
+        const event = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             text: 'This is an announcement',
         } as ExamWideAnnouncementEvent;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(event);
+        });
 
         fixture.detectChanges();
 
@@ -63,12 +73,16 @@ describe('ExamLiveEventComponent', () => {
     });
 
     it('should display working time update when event is of type WORKING_TIME_UPDATE', () => {
-        component.event = {
+        const event = {
             eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
             oldWorkingTime: 300,
             newWorkingTime: 600,
             courseWide: true,
         } as WorkingTimeUpdateEvent;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(event);
+        });
 
         fixture.detectChanges();
 
@@ -82,23 +96,24 @@ describe('ExamLiveEventComponent', () => {
     });
 
     it('should display problem statement update when event is of type PROBLEM_STATEMENT_UPDATE', () => {
-        component.event = {
+        const event = {
             eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
             text: 'Dear students, the problem statement of the exercise was changed',
             problemStatement: 'New problem statement',
             exerciseId: 1,
             exerciseName: 'Programming Exercise',
-            createdBy: 'John Doe',
         } as ProblemStatementUpdateEvent;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(event);
+        });
 
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
-        const authorElement = fixture.debugElement.query(By.css('.author > span:last-child')).nativeElement;
         const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
 
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.problemStatementUpdate');
-        expect(authorElement.textContent).toBe('John Doe');
         expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
         expect(contentElement.innerHTML).toContain('artemisApp.exam.events.messages.problemStatementUpdate.description');
     });
@@ -106,10 +121,12 @@ describe('ExamLiveEventComponent', () => {
     it('should emit event when acknowledge button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
-            createdBy: 'John Doe',
         } as any as ExamLiveEvent;
-        component.event = mockEvent;
-        component.showAcknowledge = true;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(mockEvent);
+            component.showAcknowledge = input(true);
+        });
 
         fixture.detectChanges();
 
@@ -123,10 +140,12 @@ describe('ExamLiveEventComponent', () => {
     it('should emit event when navigate to exercise button is clicked', () => {
         const mockEvent: ExamLiveEvent = {
             eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
-            createdBy: 'John Doe',
         } as any as ExamLiveEvent;
-        component.event = mockEvent;
-        component.showAcknowledge = true;
+
+        TestBed.runInInjectionContext(() => {
+            component.event = input(mockEvent);
+            component.showAcknowledge = input(true);
+        });
 
         fixture.detectChanges();
 

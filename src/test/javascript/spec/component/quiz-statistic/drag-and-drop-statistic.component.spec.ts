@@ -1,6 +1,6 @@
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -12,7 +12,7 @@ import { of } from 'rxjs';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { DragAndDropQuestionStatisticComponent } from 'app/exercises/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
+import { DragAndDropQuestionStatisticComponent } from 'app/quiz/manage/statistics/drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
 import { DropLocationCounter } from 'app/entities/quiz/drop-location-counter.model';

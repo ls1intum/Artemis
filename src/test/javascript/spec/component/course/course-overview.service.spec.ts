@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CourseOverviewService } from 'app/overview/course-overview.service';
+import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
@@ -453,7 +453,7 @@ describe('CourseOverviewService', () => {
         expect(getAsChannelDTO(groupedConversations['generalChannels'].entityData[1].conversation)?.name).toBe('General 2');
     });
 
-    it('should group favorite and hidden conversations correctly', () => {
+    it('should group favorite and archived conversations correctly', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel, generalChannel2, favoriteChannel, hiddenChannel];
 
         jest.spyOn(service, 'getCorrespondingChannelSubType');
@@ -466,7 +466,7 @@ describe('CourseOverviewService', () => {
         expect(groupedConversations['examChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['exerciseChannels'].entityData).toHaveLength(1);
         expect(groupedConversations['favoriteChannels'].entityData).toHaveLength(1);
-        expect(groupedConversations['hiddenChannels'].entityData).toHaveLength(1);
+        expect(groupedConversations['archivedChannels'].entityData).toHaveLength(1);
         expect(service.mapConversationToSidebarCardElement).toHaveBeenCalledTimes(6);
         expect(service.getConversationGroup).toHaveBeenCalledTimes(6);
         expect(service.getCorrespondingChannelSubType).toHaveBeenCalledTimes(5);
@@ -476,7 +476,7 @@ describe('CourseOverviewService', () => {
         expect(getAsChannelDTO(groupedConversations['examChannels'].entityData[0].conversation)?.name).toBe('exam-test');
         expect(getAsChannelDTO(groupedConversations['exerciseChannels'].entityData[0].conversation)?.name).toBe('exercise-test');
         expect(getAsChannelDTO(groupedConversations['favoriteChannels'].entityData[0].conversation)?.name).toBe('fav-channel');
-        expect(getAsChannelDTO(groupedConversations['hiddenChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
+        expect(getAsChannelDTO(groupedConversations['archivedChannels'].entityData[0].conversation)?.name).toBe('hidden-channel');
     });
 
     it('should not remove favorite conversations from their original section but keep them at the top of the related section', () => {

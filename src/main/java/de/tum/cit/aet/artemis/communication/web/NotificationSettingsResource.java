@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class NotificationSettingsResource {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);
@@ -60,7 +60,7 @@ public class NotificationSettingsResource {
      * GET notification-settings : Get all NotificationSettings for current user
      * <p>
      * Fetches the NotificationSettings for the current user from the server.
-     * If the user has not yet modified the settings there will be none in the database, then
+     * If the user has not yet modified the settings there will be none in the database, then the default settings will be loaded.
      *
      * @return the list of found NotificationSettings
      */

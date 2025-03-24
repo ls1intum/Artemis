@@ -1,27 +1,27 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCasesInstructorViewComponent } from 'app/plagiarism/manage/instructor-view/plagiarism-cases-instructor-view.component';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
+import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
-import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
+import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
-import { Component } from '@angular/core';
+import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -251,4 +251,23 @@ describe('Plagiarism Cases Instructor View Component', () => {
         tick();
         expect(location.path()).toBe(`/course-management/${courseId}/${exercise1.type}-exercises/${exerciseId}/plagiarism`);
     }));
+
+    it('should scroll to the correct exercise element when scrollToExercise is called', () => {
+        const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: jest.fn() };
+        const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: jest.fn() };
+
+        const elementRef1 = new ElementRef(nativeElement1);
+        const elementRef2 = new ElementRef(nativeElement2);
+
+        component.exerciseWithPlagCasesElements = signal([elementRef1, elementRef2]);
+
+        component.scrollToExerciseAfterViewInit(1);
+
+        expect(nativeElement1.scrollIntoView).toHaveBeenCalledWith({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
+        });
+        expect(nativeElement2.scrollIntoView).not.toHaveBeenCalled();
+    });
 });

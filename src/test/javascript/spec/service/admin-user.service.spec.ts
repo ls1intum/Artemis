@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { AdminUserService } from 'app/core/user/admin-user.service';
+import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('User Service', () => {
@@ -26,7 +26,7 @@ describe('User Service', () => {
             adminService.findUser('user').subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'GET' });
-            const resourceUrl = 'api/admin/users';
+            const resourceUrl = 'api/core/admin/users';
             expect(req.request.url).toBe(`${resourceUrl}/user`);
         });
         it('should return User', () => {

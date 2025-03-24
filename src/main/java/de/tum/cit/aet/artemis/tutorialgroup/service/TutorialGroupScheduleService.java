@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.ScheduleOverlapsWithSessionException;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
@@ -40,11 +41,14 @@ public class TutorialGroupScheduleService {
 
     private final TutorialGroupFreePeriodService tutorialGroupFreePeriodService;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public TutorialGroupScheduleService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
-            TutorialGroupFreePeriodService tutorialGroupFreePeriodService) {
+            TutorialGroupFreePeriodService tutorialGroupFreePeriodService, TutorialGroupRepository tutorialGroupRepository) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -186,11 +190,14 @@ public class TutorialGroupScheduleService {
                 }
             }
         }
-        else if (oldSchedule.isPresent()) { // old schedule present but not new schedule -> delete old schedule
-            tutorialGroupScheduleRepository.delete(oldSchedule.get());
+        else if (oldSchedule.isPresent()) {
+            // disassociate tutorial group from old schedule and make the persistence context aware of it to avoid Hibernate exception
+            tutorialGroup.setTutorialGroupSchedule(null);
+            tutorialGroupRepository.save(tutorialGroup);
+            tutorialGroupScheduleRepository.delete(oldSchedule.get()); // old schedule present but not new schedule -> delete old schedule
         }
-        else if (newSchedule.isPresent()) { // new schedule present but not old schedule -> create new schedule
-            saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, newSchedule.get());
+        else {
+            newSchedule.ifPresent(tutorialGroupSchedule -> saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, tutorialGroupSchedule));
         }
     }
 

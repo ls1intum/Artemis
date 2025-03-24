@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -15,7 +15,7 @@ import { take } from 'rxjs/operators';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
@@ -26,7 +26,6 @@ describe('Course Management Service', () => {
     let service: CourseExerciseService;
     let httpMock: HttpTestingController;
     let exerciseId: number;
-    const resourceUrl = 'api/courses';
     let course: Course;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -134,7 +133,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([programmingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
+        requestAndExpectDateConversion('GET', `api/programming/courses/${course.id}/programming-exercises`, returnedFromService, programmingExercise);
         tick();
     }));
 
@@ -145,7 +144,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([modelingExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
+        requestAndExpectDateConversion('GET', `api/modeling/courses/${course.id}/modeling-exercises`, returnedFromService, modelingExercise);
         tick();
     }));
 
@@ -156,7 +155,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([textExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/text-exercises`, returnedFromService, textExercise);
+        requestAndExpectDateConversion('GET', `api/text/courses/${course.id}/text-exercises`, returnedFromService, textExercise);
         tick();
     }));
 
@@ -167,7 +166,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([fileUploadExercise]));
 
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
+        requestAndExpectDateConversion('GET', `api/fileupload/courses/${course.id}/file-upload-exercises`, returnedFromService, fileUploadExercise);
         tick();
     }));
 
@@ -190,7 +189,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('POST', `api/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion('POST', `api/exercise/exercises/${exerciseId}/participations`, returnedFromService, participation.exercise, true);
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
@@ -218,7 +217,7 @@ describe('Course Management Service', () => {
 
             requestAndExpectDateConversion(
                 'POST',
-                `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+                `api/exercise/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
                 returnedFromService,
                 participation.exercise,
                 true,
@@ -247,7 +246,13 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('PUT', `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion(
+            'PUT',
+            `api/exercise/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
+            returnedFromService,
+            participation.exercise,
+            true,
+        );
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
