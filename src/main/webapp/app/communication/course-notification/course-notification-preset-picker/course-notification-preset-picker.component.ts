@@ -18,7 +18,7 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from
 })
 export class CourseNotificationPresetPickerComponent {
     readonly availableCourseSettingPresets = input.required<CourseNotificationSettingPreset[]>();
-    readonly selectedCourseSettingPreset = input.required<CourseNotificationSettingPreset | null>();
+    readonly selectedCourseSettingPreset = input.required<CourseNotificationSettingPreset | undefined>();
 
     readonly onPresetSelected = output<number>();
 

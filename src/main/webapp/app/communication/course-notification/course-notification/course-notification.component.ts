@@ -60,7 +60,7 @@ export class CourseNotificationComponent {
                         if (!CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                             acc[key] = value;
                         } else {
-                            acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value))?.replace(/<[^>]*>/g, '') || '';
+                            acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString()))?.replace(/<[^>]*>/g, '') || '';
                         }
 
                         return acc;

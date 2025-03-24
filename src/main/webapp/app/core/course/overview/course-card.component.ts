@@ -45,7 +45,7 @@ export class CourseCardComponent implements OnChanges, OnInit, OnDestroy {
     totalReachableScore: number;
     totalAbsoluteScore: number;
     courseNotificationCount: number = 0;
-    private courseNotificationCountSubscription: Subscription | null = null;
+    private courseNotificationCountSubscription?: Subscription;
 
     // ngx
     ngxDoughnutData: any[] = [
@@ -68,7 +68,7 @@ export class CourseCardComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.courseNotificationCountSubscription != null) {
+        if (this.courseNotificationCountSubscription) {
             this.courseNotificationCountSubscription.unsubscribe();
         }
     }

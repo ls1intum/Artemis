@@ -51,7 +51,7 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     courseTitle: 'Patterns in Software Engineering',
                     postMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
                     answerPostMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
-                    courseIconUrl: null,
+                    courseIconUrl: undefined,
                     channelName: 'tech-support',
                 },
             );

@@ -407,7 +407,7 @@ export class CourseNotificationService {
                     notification.courseName = notification.parameters['courseTitle'] as string;
                 }
                 if (notification.parameters && notification.parameters['courseIconUrl']) {
-                    notification.courseIconUrl = notification.parameters['courseIconUrl'] as string | null;
+                    notification.courseIconUrl = notification.parameters['courseIconUrl'] as string;
                 }
             });
         }

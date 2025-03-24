@@ -32,13 +32,13 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
     protected readonly faSpinner = faSpinner;
 
     protected selectableSettingPresets: CourseNotificationSettingPreset[];
-    protected selectedSettingPreset: CourseNotificationSettingPreset | null;
+    protected selectedSettingPreset?: CourseNotificationSettingPreset;
     protected isLoading = true;
-    protected settingInfo: CourseNotificationSettingInfo | null;
-    protected info: CourseNotificationInfo | null;
+    protected settingInfo?: CourseNotificationSettingInfo;
+    protected info?: CourseNotificationInfo;
     protected notificationSpecifications: CourseNotificationSettingSpecification[] = [];
     protected settingSpecificationsToUpload: CourseNotificationSettingSpecification[] = [];
-    protected putPresetTimeout: any;
+    protected putPresetTimeout: NodeJS.Timeout;
     protected putSpecificationsTimeout: any;
 
     constructor() {
@@ -53,7 +53,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         this.selectableSettingPresets = this.info!.presets;
 
         this.selectedSettingPreset =
-            this.settingInfo!.selectedPreset === 0 ? null : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
 
         this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels!, false);
 
@@ -71,7 +71,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
             clearTimeout(this.putPresetTimeout);
         }
 
-        this.selectedSettingPreset = presetTypeId === 0 ? null : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
+        this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
 
         if (presetTypeId !== 0) {
             this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset!.presetMap, true);
@@ -89,7 +89,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      * @param specification - The notification specification that was changed
      */
     optionChanged(specification: CourseNotificationSettingSpecification) {
-        this.selectedSettingPreset = null;
+        this.selectedSettingPreset = undefined;
         this.settingSpecificationsToUpload.push(specification);
 
         if (!this.putSpecificationsTimeout) {
@@ -97,7 +97,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
             this.putSpecificationsTimeout = setTimeout(() => {
                 this.courseNotificationSettingService.setSettingSpecification(this.courseId, this.settingSpecificationsToUpload);
                 this.putSpecificationsTimeout = undefined;
-            }, 5000);
+            }, 3000);
         }
     }
 
@@ -115,18 +115,22 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      */
     onCourseIdAvailable(): void {
         this.courseNotificationSettingService.getSettingInfo(this.courseId).subscribe((settingInfo) => {
-            this.settingInfo = settingInfo.body;
+            if (settingInfo.body) {
+                this.settingInfo = settingInfo.body;
 
-            if (this.info) {
-                this.initializeValues();
+                if (this.info) {
+                    this.initializeValues();
+                }
             }
         });
 
         this.courseNotificationService.getInfo().subscribe((info) => {
-            this.info = info.body;
+            if (info.body) {
+                this.info = info.body;
 
-            if (this.settingInfo) {
-                this.initializeValues();
+                if (this.settingInfo) {
+                    this.initializeValues();
+                }
             }
         });
     }

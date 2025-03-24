@@ -147,7 +147,7 @@ describe('NotificationSettingsComponent', () => {
 
         component.optionChanged(mockSpecification);
 
-        expect(component['selectedSettingPreset']).toBeNull();
+        expect(component['selectedSettingPreset']).toBeUndefined();
 
         expect(component['settingSpecificationsToUpload']).toContain(mockSpecification);
 

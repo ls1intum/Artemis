@@ -60,8 +60,8 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected savedScrollPosition: number = 0;
     protected pagesFinished: boolean = false;
     protected isLoading: boolean = false;
-    private courseNotificationCountSubscription: Subscription | null = null;
-    private courseNotificationSubscription: Subscription | null = null;
+    private courseNotificationCountSubscription?: Subscription;
+    private courseNotificationSubscription?: Subscription;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
     protected readonly CourseNotificationViewingStatus = CourseNotificationViewingStatus;
@@ -118,10 +118,10 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     }
 
     ngOnDestroy(): void {
-        if (this.courseNotificationCountSubscription !== null) {
+        if (this.courseNotificationCountSubscription) {
             this.courseNotificationCountSubscription.unsubscribe();
         }
-        if (this.courseNotificationSubscription !== null) {
+        if (this.courseNotificationSubscription) {
             this.courseNotificationSubscription.unsubscribe();
         }
     }

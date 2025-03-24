@@ -516,7 +516,7 @@ describe('CourseNotificationService', () => {
                 },
             } as unknown as HttpResponse<CourseNotificationPage>;
 
-            jest.mock('app/utils/date.utils', () => ({
+            jest.mock('app/shared/util/date.utils', () => ({
                 convertDateFromServer: (date: any) => {
                     if (date === '2024-01-01T10:30:00Z') {
                         return dayjs('2024-01-01T10:30:00Z');

@@ -3,9 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { CourseSettingCategoryDirective } from 'app/course/overview/course-settings/course-setting-category.directive';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Course } from 'app/entities/course.model';
-import { SubjectObservablePair } from 'app/utils/rxjs.utils';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';
 
 // Create a concrete test component that extends the directive
 @Component({
