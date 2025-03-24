@@ -412,25 +412,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                         slideToPageMap.delete(slideId);
                     }
 
-                    const currentPageOrder = [...this.pageOrder()];
-                    const updatedPageOrder = currentPageOrder.filter((page) => !slideIds.includes(page.slideId));
-
-                    updatedPageOrder.sort((a, b) => a.order - b.order);
-                    updatedPageOrder.forEach((page, index) => {
-                        page.order = index + 1;
-                    });
-
-                    this.operations.push({
-                        type: 'REORDER',
-                        timestamp: operation.timestamp.add(1, 'millisecond'), // Just after the DELETE
-                        data: {
-                            pageOrder: updatedPageOrder.map((page) => ({
-                                slideId: page.slideId,
-                                order: page.order,
-                            })),
-                        },
-                    });
-
                     const remainingSlides = Array.from(slideToPageMap.entries());
                     for (const [slideId, pageIndex] of remainingSlides) {
                         const newIndex = pageIndex - pageIndicesToDelete.filter((delIndex) => delIndex < pageIndex).length;
@@ -483,15 +464,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
                     reorderEntries.sort((a, b) => (a[2] as number) - (b[2] as number));
 
-                    for (const [_slideId, originalIndex] of reorderEntries) {
+                    const newSlideToPageMap = new Map();
+
+                    for (let i = 0; i < reorderEntries.length; i++) {
+                        const [slideId, originalIndex] = reorderEntries[i];
                         if (originalIndex !== undefined && originalIndex < pageObjects.length) {
                             instructorPdf.addPage(pageObjects[originalIndex as number]);
+                            newSlideToPageMap.set(slideId, i); // Set the new index
                         }
                     }
 
-                    reorderEntries.forEach(([slideId, _, __], newIndex) => {
+                    slideToPageMap.clear();
+                    for (const [slideId, newIndex] of newSlideToPageMap.entries()) {
                         slideToPageMap.set(slideId, newIndex);
-                    });
+                    }
                     break;
                 }
             }
@@ -506,22 +492,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 studentPdf = await PDFDocument.load(await instructorPdf.save());
 
                 const finalPageOrder = await this.getFinalPageOrder();
-                const studentPageMap = new Map();
-                let studentIndex = 0;
 
-                for (const page of finalPageOrder) {
-                    if (!this.hiddenPages()[page.slideId]) {
-                        studentPageMap.set(page.slideId, studentIndex++);
-                    }
-                }
+                const slideToFinalPositionMap = new Map();
+                finalPageOrder.forEach((page, index) => {
+                    slideToFinalPositionMap.set(page.slideId, index);
+                });
 
                 const hiddenPageIndices = hiddenSlideIds
-                    .map((slideId) => {
-                        const pageIndex = finalPageOrder.findIndex((page) => page.slideId === slideId);
-                        return pageIndex !== -1 ? pageIndex : undefined;
-                    })
+                    .map((slideId) => slideToFinalPositionMap.get(slideId))
                     .filter((index) => index !== undefined)
-                    .sort((a, b) => (b as number) - (a as number)); // Sort in descending order
+                    .sort((a, b) => (b as number) - (a as number));
 
                 for (const pageIndex of hiddenPageIndices) {
                     if (pageIndex !== undefined) {
@@ -536,6 +516,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     /**
      * Calculate the final page order after applying all operations
+     * @returns Promise<OrderedPage[]> The final page order
      */
     async getFinalPageOrder(): Promise<OrderedPage[]> {
         let workingPageOrder = [...this.pageOrder()];
@@ -544,29 +525,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         for (const operation of sortedOperations) {
             if (operation.type === 'DELETE') {
-                workingPageOrder = workingPageOrder.filter((page) => !operation.data.slideIds.includes(page.slideId));
+                const { slideIds } = operation.data;
+                workingPageOrder = workingPageOrder.filter((page) => !slideIds.includes(page.slideId));
             } else if (operation.type === 'REORDER') {
+                const { pageOrder } = operation.data;
                 const orderMap = new Map();
-                operation.data.pageOrder.forEach((item: { slideId: string; order: number }) => {
+                pageOrder.forEach((item: { slideId: string; order: number }) => {
                     orderMap.set(item.slideId, item.order);
                 });
 
-                workingPageOrder.forEach((page) => {
+                for (const page of workingPageOrder) {
                     if (orderMap.has(page.slideId)) {
                         page.order = orderMap.get(page.slideId);
                     }
-                });
+                }
+
+                workingPageOrder.sort((a, b) => a.order - b.order);
             }
         }
 
-        workingPageOrder.sort((a, b) => a.order - b.order);
-
-        workingPageOrder = workingPageOrder.map((page, index) => ({
+        return workingPageOrder.map((page, index) => ({
             ...page,
-            pageIndex: index + 1,
+            order: index + 1,
         }));
-
-        return workingPageOrder;
     }
 
     /**
@@ -700,16 +681,28 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 timestamp: dayjs(),
                 data: { slideIds },
             });
+
+            const remainingPages = this.pageOrder().filter((page) => !slideIds.includes(page.slideId));
+
+            const updatedPageOrder = remainingPages.map((page, index) => ({
+                ...page,
+                order: index + 1,
+            }));
+
+            this.operations.push({
+                type: 'REORDER',
+                timestamp: dayjs().add(1, 'millisecond'), // Just after the DELETE
+                data: {
+                    pageOrder: updatedPageOrder.map((page) => ({
+                        slideId: page.slideId,
+                        order: page.order,
+                    })),
+                },
+            });
+
             this.hasOperations.set(true);
 
-            this.pageOrder.update((pages) => {
-                const remainingPages = pages.filter((page) => !slideIds.includes(page.slideId));
-
-                return remainingPages.map((page, index) => ({
-                    ...page,
-                    order: index + 1,
-                }));
-            });
+            this.pageOrder.set(updatedPageOrder);
 
             this.hiddenPages.update((current) => {
                 const updated = { ...current };

@@ -194,7 +194,6 @@ public class SlideSplitterService {
             for (Map<String, Object> page : pageOrderList) {
                 String slideId = String.valueOf(page.get("slideId"));
                 int order = ((Number) page.get("order")).intValue();
-                int pageIndex = ((Number) page.get("pageIndex")).intValue();
 
                 Slide slideEntity;
                 boolean isNewSlide = false;
@@ -231,7 +230,7 @@ public class SlideSplitterService {
                 }
 
                 if (isNewSlide) {
-                    int pdfPageIndex = pageIndex - 1;
+                    int pdfPageIndex = order - 1;
                     if (pdfPageIndex >= 0 && pdfPageIndex < document.getNumberOfPages()) {
                         BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
                         byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");

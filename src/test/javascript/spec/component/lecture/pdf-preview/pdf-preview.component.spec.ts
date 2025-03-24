@@ -652,17 +652,18 @@ describe('PdfPreviewComponent', () => {
 
         it('should handle errors when deleting slides', () => {
             const error = new Error('Deletion failed');
-            const pageOrderSetSpy = jest.spyOn(component.pageOrder, 'update');
 
-            pageOrderSetSpy.mockImplementationOnce(() => {
+            jest.spyOn(component.pageOrder, 'set').mockImplementation(() => {
                 throw error;
             });
+
+            const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
 
             component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]));
 
             component.deleteSelectedSlides();
 
-            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
+            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: 'Deletion failed' });
             expect(component.isPdfLoading()).toBe(false);
         });
     });
