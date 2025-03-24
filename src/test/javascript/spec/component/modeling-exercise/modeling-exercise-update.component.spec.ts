@@ -15,7 +15,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';

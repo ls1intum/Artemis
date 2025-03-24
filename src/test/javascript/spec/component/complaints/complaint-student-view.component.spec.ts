@@ -22,7 +22,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { ElementRef } from '@angular/core';
 import { ComplaintType } from 'app/entities/complaint.model';

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
+import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercise-detail.directive';
 import { Component, ViewChild } from '@angular/core';
 import type {
     BooleanDetail,
@@ -13,17 +13,17 @@ import type {
     ProgrammingTestStatusDetail,
     ShownDetail,
     TextDetail,
-} from 'app/detail-overview-list/detail.model';
-import { TextDetailComponent } from 'app/detail-overview-list/components/text-detail/text-detail.component';
+} from 'app/shared/detail-overview-list/detail.model';
+import { TextDetailComponent } from 'app/shared/detail-overview-list/components/text-detail/text-detail.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { DateDetailComponent } from 'app/detail-overview-list/components/date-detail/date-detail.component';
-import { LinkDetailComponent } from 'app/detail-overview-list/components/link-detail/link-detail.component';
-import { BooleanDetailComponent } from 'app/detail-overview-list/components/boolean-detail/boolean-detail.component';
-import { ProgrammingRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component';
-import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
-import { ProgrammingTestStatusDetailComponent } from 'app/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
-import { ProgrammingDiffReportDetailComponent } from 'app/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
+import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DateDetailComponent } from 'app/shared/detail-overview-list/components/date-detail/date-detail.component';
+import { LinkDetailComponent } from 'app/shared/detail-overview-list/components/link-detail/link-detail.component';
+import { BooleanDetailComponent } from 'app/shared/detail-overview-list/components/boolean-detail/boolean-detail.component';
+import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared/detail-overview-list/components/programming-repository-buttons-detail/programming-repository-buttons-detail.component';
+import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
+import { ProgrammingTestStatusDetailComponent } from 'app/shared/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
+import { ProgrammingDiffReportDetailComponent } from 'app/shared/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

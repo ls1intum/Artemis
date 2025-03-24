@@ -12,7 +12,7 @@ import { ApollonDiagramListComponent } from 'app/quiz/manage/apollon-diagrams/ap
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

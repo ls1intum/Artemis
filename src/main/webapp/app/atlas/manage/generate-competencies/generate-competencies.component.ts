@@ -18,7 +18,7 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared/comp
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';

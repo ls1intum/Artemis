@@ -279,7 +279,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         // Create a new course with different id.
         Long newCourseId = oldCourseId + 1;
-        Course newCourse = courseUtilService.createCourse(newCourseId);
+        Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the modeling exercise.
         createdModelingExercise.setCourse(newCourse);
