@@ -28,14 +28,12 @@ public class PassKeyCredentialService implements WebAuthnCredentialRecordManager
         this.userRepository = userRepository;
     }
 
-    @SuppressWarnings("squid:RedundantThrowsDeclarationCheck")
     @Override
     public void updateCounter(byte[] credentialId, long counter) throws CredentialIdNotFoundException {
         WebAuthnCredentialRecord webAuthnCredentialRecord = this.loadCredentialRecordByCredentialId(credentialId);
         webAuthnCredentialRecord.setCounter(counter);
     }
 
-    @SuppressWarnings("squid:RedundantThrowsDeclarationCheck")
     @Override
     public WebAuthnCredentialRecord loadCredentialRecordByCredentialId(byte[] credentialId) throws CredentialIdNotFoundException {
         var credentialIdString = Base64UrlUtil.encodeToString(credentialId);

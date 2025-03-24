@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20240824170527" author="krusche">
+    <changeSet id="20250324170527" author="krusche">
         <!-- Create passkey_credentials table -->
         <createTable tableName="passkey_credentials">
             <column autoIncrement="true" name="id" type="bigint">

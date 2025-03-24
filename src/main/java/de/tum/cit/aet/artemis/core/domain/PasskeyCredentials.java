@@ -171,6 +171,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
         this.backupState = backupState;
     }
 
+    // TODO: WORK IN PROGRESS, double check if the webauthn4j framework offers and easier conversion
     public WebAuthnCredentialRecord toWebAuthnCredentialRecord() {
         // Assuming `name` is equivalent to the `credentialId` or another unique identifier
         String name = this.credentialId;
@@ -250,6 +251,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
                 authenticatorExtensions, clientData, clientExtensions, transports);
     }
 
+    // TODO: WORK IN PROGRESS, double check if the webauthn4j framework offers and easier conversion
     public static PasskeyCredentials fromWebAuthnCredentialRecord(WebAuthnCredentialRecord record, User user) {
         PasskeyCredentials passkeyCredentials = new PasskeyCredentials();
 
