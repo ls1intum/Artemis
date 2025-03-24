@@ -1,7 +1,7 @@
 import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.service';
-import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
-import { ProgrammingLanguageFeature } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { Saml2Config } from 'app/home/saml2-login/saml2.config';
+import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
+import { ProgrammingLanguageFeature } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
+import { Saml2Config } from 'app/core/home/saml2-login/saml2.config';
 
 export class ProfileInfo {
     public activeProfiles: string[];
@@ -20,7 +20,6 @@ export class ProfileInfo {
     public externalUserManagementName: string;
     public contact: string;
     public testServer?: boolean;
-    public allowedMinimumOrionVersion: string;
     public registrationEnabled?: boolean;
     public needsToAcceptTerms?: boolean;
     public allowedEmailPattern?: string;
@@ -35,6 +34,9 @@ export class ProfileInfo {
     public buildTimeoutMin?: number;
     public buildTimeoutMax?: number;
     public buildTimeoutDefault?: number;
+    public defaultContainerCpuCount?: number;
+    public defaultContainerMemoryLimitInMB?: number;
+    public defaultContainerMemorySwapLimitInMB?: number;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;
@@ -59,7 +61,4 @@ export class ProfileInfo {
     public operatorAdminName?: string;
 }
 
-export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {
-    const cisWithEditableBuildPlan = ['gitlabci', 'jenkins'];
-    return profileInfo.activeProfiles.some((profile) => cisWithEditableBuildPlan.includes(profile));
-};
+export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => profileInfo.activeProfiles.includes('jenkins');

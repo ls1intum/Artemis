@@ -53,8 +53,6 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndepende
 
     private User student1;
 
-    private NotificationSetting completeNotificationSettingA;
-
     private NotificationSetting[] unsavedNotificationSettings;
 
     private NotificationSetting[] savedNotificationSettings;
@@ -74,7 +72,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndepende
         NotificationSetting unsavedNotificationSettingC = new NotificationSetting(false, false, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
         unsavedNotificationSettings = new NotificationSetting[] { unsavedNotificationSettingA, unsavedNotificationSettingB, unsavedNotificationSettingC };
 
-        completeNotificationSettingA = new NotificationSetting(student1, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        NotificationSetting completeNotificationSettingA = new NotificationSetting(student1, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         NotificationSetting completeNotificationSettingB = new NotificationSetting(student1, true, true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
         NotificationSetting completeNotificationSettingC = new NotificationSetting(student1, false, false, false,
                 NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED);
@@ -167,7 +165,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndepende
     void testCheckLoadedNotificationSettingsForCorrectness_empty() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
-        assertThat(testSet).as("The default notification settings should be returned").isEqualTo(DEFAULT_NOTIFICATION_SETTINGS);
+        assertThat(testSet).as("The default notification settings should be returned").usingRecursiveComparison().ignoringFields("id").isEqualTo(DEFAULT_NOTIFICATION_SETTINGS);
     }
 
     /**
@@ -176,11 +174,19 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndepende
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
         notificationSettingRepository.deleteAll();
+
+        assertThat(notificationSettingRepository.findAll().size()).as("The notification settings should be empty").isEqualTo(0);
+
+        var justOneSetting = new NotificationSetting(student1, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
+        justOneSetting = notificationSettingRepository.save(justOneSetting);
+
+        assertThat(notificationSettingRepository.findAll().size()).as("The notification settings should have one element").isEqualTo(1);
+
         Set<NotificationSetting> testSet = new HashSet<>();
-        testSet.add(completeNotificationSettingA);
+        testSet.add(justOneSetting);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
         assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS)
-                .as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
+                .as("The loaded settings should contain the single entry that deviates from the default settings").contains(justOneSetting);
     }
 
     /**
@@ -188,9 +194,10 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndepende
      */
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_correct() {
-        Set<NotificationSetting> testSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
+        var defaultSettings = DEFAULT_NOTIFICATION_SETTINGS;
+        Set<NotificationSetting> testSet = new HashSet<>(defaultSettings);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
-        assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
+        assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(defaultSettings);
     }
 
     /**
@@ -198,17 +205,17 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndepende
      */
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_outdated() {
+        var defaultSettings = DEFAULT_NOTIFICATION_SETTINGS;
         NotificationSetting outdatedSetting = new NotificationSetting(student1, false, true, true, "Outdated Settings ID");
         notificationSettingRepository.save(outdatedSetting);
 
         Set<NotificationSetting> outdatedSet = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(student1.getId());
 
-        assertThat(outdatedSet.size()).as("Prior to checking the settings for correctness the outdated additional setting should be present")
-                .isNotEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
+        assertThat(outdatedSet.size()).as("Prior to checking the settings for correctness the outdated additional setting should be present").isNotEqualTo(defaultSettings.size());
 
         Set<NotificationSetting> resultingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(outdatedSet, student1);
 
-        assertThat(resultingSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS)
+        assertThat(resultingSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(defaultSettings)
                 .as("The outdated setting should have been removed").doesNotContain(outdatedSetting);
     }
 }

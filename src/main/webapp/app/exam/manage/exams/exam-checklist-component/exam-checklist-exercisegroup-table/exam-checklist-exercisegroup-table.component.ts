@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, OnChanges, input } from '@angular/core';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
@@ -16,8 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, NgbTooltip, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
-    @Input() quizExamMaxPoints: number;
-    @Input() exerciseGroups: ExerciseGroup[];
+    quizExamMaxPoints = input.required<number>();
+    exerciseGroups = input.required<ExerciseGroup[]>();
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
@@ -28,9 +28,9 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
 
     ngOnChanges() {
         this.exerciseGroupVariantColumns = []; // Clear any previously existing entries
-        if (this.exerciseGroups) {
+        if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;
-            this.exerciseGroups.forEach((exerciseGroup) => {
+            this.exerciseGroups()!.forEach((exerciseGroup) => {
                 const exerciseGroupVariantColumn = new ExerciseGroupVariantColumn();
                 exerciseGroupVariantColumn.exerciseGroupTitle = exerciseGroup.title;
                 exerciseGroupVariantColumn.indexExerciseGroup = exerciseGroupIndex;

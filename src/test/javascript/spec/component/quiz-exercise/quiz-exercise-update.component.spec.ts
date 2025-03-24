@@ -5,7 +5,7 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -22,14 +22,14 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { QuizExerciseUpdateComponent } from 'app/exercises/quiz/manage/quiz-exercise-update.component';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { QuizExerciseUpdateComponent } from 'app/quiz/manage/quiz-exercise-update.component';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { advanceTo } from 'jest-date-mock';
 import dayjs from 'dayjs/esm';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -37,8 +37,8 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { MockProvider } from 'ng-mocks';
-import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
-import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
+import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
+import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('QuizExerciseUpdateComponent', () => {

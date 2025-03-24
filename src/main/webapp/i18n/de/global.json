@@ -216,7 +216,6 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",
@@ -357,7 +356,8 @@
         "exams": "Klausuren",
         "communication": "Kommunikation",
         "archive": "Kursarchiv",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "plagiarismCases": "Plagiatsfälle"
     },
     "connectionStatus": {
         "connected": "Verbunden",

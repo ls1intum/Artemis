@@ -10,6 +10,7 @@
             "warning": "Die Bestätigung/Ablehnung eines Plagiats geht beim Neuladen der Seite verloren.",
             "inspection": "Plagiatskontrolle",
             "plagiarism": "Plagiat",
+            "teamModeDisabled": "Benachrichtigung und Urteil für den Teammodus <b>nicht</b> verfügbar.",
             "back": "Zurück",
             "empty": "Es liegen keine Ergebnisse vor.",
             "notFound": "Kein Plagiat gefunden",

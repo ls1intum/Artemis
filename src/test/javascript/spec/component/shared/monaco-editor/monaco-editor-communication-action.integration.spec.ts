@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { MetisService } from 'app/communication/metis.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +25,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { ReferenceType } from 'app/shared/metis/metis.util';
+import { ReferenceType } from 'app/communication/metis.util';
 import { Attachment } from 'app/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
@@ -301,6 +301,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachments: lecture.attachments?.map((attachment) => ({
                     ...attachment,
                     link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
+                    linkUrl: attachment.link && attachment.name ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, true) : attachment.link,
                 })),
             }));
 

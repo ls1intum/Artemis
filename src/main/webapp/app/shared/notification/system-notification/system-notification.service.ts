@@ -2,7 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 

@@ -6,7 +6,7 @@ import { filter, map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
 import {
@@ -41,12 +41,12 @@ import {
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
-import { convertDateFromServer } from 'app/utils/date.utils';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisService } from 'app/communication/metis.service';
+import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

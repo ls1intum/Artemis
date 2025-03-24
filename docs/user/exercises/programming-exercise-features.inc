@@ -60,8 +60,6 @@ Instructors can still use those templates to generate programming exercises and 
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features.
   In case a feature has different support for different continuous integration systems, the table shows the differences between Local CI **(L)** and Jenkins **(J)**.
-  (Note that Gitlab CI is experimental and therefore has a limited set of features which are not mentioned here to keep the overview simpler.)
-
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check    | Package Name | Project Type                             | Solution Repository Checkout | Auxiliary repositories |
   +======================+======================+======================+=====================+==============+==========================================+==============================+========================+
@@ -87,7 +85,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
   | Rust                 | no                   | L: yes; J: no        | yes                 | no           | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
-  | JavaScript           | no                   | no                   | yes                 | no           | n/a                                      | no                           | L: yes, J: no          |
+  | JavaScript           | no                   | L: yes; J: no        | yes                 | no           | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+
   | R                    | no                   | no                   | yes                 | no           | n/a                                      | no                           | L: yes, J: no          |
   +----------------------+----------------------+----------------------+---------------------+--------------+------------------------------------------+------------------------------+------------------------+

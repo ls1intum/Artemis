@@ -129,9 +129,6 @@
                 "templateInfo": "Kein Ergebnis verfügbar.",
                 "exerciseHasNoIssues": "Es wurden keine Probleme mit den Repositories identifiziert."
             },
-            "orion": {
-                "testLocally": "Lokal Testen"
-            },
             "switchEditors": "Code-Editor wechseln"
         }
     }

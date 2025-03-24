@@ -1,28 +1,29 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
-import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
-import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
-import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
+import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
+import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
+import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
-import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
+import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { FormsModule } from '@angular/forms';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -69,8 +70,8 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     changesSubscription: Subscription;
     cachedDiffReports: Map<string, ProgrammingExerciseGitDiffReport> = new Map<string, ProgrammingExerciseGitDiffReport>();
 
-    @ViewChildren(ExamSubmissionComponent) currentPageComponents: QueryList<ExamSubmissionComponent>;
-    @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
+    currentPageComponents = viewChildren(ExamSubmissionComponent);
+    examNavigationBarComponent = viewChild.required<ExamNavigationBarComponent>('examNavigationBar');
 
     private activatedRouteSubscription: Subscription;
 
@@ -103,12 +104,12 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
             this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
-            this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false, firstSubmission);
+            this.examNavigationBarComponent().changePage(false, this.exerciseIndex, false, firstSubmission);
         });
     }
 
     ngAfterViewInit(): void {
-        this.changesSubscription = this.currentPageComponents.changes.subscribe(() => {
+        this.changesSubscription = this.currentPageComponentsChanges.subscribe(() => {
             this.updateSubmissionOrSubmissionVersionInView();
         });
     }
@@ -126,12 +127,17 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent | undefined;
         if (activeProgrammingComponent) {
-            activeProgrammingComponent.studentParticipation = this.currentExercise!.studentParticipations![0];
-            activeProgrammingComponent.exercise = this.currentExercise!;
-            activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
-            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!);
-            activeProgrammingComponent.submissions = this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id);
-            activeProgrammingComponent.exerciseIdSubject.next(this.currentExercise!.id!);
+            activeProgrammingComponent.studentParticipation.update(() => this.currentExercise!.studentParticipations![0]);
+            activeProgrammingComponent.exercise.update(() => this.currentExercise!);
+            activeProgrammingComponent.currentSubmission.update(() => this.currentSubmission as ProgrammingSubmission);
+            activeProgrammingComponent.previousSubmission.update(() => this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!));
+            activeProgrammingComponent.submissions.update(() =>
+                this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id),
+            );
+            activeProgrammingComponent.exerciseIdSubject.update((subject) => {
+                subject.next(this.currentExercise!.id!);
+                return subject;
+            });
         }
     }
 
@@ -315,7 +321,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        return this.currentPageComponents.find((submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise?.id);
+        return this.currentPageComponents().find((submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise?.id);
     }
 
     /**
@@ -337,7 +343,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.currentExercise?.id);
         this.exerciseIndex = exerciseIndex;
         this.currentSubmission = submission;
-        this.examNavigationBarComponent.changePage(false, exerciseIndex, false, submission);
+        this.examNavigationBarComponent().changePage(false, exerciseIndex, false, submission);
     }
 
     /**
@@ -427,4 +433,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === submission.participation?.exercise?.id);
         }
     }
+
+    protected readonly currentPageComponentsChanges = toObservable(this.currentPageComponents);
 }

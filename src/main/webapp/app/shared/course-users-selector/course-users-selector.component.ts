@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -10,6 +10,7 @@ import { ProfilePictureComponent } from '../profile-picture/profile-picture.comp
 import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 let selectorId = 0;
 
@@ -230,4 +231,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             this.searchInput.nativeElement.value = '';
         }
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

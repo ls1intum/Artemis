@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
@@ -9,8 +9,8 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import dayjs from 'dayjs/esm';
-import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
+import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';
+import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
 import * as helper from 'app/shared/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';

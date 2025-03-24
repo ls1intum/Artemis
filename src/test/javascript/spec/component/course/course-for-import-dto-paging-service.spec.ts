@@ -3,10 +3,10 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { CourseForImportDTO } from 'app/entities/course.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { provideHttpClient } from '@angular/common/http';
+import { CourseForImportDTOPagingService } from 'app/core/course/shared/course-for-import-dto-paging-service';
 
 describe('CourseForImportDtoPagingService', () => {
     let pagingService: CourseForImportDTOPagingService;
