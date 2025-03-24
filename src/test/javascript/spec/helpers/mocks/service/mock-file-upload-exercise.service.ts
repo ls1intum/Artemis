@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 

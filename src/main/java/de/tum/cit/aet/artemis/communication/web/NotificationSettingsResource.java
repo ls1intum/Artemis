@@ -60,7 +60,7 @@ public class NotificationSettingsResource {
      * GET notification-settings : Get all NotificationSettings for current user
      * <p>
      * Fetches the NotificationSettings for the current user from the server.
-     * If the user has not yet modified the settings there will be none in the database, then
+     * If the user has not yet modified the settings there will be none in the database, then the default settings will be loaded.
      *
      * @return the list of found NotificationSettings
      */
