@@ -24,7 +24,7 @@ import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/exa
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';

@@ -12,7 +12,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
 import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/entities/course.model';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ArtemisDatePipe } from '../../../../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../../../../../../../../main/webapp/app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';

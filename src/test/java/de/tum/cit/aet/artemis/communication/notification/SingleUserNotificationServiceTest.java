@@ -46,6 +46,7 @@ import static de.tum.cit.aet.artemis.communication.service.notifications.Notific
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.eq;
@@ -60,6 +61,7 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import jakarta.mail.MessagingException;
@@ -444,11 +446,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void shouldNotifyUserAboutUpcomingSshKeyExpiry() throws GeneralSecurityException, IOException {
+        void shouldNotifyUserAboutUpcomingSshKeyExpiry() throws GeneralSecurityException, IOException, InterruptedException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(6));
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
             userSshPublicKeyExpiryNotificationService.notifyUserOnUpcomingKeyExpiry();
+
+            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationTestRepository.findAllByRecipientId(user.getId())).hasSize(2));
 
             sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(2);
@@ -458,11 +462,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         }
 
         @Test
-        void shouldNotifyUserAboutExpiredSshKey() throws GeneralSecurityException, IOException {
+        void shouldNotifyUserAboutExpiredSshKey() throws GeneralSecurityException, IOException, InterruptedException {
             UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().minusDays(1));
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
             userSshPublicKeyExpiryNotificationService.notifyUserOnExpiredKey();
+
+            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationTestRepository.findAllByRecipientId(user.getId())).hasSize(2));
 
             sentNotifications = notificationTestRepository.findAllByRecipientId(user.getId());
             assertThat(sentNotifications).hasSize(2);
