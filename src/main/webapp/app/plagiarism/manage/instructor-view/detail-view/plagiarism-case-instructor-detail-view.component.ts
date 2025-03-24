@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { abbreviateString } from 'app/utils/text.utils';
+import { abbreviateString } from 'app/shared/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';

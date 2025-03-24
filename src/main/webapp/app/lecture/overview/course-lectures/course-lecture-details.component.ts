@@ -46,7 +46,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../overview/course-overview.scss', '../../shared/course-lectures.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview.scss', '../../shared/course-lectures.scss'],
     imports: [
         TranslateDirective,
         NgClass,

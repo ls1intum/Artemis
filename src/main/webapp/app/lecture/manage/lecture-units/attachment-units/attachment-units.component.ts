@@ -34,7 +34,6 @@ export type LectureUnitInformationDTO = {
 @Component({
     selector: 'jhi-attachment-units',
     templateUrl: './attachment-units.component.html',
-    styleUrls: [],
     imports: [LectureUnitLayoutComponent, TranslateDirective, FormsModule, FormDateTimePickerComponent, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
 export class AttachmentUnitsComponent implements OnInit {

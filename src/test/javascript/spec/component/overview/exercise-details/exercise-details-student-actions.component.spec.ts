@@ -14,7 +14,7 @@ import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
@@ -31,7 +31,6 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { PROFILE_THEIA } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
@@ -498,85 +497,4 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-
-    it.each([
-        [
-            'start theia button should be visible when profile is active and theia is configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            true,
-        ],
-        [
-            'start theia button should not be visible when profile is active but theia is ill-configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: undefined,
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but onlineIde is not activated',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: false,
-            },
-            {
-                theiaImage: 'this-is-an-old-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but url is not set',
-            {
-                activeProfiles: [PROFILE_THEIA],
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is not active but url is set',
-            {
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
-
-        // Expand the programmingExercise by given properties
-        comp.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
-
-        fixture.detectChanges();
-
-        expect(comp.theiaEnabled).toBe(expectedVisibility);
-    });
 });
