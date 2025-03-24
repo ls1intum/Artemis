@@ -804,6 +804,9 @@ public class ResultService {
     public List<BuildLogEntry> getBuildLogsByResultId(Long resultId, Participation participation) {
         Map<Long, String> resultIdBuildsJobsMap = getLogsAvailabilityForResults(List.of(resultId), participation);
         String buildJobId = resultIdBuildsJobsMap.get(resultId);
+        if (buildJobId == null) {
+            return null;
+        }
         FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
         if (buildLog == null) {
             return null;
