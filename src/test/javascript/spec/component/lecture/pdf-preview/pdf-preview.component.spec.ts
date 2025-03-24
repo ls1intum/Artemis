@@ -1223,7 +1223,7 @@ describe('PdfPreviewComponent', () => {
                 ]),
             );
 
-            jest.spyOn(component, 'applyOperations').mockImplementation(async (studentVersion) => {
+            jest.spyOn(component, 'applyOperations').mockImplementation(async () => {
                 return {
                     instructorPdf: mockPdf as any,
                     studentPdf: null,

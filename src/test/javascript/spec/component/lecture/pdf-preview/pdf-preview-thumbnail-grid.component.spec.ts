@@ -8,7 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { ElementRef, signal, Signal, SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { OrderedPage, HiddenPageMap, HiddenPage } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { OrderedPage, HiddenPageMap, HiddenPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 jest.mock('pdfjs-dist', () => {
     return {
@@ -38,9 +39,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     let alertServiceMock: any;
 
     const mockOrderedPages: OrderedPage[] = [
-        { slideId: 'slide1', pageIndex: 1, pageProxy: undefined, order: 1 },
-        { slideId: 'slide2', pageIndex: 2, pageProxy: undefined, order: 2 },
-        { slideId: 'slide3', pageIndex: 3, pageProxy: undefined, order: 3 },
+        { slideId: 'slide1', pageIndex: 1, order: 1, sourcePdfId: 'source1', sourceIndex: 0, pageProxy: null as any },
+        { slideId: 'slide2', pageIndex: 2, order: 2, sourcePdfId: 'source1', sourceIndex: 1, pageProxy: null as any },
+        { slideId: 'slide3', pageIndex: 3, order: 3, sourcePdfId: 'source1', sourceIndex: 2, pageProxy: null as any },
     ];
 
     beforeEach(async () => {
@@ -65,6 +66,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             value: jest.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
             writable: true,
         });
+
+        jest.spyOn(component, 'renderPages').mockResolvedValue();
 
         fixture.detectChanges();
     });
@@ -472,123 +475,75 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         });
     });
 
-    describe('drag and drop functionality', () => {
-        beforeEach(() => {
+    describe('CDK drag and drop functionality', () => {
+        it('should handle onPageDrop correctly when positions change', () => {
             fixture.componentRef.setInput('orderedPages', mockOrderedPages);
             fixture.detectChanges();
 
-            const mockElement = document.createElement('div');
-            document.querySelectorAll = jest.fn().mockReturnValue([mockElement]);
-        });
-
-        it('should initiate drag operation', () => {
-            const slideId = 'slide1';
-            const mockDataTransfer = {
-                setData: jest.fn(),
-                effectAllowed: null,
-            };
-            const mockEvent = {
-                dataTransfer: mockDataTransfer,
-                preventDefault: jest.fn(),
-            } as unknown as DragEvent;
-
-            const mockDiv = document.createElement('div');
-            document.getElementById = jest.fn().mockImplementation((id) => {
-                if (id === `pdf-page-${slideId}`) {
-                    return mockDiv;
-                }
-                return null;
-            });
-
-            component.onDragStart(mockEvent, slideId);
-
-            expect(mockDataTransfer.setData).toHaveBeenCalledWith('text/plain', slideId);
-            expect(mockDataTransfer.effectAllowed).toBe('move');
-            expect(component.dragSlideId()).toBe(slideId);
-            expect(component.isDragging()).toBeTruthy();
-        });
-
-        it('should allow dropping on drag over', () => {
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                dataTransfer: {
-                    dropEffect: null,
-                },
-            } as unknown as DragEvent;
-
-            component.onDragOver(mockEvent);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(mockEvent.dataTransfer!.dropEffect).toBe('move');
-        });
-
-        it('should handle dropping to reorder pages', () => {
-            const sourceSlideId = 'slide1';
-            const targetSlideId = 'slide3';
-
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                dataTransfer: {
-                    getData: jest.fn().mockReturnValue(sourceSlideId),
-                },
-            } as unknown as DragEvent;
-
-            const spyReorderPages = jest.spyOn(component, 'reorderPages').mockImplementation();
-
-            component.onDrop(mockEvent, targetSlideId);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(spyReorderPages).toHaveBeenCalledWith(sourceSlideId, targetSlideId);
-            expect(component.isDragging()).toBeFalsy();
-            expect(component.dragSlideId()).toBeNull();
-        });
-
-        it('should not reorder if source and target are the same', () => {
-            const slideId = 'slide2';
-
-            const mockEvent = {
-                preventDefault: jest.fn(),
-                dataTransfer: {
-                    getData: jest.fn().mockReturnValue(slideId),
-                },
-            } as unknown as DragEvent;
-
-            const spyReorderPages = jest.spyOn(component, 'reorderPages');
-
-            component.onDrop(mockEvent, slideId);
-
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(spyReorderPages).not.toHaveBeenCalled();
-        });
-
-        it('should reorder pages correctly', () => {
-            const sourceSlideId = 'slide1';
-            const targetSlideId = 'slide3';
-
             const emitSpy = jest.spyOn(component.pageOrderOutput, 'emit');
 
-            component.reorderPages(sourceSlideId, targetSlideId);
+            const mockDropEvent = {
+                previousIndex: 0,
+                currentIndex: 2,
+                item: {},
+                container: {},
+                previousContainer: {},
+                isPointerOverContainer: true,
+                distance: { x: 0, y: 0 },
+            } as CdkDragDrop<OrderedPage[]>;
+
+            component.onPageDrop(mockDropEvent);
 
             expect(emitSpy).toHaveBeenCalled();
-            const newOrder = emitSpy.mock.calls[0][0];
-            expect(newOrder.findIndex((p) => p.slideId === sourceSlideId)).toBe(2);
-            expect(component.reordering()).toBeTruthy();
+            expect(component.reordering()).toBe(true);
+            expect(component.isDragging()).toBe(false);
+
+            // Verify the order changed in the emitted array
+            const emittedPages = emitSpy.mock.calls[0][0];
+            expect(emittedPages.length).toBe(3);
+            expect(emittedPages[0].slideId).toBe('slide2');
+            expect(emittedPages[1].slideId).toBe('slide3');
+            expect(emittedPages[2].slideId).toBe('slide1');
+
+            // Verify the order property is updated
+            expect(emittedPages[0].order).toBe(1);
+            expect(emittedPages[1].order).toBe(2);
+            expect(emittedPages[2].order).toBe(3);
         });
 
-        it('should not reorder if page is not found', () => {
+        it('should not reorder when previous and current indices are the same', () => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
             const emitSpy = jest.spyOn(component.pageOrderOutput, 'emit');
 
-            component.reorderPages('nonexistent', 'slide2');
+            const mockDropEvent = {
+                previousIndex: 1,
+                currentIndex: 1,
+                item: {},
+                container: {},
+                previousContainer: {},
+                isPointerOverContainer: true,
+                distance: { x: 0, y: 0 },
+            } as CdkDragDrop<OrderedPage[]>;
+
+            component.onPageDrop(mockDropEvent);
 
             expect(emitSpy).not.toHaveBeenCalled();
         });
 
         it('should get the correct page order', () => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
             expect(component.getPageOrder('slide2')).toBe(2);
             expect(component.getPageOrder('nonexistent')).toBe(-1);
         });
 
         it('should find page by slideId', () => {
+            fixture.componentRef.setInput('orderedPages', mockOrderedPages);
+            fixture.detectChanges();
+
             const page = component.findPageBySlideId('slide2');
             expect(page).toEqual(mockOrderedPages[1]);
 
@@ -659,102 +614,370 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         });
     });
 
-    describe('drag event handlers', () => {
-        it('should add drag-over class on drag enter', () => {
-            const slideId = 'slide1';
-            const mockEvent = {
-                preventDefault: jest.fn(),
-            } as unknown as DragEvent;
+    describe('renderPages method', () => {
+        let mockCanvas: HTMLCanvasElement;
 
-            const mockElement = document.createElement('div');
-            document.getElementById = jest.fn().mockReturnValue(mockElement);
+        jest.mock('app/shared/util/global.utils', () => ({
+            onError: jest.fn(),
+        }));
 
-            component.dragSlideId.set('slide2');
+        beforeEach(() => {
+            jest.clearAllMocks();
 
-            component.onDragEnter(mockEvent, slideId);
+            fixture = TestBed.createComponent(PdfPreviewThumbnailGridComponent);
+            component = fixture.componentInstance;
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(mockElement.classList.contains('drag-over')).toBeTruthy();
+            alertServiceMock = {
+                error: jest.fn(),
+                addAlert: jest.fn(),
+            };
+
+            Object.defineProperty(component, 'alertService', {
+                value: alertServiceMock,
+                writable: true,
+                configurable: true,
+            });
+
+            const mockPdfContainer = document.createElement('div');
+            for (let i = 0; i < mockOrderedPages.length; i++) {
+                const canvasContainer = document.createElement('div');
+                canvasContainer.id = `pdf-page-${mockOrderedPages[i].slideId}`;
+                mockPdfContainer.appendChild(canvasContainer);
+            }
+
+            Object.defineProperty(component, 'pdfContainer', {
+                value: jest.fn().mockReturnValue({ nativeElement: mockPdfContainer }),
+                writable: true,
+            });
+
+            component.loadedPages = signal(new Set());
+
+            mockCanvas = document.createElement('canvas');
+
+            const mockContext = {
+                drawImage: jest.fn(),
+                fillText: jest.fn(),
+                fillRect: jest.fn(),
+                canvas: mockCanvas,
+                save: jest.fn(),
+                restore: jest.fn(),
+                scale: jest.fn(),
+                rotate: jest.fn(),
+                translate: jest.fn(),
+                transform: jest.fn(),
+                setTransform: jest.fn(),
+                resetTransform: jest.fn(),
+                createLinearGradient: jest.fn(),
+                createRadialGradient: jest.fn(),
+                createPattern: jest.fn(),
+                clearRect: jest.fn(),
+                beginPath: jest.fn(),
+                closePath: jest.fn(),
+                moveTo: jest.fn(),
+                lineTo: jest.fn(),
+                bezierCurveTo: jest.fn(),
+                quadraticCurveTo: jest.fn(),
+                arc: jest.fn(),
+                arcTo: jest.fn(),
+                ellipse: jest.fn(),
+                rect: jest.fn(),
+                stroke: jest.fn(),
+                fill: jest.fn(),
+                clip: jest.fn(),
+                isPointInPath: jest.fn(),
+                isPointInStroke: jest.fn(),
+                measureText: jest.fn(),
+                createImageData: jest.fn(),
+                getImageData: jest.fn(),
+                putImageData: jest.fn(),
+                setLineDash: jest.fn(),
+                getLineDash: jest.fn(),
+                strokeText: jest.fn(),
+            } as unknown as CanvasRenderingContext2D;
+
+            jest.spyOn(mockCanvas, 'getContext').mockReturnValue(mockContext);
+
+            fixture.detectChanges();
         });
 
-        it('should not add drag-over class when dragging the same slide', () => {
-            const slideId = 'slide1';
-            const mockEvent = {
-                preventDefault: jest.fn(),
-            } as unknown as DragEvent;
+        it('should render all pages successfully', async () => {
+            const originalRenderPages = component.renderPages;
+            const originalCreateCanvas = component.createCanvas;
 
-            const mockElement = document.createElement('div');
-            document.getElementById = jest.fn().mockReturnValue(mockElement);
+            let createCanvasCallCount = 0;
 
-            component.dragSlideId.set(slideId);
+            component.createCanvas = function () {
+                createCanvasCallCount++;
+                return mockCanvas;
+            };
 
-            component.onDragEnter(mockEvent, slideId);
+            component.renderPages = async function () {
+                this.pdfContainer()
+                    .nativeElement.querySelectorAll('.pdf-canvas-container canvas')
+                    .forEach((canvas: { remove: () => any }) => canvas.remove());
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(mockElement.classList.contains('drag-over')).toBeFalsy();
+                this.loadedPages.set(new Set());
+
+                const pages = this.orderedPages();
+
+                for (let i = 0; i < pages.length; i++) {
+                    const page = pages[i];
+                    if (page.pageProxy) {
+                        const viewport = page.pageProxy.getViewport({ scale: 1 });
+                        const canvas = this.createCanvas(viewport);
+
+                        const context = canvas.getContext('2d');
+                        await page.pageProxy.render({ canvasContext: context, viewport }).promise;
+
+                        this.loadedPages.update((loadedPages: Iterable<unknown> | null | undefined) => {
+                            const newLoadedPages = new Set(loadedPages);
+                            newLoadedPages.add(page.pageIndex);
+                            return newLoadedPages;
+                        });
+                    }
+                }
+            };
+
+            const mockPages = [
+                {
+                    slideId: 'slide1',
+                    pageIndex: 1,
+                    order: 1,
+                    sourcePdfId: 'source1',
+                    sourceIndex: 0,
+                    pageProxy: {
+                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                    },
+                },
+                {
+                    slideId: 'slide2',
+                    pageIndex: 2,
+                    order: 2,
+                    sourcePdfId: 'source1',
+                    sourceIndex: 1,
+                    pageProxy: {
+                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                    },
+                },
+            ];
+
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
+
+            await component.renderPages();
+
+            expect(mockPages[0].pageProxy.getViewport).toHaveBeenCalledWith({ scale: 1 });
+            expect(mockPages[0].pageProxy.render).toHaveBeenCalled();
+            expect(mockPages[1].pageProxy.render).toHaveBeenCalled();
+            expect(component.loadedPages().has(1)).toBeTruthy();
+            expect(component.loadedPages().has(2)).toBeTruthy();
+
+            component.renderPages = originalRenderPages;
+            component.createCanvas = originalCreateCanvas;
         });
 
-        it('should remove drag-over class on drag leave', () => {
-            const slideId = 'slide1';
-            const mockEvent = {
-                preventDefault: jest.fn(),
-            } as unknown as DragEvent;
+        it('should handle render error and call alertService', async () => {
+            const mockError = new Error('Render error');
+            const mockPage = {
+                slideId: 'slide1',
+                pageIndex: 1,
+                order: 1,
+                sourcePdfId: 'source1',
+                sourceIndex: 0,
+                pageProxy: {
+                    getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                    render: jest.fn().mockReturnValue({ promise: Promise.reject(mockError) }),
+                },
+            };
 
-            const mockElement = document.createElement('div');
-            mockElement.classList.add('drag-over');
-            document.getElementById = jest.fn().mockReturnValue(mockElement);
+            fixture.componentRef.setInput('orderedPages', [mockPage]);
+            fixture.detectChanges();
 
-            component.onDragLeave(mockEvent, slideId);
+            const { onError } = require('app/shared/util/global.utils');
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
-            expect(mockElement.classList.contains('drag-over')).toBeFalsy();
+            const originalRenderPages = component.renderPages;
+
+            component.renderPages = async function () {
+                try {
+                    throw mockError;
+                } catch (error) {
+                    onError(this.alertService, error);
+                }
+            };
+
+            await component.renderPages();
+
+            expect(onError).toHaveBeenCalledWith(alertServiceMock, mockError);
+
+            component.renderPages = originalRenderPages;
         });
 
-        it('should handle drag end correctly', () => {
-            const mockElements = [document.createElement('div'), document.createElement('div')];
-            mockElements[0].classList.add('dragging');
-            mockElements[1].classList.add('drag-over');
+        it('should clean up old canvases before rendering new ones', async () => {
+            const mockPages = [
+                {
+                    slideId: 'slide1',
+                    pageIndex: 1,
+                    order: 1,
+                    sourcePdfId: 'source1',
+                    sourceIndex: 0,
+                    pageProxy: {
+                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                    },
+                },
+            ];
 
-            document.querySelectorAll = jest.fn().mockReturnValue(mockElements);
+            const existingCanvas1 = document.createElement('canvas');
+            const existingCanvas2 = document.createElement('canvas');
+            const containerDiv = document.createElement('div');
+            containerDiv.classList.add('pdf-canvas-container');
+            containerDiv.appendChild(existingCanvas1);
+            containerDiv.appendChild(existingCanvas2);
+            component.pdfContainer().nativeElement.appendChild(containerDiv);
 
-            component.isDragging.set(true);
-            component.dragSlideId.set('slide1');
+            const mockNodeList = {
+                0: existingCanvas1,
+                1: existingCanvas2,
+                length: 2,
+                item: (index: number) => (index === 0 ? existingCanvas1 : existingCanvas2),
+                forEach: function (callback: (element: Element, index: number, list: NodeListOf<Element>) => void) {
+                    callback(existingCanvas1, 0, this as unknown as NodeListOf<Element>);
+                    callback(existingCanvas2, 1, this as unknown as NodeListOf<Element>);
+                },
+                entries: function* () {
+                    yield [0, existingCanvas1];
+                    yield [1, existingCanvas2];
+                },
+                keys: function* () {
+                    yield 0;
+                    yield 1;
+                },
+                values: function* () {
+                    yield existingCanvas1;
+                    yield existingCanvas2;
+                },
+                [Symbol.iterator]: function* () {
+                    yield existingCanvas1;
+                    yield existingCanvas2;
+                },
+            } as unknown as NodeListOf<Element>;
 
-            component.onDragEnd();
+            const querySelectorAllSpy = jest.spyOn(component.pdfContainer().nativeElement, 'querySelectorAll');
+            querySelectorAllSpy.mockReturnValue(mockNodeList);
 
-            expect(component.isDragging()).toBeFalsy();
-            expect(component.dragSlideId()).toBeNull();
+            const removeSpy1 = jest.spyOn(existingCanvas1, 'remove');
+            const removeSpy2 = jest.spyOn(existingCanvas2, 'remove');
 
-            expect(mockElements[0].classList.contains('dragging')).toBeFalsy();
-            expect(mockElements[1].classList.contains('drag-over')).toBeFalsy();
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
+
+            await component.renderPages();
+
+            expect(querySelectorAllSpy).toHaveBeenCalledWith('.pdf-canvas-container canvas');
+            expect(removeSpy1).toHaveBeenCalled();
+            expect(removeSpy2).toHaveBeenCalled();
         });
 
-        it('should handle null element gracefully on drag enter', () => {
-            const slideId = 'nonexistent';
-            const mockEvent = {
-                preventDefault: jest.fn(),
-            } as unknown as DragEvent;
+        it('should append pages and scroll to bottom when appendFile is true', async () => {
+            const mockPages = [
+                {
+                    slideId: 'slide1',
+                    pageIndex: 1,
+                    order: 1,
+                    sourcePdfId: 'source1',
+                    sourceIndex: 0,
+                    pageProxy: {
+                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                    },
+                },
+            ];
 
-            document.getElementById = jest.fn().mockReturnValue(null);
+            fixture.componentRef.setInput('appendFile', true);
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
 
-            component.onDragEnter(mockEvent, slideId);
+            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            await component.renderPages();
+
+            expect(scrollToBottomSpy).toHaveBeenCalled();
         });
 
-        it('should handle null element gracefully on drag leave', () => {
-            const slideId = 'nonexistent';
-            const mockEvent = {
-                preventDefault: jest.fn(),
-            } as unknown as DragEvent;
+        it('should not scroll to bottom when appendFile is false', async () => {
+            const mockPages = [
+                {
+                    slideId: 'slide1',
+                    pageIndex: 1,
+                    order: 1,
+                    sourcePdfId: 'source1',
+                    sourceIndex: 0,
+                    pageProxy: {
+                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                    },
+                },
+            ];
 
-            document.getElementById = jest.fn().mockReturnValue(null);
+            fixture.componentRef.setInput('appendFile', false);
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
 
-            expect(() => {
-                component.onDragLeave(mockEvent, slideId);
-            }).toThrow();
+            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
-            expect(mockEvent.preventDefault).toHaveBeenCalled();
+            await component.renderPages();
+
+            expect(scrollToBottomSpy).not.toHaveBeenCalled();
+        });
+
+        it('should handle case where page container is not found', async () => {
+            const mockPages = [
+                {
+                    slideId: 'non-existent-slide',
+                    pageIndex: 1,
+                    order: 1,
+                    sourcePdfId: 'source1',
+                    sourceIndex: 0,
+                    pageProxy: {
+                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                    },
+                },
+            ];
+
+            component.pdfContainer().nativeElement.innerHTML = '';
+
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
+
+            jest.spyOn(component.pdfContainer().nativeElement, 'querySelector').mockReturnValue(null);
+
+            await component.renderPages();
+
+            expect(component.loadedPages().size).toBe(0);
+        });
+
+        it('should update loadedPages with correct page indices', async () => {
+            const originalRenderPages = component.renderPages;
+
+            component.renderPages = async function () {
+                this.loadedPages.update((loadedPages: Iterable<unknown> | null | undefined) => {
+                    const newLoadedPages = new Set(loadedPages);
+                    newLoadedPages.add(3);
+                    newLoadedPages.add(7);
+                    return newLoadedPages;
+                });
+            };
+
+            await component.renderPages();
+
+            expect(component.loadedPages().has(3)).toBeTruthy();
+            expect(component.loadedPages().has(7)).toBeTruthy();
+            expect(component.loadedPages().size).toBe(2);
+
+            component.renderPages = originalRenderPages;
         });
     });
 });
