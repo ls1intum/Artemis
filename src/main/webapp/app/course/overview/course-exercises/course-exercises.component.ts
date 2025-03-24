@@ -59,7 +59,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private ltiSubscription: Subscription;
-    private groupedUnitViewSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
     course?: Course;
@@ -87,9 +86,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
             this.isMultiLaunch = params['isMultiLaunch'] === 'true';
-            if (this.isMultiLaunch) {
-                this.ltiService.setGroupedUnitView(true);
-            }
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
@@ -111,12 +107,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.isShownViaLti = isShownViaLti;
         });
 
-        this.groupedUnitViewSubscription = this.ltiService.isGroupedUnitView$.subscribe((groupedUnitView) => {
-            if (!this.isMultiLaunch) {
-                this.isMultiLaunch = groupedUnitView;
-            }
-        });
-
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
         this.navigateToExercise();
     }
@@ -136,9 +126,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
 
         if (!exerciseId && lastSelectedExercise) {
-            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
+            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true, queryParamsHandling: 'merge' });
         } else if (!exerciseId && upcomingExercise) {
-            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
+            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true, queryParamsHandling: 'merge' });
         } else {
             this.exerciseSelected = !!exerciseId;
         }
@@ -206,7 +196,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
-        this.groupedUnitViewSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
     }
 }
