@@ -10,14 +10,12 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Lecture } from 'app/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/lti.constants';
@@ -30,10 +28,8 @@ import { DeepLinkingType } from 'app/lti/lti.constants';
         FaIconComponent,
         FormsModule,
         HelpIconComponent,
-        ArtemisTranslatePipe,
         SortByDirective,
         SortDirective,
-        ArtemisDatePipe,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
     ],
