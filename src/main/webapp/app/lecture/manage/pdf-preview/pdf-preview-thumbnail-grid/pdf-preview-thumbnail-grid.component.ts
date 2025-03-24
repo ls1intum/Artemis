@@ -99,7 +99,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                         container.appendChild(canvas);
                         this.loadedPages.update((loadedPages) => {
                             const newLoadedPages = new Set(loadedPages);
-                            newLoadedPages.add(page.pageIndex);
+                            newLoadedPages.add(page.order);
                             return newLoadedPages;
                         });
                     }
@@ -206,14 +206,14 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     /**
      * Displays the selected PDF page in an enlarged view for detailed examination.
-     * @param pageIndex - The index of PDF page to be enlarged.
+     * @param pageOrder - The order of PDF page to be enlarged.
      * @param slideId - The ID of the slide
      * */
-    displayEnlargedCanvas(pageIndex: number, slideId: string): void {
+    displayEnlargedCanvas(pageOrder: number, slideId: string): void {
         const canvas = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${slideId} canvas`) as HTMLCanvasElement;
         this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
-        this.initialPageNumber.set(pageIndex);
+        this.initialPageNumber.set(pageOrder);
     }
 
     /**

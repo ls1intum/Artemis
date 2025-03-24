@@ -16,7 +16,7 @@
                 [class.cdk-drag-placeholder]="isDragging() && dragSlideId() !== page.slideId"
                 cdkDrag
                 [cdkDragData]="page"
-                (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()"
+                (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()"
             >
                 <div class="drag-handle">
                     <fa-icon [icon]="faGripLines" />
@@ -34,7 +34,7 @@
                 <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
                     <span>{{ getPageOrder(page.slideId) }}</span>
                 </span>
-                @if (loadedPages().has(page.pageIndex)) {
+                @if (loadedPages().has(page.order)) {
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
                 }
                 <button
@@ -105,7 +105,7 @@
     } @else {
         <!-- Without drag and drop for regular attachments -->
         @for (page of orderedPages(); track page.slideId) {
-            <div [id]="'pdf-page-' + page.slideId" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page.pageIndex, page.slideId); $event.stopPropagation()">
+            <div [id]="'pdf-page-' + page.slideId" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page.order, page.slideId); $event.stopPropagation()">
                 @if (hiddenPages()[page.slideId]) {
                     <ng-container>
                         <div class="hidden-overlay pdf-overlay" style="opacity: 1">
@@ -118,7 +118,7 @@
                 <span class="pdf-overlay" [id]="'overlay-' + page.slideId">
                     <span>{{ getPageOrder(page.slideId) }}</span>
                 </span>
-                @if (loadedPages().has(page.pageIndex)) {
+                @if (loadedPages().has(page.order)) {
                     <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
                 }
             </div>

@@ -389,12 +389,12 @@ describe('PdfPreviewComponent', () => {
                 studentPdf: null,
             });
 
-            component.pageOrder.set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide2', pageIndex: 2, order: 2 } as any]);
+            component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
             component.hiddenPages.set({});
 
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
-                { slideId: 'slide1', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
             ]);
 
             const appendSpy = jest.spyOn(FormData.prototype, 'append');
@@ -439,11 +439,11 @@ describe('PdfPreviewComponent', () => {
                 slide2: { date: mockDate, exerciseId: 123 },
             });
 
-            component.pageOrder.set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide2', pageIndex: 2, order: 2 } as any]);
+            component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
 
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
-                { slideId: 'slide1', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
             ]);
 
             const appendSpy = jest.spyOn(FormData.prototype, 'append');
@@ -565,7 +565,7 @@ describe('PdfPreviewComponent', () => {
                 },
             };
 
-            const initialSelectedPages = new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any]);
+            const initialSelectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]);
             component.selectedPages.set(initialSelectedPages);
 
             global.URL.createObjectURL = jest.fn().mockReturnValue('mock-url');
@@ -615,14 +615,14 @@ describe('PdfPreviewComponent', () => {
     describe('Slide Deletion', () => {
         it('should delete selected slides from pageOrder', () => {
             const pageOrder = [
-                { slideId: 'slide1', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2 } as any,
-                { slideId: 'slide3', pageIndex: 3, order: 3 } as any,
-                { slideId: 'slide4', pageIndex: 4, order: 4 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3 } as any,
+                { slideId: 'slide4', initialIndex: 4, order: 4 } as any,
             ];
             component.pageOrder.set(pageOrder);
 
-            component.selectedPages.set(new Set([{ slideId: 'slide2', pageIndex: 2, order: 2 } as any, { slideId: 'slide4', pageIndex: 4, order: 4 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide4', initialIndex: 4, order: 4 } as any]));
 
             component.hiddenPages.set({
                 slide2: { date: dayjs(), exerciseId: null },
@@ -637,9 +637,9 @@ describe('PdfPreviewComponent', () => {
             expect(component.pageOrder()[0].slideId).toBe('slide1');
             expect(component.pageOrder()[1].slideId).toBe('slide3');
 
-            expect(component.pageOrder()[0].pageIndex).toBe(1);
+            expect(component.pageOrder()[0].initialIndex).toBe(1);
             expect(component.pageOrder()[0].order).toBe(1);
-            expect(component.pageOrder()[1].pageIndex).toBe(2);
+            expect(component.pageOrder()[1].initialIndex).toBe(3);
             expect(component.pageOrder()[1].order).toBe(2);
 
             expect(Object.keys(component.hiddenPages()).length).toBe(1);
@@ -658,7 +658,7 @@ describe('PdfPreviewComponent', () => {
                 throw error;
             });
 
-            component.selectedPages.set(new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]));
 
             component.deleteSelectedSlides();
 
@@ -728,7 +728,7 @@ describe('PdfPreviewComponent', () => {
                 { slideId: 'slide3', date: dayjs(), exerciseId: 123 },
             ];
 
-            component.selectedPages.set(new Set([{ slideId: 'slide2', pageIndex: 2, order: 2 } as any, { slideId: 'slide3', pageIndex: 3, order: 3 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide3', initialIndex: 3, order: 3 } as any]));
 
             component.hidePages(pages);
 
@@ -749,7 +749,7 @@ describe('PdfPreviewComponent', () => {
                 slide3: { date: dayjs(), exerciseId: 123 },
             });
 
-            const selectedPages = new Set([{ slideId: 'slide2', pageIndex: 2, order: 2 } as any, { slideId: 'slide3', pageIndex: 3, order: 3 } as any]);
+            const selectedPages = new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide3', initialIndex: 3, order: 3 } as any]);
 
             component.selectedPages.set(selectedPages);
 
@@ -836,7 +836,7 @@ describe('PdfPreviewComponent', () => {
                 slide3: { date: dayjs(), exerciseId: null },
             });
 
-            component.selectedPages.set(new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide5', pageIndex: 5, order: 5 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide5', initialIndex: 5, order: 5 } as any]));
 
             component.hidePages(mockHiddenPage);
 
@@ -872,7 +872,7 @@ describe('PdfPreviewComponent', () => {
                 slide3: { date: dayjs(), exerciseId: null },
             });
 
-            component.selectedPages.set(new Set([{ slideId: 'slide2', pageIndex: 2, order: 2 } as any, { slideId: 'slide7', pageIndex: 7, order: 7 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide7', initialIndex: 7, order: 7 } as any]));
 
             component.hidePages(mockHiddenPages);
 
@@ -918,9 +918,9 @@ describe('PdfPreviewComponent', () => {
 
     describe('Operations Management', () => {
         it('should record reorder operations when page order changes', () => {
-            const initialPageOrder = [{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide2', pageIndex: 2, order: 2 } as any];
+            const initialPageOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
 
-            const newPageOrder = [{ slideId: 'slide2', pageIndex: 1, order: 1 } as any, { slideId: 'slide1', pageIndex: 2, order: 2 } as any];
+            const newPageOrder = [{ slideId: 'slide2', initialIndex: 1, order: 1 } as any, { slideId: 'slide1', initialIndex: 2, order: 2 } as any];
 
             component.pageOrder.set(initialPageOrder);
 
@@ -937,15 +937,15 @@ describe('PdfPreviewComponent', () => {
     describe('PDF Operations', () => {
         it('should handle page reordering correctly', () => {
             const initialPageOrder = [
-                { slideId: 'slide1', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2 } as any,
-                { slideId: 'slide3', pageIndex: 3, order: 3 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3 } as any,
             ];
 
             const newPageOrder = [
-                { slideId: 'slide3', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide1', pageIndex: 2, order: 2 } as any,
-                { slideId: 'slide2', pageIndex: 3, order: 3 } as any,
+                { slideId: 'slide3', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide1', initialIndex: 2, order: 2 } as any,
+                { slideId: 'slide2', initialIndex: 3, order: 3 } as any,
             ];
 
             component.pageOrder.set(initialPageOrder);
@@ -974,7 +974,7 @@ describe('PdfPreviewComponent', () => {
                 slide3: { date: mockDate, exerciseId: null },
             });
 
-            const selectedPages = new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide3', pageIndex: 3, order: 3 } as any]);
+            const selectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide3', initialIndex: 3, order: 3 } as any]);
 
             component.showPages(selectedPages);
 
@@ -998,17 +998,17 @@ describe('PdfPreviewComponent', () => {
             expect(component.allPagesSelected()).toBe(false);
 
             // When some pages are selected
-            const selectedPages = new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide2', pageIndex: 2, order: 2 } as any]);
+            const selectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
             component.selectedPages.set(selectedPages);
             expect(component.allPagesSelected()).toBe(false);
 
             // When all pages are selected
             const allPages = new Set([
-                { slideId: 'slide1', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2 } as any,
-                { slideId: 'slide3', pageIndex: 3, order: 3 } as any,
-                { slideId: 'slide4', pageIndex: 4, order: 4 } as any,
-                { slideId: 'slide5', pageIndex: 5, order: 5 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3 } as any,
+                { slideId: 'slide4', initialIndex: 4, order: 4 } as any,
+                { slideId: 'slide5', initialIndex: 5, order: 5 } as any,
             ]);
             component.selectedPages.set(allPages);
             expect(component.allPagesSelected()).toBe(true);
@@ -1016,13 +1016,13 @@ describe('PdfPreviewComponent', () => {
 
         it('should correctly compute pageOrderChanged property', () => {
             // When page order has not changed
-            const unchangedOrder = [{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide2', pageIndex: 2, order: 2 } as any];
+            const unchangedOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
             component.pageOrder.set(unchangedOrder);
             expect(component.pageOrderChanged()).toBe(false);
 
             const changedOrder = [
-                { slideId: 'slide1', pageIndex: 2, order: 2 } as any, // Changed pageIndex to 2
-                { slideId: 'slide2', pageIndex: 1, order: 1 } as any, // Changed pageIndex to 1
+                { slideId: 'slide1', initialIndex: 2, order: 2 } as any, // Changed initialIndex to 2
+                { slideId: 'slide2', initialIndex: 1, order: 1 } as any, // Changed initialIndex to 1
             ];
             component.pageOrder.set(changedOrder);
             expect(component.pageOrderChanged()).toBe(true);
@@ -1044,10 +1044,10 @@ describe('PdfPreviewComponent', () => {
                 slide3: { date: dayjs(), exerciseId: 123 },
             });
 
-            component.selectedPages.set(new Set([{ slideId: 'slide2', pageIndex: 2, order: 2 } as any, { slideId: 'slide4', pageIndex: 4, order: 4 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide2', initialIndex: 2, order: 2 } as any, { slideId: 'slide4', initialIndex: 4, order: 4 } as any]));
             expect(component.hasHiddenSelectedPages()).toBe(false);
 
-            component.selectedPages.set(new Set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any, { slideId: 'slide2', pageIndex: 2, order: 2 } as any]));
+            component.selectedPages.set(new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]));
             expect(component.hasHiddenSelectedPages()).toBe(true);
         });
 
@@ -1057,7 +1057,7 @@ describe('PdfPreviewComponent', () => {
             (component as any).operations = [];
             component.hasOperations.set(false);
             component.isFileChanged.set(false);
-            component.pageOrder.set([{ slideId: 'slide1', pageIndex: 1, order: 1 } as any]);
+            component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]);
 
             expect(component.hasChanges()).toBe(false);
 
@@ -1075,7 +1075,7 @@ describe('PdfPreviewComponent', () => {
             component.isFileChanged.set(false);
 
             component.pageOrder.set([
-                { slideId: 'slide1', pageIndex: 2, order: 2 } as any, // pageIndex doesn't match index+1
+                { slideId: 'slide1', initialIndex: 2, order: 2 } as any, // initialIndex doesn't match index+1
             ]);
             expect(component.hasChanges()).toBe(true);
         });
@@ -1130,9 +1130,9 @@ describe('PdfPreviewComponent', () => {
     describe('Selection Management', () => {
         it('should add and remove pages from selection', () => {
             const pageOrder = [
-                { slideId: 'slide1', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2 } as any,
-                { slideId: 'slide3', pageIndex: 3, order: 3 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3 } as any,
             ];
             component.pageOrder.set(pageOrder);
             component.totalPages.set(3);
@@ -1179,9 +1179,9 @@ describe('PdfPreviewComponent', () => {
             });
 
             component.pageOrder.set([
-                { slideId: 'slide1', pageIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
-                { slideId: 'slide3', pageIndex: 3, order: 3, sourcePdfId: 'original', sourceIndex: 2 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3, sourcePdfId: 'original', sourceIndex: 2 } as any,
             ]);
 
             const result = await component.applyOperations(true);
@@ -1205,8 +1205,8 @@ describe('PdfPreviewComponent', () => {
             component.hiddenPages.set({});
 
             component.pageOrder.set([
-                { slideId: 'slide1', pageIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
             ]);
 
             component.sourcePDFs.set(
@@ -1311,7 +1311,7 @@ describe('PdfPreviewComponent', () => {
             expect(component.pageOrder()[2].slideId).toBe('slide3');
 
             const firstPage = component.pageOrder()[0];
-            expect(firstPage).toHaveProperty('pageIndex', 1);
+            expect(firstPage).toHaveProperty('initialIndex', 1);
             expect(firstPage).toHaveProperty('order', 1);
             expect(firstPage).toHaveProperty('sourcePdfId', 'original');
             expect(firstPage).toHaveProperty('sourceIndex', 0);
@@ -1320,8 +1320,8 @@ describe('PdfPreviewComponent', () => {
 
         it('should append pages when append flag is true', async () => {
             component.pageOrder.set([
-                { slideId: 'slide1', pageIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
             ]);
             component.totalPages.set(2);
 
@@ -1339,7 +1339,7 @@ describe('PdfPreviewComponent', () => {
 
             const newPage = component.pageOrder()[2];
             expect(newPage.sourcePdfId).toBe('append-source');
-            expect(newPage.pageIndex).toBe(3);
+            expect(newPage.initialIndex).toBe(3);
             expect(newPage.order).toBe(3);
         });
 
@@ -1454,9 +1454,9 @@ describe('PdfPreviewComponent', () => {
             );
 
             component.pageOrder.set([
-                { slideId: 'slide1', pageIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
-                { slideId: 'slide2', pageIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
-                { slideId: 'slide3', pageIndex: 3, order: 3, sourcePdfId: 'original', sourceIndex: 2 } as any,
+                { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'original', sourceIndex: 0 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'original', sourceIndex: 1 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3, sourcePdfId: 'original', sourceIndex: 2 } as any,
             ]);
 
             (component as any).operations = [];
@@ -1550,9 +1550,9 @@ describe('PdfPreviewComponent', () => {
             });
 
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
-                { slideId: 'slide1', pageIndex: 0, order: 0 } as any,
-                { slideId: 'slide2', pageIndex: 1, order: 1 } as any,
-                { slideId: 'slide3', pageIndex: 2, order: 2 } as any,
+                { slideId: 'slide1', initialIndex: 0, order: 0 } as any,
+                { slideId: 'slide2', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide3', initialIndex: 2, order: 2 } as any,
             ]);
 
             const result = await component.applyOperations(true);

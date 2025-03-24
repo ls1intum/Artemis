@@ -44,7 +44,7 @@ export interface PDFSource {
 }
 
 export interface OrderedPage {
-    pageIndex: number;
+    initialIndex: number;
     slideId: string;
     order: number;
     sourcePdfId: string;
@@ -119,7 +119,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Computed properties
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     pageOrderChanged = computed(() => {
-        return this.pageOrder().some((page, index) => page.pageIndex !== index + 1);
+        return this.pageOrder().some((page, index) => page.initialIndex !== index + 1);
     });
     hasHiddenPages = computed(() => Object.keys(this.hiddenPages()).length > 0);
     hasHiddenSelectedPages = computed(() => {
@@ -261,7 +261,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
                     newPages.push({
                         slideId: `temp_${Date.now()}_${i}`,
-                        pageIndex: currentPageCount + i + 1,
+                        initialIndex: currentPageCount + i + 1,
                         order: currentPageCount + i + 1,
                         sourcePdfId: sourceId,
                         sourceIndex: i,
@@ -271,15 +271,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
                 this.pageOrder.update((pages) => [...pages, ...newPages]);
                 this.isFileChanged.set(true);
-            } else {
+            } else if (existingSlides && existingSlides.length > 0) {
                 const orderedPages: OrderedPage[] = [];
 
-                for (const slide of existingSlides!) {
-                    const sourceIndex = slide.slideNumber! - 1; // Convert to 0-based index
+                for (const slide of existingSlides) {
+                    const sourceIndex = slide.slideNumber! - 1;
                     const pageProxy = await pdfJsDocument.getPage(sourceIndex + 1);
 
                     orderedPages.push({
-                        pageIndex: slide.slideNumber!,
+                        initialIndex: slide.slideNumber!,
                         slideId: slide.id!.toString(),
                         order: slide.slideNumber!,
                         sourcePdfId: sourceId,
@@ -289,6 +289,23 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 }
 
                 orderedPages.sort((a, b) => a.order - b.order);
+                this.pageOrder.set(orderedPages);
+            } else {
+                const orderedPages: OrderedPage[] = [];
+
+                for (let i = 0; i < pageCount; i++) {
+                    const pageProxy = await pdfJsDocument.getPage(i + 1);
+
+                    orderedPages.push({
+                        initialIndex: i + 1,
+                        slideId: `temp_${Date.now()}_${i}`,
+                        order: i + 1,
+                        sourcePdfId: sourceId,
+                        sourceIndex: i,
+                        pageProxy,
+                    });
+                }
+
                 this.pageOrder.set(orderedPages);
             }
         } catch (error) {
@@ -401,7 +418,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     updatedPageOrder.sort((a, b) => a.order - b.order);
                     updatedPageOrder.forEach((page, index) => {
                         page.order = index + 1;
-                        page.pageIndex = index + 1;
                     });
 
                     this.operations.push({
@@ -606,7 +622,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     'pageOrder',
                     JSON.stringify(
                         finalPageOrder.map((page) => ({
-                            pageIndex: page.pageIndex,
                             slideId: page.slideId,
                             order: page.order,
                         })),
@@ -692,7 +707,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
                 return remainingPages.map((page, index) => ({
                     ...page,
-                    pageIndex: index + 1,
                     order: index + 1,
                 }));
             });

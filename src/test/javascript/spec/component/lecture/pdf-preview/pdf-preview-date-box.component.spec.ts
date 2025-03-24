@@ -25,8 +25,8 @@ describe('PdfPreviewDateBoxComponent', () => {
     ] as Exercise[];
 
     const mockSelectedPages = [
-        { pageIndex: 1, id: '1', slideId: '1' },
-        { pageIndex: 2, id: '2', slideId: '2' },
+        { order: 1, id: '1', slideId: '1' },
+        { order: 2, id: '2', slideId: '2' },
     ] as unknown as OrderedPage[];
 
     beforeEach(async () => {
@@ -82,7 +82,7 @@ describe('PdfPreviewDateBoxComponent', () => {
             component.ngOnInit();
             expect(component.isMultiplePages()).toBeTruthy();
 
-            fixture.componentRef.setInput('selectedPages', [{ pageIndex: 1, id: '1', slideId: '1' }]);
+            fixture.componentRef.setInput('selectedPages', [{ order: 1, id: '1', slideId: '1' }]);
             expect(component.isMultiplePages()).toBeFalsy();
         });
     });
@@ -190,7 +190,7 @@ describe('PdfPreviewDateBoxComponent', () => {
 
             component.calendarSelected.set(true);
             component.defaultDate.set(testDate);
-            fixture.componentRef.setInput('selectedPages', [{ pageIndex: 3, id: '3', slideId: '3' }]);
+            fixture.componentRef.setInput('selectedPages', [{ order: 3, id: '3', slideId: '3' }]);
 
             component.onSubmit();
 
@@ -215,8 +215,8 @@ describe('PdfPreviewDateBoxComponent', () => {
             component.exerciseSelected.set(true);
             component.selectedExercise.set(futureExercise);
             fixture.componentRef.setInput('selectedPages', [
-                { pageIndex: 5, id: '5', slideId: '5' },
-                { pageIndex: 6, id: '6', slideId: '6' },
+                { order: 5, id: '5', slideId: '5' },
+                { order: 6, id: '6', slideId: '6' },
             ]);
 
             component.onSubmit();
@@ -256,15 +256,15 @@ describe('PdfPreviewDateBoxComponent', () => {
     describe('Computed Properties', () => {
         it('should correctly format page indices', () => {
             fixture.componentRef.setInput('selectedPages', [
-                { pageIndex: 3, id: '3', slideId: '3' },
-                { pageIndex: 1, id: '1', slideId: '1' },
-                { pageIndex: 2, id: '2', slideId: '2' },
+                { order: 3, id: '3', slideId: '3' },
+                { order: 1, id: '1', slideId: '1' },
+                { order: 2, id: '2', slideId: '2' },
             ]);
             expect(component.pagesDisplay()).toBe('1, 2, 3');
         });
 
         it('should correctly show single page index', () => {
-            fixture.componentRef.setInput('selectedPages', [{ pageIndex: 3, id: '3', slideId: '3' }]);
+            fixture.componentRef.setInput('selectedPages', [{ order: 3, id: '3', slideId: '3' }]);
             expect(component.pagesDisplay()).toBe('3');
         });
     });

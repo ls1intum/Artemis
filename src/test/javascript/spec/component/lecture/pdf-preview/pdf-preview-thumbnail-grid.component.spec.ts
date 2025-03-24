@@ -39,9 +39,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     let alertServiceMock: any;
 
     const mockOrderedPages: OrderedPage[] = [
-        { slideId: 'slide1', pageIndex: 1, order: 1, sourcePdfId: 'source1', sourceIndex: 0, pageProxy: null as any },
-        { slideId: 'slide2', pageIndex: 2, order: 2, sourcePdfId: 'source1', sourceIndex: 1, pageProxy: null as any },
-        { slideId: 'slide3', pageIndex: 3, order: 3, sourcePdfId: 'source1', sourceIndex: 2, pageProxy: null as any },
+        { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'source1', sourceIndex: 0, pageProxy: null as any },
+        { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'source1', sourceIndex: 1, pageProxy: null as any },
+        { slideId: 'slide3', initialIndex: 3, order: 3, sourcePdfId: 'source1', sourceIndex: 2, pageProxy: null as any },
     ];
 
     beforeEach(async () => {
@@ -731,7 +731,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
                         this.loadedPages.update((loadedPages: Iterable<unknown> | null | undefined) => {
                             const newLoadedPages = new Set(loadedPages);
-                            newLoadedPages.add(page.pageIndex);
+                            newLoadedPages.add(page.order);
                             return newLoadedPages;
                         });
                     }
@@ -741,7 +741,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockPages = [
                 {
                     slideId: 'slide1',
-                    pageIndex: 1,
+                    initialIndex: 1,
                     order: 1,
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
@@ -752,7 +752,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 },
                 {
                     slideId: 'slide2',
-                    pageIndex: 2,
+                    initialIndex: 2,
                     order: 2,
                     sourcePdfId: 'source1',
                     sourceIndex: 1,
@@ -782,7 +782,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockError = new Error('Render error');
             const mockPage = {
                 slideId: 'slide1',
-                pageIndex: 1,
+                initialIndex: 1,
                 order: 1,
                 sourcePdfId: 'source1',
                 sourceIndex: 0,
@@ -818,7 +818,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockPages = [
                 {
                     slideId: 'slide1',
-                    pageIndex: 1,
+                    initialIndex: 1,
                     order: 1,
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
@@ -884,7 +884,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockPages = [
                 {
                     slideId: 'slide1',
-                    pageIndex: 1,
+                    initialIndex: 1,
                     order: 1,
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
@@ -910,7 +910,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockPages = [
                 {
                     slideId: 'slide1',
-                    pageIndex: 1,
+                    initialIndex: 1,
                     order: 1,
                     sourcePdfId: 'source1',
                     sourceIndex: 0,
@@ -936,7 +936,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockPages = [
                 {
                     slideId: 'non-existent-slide',
-                    pageIndex: 1,
+                    initialIndex: 1,
                     order: 1,
                     sourcePdfId: 'source1',
                     sourceIndex: 0,

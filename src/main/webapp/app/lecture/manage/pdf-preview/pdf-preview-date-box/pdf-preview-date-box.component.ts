@@ -49,11 +49,11 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         const pages = this.selectedPages();
 
         if (pages.length === 1) {
-            return `${pages[0].pageIndex}`;
+            return `${pages[0].order}`;
         }
 
         return pages
-            .map((p) => p.pageIndex)
+            .map((p) => p.order)
             .sort()
             .join(', ');
     });
