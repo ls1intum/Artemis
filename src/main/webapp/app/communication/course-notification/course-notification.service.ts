@@ -6,10 +6,10 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { CourseNotificationInfo } from 'app/entities/course-notification/course-notification-info';
 import { CourseNotificationPage } from 'app/entities/course-notification/course-notification-page';
-import { convertDateFromServer } from 'app/utils/date.utils';
 import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 /**
  * Service for managing course notifications.

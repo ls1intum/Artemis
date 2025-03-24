@@ -15,7 +15,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 
@@ -33,7 +32,6 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
         NotificationPopupComponent,
         FooterComponent,
         CourseNotificationPopupOverlayComponent,
-        FeatureToggleDirective,
         FeatureToggleHideDirective,
     ],
 })

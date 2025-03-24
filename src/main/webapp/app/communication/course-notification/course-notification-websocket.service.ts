@@ -2,11 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { CourseNotification } from 'app/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
-import { convertDateFromServer } from 'app/utils/date.utils';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 /**
  * Service for handling course notification websocket connections.
