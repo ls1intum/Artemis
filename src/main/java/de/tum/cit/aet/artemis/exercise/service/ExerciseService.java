@@ -67,7 +67,6 @@ import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
@@ -140,6 +139,8 @@ public class ExerciseService {
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final ParticipationFilterService participationFilterService;
+
     private final SlideRepository slideRepository;
 
     private final SlideUnhideService slideUnhideService;
@@ -151,7 +152,8 @@ public class ExerciseService {
             TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
             FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
             QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
-            Optional<CompetencyRelationApi> competencyRelationApi, SlideRepository slideRepository, SlideUnhideService slideUnhideService) {
+            Optional<CompetencyRelationApi> competencyRelationApi, ParticipationFilterService participationFilterService, SlideRepository slideRepository,
+            SlideUnhideService slideUnhideService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -175,6 +177,7 @@ public class ExerciseService {
         this.examLiveEventsService = examLiveEventsService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
+        this.participationFilterService = participationFilterService;
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
     }
@@ -335,7 +338,7 @@ public class ExerciseService {
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
-            filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
+            filterExerciseForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
             // remove sensitive information from the exercise for students
             if (isStudent) {
                 exercise.filterSensitiveInformation();
@@ -471,65 +474,28 @@ public class ExerciseService {
      * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
      * result. Filter everything else that is not relevant
      *
-     * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
-     * @param participations the set of participations, wherein to search for the relevant participation
-     * @param isStudent      defines if the current user is a student
+     * @param exercise                         the exercise that should be filtered (this deletes many field values of the passed exercise object)
+     * @param participationsAcrossAllExercises the set of participations in all exercises, wherein to search for the participations in this exercise
+     * @param isStudent                        defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, boolean isStudent) {
-        // remove the unnecessary inner course attribute
+    public void filterExerciseForCourseDashboard(Exercise exercise, Set<StudentParticipation> participationsAcrossAllExercises, boolean isStudent) {
+        // remove attributes that are not necessary for the dashboard
         exercise.setCourse(null);
-
-        // remove the problem statement, which is loaded in the exercise details call
         exercise.setProblemStatement(null);
-
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             programmingExercise.setTestRepositoryUri(null);
         }
 
-        // get user's participation for the exercise
-        Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
+        // no participations yet, therefore nothing to filter from here on -> return
+        if (participationsAcrossAllExercises == null) {
+            exercise.setStudentParticipations(Set.of());
+            return;
+        }
+        Set<StudentParticipation> studentParticipationsInExercise = participationFilterService.findStudentParticipationsInExercise(participationsAcrossAllExercises, exercise);
 
-        // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        relevantParticipations.forEach(participation -> {
-            // find the latest submission with a rated result, otherwise the latest submission with
-            // an unrated result or alternatively the latest submission without a result
-            Set<Submission> submissions = participation.getSubmissions();
+        studentParticipationsInExercise.forEach(participation -> participationFilterService.filterParticipationForCourseDashboard(participation, isStudent));
 
-            // only transmit the relevant result
-            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
-            Submission submission = (submissions == null || submissions.isEmpty()) ? null : exercise.findAppropriateSubmissionByResults(submissions);
-            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
-
-            Set<Result> results = Set.of();
-
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
-                }
-            }
-
-            // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getLatestResult() != null) {
-                submission.getLatestResult().filterSensitiveInformation();
-            }
-
-            // add submission to participation or set it to null
-            participation.setSubmissions(submission != null ? Set.of(submission) : null);
-
-            participation.setResults(results);
-            if (submission != null) {
-                submission.setResults(new ArrayList<>(results));
-            }
-
-            // remove inner exercise from participation
-            participation.setExercise(null);
-        });
-
-        exercise.setStudentParticipations(relevantParticipations);
+        exercise.setStudentParticipations(studentParticipationsInExercise);
     }
 
     /**

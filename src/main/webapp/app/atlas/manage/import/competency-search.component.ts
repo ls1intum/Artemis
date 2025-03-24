@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
-import { getSemesters } from 'app/utils/semester-utils';
+import { getSemesters } from 'app/shared/util/semester-utils';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

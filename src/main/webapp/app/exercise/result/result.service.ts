@@ -10,7 +10,7 @@ import { StudentParticipation, isPracticeMode } from 'app/entities/participation
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';

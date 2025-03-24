@@ -1,4 +1,4 @@
-import { DifficultyFilterOption, ExerciseCategoryFilterOption, ExerciseFilterOptions, ExerciseTypeFilterOption, FilterOption, RangeFilter } from 'app/types/exercise-filter';
+import { DifficultyFilterOption, ExerciseCategoryFilterOption, ExerciseFilterOptions, ExerciseTypeFilterOption, FilterOption, RangeFilter } from 'app/shared/types/exercise-filter';
 import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';

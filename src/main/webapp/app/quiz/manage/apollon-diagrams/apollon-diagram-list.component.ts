@@ -8,7 +8,7 @@ import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagr
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';

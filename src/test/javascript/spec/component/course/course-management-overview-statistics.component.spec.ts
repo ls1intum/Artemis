@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
+import { CourseManagementOverviewStatisticsComponent } from 'app/core/course/manage/overview/course-management-overview-statistics.component';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

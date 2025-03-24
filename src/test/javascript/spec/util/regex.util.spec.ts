@@ -1,4 +1,4 @@
-import { matchesRegexFully } from 'app/utils/regex.util';
+import { matchesRegexFully } from 'app/shared/util/regex.util';
 
 describe('matchesRegexFully', () => {
     it('should return true if regex is undefined', () => {

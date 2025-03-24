@@ -6,12 +6,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/text-editor.service';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -44,6 +44,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -52,6 +58,8 @@ describe('TextEditorComponent', () => {
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: jest.SpyInstance;
+    let profileService: ProfileService;
+    let irisSettingsService: IrisSettingsService;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
@@ -94,6 +102,8 @@ describe('TextEditorComponent', () => {
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -105,6 +115,8 @@ describe('TextEditorComponent', () => {
                 debugElement = fixture.debugElement;
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
+                profileService = TestBed.inject(ProfileService);
+                irisSettingsService = TestBed.inject(IrisSettingsService);
                 getTextForParticipationStub = jest.spyOn(textService, 'get');
             });
     });
@@ -459,4 +471,65 @@ describe('TextEditorComponent', () => {
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
+
+    it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
+        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+
+        const mockIrisSettings = { id: 123 } as IrisSettings;
+        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(mockIrisSettings));
+
+        route.params = of({ exerciseId: '456' });
+
+        comp.examMode = false;
+
+        comp['loadIrisSettings']();
+        tick();
+
+        expect(profileService.getProfileInfo).toHaveBeenCalled();
+        expect(irisSettingsService.getCombinedExerciseSettings).toHaveBeenCalledWith('456');
+        expect(comp.irisSettings).toEqual(mockIrisSettings);
+
+        flush();
+    }));
+
+    it('should not load Iris settings when in exam mode', fakeAsync(() => {
+        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+
+        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
+
+        route.params = of({ exerciseId: '456' });
+
+        comp.examMode = true;
+
+        comp['loadIrisSettings']();
+        tick();
+
+        expect(profileService.getProfileInfo).toHaveBeenCalled();
+        expect(irisSettingsService.getCombinedExerciseSettings).not.toHaveBeenCalled();
+        expect(comp.irisSettings).toBeUndefined();
+
+        flush();
+    }));
+
+    it('should not load Iris settings when Iris profile is not active', fakeAsync(() => {
+        const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+
+        jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
+
+        route.params = of({ exerciseId: '456' });
+
+        comp.examMode = false;
+
+        comp['loadIrisSettings']();
+        tick();
+
+        expect(profileService.getProfileInfo).toHaveBeenCalled();
+        expect(irisSettingsService.getCombinedExerciseSettings).not.toHaveBeenCalled();
+        expect(comp.irisSettings).toBeUndefined();
+
+        flush();
+    }));
 });

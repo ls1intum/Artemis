@@ -527,7 +527,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().removeFirst();
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
@@ -1650,7 +1650,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
 
-        exerciseService.filterForCourseDashboard(quizExercise, Set.of((StudentParticipation) quizSubmission.getParticipation()), true);
+        exerciseService.filterExerciseForCourseDashboard(quizExercise, Set.of((StudentParticipation) quizSubmission.getParticipation()), true);
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
         assertThat(quizExercise.getStudentParticipations()).containsExactlyInAnyOrder((StudentParticipation) quizSubmission.getParticipation());
@@ -1890,19 +1890,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void updateMultipleChoice(QuizExercise quizExercise) {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().removeFirst();
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        dnd.getDropLocations().remove(0);
-        dnd.getCorrectMappings().remove(0);
-        dnd.getDragItems().remove(0);
+        dnd.getDropLocations().removeFirst();
+        dnd.getCorrectMappings().removeFirst();
+        dnd.getDragItems().removeFirst();
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sa.getSpots().remove(0);
-        sa.getSolutions().remove(0);
-        sa.getCorrectMappings().remove(0);
+        sa.getSpots().removeFirst();
+        sa.getSolutions().removeFirst();
+        sa.getCorrectMappings().removeFirst();
     }
 
     private QuizExercise createMultipleChoiceQuizExercise() {

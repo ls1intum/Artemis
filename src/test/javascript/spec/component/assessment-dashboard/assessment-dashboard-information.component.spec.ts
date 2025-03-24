@@ -1,4 +1,4 @@
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
