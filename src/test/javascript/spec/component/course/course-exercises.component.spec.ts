@@ -156,7 +156,7 @@ describe('CourseExercisesComponent', () => {
         expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
     });
 
-    it('should update isMultiLaunch from false to true when query parameters change', () => {
+    it('should call exerciseService if multiLaunchExercises are present', () => {
         component.isMultiLaunch = true;
         component.multiLaunchExerciseIDs = [1, 2];
 
