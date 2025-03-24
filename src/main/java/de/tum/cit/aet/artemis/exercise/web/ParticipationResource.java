@@ -763,6 +763,7 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -801,6 +802,7 @@ public class ParticipationResource {
     }
 
     @Nullable
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
@@ -843,11 +845,6 @@ public class ParticipationResource {
                     responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
                 }
             }
-
-            // set view
-            // var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
-            // MappingJacksonValue value = new MappingJacksonValue(participation);
-            // value.setSerializationView(view);
 
             return responseDTO != null ? new MappingJacksonValue(responseDTO) : null;
         }

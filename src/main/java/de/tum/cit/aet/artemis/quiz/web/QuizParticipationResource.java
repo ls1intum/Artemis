@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipation;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
@@ -76,7 +76,7 @@ public class QuizParticipationResource {
      */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<MappingJacksonValue> startParticipation(@PathVariable Long exerciseId) {
+    public ResponseEntity<StudentQuizParticipation> startParticipation(@PathVariable Long exerciseId) {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
@@ -105,7 +105,7 @@ public class QuizParticipationResource {
         participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
-        Object responseDTO;
+        StudentQuizParticipation responseDTO;
         if (exercise.isQuizEnded()) {
             responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
         }
@@ -116,13 +116,10 @@ public class QuizParticipationResource {
             responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
         }
 
-        // var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));
         if (responseDTO == null) {
             throw new InternalServerErrorException("Error starting quiz participation");
         }
-        MappingJacksonValue value = new MappingJacksonValue(responseDTO);
-        // value.setSerializationView(view);
-        return new ResponseEntity<>(value, HttpStatus.OK);
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
 
 }
