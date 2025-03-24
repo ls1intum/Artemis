@@ -18,6 +18,12 @@ public record QuizExerciseWithoutQuestionsDTO(Long id, String title, String shor
         Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, Integer remainingNumberOfAttempts, Boolean isOpenForPractice, QuizMode quizMode, Integer duration,
         Set<QuizBatchDTO> quizBatches, boolean quizStarted, boolean quizEnded) {
 
+    /**
+     * Creates a QuizExerciseWithoutQuestionsDTO object from a QuizExercise object.
+     *
+     * @param quizExercise the QuizExercise object
+     * @return the created QuizExerciseWithoutQuestionsDTO object
+     */
     public static QuizExerciseWithoutQuestionsDTO of(final QuizExercise quizExercise) {
         return new QuizExerciseWithoutQuestionsDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.getShortName(), quizExercise.getReleaseDate(),
                 quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getAssessmentDueDate(), quizExercise.getDifficulty(), quizExercise.isVisibleToStudents(),

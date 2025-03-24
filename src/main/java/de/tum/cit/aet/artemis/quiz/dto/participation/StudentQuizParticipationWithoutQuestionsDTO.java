@@ -16,13 +16,19 @@ import de.tum.cit.aet.artemis.quiz.dto.result.ResultBeforeEvaluationDTO;
 public record StudentQuizParticipationWithoutQuestionsDTO(@JsonUnwrapped StudentQuizParticipationBaseDTO studentQuizParticipationBaseDTO, QuizExerciseWithoutQuestionsDTO exercise,
         Set<ResultBeforeEvaluationDTO> results) implements StudentQuizParticipation {
 
+    /**
+     * Creates a StudentQuizParticipationWithoutQuestionsDTO object from a StudentParticipation object.
+     *
+     * @param studentParticipation the StudentParticipation object
+     * @return the created StudentQuizParticipationWithoutQuestionsDTO object
+     */
     public static StudentQuizParticipationWithoutQuestionsDTO of(final StudentParticipation studentParticipation) {
         Exercise participationExercise = studentParticipation.getExercise();
         if (!(participationExercise instanceof QuizExercise quizExercise)) {
             // TODO: Figure out error handling here
             return null;
         }
-        // ToDo: Results is deprecated, will be removed after QuizView is removed
+        // TODO: Results is deprecated, will be removed after QuizView is removed
         return new StudentQuizParticipationWithoutQuestionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithoutQuestionsDTO.of(quizExercise),
                 studentParticipation.getResults().stream().map(ResultBeforeEvaluationDTO::of).collect(Collectors.toSet()));
     }

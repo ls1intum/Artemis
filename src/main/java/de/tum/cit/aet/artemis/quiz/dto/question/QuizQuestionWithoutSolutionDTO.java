@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question;
 
+import jakarta.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -8,12 +10,19 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 
+// Note: Only one of the three questions will be non-null depending on the question type
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO quizQuestionBaseDTO,
-        @JsonUnwrapped MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionWithoutSolutionDTO,
-        @JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO,
-        @JsonUnwrapped ShortAnswerQuestionWithoutMappingDTO shortAnswerQuestionWithoutMappingDTO) {
+        @Nullable @JsonUnwrapped MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionWithoutSolutionDTO,
+        @Nullable @JsonUnwrapped DragAndDropQuestionWithoutSolutionDTO dragAndDropQuestionWithoutSolutionDTO,
+        @Nullable @JsonUnwrapped ShortAnswerQuestionWithoutMappingDTO shortAnswerQuestionWithoutMappingDTO) {
 
+    /**
+     * Creates a QuizQuestionWithoutSolutionDTO object from a QuizQuestion object.
+     *
+     * @param quizQuestion the QuizQuestion object
+     * @return the created QuizQuestionWithoutSolutionDTO object
+     */
     public static QuizQuestionWithoutSolutionDTO of(final QuizQuestion quizQuestion) {
         QuizQuestionBaseDTO quizQuestionBaseDTO = QuizQuestionBaseDTO.of(quizQuestion);
         MultipleChoiceQuestionWithoutSolutionDTO multipleChoiceQuestionDTO = null;

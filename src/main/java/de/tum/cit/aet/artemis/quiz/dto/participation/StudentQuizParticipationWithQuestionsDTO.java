@@ -16,6 +16,12 @@ import de.tum.cit.aet.artemis.quiz.dto.result.ResultBeforeEvaluationDTO;
 public record StudentQuizParticipationWithQuestionsDTO(@JsonUnwrapped StudentQuizParticipationBaseDTO studentQuizParticipationBaseDTO, QuizExerciseWithQuestionsDTO exercise,
         Set<ResultBeforeEvaluationDTO> results) implements StudentQuizParticipation {
 
+    /**
+     * Creates a StudentQuizParticipationWithQuestionsDTO object from a StudentParticipation object.
+     *
+     * @param studentParticipation the StudentParticipation object
+     * @return the created StudentQuizParticipationWithQuestionsDTO object
+     */
     public static StudentQuizParticipationWithQuestionsDTO of(final StudentParticipation studentParticipation) {
         Exercise participationExercise = studentParticipation.getExercise();
         if (!(participationExercise instanceof QuizExercise quizExercise)) {

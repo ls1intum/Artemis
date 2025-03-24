@@ -14,6 +14,12 @@ public record SubmittedAnswerAfterEvaluationDTO(Long id, Double scoreInPoints, Q
         @JsonUnwrapped MultipleChoiceSubmittedAnswerWithSolutionDTO multipleChoiceSubmittedAnswer, @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer,
         @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer) {
 
+    /**
+     * Creates a SubmittedAnswerAfterEvaluationDTO object from a SubmittedAnswer object.
+     *
+     * @param submittedAnswer the SubmittedAnswer object
+     * @return the created SubmittedAnswerAfterEvaluationDTO object
+     */
     public static SubmittedAnswerAfterEvaluationDTO of(final SubmittedAnswer submittedAnswer) {
         MultipleChoiceSubmittedAnswerWithSolutionDTO multipleChoiceSubmittedAnswer = null;
         DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer = null;

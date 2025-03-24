@@ -13,6 +13,12 @@ import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionAfterEvaluationD
 public record ResultAfterEvaluationDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, QuizSubmissionAfterEvaluationDTO submission,
         AssessmentType assessmentType) {
 
+    /**
+     * Creates a ResultAfterEvaluationDTO object from a Result object.
+     *
+     * @param result the Result object
+     * @return the created ResultAfterEvaluationDTO object
+     */
     public static ResultAfterEvaluationDTO of(Result result) {
         QuizSubmissionAfterEvaluationDTO quizSubmission = null;
         if (result.getSubmission() instanceof QuizSubmission submission) {

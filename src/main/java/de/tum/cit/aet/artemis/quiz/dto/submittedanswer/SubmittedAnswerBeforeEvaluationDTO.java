@@ -14,6 +14,12 @@ public record SubmittedAnswerBeforeEvaluationDTO(Long id, QuizQuestionWithoutSol
         @JsonUnwrapped MultipleChoiceSubmittedAnswerWithoutSolutionDTO multipleChoiceSubmittedAnswer, @JsonUnwrapped DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer,
         @JsonUnwrapped ShortAnswerSubmittedAnswerDTO shortAnswerSubmittedAnswer) {
 
+    /**
+     * Creates a SubmittedAnswerBeforeEvaluationDTO object from a SubmittedAnswer object.
+     *
+     * @param submittedAnswer the SubmittedAnswer object
+     * @return the created SubmittedAnswerBeforeEvaluationDTO object
+     */
     public static SubmittedAnswerBeforeEvaluationDTO of(final SubmittedAnswer submittedAnswer) {
         MultipleChoiceSubmittedAnswerWithoutSolutionDTO multipleChoiceSubmittedAnswer = null;
         DragAndDropSubmittedAnswerDTO dragAndDropSubmittedAnswer = null;
