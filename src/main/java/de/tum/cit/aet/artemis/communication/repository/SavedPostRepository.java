@@ -36,15 +36,15 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
     Long countByUserId(Long userId);
 
     /***
-     * Get a single saved post by user id, connected post/answer post id and posting type. Not cached.
+     * Get all saved post by user id, connected post/answer post id and posting type. Not cached.
      *
      * @param userId   of the bookmark
      * @param postId   of the bookmark
      * @param postType of the bookmark
      *
-     * @return The saved post if exists, null otherwise.
+     * @return The saved posts if they exist.
      */
-    SavedPost findSavedPostByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
+    List<SavedPost> findSavedPostsByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
 
     /***
      * Get all saved posts by connected post/answer post id and posting type. Not cached.
@@ -70,7 +70,7 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
                 WHERE s.user.id = :userId AND s.postType = :postType
             """)
     @Cacheable(key = "'saved_post_type_' + #postType.getDatabaseKey() + '_' + #userId")
-    List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") Long userId, @Param("postType") PostingType postType);
+    List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") long userId, @Param("postType") PostingType postType);
 
     /***
      * Query all saved posts of a user by status. E.g. for displaying the saved posts. Cached by user id and status.
@@ -80,8 +80,16 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @return List of saved posts of the given user, filtered by the given status.
      */
+    @Query("""
+            SELECT new SavedPost(sp.user, sp.postId, sp.postType, MAX(sp.status), MAX(sp.completedAt))
+            FROM SavedPost sp
+            WHERE sp.user.id = :userId
+                AND sp.status = :status
+            GROUP BY sp.user, sp.postId, sp.postType
+            ORDER BY MAX(sp.completedAt) DESC, MAX(sp.id) DESC
+            """)
     @Cacheable(key = "'saved_post_status_' + #status.getDatabaseKey() + '_' + #userId")
-    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(Long userId, SavedPostStatus status);
+    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") long userId, @Param("status") SavedPostStatus status);
 
     /***
      * Query all SavedPosts for a certain user. Not cached.
