@@ -20,6 +20,8 @@
             "goToLecture": "Zur Vorlesung gehen",
             "goToExam": "Zur Klausur gehen",
             "sendAsDirectMessage": "Auch als Direktnachricht senden",
+            "sendToGroup": "Auch an die Gruppe senden",
+            "sendToChannel": "Auch an <b>{{ channelName }}</b> senden",
             "conversationMessages": {
                 "searchLabel": "Nachrichten durchsuchen",
                 "clearSearch": "Suche löschen",

@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, input, output, signal } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -20,8 +21,10 @@ import { Post } from 'app/entities/metis/post.model';
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     private localStorageService = inject(LocalStorageService);
+    private cdr = inject(ChangeDetectorRef);
 
     warningDismissed = false;
+    channelName?: string;
 
     readonly activeConversation = input<ConversationDTO>();
 
@@ -32,6 +35,8 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     ngOnInit(): void {
         super.ngOnInit();
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
+        this.channelName = (this.activeConversation() as ChannelDTO).name;
+        this.cdr.detectChanges();
     }
 
     ngOnChanges(changes: SimpleChanges | void) {

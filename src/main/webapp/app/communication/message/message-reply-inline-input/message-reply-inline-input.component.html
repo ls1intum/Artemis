@@ -24,9 +24,15 @@
             }
             <div class="d-flex justify-content-between align-items-center">
                 @if (editType !== EditType.UPDATE) {
-                    <div class="direct-message-checkbox">
-                        <input type="checkbox" id="directMessageCheckbox" [checked]="sendAsDirectMessage()" (change)="toggleSendAsDirectMessage()" />
-                        <label for="directMessageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendAsDirectMessage"></label>
+                    <div class="message-checkbox">
+                        <input type="checkbox" id="messageCheckbox" [checked]="sendAsDirectMessage()" (change)="toggleSendAsDirectMessage()" />
+                        @if (this.activeConversation()!.type === 'channel') {
+                            <label for="messageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendToChannel" [translateValues]="{ channelName: this.channelName }"> </label>
+                        } @else if (this.activeConversation()!.type === 'oneToOneChat') {
+                            <label for="messageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendAsDirectMessage"></label>
+                        } @else {
+                            <label for="messageCheckbox" jhiTranslate="artemisApp.conversationsLayout.sendToGroup"></label>
+                        }
                     </div>
                 } @else {
                     <div class="d-flex gap-2">
