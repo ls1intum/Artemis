@@ -27,7 +27,6 @@ import { StartPracticeModeButtonComponent } from 'app/shared/components/start-pr
 import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -43,7 +42,6 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
         FaIconComponent,
-        TranslateDirective,
         RequestFeedbackButtonComponent,
         ArtemisTranslatePipe,
     ],
