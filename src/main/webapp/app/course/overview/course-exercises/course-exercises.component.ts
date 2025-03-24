@@ -90,6 +90,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
+            if (this.isMultiLaunch) {
+                this.ltiService.setGroupedUnitView(true);
+            }
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -152,10 +155,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     prepareSidebarData() {
         const exercises: Exercise[] = [];
-
-        if (this.isMultiLaunch) {
-            this.ltiService.setGroupedUnitView(true);
-        }
 
         if (this.multiLaunchExerciseIDs?.length > 0) {
             const exerciseObservables = this.multiLaunchExerciseIDs.map((exerciseId) => this.exerciseService.find(exerciseId));

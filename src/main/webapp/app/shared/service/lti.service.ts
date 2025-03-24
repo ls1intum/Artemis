@@ -9,7 +9,7 @@ export class LtiService {
     isShownViaLti$ = this.shownViaLtiSubject.asObservable();
 
     private groupedUnitViewSubject = new BehaviorSubject<boolean>(false);
-    isGroupedUnitView$ = this.shownViaLtiSubject.asObservable();
+    isGroupedUnitView$ = this.groupedUnitViewSubject.asObservable();
 
     setShownViaLti(shownViaLti: boolean) {
         this.shownViaLtiSubject.next(shownViaLti);
