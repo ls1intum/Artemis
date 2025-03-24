@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
-import { CourseScoresComponent, HighlightType } from 'app/course/manage/course-scores/course-scores.component';
+import { CourseScoresComponent, HighlightType } from 'app/core/course/manage/course-scores/course-scores.component';
 import {
     COURSE_OVERALL_POINTS_KEY,
     COURSE_OVERALL_SCORE_KEY,
@@ -14,7 +14,7 @@ import {
     PRESENTATION_SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -46,7 +46,7 @@ import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
+import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;

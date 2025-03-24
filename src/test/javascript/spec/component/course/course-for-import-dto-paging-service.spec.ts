@@ -6,7 +6,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { CourseForImportDTO } from 'app/entities/course.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { provideHttpClient } from '@angular/common/http';
-import { CourseForImportDTOPagingService } from 'app/course/shared/course-for-import-dto-paging-service';
+import { CourseForImportDTOPagingService } from 'app/core/course/shared/course-for-import-dto-paging-service';
 
 describe('CourseForImportDtoPagingService', () => {
     let pagingService: CourseForImportDTOPagingService;

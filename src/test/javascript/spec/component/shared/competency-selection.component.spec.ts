@@ -5,7 +5,7 @@ import { Competency, CompetencyLearningObjectLink } from 'app/entities/competenc
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';

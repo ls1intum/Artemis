@@ -112,12 +112,14 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @BeforeAll
     void setupAll() {
+        buildJobRepository.deleteAll();
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
     }
 
     @AfterAll
     void cleanupAll() {
-        this.gitService.init();
+        gitService.init();
+        buildJobRepository.deleteAll();
     }
 
     @BeforeEach
