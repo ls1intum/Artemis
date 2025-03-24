@@ -195,22 +195,12 @@ public class CourseUtilService {
     private GradingScaleUtilService gradingScaleUtilService;
 
     /**
-     * Creates and saves a course with null id.
+     * Creates and saves a course (`id` is automatically generated).
      *
      * @return The created course.
      */
     public Course createCourse() {
-        return createCourse(null);
-    }
-
-    /**
-     * Creates and saves a course with the given id.
-     *
-     * @param id The id of the course.
-     * @return The newly created course.
-     */
-    public Course createCourse(Long id) {
-        Course course = CourseFactory.generateCourse(id, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 

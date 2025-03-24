@@ -469,7 +469,6 @@ public class UserTestService {
     public void createUser_asAdmin_hasId() throws Exception {
         userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
-        student.setId((long) 1337);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
