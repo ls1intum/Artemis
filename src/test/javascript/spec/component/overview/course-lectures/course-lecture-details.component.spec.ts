@@ -337,6 +337,6 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachmentUnit.releaseDate = attachment.releaseDate;
     attachmentUnit.lecture = lecture;
     attachmentUnit.attachment = attachment;
-    attachment.attachmentUnit = attachmentUnit;
+    attachment.attachmentVideoUnit = attachmentUnit;
     return attachmentUnit;
 };
