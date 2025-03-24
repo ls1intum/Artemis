@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GradeStep } from 'app/entities/grade-step.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-helper';

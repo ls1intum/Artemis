@@ -17,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
-    styleUrls: ['../../course/manage/course-management-statistics.component.scss'],
+    styleUrls: ['../../core/course/manage/course-management-statistics.component.scss'],
     imports: [TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent, ArtemisTranslatePipe],
 })
 export class ExerciseStatisticsComponent implements OnInit {

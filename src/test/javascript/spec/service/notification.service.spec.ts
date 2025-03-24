@@ -15,7 +15,7 @@ import {
     Notification,
 } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';

@@ -23,7 +23,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';

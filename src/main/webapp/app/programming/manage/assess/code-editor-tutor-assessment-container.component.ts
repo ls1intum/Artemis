@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
@@ -65,8 +65,6 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -142,10 +140,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
-    // @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
