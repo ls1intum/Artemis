@@ -8,7 +8,7 @@ import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.compo
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { RangeFilter } from 'app/types/exercise-filter';
+import { RangeFilter } from 'app/shared/types/exercise-filter';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { SidebarCardElement } from 'app/types/sidebar';

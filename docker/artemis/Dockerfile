@@ -66,7 +66,7 @@ RUN \
 #-----------------------------------------------------------------------------------------------------------------------
 # external build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/alpine:3 AS external_builder
+FROM docker.io/library/alpine:3.21.3 AS external_builder
 
 #default path of the built .war files
 ARG WAR_FILE_PATH="/opt/artemis/build/libs"
