@@ -9,7 +9,7 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { Subject, of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';

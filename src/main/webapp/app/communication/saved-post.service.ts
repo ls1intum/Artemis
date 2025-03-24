@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { map } from 'rxjs/operators';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 

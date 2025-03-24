@@ -6,7 +6,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations/forward-message-dialog/forward-message-dialog.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../../../../helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { MockResizeObserver } from '../../../../../helpers/mocks/service/mock-resize-observer';

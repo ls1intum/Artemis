@@ -11,7 +11,7 @@ import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attach
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
