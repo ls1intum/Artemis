@@ -33,7 +33,10 @@
                         </svg>
                     </div>
                     <div class="lecture-unit-type-container">
-                        <div class="unit-badges d-flex flex-column gap-1">
+                        <div
+                            class="unit-badges d-flex flex-column gap-1"
+                            [style.top]="lectureUnit.type === LectureUnitType.ATTACHMENT && hasAttachment(lectureUnit) ? '-40px' : null"
+                        >
                             <div class="badge bg-info">
                                 {{
                                     getLectureUnitReleaseDate(lectureUnit)
@@ -41,7 +44,7 @@
                                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                                 }}
                             </div>
-                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT && hasAttachment(lectureUnit)) {
                                 <div class="badge bg-info attachment-badge">
                                     {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
                                 </div>

@@ -95,8 +95,7 @@ public class LectureService {
 
         List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
         for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
-            if (unit instanceof AttachmentVideoUnit && (((AttachmentVideoUnit) unit).getAttachment().getReleaseDate() == null
-                    || ((AttachmentVideoUnit) unit).getAttachment().getReleaseDate().isBefore(ZonedDateTime.now()))) {
+            if (unit instanceof AttachmentVideoUnit && (unit.getReleaseDate() == null || unit.getReleaseDate().isBefore(ZonedDateTime.now()))) {
                 filteredAttachmentUnits.add(unit);
             }
         }

@@ -34,7 +34,7 @@ export const lectureUnitRoute: Routes = [
                 loadComponent: () => import('app/lecture/manage/lecture-units/attachment-units/attachment-units.component').then((m) => m.AttachmentUnitsComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
+                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentVideoUnits.pageTitle',
                 },
             },
             {
@@ -43,7 +43,7 @@ export const lectureUnitRoute: Routes = [
                     import('app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component').then((m) => m.CreateAttachmentUnitComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnit.title',
+                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentVideoUnit.title',
                 },
             },
             {

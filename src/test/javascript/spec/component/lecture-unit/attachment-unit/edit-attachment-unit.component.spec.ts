@@ -92,15 +92,18 @@ describe('EditAttachmentUnitComponent', () => {
 
         attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.id = 1;
+        attachmentUnit.name = 'test';
         attachmentUnit.description = 'lorem ipsum';
         attachmentUnit.attachment = attachment;
+        attachmentUnit.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachmentUnit.videoSource = 'https://live.rbg.tum.de';
 
         fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         baseFormData = new FormData();
         baseFormData.append('file', fakeFile, 'updated file');
         baseFormData.append('attachment', objectToJsonBlob(attachment));
-        baseFormData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        baseFormData.append('attachmentVideoUnit', objectToJsonBlob(attachmentUnit));
 
         jest.spyOn(attachmentUnitService, 'findById').mockReturnValue(
             of(
@@ -122,11 +125,12 @@ describe('EditAttachmentUnitComponent', () => {
         fixture.detectChanges();
         const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
 
-        expect(attachmentUnitFormComponent.formData()?.formProperties.name).toEqual(attachment.name);
-        expect(attachmentUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachment.releaseDate);
+        expect(attachmentUnitFormComponent.formData()?.formProperties.name).toEqual(attachmentUnit.name);
+        expect(attachmentUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachmentUnit.releaseDate);
         expect(attachmentUnitFormComponent.formData()?.formProperties.updateNotificationText).toBeUndefined();
         expect(attachmentUnitFormComponent.formData()?.formProperties.version).toBe(1);
         expect(attachmentUnitFormComponent.formData()?.formProperties.description).toEqual(attachmentUnit.description);
+        expect(attachmentUnitFormComponent.formData()?.formProperties.videoSource).toEqual(attachmentUnit.videoSource);
         expect(attachmentUnitFormComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
         expect(attachmentUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
     });
@@ -139,9 +143,10 @@ describe('EditAttachmentUnitComponent', () => {
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
-                name: attachment.name,
+                name: attachmentUnit.name,
                 description: attachmentUnit.description,
-                releaseDate: attachment.releaseDate,
+                releaseDate: attachmentUnit.releaseDate,
+                videoSource: attachmentUnit.videoSource,
                 version: 1,
                 updateNotificationText: undefined,
             },
@@ -169,9 +174,9 @@ describe('EditAttachmentUnitComponent', () => {
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
-                name: attachment.name,
+                name: attachmentUnit.name,
                 description: attachmentUnit.description,
-                releaseDate: attachment.releaseDate,
+                releaseDate: attachmentUnit.releaseDate,
                 version: 1,
                 updateNotificationText: notification,
             },
@@ -195,9 +200,10 @@ describe('EditAttachmentUnitComponent', () => {
 
         const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
-                name: attachment.name,
+                name: attachmentUnit.name,
                 description: attachmentUnit.description,
-                releaseDate: attachment.releaseDate,
+                releaseDate: attachmentUnit.releaseDate,
+                videoSource: attachmentUnit.videoSource,
                 version: 1,
                 updateNotificationText: undefined,
             },
@@ -206,7 +212,7 @@ describe('EditAttachmentUnitComponent', () => {
 
         const formData = new FormData();
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentUnit));
 
         updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
         attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);

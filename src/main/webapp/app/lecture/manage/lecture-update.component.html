@@ -64,27 +64,27 @@
                     <jhi-lecture-update-units [lecture]="lecture()" />
                     <div class="py-2">
                         <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
-                        <span class="px-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.processAutomatically"></span>
-                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate" />
+                        <span class="px-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processAutomatically"></span>
+                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.lectureFileToolTip' | artemisTranslate" />
                     </div>
                 </div>
             }
             @if (processUnitMode) {
                 <div class="alert alert-warning mt-3">
                     <ul class="informative-text">
-                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.informativeText.firstLine"></li>
-                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.informativeText.secondLine"></li>
-                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.informativeText.note"></li>
+                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.firstLine"></li>
+                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.secondLine"></li>
+                        <li jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.informativeText.note"></li>
                     </ul>
                 </div>
             }
             @if (processUnitMode) {
                 <div class="form-group">
-                    <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                    <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnit.fileLimitation"></small>
+                    <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}*</label>
+                    <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></small>
                     <fa-icon
                         [icon]="faQuestionCircle"
-                        [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                        [ngbTooltip]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                     />
                     <div class="input-group background-file">
                         <div class="custom-file overflow-ellipsis">
@@ -95,13 +95,13 @@
                                 [accept]="acceptedFileExtensionsFileBrowser"
                                 (change)="onFileChange($event)"
                                 aria-describedby="fileHelp"
-                                [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentUnit.chooseFile' | artemisTranslate"
+                                [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.chooseFile' | artemisTranslate"
                                 (click)="fileInputTouched = true"
                             />
                         </div>
                     </div>
                     @if (!fileName && fileInputTouched) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnit.fileRequiredValidationError"></div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileRequiredValidationError"></div>
                     }
                 </div>
             }
@@ -116,7 +116,7 @@
                                 class="btn btn-success"
                                 (click)="proceedToUnitSplit()"
                             >
-                                <fa-icon [icon]="faPuzzleProcess" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentUnits.processUnits"></span>
+                                <fa-icon [icon]="faPuzzleProcess" class="me-1" /><span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.processUnits"></span>
                                 @if (isProcessing) {
                                     <span class="spinner-border spinner-border-sm"></span>
                                 }

@@ -43,11 +43,12 @@ export class CreateAttachmentUnitComponent implements OnInit {
     }
 
     createAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
-        if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
+        const { name, videoSource, description, releaseDate, competencyLinks } = attachmentUnitFormData?.formProperties || {};
+        const { file, fileName } = attachmentUnitFormData?.fileProperties || {};
+
+        if (!name || (!(file && fileName) && !videoSource)) {
             return;
         }
-        const { description, name, videoSource, releaseDate, competencyLinks } = attachmentUnitFormData.formProperties;
-        const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // === Setting attachment ===
         this.attachmentToCreate.name = name;
@@ -58,6 +59,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
 
         // === Setting attachmentUnit ===
         this.attachmentVideoUnitToCreate.name = name;
+        this.attachmentVideoUnitToCreate.releaseDate = releaseDate;
         this.attachmentVideoUnitToCreate.description = description;
         this.attachmentVideoUnitToCreate.videoSource = videoSource;
         this.attachmentVideoUnitToCreate.competencyLinks = competencyLinks || [];
@@ -65,8 +67,11 @@ export class CreateAttachmentUnitComponent implements OnInit {
         this.isLoading = true;
 
         const formData = new FormData();
-        formData.append('file', file, fileName);
-        formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
+
+        if (!!file && !!fileName) {
+            formData.append('file', file, fileName);
+            formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
+        }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
         this.attachmentUnitService

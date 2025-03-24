@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
@@ -86,14 +85,10 @@ public class AttachmentUnitService {
         attachmentVideoUnit.setLecture(lecture);
         lecture.addLectureUnit(savedAttachmentVideoUnit);
 
-        handleFile(file, attachment, keepFilename, savedAttachmentVideoUnit.getId());
-        // Default attachment
-        attachment.setVersion(1);
-        attachment.setAttachmentVideoUnit(savedAttachmentVideoUnit);
+        if (attachment != null && file != null) {
+            createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
+        }
 
-        Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
-        savedAttachmentVideoUnit.setAttachment(savedAttachment);
-        evictCache(file, savedAttachmentVideoUnit);
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
             pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit));
         }
@@ -122,42 +117,66 @@ public class AttachmentUnitService {
 
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentUnitRepository::saveAndFlush);
 
-        Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
-        if (existingAttachment == null) {
-            throw new BadRequestAlertException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
-        }
-
-        updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit);
-        handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
-        final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
-        existingAttachment.setVersion(revision);
-        Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-        savedAttachmentVideoUnit.setAttachment(savedAttachment);
-        prepareAttachmentUnitForClient(savedAttachmentVideoUnit);
-        evictCache(updateFile, savedAttachmentVideoUnit);
-
-        if (updateFile != null) {
-            if (existingAttachmentVideoUnit.getSlides() != null && !existingAttachmentVideoUnit.getSlides().isEmpty()) {
-                List<Slide> slides = existingAttachmentVideoUnit.getSlides();
-                for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
-                }
-                slideRepository.deleteAll(existingAttachmentVideoUnit.getSlides());
-            }
-            // Split the updated file into single slides only if it is a pdf
-            if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentVideoUnit);
-            }
-            if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit));
-            }
-        }
-
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
         existingAttachmentVideoUnit.setCompetencyLinks(existingCompetencyLinks);
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
 
+        if (updateAttachment == null) {
+            deleteSlides(existingAttachmentVideoUnit);
+
+            return existingAttachmentVideoUnit;
+        }
+
+        Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        if (existingAttachment == null) {
+            createAttachment(updateAttachment, savedAttachmentVideoUnit, updateFile, keepFilename);
+        }
+        else {
+            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit);
+            handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+            final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
+            existingAttachment.setVersion(revision);
+            Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+            savedAttachmentVideoUnit.setAttachment(savedAttachment);
+            prepareAttachmentUnitForClient(savedAttachmentVideoUnit);
+            evictCache(updateFile, savedAttachmentVideoUnit);
+
+            if (updateFile != null) {
+                deleteSlides(existingAttachmentVideoUnit);
+                // Split the updated file into single slides only if it is a pdf
+                if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                }
+            }
+        }
+
+        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
+            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit));
+        }
+
         return savedAttachmentVideoUnit;
+    }
+
+    private Attachment createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
+        handleFile(file, attachment, keepFilename, attachmentVideoUnit.getId());
+        // Default attachment
+        attachment.setVersion(1);
+        attachment.setAttachmentVideoUnit(attachmentVideoUnit);
+
+        Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
+        attachmentVideoUnit.setAttachment(savedAttachment);
+        evictCache(file, attachmentVideoUnit);
+        return savedAttachment;
+    }
+
+    private void deleteSlides(AttachmentVideoUnit attachmentVideoUnit) {
+        if (attachmentVideoUnit.getSlides() != null && !attachmentVideoUnit.getSlides().isEmpty()) {
+            List<Slide> slides = attachmentVideoUnit.getSlides();
+            for (Slide slide : slides) {
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
+            }
+            slideRepository.deleteAll(attachmentVideoUnit.getSlides());
+        }
     }
 
     /**

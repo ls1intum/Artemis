@@ -16,6 +16,7 @@ import {
     faFilePdf,
     faFilePen,
     faFilePowerpoint,
+    faFileVideo,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
 import { FileService } from 'app/shared/http/file.service';
@@ -78,10 +79,22 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentVide
         }
     }
 
+    hasAttachment(): boolean {
+        return !!this.lectureUnit().attachment;
+    }
+
+    hasVideo(): boolean {
+        return !!this.lectureUnit().videoSource;
+    }
+
     /**
      * Returns the matching icon for the file extension of the attachment
      */
     getAttachmentIcon(): IconDefinition {
+        if (this.hasVideo()) {
+            return faFileVideo;
+        }
+
         if (this.lectureUnit().attachment?.link) {
             const fileExtension = this.lectureUnit().attachment?.link?.split('.').pop()!.toLocaleLowerCase();
             switch (fileExtension) {

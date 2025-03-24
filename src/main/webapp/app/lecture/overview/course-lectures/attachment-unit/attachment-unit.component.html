@@ -1,7 +1,7 @@
 <jhi-lecture-unit-card
     [lectureUnit]="lectureUnit()"
     [icon]="getAttachmentIcon()"
-    [showViewIsolatedButton]="true"
+    [showViewIsolatedButton]="hasAttachment()"
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"

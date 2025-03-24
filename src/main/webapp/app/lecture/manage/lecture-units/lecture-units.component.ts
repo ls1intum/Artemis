@@ -74,7 +74,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedVideoUnit: VideoUnit;
     currentlyProcessedOnlineUnit: OnlineUnit;
-    currentlyProcessedAttachmentUnit: AttachmentVideoUnit;
+    currentlyProcessedAttachmentVideoUnit: AttachmentVideoUnit;
     textUnitFormData: TextUnitFormData;
     videoUnitFormData: VideoUnitFormData;
     onlineUnitFormData: OnlineUnitFormData;
@@ -208,12 +208,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
-        this.currentlyProcessedAttachmentUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit : new AttachmentVideoUnit();
-        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit.attachment! : new Attachment();
+        this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
+        const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment! : new Attachment();
 
         if (this.isEditingLectureUnit) {
             // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
-            this.currentlyProcessedAttachmentUnit.attachment = undefined;
+            this.currentlyProcessedAttachmentVideoUnit.attachment = undefined;
             attachmentToCreateOrEdit.attachmentVideoUnit = undefined;
         }
 
@@ -224,6 +224,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         if (name) {
+            this.currentlyProcessedAttachmentVideoUnit.name = name;
             attachmentToCreateOrEdit.name = name;
         }
         if (releaseDate) {
@@ -234,17 +235,17 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentToCreateOrEdit.uploadDate = dayjs();
 
         if (description) {
-            this.currentlyProcessedAttachmentUnit.description = description;
+            this.currentlyProcessedAttachmentVideoUnit.description = description;
         }
-        this.currentlyProcessedAttachmentUnit.competencyLinks = competencyLinks;
+        this.currentlyProcessedAttachmentVideoUnit.competencyLinks = competencyLinks;
 
         const formData = new FormData();
         formData.append('file', file, fileName);
         formData.append('attachment', objectToJsonBlob(attachmentToCreateOrEdit));
-        formData.append('attachmentUnit', objectToJsonBlob(this.currentlyProcessedAttachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
-            ? this.attachmentUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentUnit.id!, formData, notificationText)
+            ? this.attachmentUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
             : this.attachmentUnitService.create(formData, this.lecture.id!)
         ).subscribe({
             next: () => {
@@ -279,7 +280,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.currentlyProcessedTextUnit = lectureUnit as TextUnit;
         this.currentlyProcessedVideoUnit = lectureUnit as VideoUnit;
         this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
-        this.currentlyProcessedAttachmentUnit = lectureUnit as AttachmentVideoUnit;
+        this.currentlyProcessedAttachmentVideoUnit = lectureUnit as AttachmentVideoUnit;
 
         this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
         this.isVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.VIDEO);
@@ -314,14 +315,14 @@ export class LectureUpdateUnitsComponent implements OnInit {
             case LectureUnitType.ATTACHMENT:
                 this.attachmentUnitFormData = {
                     formProperties: {
-                        name: this.currentlyProcessedAttachmentUnit.attachment!.name,
-                        description: this.currentlyProcessedAttachmentUnit.description,
-                        releaseDate: this.currentlyProcessedAttachmentUnit.attachment!.releaseDate,
-                        version: this.currentlyProcessedAttachmentUnit.attachment!.version,
-                        videoSource: this.currentlyProcessedAttachmentUnit.videoSource,
+                        name: this.currentlyProcessedAttachmentVideoUnit.attachment!.name,
+                        description: this.currentlyProcessedAttachmentVideoUnit.description,
+                        releaseDate: this.currentlyProcessedAttachmentVideoUnit.attachment!.releaseDate,
+                        version: this.currentlyProcessedAttachmentVideoUnit.attachment!.version,
+                        videoSource: this.currentlyProcessedAttachmentVideoUnit.videoSource,
                     },
                     fileProperties: {
-                        fileName: this.currentlyProcessedAttachmentUnit.attachment!.link,
+                        fileName: this.currentlyProcessedAttachmentVideoUnit.attachment!.link,
                     },
                 };
                 break;

@@ -206,7 +206,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.EXERCISE:
                 return 'artemisApp.exerciseUnit.delete.question';
             case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.question';
+                return 'artemisApp.attachmentVideoUnit.delete.question';
             case LectureUnitType.VIDEO:
                 return 'artemisApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
@@ -223,7 +223,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.EXERCISE:
                 return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
             case LectureUnitType.ATTACHMENT:
-                return 'artemisApp.attachmentUnit.delete.typeNameToConfirm';
+                return 'artemisApp.attachmentVideoUnit.delete.typeNameToConfirm';
             case LectureUnitType.VIDEO:
                 return 'artemisApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
@@ -282,8 +282,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
-            case LectureUnitType.ATTACHMENT:
-                return (<AttachmentVideoUnit>lectureUnit)?.attachment?.releaseDate || undefined;
             case LectureUnitType.EXERCISE:
                 return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate || undefined;
             default:
@@ -298,6 +296,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             default:
                 return undefined;
         }
+    }
+
+    hasAttachment(lectureUnit: AttachmentVideoUnit): boolean {
+        return !!lectureUnit.attachment;
     }
 
     /**
@@ -360,4 +362,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return this.faFileExport;
         }
     }
+
+    protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
 }

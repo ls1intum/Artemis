@@ -593,8 +593,8 @@ describe('LectureUpdateUnitsComponent', () => {
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isEditingLectureUnit = true;
-        wizardUnitComponent.currentlyProcessedAttachmentUnit = new AttachmentVideoUnit();
-        wizardUnitComponent.currentlyProcessedAttachmentUnit.attachment = new Attachment();
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
         wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);

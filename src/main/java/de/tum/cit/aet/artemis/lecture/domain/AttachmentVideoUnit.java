@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,22 +78,14 @@ public class AttachmentVideoUnit extends LectureUnit {
 
     @Override
     public String getName() {
-        return attachment == null ? null : attachment.getName();
-    }
-
-    @Override
-    public void setName(String name) {
-        // Should be set in associated attachment
-    }
-
-    @Override
-    public ZonedDateTime getReleaseDate() {
-        return attachment == null ? null : attachment.getReleaseDate();
-    }
-
-    @Override
-    public void setReleaseDate(ZonedDateTime releaseDate) {
-        // Should be set in associated attachment
+        String name = super.getName();
+        if (name != null) {
+            return name;
+        }
+        if (attachment != null) {
+            return attachment.getName();
+        }
+        return null;
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java

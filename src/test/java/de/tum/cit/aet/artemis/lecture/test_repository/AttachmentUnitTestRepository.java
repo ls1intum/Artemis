@@ -14,5 +14,5 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 public interface AttachmentUnitTestRepository extends AttachmentUnitRepository {
 
     @EntityGraph(type = LOAD, attributePaths = "competencyLinks")
-    AttachmentVideoUnit findOneWithCompetencyLinksById(long attachmentUnitId);
+    AttachmentVideoUnit findOneWithCompetencyLinksById(long attachmentVideoUnitId);
 }

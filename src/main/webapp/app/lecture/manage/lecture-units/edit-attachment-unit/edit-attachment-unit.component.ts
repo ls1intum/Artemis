@@ -50,16 +50,16 @@ export class EditAttachmentUnitComponent implements OnInit {
             .subscribe({
                 next: (attachmentUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
                     this.attachmentUnit = attachmentUnitResponse.body!;
-                    this.attachment = this.attachmentUnit.attachment!;
+                    this.attachment = this.attachmentUnit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     this.attachmentUnit.attachment = undefined;
                     this.attachment.attachmentVideoUnit = undefined;
 
                     this.formData = {
                         formProperties: {
-                            name: this.attachment.name,
+                            name: this.attachmentUnit.name,
                             description: this.attachmentUnit.description,
-                            releaseDate: this.attachment.releaseDate,
+                            releaseDate: this.attachmentUnit.releaseDate,
                             version: this.attachment.version,
                             competencyLinks: this.attachmentUnit.competencyLinks,
                             videoSource: this.attachmentUnit.videoSource,
@@ -87,7 +87,10 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachment.releaseDate = releaseDate;
         this.attachment.attachmentType = AttachmentType.FILE;
         // === Setting attachmentUnit ===
+
+        this.attachmentUnit.name = name;
         this.attachmentUnit.description = description;
+        this.attachmentUnit.releaseDate = releaseDate;
         this.attachmentUnit.competencyLinks = competencyLinks;
 
         this.attachmentUnit.videoSource = videoSource;

@@ -127,14 +127,19 @@ public class AttachmentUnitResource {
             @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        log.debug("REST request to update an attachment unit 1: {}", attachmentVideoUnit);
         checkAttachmentUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
+        log.debug("REST request to update an attachment unit 2: {}", attachmentVideoUnit);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentVideoUnit.getLecture().getCourse(), null);
 
+        log.debug("REST request to update an attachment unit 3: {}", attachmentVideoUnit);
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file, keepFilename);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), notificationText);
         }
+
+        log.debug("REST request to update an attachment unit 4: {}", attachmentVideoUnit);
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
@@ -153,13 +158,19 @@ public class AttachmentUnitResource {
     @PostMapping(value = "lectures/{lectureId}/attachment-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentVideoUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
-            @RequestPart Attachment attachment, @RequestPart MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
+            @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
+            throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit {} with Attachment {}", attachmentVideoUnit, attachment);
         if (attachmentVideoUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        if (attachment.getId() != null) {
+
+        if (attachment != null && attachment.getId() != null) {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+
+        if (attachment == null && attachmentVideoUnit.getVideoSource() == null) {
+            throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
@@ -170,7 +181,7 @@ public class AttachmentUnitResource {
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.createAttachmentUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
-        if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+        if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentVideoUnit);
         }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentVideoUnit);

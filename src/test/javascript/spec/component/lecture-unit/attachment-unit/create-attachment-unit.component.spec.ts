@@ -89,6 +89,7 @@ describe('CreateAttachmentUnitComponent', () => {
                 releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
+                videoSource: 'https://live.rbg.tum.de',
             },
             fileProperties: {
                 file: fakeFile,
@@ -108,11 +109,14 @@ describe('CreateAttachmentUnitComponent', () => {
         const attachmentUnit = new AttachmentVideoUnit();
         attachmentUnit.description = attachmentUnitFormData.formProperties.description;
         attachmentUnit.attachment = attachment;
+        attachmentUnit.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
+        attachmentUnit.name = attachmentUnitFormData.formProperties.name;
+        attachmentUnit.videoSource = attachmentUnitFormData.formProperties.videoSource;
 
         const formData = new FormData();
         formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentUnit));
 
         const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
             body: attachmentUnit,

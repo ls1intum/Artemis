@@ -16,7 +16,7 @@
                     <fa-icon [icon]="faLink" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online"></span>
                 </a>
                 <a type="button" id="createAttachmentUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'attachment-units', 'create']">
-                    <fa-icon [icon]="faFileUpload" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment"></span>
+                    <fa-icon [icon]="faFileVideo" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachmentVideo"></span>
                 </a>
             } @else {
                 <button type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.TEXT)">
@@ -32,7 +32,7 @@
                     <fa-icon [icon]="faLink" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online"></span>
                 </button>
                 <button type="button" id="createAttachmentUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ATTACHMENT)">
-                    <fa-icon [icon]="faFileUpload" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment"></span>
+                    <fa-icon [icon]="faFileVideo" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachmentVideo"></span>
                 </button>
             }
         </div>

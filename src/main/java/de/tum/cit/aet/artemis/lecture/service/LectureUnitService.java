@@ -164,7 +164,7 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+        if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit && attachmentVideoUnit.getAttachment() != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentVideoUnit.getAttachment().getLink()))), 5);
             if (attachmentVideoUnit.getSlides() != null && !attachmentVideoUnit.getSlides().isEmpty()) {
                 List<Slide> slides = attachmentVideoUnit.getSlides();
