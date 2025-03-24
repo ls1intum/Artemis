@@ -1,4 +1,4 @@
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';

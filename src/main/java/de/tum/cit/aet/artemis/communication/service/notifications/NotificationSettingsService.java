@@ -260,14 +260,15 @@ public class NotificationSettingsService {
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
-    // Please adapt the above docs if you change the supported notification types
+    // Please adapt the above docs if you change the supported notification types.
+    // Note: When adding new types here, please create issues in the artemis-ios and artemis-android repos, so that these new notifcations can be displayed!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT,
             PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY, TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR,
             TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED,
             TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST,
-            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE, SSH_KEY_ADDED,
-            SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED, VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON);
+            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE,
+            CONVERSATION_USER_MENTIONED, SSH_KEY_ADDED, SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED, VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON);
 
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
