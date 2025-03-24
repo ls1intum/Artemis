@@ -125,7 +125,7 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * POST lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
+     * PUT lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param lectureId     The id of the lecture of the transcription
