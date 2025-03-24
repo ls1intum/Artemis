@@ -9,7 +9,7 @@ import { getContrastingTextColor } from 'app/shared/util/color.utils';
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
-    styleUrls: ['../../overview/course-card.scss'],
+    styleUrls: ['../../core/course/overview/course-card.scss'],
     imports: [RouterLink, NgStyle, SecuredImageComponent],
 })
 export class LtiCourseCardComponent {

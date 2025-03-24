@@ -66,7 +66,7 @@ import { FileService } from 'app/shared/service/file.service';
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,

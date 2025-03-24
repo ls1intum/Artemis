@@ -46,7 +46,7 @@ import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.compo
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../overview/course-overview.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,
