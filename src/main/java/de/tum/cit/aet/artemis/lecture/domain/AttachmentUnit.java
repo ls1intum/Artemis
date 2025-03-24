@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -61,7 +63,17 @@ public class AttachmentUnit extends LectureUnit {
     }
 
     public List<Slide> getSlides() {
-        return slides;
+        // A map to keep only the slide with the highest ID for each slide number
+        Map<Integer, Slide> latestSlideByNumber = new HashMap<>();
+
+        for (Slide slide : slides) {
+            int slideNumber = slide.getSlideNumber();
+            if (!latestSlideByNumber.containsKey(slideNumber) || slide.getId() > latestSlideByNumber.get(slideNumber).getId()) {
+                latestSlideByNumber.put(slideNumber, slide);
+            }
+        }
+
+        return new ArrayList<>(latestSlideByNumber.values());
     }
 
     public void setSlides(List<Slide> slides) {

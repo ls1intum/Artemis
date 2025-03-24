@@ -137,7 +137,12 @@ public class AttachmentUnitService {
         if (updateFile != null) {
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages, pageOrder);
+                if (pageOrder == null) {
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                }
+                else {
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages, pageOrder);
+                }
             }
             if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
                 pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));

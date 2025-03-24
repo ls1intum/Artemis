@@ -109,7 +109,8 @@ public class SlideSplitterService {
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files or updates existing slides.
+     * Splits an Attachment Unit file into single slides and saves them as PNG files.
+     * Only creates new slides; never updates existing ones to keep slide referencing.
      *
      * @param attachmentUnit The attachment unit to which the slides belong.
      * @param document       The PDF document that is already loaded.
@@ -130,8 +131,8 @@ public class SlideSplitterService {
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
                 Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
-                Optional<Slide> existingSlideOpt = Optional.ofNullable(slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnit.getId(), slideNumber));
-                Slide slideEntity = existingSlideOpt.orElseGet(Slide::new);
+
+                Slide slideEntity = new Slide();
                 slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentUnit(attachmentUnit);
