@@ -2,9 +2,9 @@
     <div class="popover-title mb-2">
         <h5>
             @if (isMultiplePages()) {
-                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideMultiplePages" [translateValues]="{ param: pageIndicesSorted() }"></span>
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideMultiplePages" [translateValues]="{ param: pagesDisplay() }"></span>
             } @else {
-                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pageIndices()! }"></span>
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pagesDisplay() }"></span>
             }
         </h5>
     </div>

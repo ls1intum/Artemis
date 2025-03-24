@@ -10,12 +10,12 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
@@ -75,7 +75,16 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        splitAttachmentUnitIntoSingleSlides(attachmentUnit, null);
+        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
+        File file = attachmentPath.toFile();
+        try (PDDocument document = Loader.loadPDF(file)) {
+            String pdfFilename = file.getName();
+            splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename);
+        }
+        catch (IOException e) {
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+        }
     }
 
     /**
@@ -83,14 +92,54 @@ public class SlideSplitterService {
      *
      * @param attachmentUnit The attachment unit to which the slides belong.
      * @param hiddenPages    The hidden pages of the attachment unit.
+     * @param pageOrder      The page order of the attachment unit.
      */
     @Async
-    public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit, String hiddenPages) {
+    public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit, String hiddenPages, String pageOrder) {
         Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
-            splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename, hiddenPages);
+            splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename, hiddenPages, pageOrder);
+        }
+        catch (IOException e) {
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Splits an Attachment Unit file into single slides and saves them as PNG files.
+     * Only creates new slides; never updates existing ones to keep slide referencing.
+     *
+     * @param attachmentUnit The attachment unit to which the slides belong.
+     * @param document       The PDF document that is already loaded.
+     * @param pdfFilename    The name of the PDF file.
+     */
+    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename) {
+        log.debug("Splitting Attachment Unit file {} into single slides", attachmentUnit.getAttachment().getName());
+        try {
+            String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
+            int numPages = document.getNumberOfPages();
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+
+            for (int page = 0; page < numPages; page++) {
+                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
+                byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
+                int slideNumber = page + 1;
+                String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + slideNumber + ".png";
+                MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
+                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+                        .resolve(String.valueOf(slideNumber)).resolve(filename));
+
+                Slide slideEntity = new Slide();
+                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
+                slideEntity.setSlideNumber(slideNumber);
+                slideEntity.setAttachmentUnit(attachmentUnit);
+                slideEntity.setHidden(null);
+                slideEntity.setExercise(null);
+                slideRepository.save(slideEntity);
+            }
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
@@ -104,59 +153,64 @@ public class SlideSplitterService {
      * @param attachmentUnit The attachment unit to which the slides belong.
      * @param document       The PDF document that is already loaded.
      * @param pdfFilename    The name of the PDF file.
+     * @param hiddenPages    The hidden pages information.
+     * @param pageOrder      The order of pages in the PDF.
      */
-    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename) {
-        splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename, null);
-    }
+    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename, String hiddenPages, String pageOrder) {
+        log.debug("Processing slides for Attachment Unit with hidden pages {}", attachmentUnit.getAttachment().getName());
 
-    /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files or updates existing slides.
-     *
-     * @param attachmentUnit The attachment unit to which the slides belong.
-     * @param document       The PDF document that is already loaded.
-     * @param pdfFilename    The name of the PDF file.
-     * @param hiddenPages    The hidden pages of the attachment unit.
-     */
-    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename, String hiddenPages) {
-        log.debug("Splitting Attachment Unit file {} into single slides", attachmentUnit.getAttachment().getName());
         try {
-            String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
-            int numPages = document.getNumberOfPages();
-            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            ObjectMapper objectMapper = new ObjectMapper();
+            List<Map<String, Object>> pageOrderList = objectMapper.readValue(pageOrder, new TypeReference<>() {
+            });
 
-            Map<Integer, Map<String, Object>> hiddenPagesData = Collections.emptyMap();
-            if (hiddenPages != null) {
-                List<Map<String, Object>> hiddenPagesList = new ObjectMapper().readValue(hiddenPages, new TypeReference<>() {
-                });
-                hiddenPagesData = hiddenPagesList.stream().collect(Collectors.toMap(map -> (Integer) map.get("pageIndex"), map -> {
-                    Map<String, Object> data = new HashMap<>();
-                    String dateStr = (String) map.get("date");
-                    data.put("date", Timestamp.from(Instant.parse(dateStr)));
+            Map<String, Map<String, Object>> hiddenPagesMap = new HashMap<>();
+            if (hiddenPages != null && !hiddenPages.isEmpty()) {
+                try {
+                    List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
+                    });
 
-                    // Include exercise ID if it exists
-                    if (map.get("exerciseId") != null) {
-                        data.put("exerciseId", map.get("exerciseId"));
-                    }
-                    return data;
-                }));
+                    hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
+                        Map<String, Object> data = new HashMap<>();
+                        String dateStr = (String) page.get("date");
+                        data.put("date", Timestamp.from(Instant.parse(dateStr)));
+
+                        if (page.get("exerciseId") != null) {
+                            data.put("exerciseId", page.get("exerciseId"));
+                        }
+                        return data;
+                    }));
+                }
+                catch (Exception e) {
+                    log.warn("Failed to parse hidden pages data: {}", e.getMessage());
+                }
             }
 
-            for (int page = 0; page < numPages; page++) {
-                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
-                byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-                int slideNumber = page + 1;
-                String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + slideNumber + ".png";
-                MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
-                        .resolve(String.valueOf(slideNumber)).resolve(filename));
-                Optional<Slide> existingSlideOpt = Optional.ofNullable(slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnit.getId(), slideNumber));
-                Slide slideEntity = existingSlideOpt.orElseGet(Slide::new);
-                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
-                slideEntity.setSlideNumber(slideNumber);
-                slideEntity.setAttachmentUnit(attachmentUnit);
+            List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
+            Map<String, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), slide -> slide));
 
-                // Get the hidden data for this slide
-                Map<String, Object> hiddenData = hiddenPagesData.get(slideNumber);
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
+
+            for (Map<String, Object> page : pageOrderList) {
+                String slideId = String.valueOf(page.get("slideId"));
+                int order = ((Number) page.get("order")).intValue();
+
+                Slide slideEntity;
+                boolean isNewSlide = false;
+
+                if (slideId.startsWith("temp_") || !existingSlidesMap.containsKey(slideId)) {
+                    isNewSlide = true;
+                    slideEntity = new Slide();
+                    slideEntity.setAttachmentUnit(attachmentUnit);
+                }
+                else {
+                    slideEntity = existingSlidesMap.get(slideId);
+                }
+
+                slideEntity.setSlideNumber(order);
+
+                Map<String, Object> hiddenData = hiddenPagesMap.get(slideId);
                 java.util.Date previousHiddenValue = slideEntity.getHidden();
 
                 if (hiddenData != null && hiddenData.containsKey("date")) {
@@ -176,12 +230,68 @@ public class SlideSplitterService {
                     slideEntity.setExercise(null);
                 }
 
+                if (isNewSlide) {
+                    int pdfPageIndex = order - 1;
+                    if (pdfPageIndex >= 0 && pdfPageIndex < document.getNumberOfPages()) {
+                        BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
+                        byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
+                        String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+                        MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
+                        Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+                                .resolve(String.valueOf(order)).resolve(filename));
+
+                        slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                    }
+                }
+                else {
+                    String oldPath = slideEntity.getSlideImagePath();
+                    if (oldPath != null && !oldPath.isEmpty()) {
+                        Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath));
+
+                        String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+
+                        try {
+                            File existingFile = originalPath.toFile();
+                            if (existingFile.exists()) {
+                                BufferedImage image = ImageIO.read(existingFile);
+                                byte[] imageInByte = bufferedImageToByteArray(image, "png");
+
+                                MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
+                                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString())
+                                        .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
+
+                                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                                existingFile.delete();
+                            }
+                            else {
+                                log.warn("Could not find existing slide file at path: {}", originalPath);
+                            }
+                        }
+                        catch (IOException e) {
+                            log.error("Failed to update slide image for reordering", e);
+                        }
+                    }
+                }
+
                 Slide savedSlide = slideRepository.save(slideEntity);
 
                 // Schedule unhiding if the hidden date has changed
                 if (!Objects.equals(previousHiddenValue, slideEntity.getHidden())) {
                     slideUnhideService.handleSlideHiddenUpdate(savedSlide);
                     log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), slideEntity.getHidden());
+                }
+            }
+
+            // Clean up slides that are no longer in the page order
+            Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_"))
+                    .collect(Collectors.toSet());
+
+            if (!slideIdsInPageOrder.isEmpty()) {
+                List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
+
+                if (!slidesToRemove.isEmpty()) {
+                    slideRepository.deleteAll(slidesToRemove);
+                    log.debug("Removed {} slides that are no longer in the page order", slidesToRemove.size());
                 }
             }
         }

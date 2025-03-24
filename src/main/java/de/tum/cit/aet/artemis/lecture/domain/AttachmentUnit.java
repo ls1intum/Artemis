@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -11,6 +13,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,6 +33,7 @@ public class AttachmentUnit extends LectureUnit {
 
     @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("attachmentUnit")
+    @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
 
     @Override
@@ -58,8 +62,24 @@ public class AttachmentUnit extends LectureUnit {
         this.attachment = attachment;
     }
 
+    /**
+     * Returns a filtered list of slides where only the latest version of each slide (based on slide number) is included.
+     * For slides with the same slide number, only the one with the highest ID is kept.
+     *
+     * @return A list of the most recent version of each slide, ordered by slide number
+     */
     public List<Slide> getSlides() {
-        return slides;
+        // A map to keep only the slide with the highest ID for each slide number
+        Map<Integer, Slide> latestSlideByNumber = new HashMap<>();
+
+        for (Slide slide : slides) {
+            int slideNumber = slide.getSlideNumber();
+            if (!latestSlideByNumber.containsKey(slideNumber) || slide.getId() > latestSlideByNumber.get(slideNumber).getId()) {
+                latestSlideByNumber.put(slideNumber, slide);
+            }
+        }
+
+        return new ArrayList<>(latestSlideByNumber.values());
     }
 
     public void setSlides(List<Slide> slides) {

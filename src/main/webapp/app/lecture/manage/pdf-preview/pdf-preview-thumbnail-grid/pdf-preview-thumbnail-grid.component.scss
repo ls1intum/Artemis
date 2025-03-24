@@ -35,7 +35,46 @@
     height: fit-content;
     margin: 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    transition: transform 0.3s;
+    transition:
+        transform 0.3s,
+        box-shadow 0.3s;
+    cursor: grab;
+
+    &.dragging {
+        opacity: 0.6;
+        transform: scale(0.95);
+        z-index: 10;
+        cursor: grabbing;
+    }
+
+    &.drag-over {
+        box-shadow:
+            0 0 0 2px var(--primary),
+            0 2px 10px rgba(0, 0, 0, 0.3);
+        transform: scale(1.03);
+    }
+}
+
+.drag-handle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: 3px;
+    padding: 2px 5px;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.pdf-canvas-container:hover .drag-handle {
+    opacity: 1;
+}
+
+.pdf-canvas-container.dragging .drag-handle {
+    cursor: grabbing;
 }
 
 .pdf-overlay {
@@ -97,4 +136,15 @@ input[type='checkbox'] {
     cursor: pointer;
     z-index: 4;
     transition: opacity 0.3s ease;
+}
+
+.cdk-drag-preview {
+    z-index: 9999;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.cdk-drag-placeholder {
+    opacity: 0.3;
+    background: #f0f0f0;
+    border: 2px dashed #ccc !important;
 }

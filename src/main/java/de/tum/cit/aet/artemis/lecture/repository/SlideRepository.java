@@ -22,6 +22,8 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
     Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
 
+    List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
+
     /**
      * Find all slides that have a non-null hidden timestamp
      *

@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
-import { HiddenPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
+import { HiddenPage, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -29,7 +29,7 @@ const FOREVER = dayjs('9999-12-31');
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
     course = input<Course>();
-    pageIndices = input<number[]>([]);
+    selectedPages = input<OrderedPage[]>([]);
 
     // Signals
     calendarSelected = signal<boolean>(false);
@@ -39,17 +39,25 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
     selectedExercise = signal<Exercise | null>(null);
-    isMultiplePages = signal<boolean>(false);
 
     // Outputs
     hiddenPagesOutput = output<HiddenPage[]>();
     selectionCancelledOutput = output<boolean>();
 
     // Computed properties
-    pageIndicesSorted = computed(() => {
-        const indices = [...this.pageIndices()];
-        return indices.sort((a, b) => a - b).join(', ');
+    pagesDisplay = computed(() => {
+        const pages = this.selectedPages();
+
+        if (pages.length === 1) {
+            return `${pages[0].order}`;
+        }
+
+        return pages
+            .map((p) => p.order)
+            .sort()
+            .join(', ');
     });
+    isMultiplePages = computed(() => this.selectedPages().length > 1);
 
     // Injected services
     private readonly alertService = inject(AlertService);
@@ -57,7 +65,6 @@ export class PdfPreviewDateBoxComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadExercises();
-        this.isMultiplePages.set(this.pageIndices().length > 1);
     }
 
     /**
@@ -169,8 +176,8 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             return;
         }
 
-        const hiddenPages: HiddenPage[] = this.pageIndices().map((pageIndex) => ({
-            pageIndex,
+        const hiddenPages: HiddenPage[] = this.selectedPages().map((page) => ({
+            slideId: page.slideId,
             date: selectedDate,
             exerciseId: this.selectedExercise()?.id ?? null,
         }));
