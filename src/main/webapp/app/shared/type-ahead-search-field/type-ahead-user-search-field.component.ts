@@ -3,11 +3,11 @@ import { Observable, OperatorFunction, catchError, of, switchMap, tap } from 'rx
 import { UserService } from 'app/core/user/shared/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
-import { TranslateDirective } from '../language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-type-ahead-user-search-field',

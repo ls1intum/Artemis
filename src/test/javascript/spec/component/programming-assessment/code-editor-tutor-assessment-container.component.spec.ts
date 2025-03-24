@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { User } from 'app/core/user/user.model';

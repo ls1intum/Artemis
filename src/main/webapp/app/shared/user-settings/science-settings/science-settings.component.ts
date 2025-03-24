@@ -8,9 +8,9 @@ import { ScienceSettingsService } from 'app/shared/user-settings/science-setting
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
-import { HasAnyAuthorityDirective } from '../../auth/has-any-authority.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-science-settings',

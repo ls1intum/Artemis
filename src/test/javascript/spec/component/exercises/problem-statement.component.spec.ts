@@ -8,7 +8,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
+import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

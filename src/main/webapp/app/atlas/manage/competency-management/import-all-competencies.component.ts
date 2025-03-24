@@ -12,7 +12,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CourseForImportDTOPagingService } from 'app/course/shared/course-for-import-dto-paging-service';
+import { CourseForImportDTOPagingService } from 'app/core/course/shared/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
     {

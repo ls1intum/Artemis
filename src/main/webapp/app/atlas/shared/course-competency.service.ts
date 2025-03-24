@@ -14,7 +14,7 @@ import {
 } from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { HttpParams } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/exercise.service';
