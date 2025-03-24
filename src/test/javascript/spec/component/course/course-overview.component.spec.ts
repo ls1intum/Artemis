@@ -1,7 +1,6 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
@@ -10,7 +9,6 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -27,7 +25,6 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
@@ -43,22 +40,27 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { CourseSidebarComponent } from 'app/course/shared/course-sidebar/course-sidebar.component';
-import { CourseOverviewComponent } from 'app/course/overview/course-overview.component';
+import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
-import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
-import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationComponent } from 'app/course/overview/course-registration/course-registration.component';
+
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
+import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
+import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
+import { CourseOverviewComponent } from 'app/core/course/overview/course-overview.component';
+import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
+import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
