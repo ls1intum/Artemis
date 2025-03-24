@@ -114,6 +114,8 @@
                 "confirmCancelEditing": "Abbruchvorgang bestätigen",
                 "cancelEditingQuestion": "Möchten Sie wirklich gehen, ohne Ihre Änderungen zu speichern?",
                 "invalidFileType": "Du kannst nur PDF-Dateien hochladen.",
+                "studentVersionCreateError": "Die Studentenversion der Dateieinheit konnte nicht erstellt werden.",
+                "studentVersionUpdateError": "Die Studentenversion der Dateieinheit konnte nicht aktualisiert werden..",
                 "thumbnailGrid": {
                     "showPage": "Seite {{ param }} anzeigen",
                     "hiddenUntil": "Diese Seite ist ausgeblendet bis:",

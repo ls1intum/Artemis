@@ -114,6 +114,8 @@
                 "confirmCancelEditing": "Confirm cancel operation",
                 "cancelEditingQuestion": "Are you sure you would like to leave without saving your changes?",
                 "invalidFileType": "You can only upload PDF files.",
+                "studentVersionCreateError": "Student Version of the Attachment Unit could not be created.",
+                "studentVersionUpdateError": "Student Version of the Attachment Unit could not be updated.",
                 "thumbnailGrid": {
                     "showPage": "Show Page {{ param }}",
                     "hiddenUntil": "This page is hidden until:",
