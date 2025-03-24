@@ -9,7 +9,7 @@ import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

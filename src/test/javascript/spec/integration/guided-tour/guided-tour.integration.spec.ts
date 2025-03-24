@@ -6,7 +6,7 @@ import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { User } from 'app/core/user/user.model';
-import { CourseCardComponent } from 'app/course/overview/course-card.component';
+import { CourseCardComponent } from 'app/core/course/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercise/exercise.service';
