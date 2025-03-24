@@ -102,14 +102,13 @@ public class AttachmentUnitService {
      * @param updateUnit             The new attachment unit data.
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
-     * @param studentVersionFile     The student version of the original file.
      * @param keepFilename           Whether to keep the original filename or not.
      * @param hiddenPages            The hidden pages of attachment unit.
      * @param pageOrder              The new order of the edited attachment unit
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            MultipartFile studentVersionFile, boolean keepFilename, String hiddenPages, String pageOrder) {
+            boolean keepFilename, String hiddenPages, String pageOrder) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
@@ -126,7 +125,6 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit, hiddenPages);
         handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
-        handleStudentVersionFile(studentVersionFile, existingAttachment, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -213,6 +211,7 @@ public class AttachmentUnitService {
             Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
             Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
             attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
+            attachmentRepository.save(attachment);
         }
     }
 

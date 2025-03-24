@@ -576,12 +576,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
                 this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, instructorPdfFile).subscribe({
                     next: () => {
-                        this.isSaving.set(false);
-                        this.operations = [];
-                        this.hasOperations.set(false);
-                        this.isFileChanged.set(false);
-                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                        this.navigateToCourseManagement();
+                        this.finishSaving();
                     },
                     error: (error) => {
                         this.isSaving.set(false);
@@ -610,23 +605,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 );
 
                 const hiddenPages = this.getHiddenPages();
-
-                // Add student version if it exists
-                if (studentPdf) {
-                    const studentBytes = await studentPdf.save();
-                    const studentPdfFile = new File([studentBytes], `${pdfName}_student.pdf`, { type: 'application/pdf' });
-                    formData.append('studentVersion', studentPdfFile);
+                if (hiddenPages.length > 0) {
                     formData.append('hiddenPages', JSON.stringify(hiddenPages));
                 }
 
                 this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                     next: () => {
-                        this.isSaving.set(false);
-                        this.operations = [];
-                        this.hasOperations.set(false);
-                        this.isFileChanged.set(false);
-                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                        this.navigateToCourseManagement();
+                        if (studentPdf && hiddenPages.length > 0) {
+                            this.updateAttachmentUnitStudentVersion(studentPdf, pdfName);
+                        } else {
+                            this.finishSaving();
+                        }
                     },
                     error: (error) => {
                         this.isSaving.set(false);
@@ -638,6 +627,46 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isSaving.set(false);
             this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
         }
+    }
+
+    /**
+     * Updates only the student version of the attachment unit's attachment
+     * @param studentPdf The student PDF document
+     * @param pdfName The base name for the PDF file
+     */
+    private updateAttachmentUnitStudentVersion(studentPdf: PDFDocument, pdfName: string): void {
+        studentPdf
+            .save()
+            .then((studentBytes) => {
+                const studentPdfFile = new File([studentBytes], `${pdfName}_student.pdf`, { type: 'application/pdf' });
+
+                const formData = new FormData();
+                formData.append('studentVersion', studentPdfFile);
+
+                this.attachmentUnitService.updateStudentVersion(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+                    next: () => this.finishSaving(),
+                    error: (error) => {
+                        this.isSaving.set(false);
+                        this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: error.message });
+                    },
+                });
+            })
+            .catch((error) => {
+                this.isSaving.set(false);
+                this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionCreateError', { error: error.message });
+            });
+    }
+
+    /**
+     * Finishes the saving process and resets state
+     */
+    private finishSaving(): void {
+        this.isSaving.set(false);
+        this.operations = [];
+        this.hasOperations.set(false);
+        this.isFileChanged.set(false);
+        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+        this.navigateToCourseManagement();
     }
 
     /**

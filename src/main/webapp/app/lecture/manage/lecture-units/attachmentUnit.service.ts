@@ -78,4 +78,19 @@ export class AttachmentUnitService {
     getAttachmentFile(courseId: number, attachmentUnitId: number): Observable<Blob> {
         return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`, { responseType: 'blob' });
     }
+
+    /**
+     * Update only the student version of an attachment unit's attachment
+     * @param lectureId the id of the lecture
+     * @param attachmentUnitId the id of the attachment unit
+     * @param formData the FormData containing only the student version file
+     */
+    updateStudentVersion(lectureId: number, attachmentUnitId: number, formData: FormData): Observable<EntityResponseType> {
+        return this.httpClient
+            .put<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}/student-version`, formData, {
+                headers: { 'ngsw-bypass': 'true' },
+                observe: 'response',
+            })
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+    }
 }
