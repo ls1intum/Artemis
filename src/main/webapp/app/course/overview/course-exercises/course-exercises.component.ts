@@ -86,10 +86,18 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
             this.isMultiLaunch = params['isMultiLaunch'] === 'true';
+            if (this.isMultiLaunch) {
+                sessionStorage.setItem('isMultiLaunch', 'true');
+            }
+
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
         });
+
+        if (!this.isMultiLaunch && sessionStorage.getItem('isMultiLaunch') === 'true') {
+            this.isMultiLaunch = true;
+        }
 
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
@@ -126,9 +134,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
 
         if (!exerciseId && lastSelectedExercise) {
-            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true, queryParamsHandling: 'merge' });
+            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
-            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true, queryParamsHandling: 'merge' });
+            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             this.exerciseSelected = !!exerciseId;
         }
