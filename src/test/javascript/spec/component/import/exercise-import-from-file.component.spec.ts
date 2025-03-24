@@ -11,7 +11,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
