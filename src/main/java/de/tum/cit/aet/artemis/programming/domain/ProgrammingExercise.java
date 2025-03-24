@@ -608,6 +608,33 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        // TODO Michal Kawka how do we map from participation to results now? participation -> submissions -> map to result?
+        return participation.getResults().stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(Set)}
+     *
+     * @param participations the list of available participations
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
+     */
+    @Override
+    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
+        Set<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).collect(Collectors.toSet());
+        Set<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).collect(Collectors.toSet());
+        Set<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
+
+        if (gradedParticipations.size() > 1) {
+            gradedParticipations = super.findRelevantParticipation(gradedParticipations);
+        }
+        if (practiceParticipations.size() > 1) {
+            practiceParticipations = super.findRelevantParticipation(practiceParticipations);
+        }
+
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
         return participation.getResults().stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
                 .collect(Collectors.toSet());
     }
