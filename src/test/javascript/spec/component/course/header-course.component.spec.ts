@@ -92,6 +92,8 @@ describe('Header Course Component', () => {
         expect(manageButton).toBeNull();
 
         const showStudentViewButton = fixture.nativeElement.querySelector('#student-view-button');
+        // when the TranslateDirective is missing in the component, the textContent is an empty string
+        expect(showStudentViewButton.textContent).toEqual('artemisApp.courseOverview.studentView');
         expect(showStudentViewButton).toBeTruthy();
     });
 
