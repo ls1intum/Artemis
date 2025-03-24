@@ -309,7 +309,7 @@ dependencies {
 
     implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    
+
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
@@ -322,6 +322,7 @@ dependencies {
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.0.RELEASE"
+    implementation 'com.webauthn4j:webauthn4j-core:0.28.6.RELEASE'
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
