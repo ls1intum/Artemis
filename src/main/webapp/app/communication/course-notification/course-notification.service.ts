@@ -282,7 +282,7 @@ export class CourseNotificationService {
     public getNotificationsForCourse$(courseId: number): Observable<CourseNotification[]> {
         return new Observable<CourseNotification[]>((observer) => {
             const subscription = this.notifications$.subscribe((map) => {
-                observer.next(map[courseId] || 0);
+                observer.next(map[courseId] || []);
             });
 
             return () => subscription.unsubscribe();

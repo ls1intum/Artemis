@@ -139,7 +139,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         super.ngOnDestroy();
         if (this.putPresetTimeout) {
             clearTimeout(this.putPresetTimeout);
-            this.courseNotificationSettingService.setSettingPreset(this.courseId, this.selectedSettingPreset!.typeId);
+            this.courseNotificationSettingService.setSettingPreset(this.courseId, this.selectedSettingPreset?.typeId ?? 0);
         }
         if (this.putSpecificationsTimeout) {
             clearTimeout(this.putSpecificationsTimeout);
