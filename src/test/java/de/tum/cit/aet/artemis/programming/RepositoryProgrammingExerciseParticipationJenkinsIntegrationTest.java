@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -27,6 +28,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @AfterEach
@@ -64,5 +66,45 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         var url = "/api/programming/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
         var buildLogs = request.getList(url, HttpStatus.OK, BuildLogEntry.class);
         assertThat(buildLogs).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    public void testGetBuildLogsWithResultIdDoesNotReturnLogsFromDatabase() throws Exception {
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        var programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        var submission = new ProgrammingSubmission();
+        submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
+        submission.setSubmitted(true);
+        submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        submission.setType(SubmissionType.MANUAL);
+        submission.setBuildFailed(true);
+
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry1", submission));
+        submission.setBuildLogEntries(buildLogEntries);
+
+        Result result1 = new Result();
+        result1.setSubmission(submission);
+        Result result2 = new Result();
+        result2.setSubmission(submission);
+
+        List<Result> results = new ArrayList<>();
+        results.add(result1);
+        results.add(result2);
+        submission.setResults(results);
+
+        programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        var buildPlanId = programmingExerciseParticipation.getBuildPlanId();
+        var jobWithDetails = new JenkinsJobService.JobWithDetails(buildPlanId, "description", false);
+        jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), buildPlanId, jobWithDetails, false);
+        jenkinsRequestMockProvider.mockGetBuildStatus(programmingExercise.getProjectKey(), buildPlanId, true, true, false, true);
+
+        var url = "/api/programming/repository/" + programmingExerciseParticipation.getId() + "/buildlogs?resultId=" + result1.getId();
+        request.getList(url, HttpStatus.NOT_FOUND, BuildLogEntry.class);
     }
 }
