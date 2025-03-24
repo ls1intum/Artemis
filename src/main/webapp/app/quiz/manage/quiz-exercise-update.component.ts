@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
@@ -97,9 +98,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     notificationText?: string;
 
     isImport = false;
+    isCreation = false;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
+    private navigatingAfterSave = false;
 
     exams: Exam[] = [];
 
@@ -127,7 +130,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     /** Route params **/
     examId?: number;
     courseId?: number;
-
     // Icons
     faPlus = faPlus;
     faXmark = faXmark;
@@ -234,6 +236,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         newQuiz.allowedNumberOfAttempts = 1;
         newQuiz.isEditable = true;
         this.prepareEntity(newQuiz);
+        this.isCreation = true;
         return newQuiz;
     }
 
@@ -282,7 +285,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         // Assign savedEntity to identify local changes
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
-
         this.cacheValidation();
     }
 
@@ -299,6 +301,24 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             batch.startTimeError = startTime.isBefore(this.quizExercise.releaseDate) || (dueDate != undefined && endTime.isAfter(dueDate));
         });
     }
+    // private normalizeShortAnswerStructure(quiz: QuizExercise): QuizExercise {
+    //     quiz.quizQuestions?.forEach(question => {
+    //         if (question.type === QuizQuestionType.SHORT_ANSWER) {
+    //             const shortAnswerQuestion = question as ShortAnswerQuestion;
+    //             shortAnswerQuestion.spots?.map(spot => {
+    //                 // return object without tempId
+    //                 return { ...spot, tempID: undefined};
+    //             })
+    //             shortAnswerQuestion.solutions?.map(solution => {
+    //                 // return object without tempId
+    //                 return { ...solution, tempID: undefined};
+    //             })
+    //         }
+    //
+    //     });
+    //
+    //     return quiz;
+    // }
 
     cacheValidation() {
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
@@ -339,6 +359,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * @param changes the changes to apply
      */
     ngOnChanges(changes: SimpleChanges): void {
+        console.log('changes', changes);
         if (changes.course || changes.quizExercise) {
             this.init();
         }
@@ -372,6 +393,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      * Returns whether pending changes are present, preventing a deactivation.
      */
     canDeactivate(): boolean {
+        if (this.navigatingAfterSave) {
+            return true;
+        }
         return !this.pendingChangesCache;
     }
 
@@ -382,6 +406,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
+        if (this.navigatingAfterSave) {
+            return true;
+        }
+
         if (!this.canDeactivate()) {
             event.preventDefault();
             return this.translateService.instant('pendingChanges');
@@ -547,18 +575,21 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.isSaving = false;
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
-        this.quizQuestionListEditComponent.fileMap.clear();
+        //this.quizQuestionListEditComponent.fileMap.clear();
+        quizExercise.isEditable = isQuizEditable(quizExercise);
+        this.exerciseService.validateDate(quizExercise);
         this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
-        this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
 
         // Navigate back only if it's an import
         // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
+        this.navigatingAfterSave = true;
         if (this.isImport) {
             this.previousState();
         } else if (isCreate) {
+            console.log('saved entity', this.savedEntity);
+            console.log('quizExercise', this.quizExercise);
             this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, skipLocationChange: true });
         }
     }
@@ -656,7 +687,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 
-    handleQuestionChanged() {
+    handleQuestionChanged(editorSetup = false) {
+        // editor setup are not changes triggered by the user -> not update pendingChangesCache
+        if (editorSetup) {
+            return;
+        }
+
         this.cacheValidation();
     }
 }

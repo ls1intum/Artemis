@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { ChangeDetectorRef, Directive, inject } from '@angular/core';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
@@ -182,10 +183,16 @@ export abstract class QuizExerciseValidationDirective {
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
+        console.log('Checking for pending changes');
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
+
+        console.log('quizExercise', this.quizExercise);
+        console.log('savedEntity', this.savedEntity);
+        const result = JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
+        console.log('pendingChanges', result);
+        return result;
     }
 
     checkForInvalidFlaggedQuestions() {

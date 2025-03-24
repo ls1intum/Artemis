@@ -93,7 +93,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     @Input() questionIndex: number;
     @Input() reEvaluationInProgress: boolean;
 
-    @Output() questionUpdated = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter<boolean>(false);
     @Output() questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
     @Output() questionMoveUp = new EventEmitter();
@@ -225,7 +225,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.questionEditorText = this.generateMarkdown();
         this.changeDetector.detectChanges();
         this.parseMarkdown(this.questionEditorText);
-        this.questionUpdated.emit();
+        this.questionUpdated.emit(true);
     }
 
     /**

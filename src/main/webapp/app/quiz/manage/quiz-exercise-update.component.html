@@ -233,7 +233,7 @@
                         [quizQuestions]="quizExercise.quizQuestions ?? []"
                         (onQuestionAdded)="handleQuestionChanged()"
                         (onQuestionDeleted)="handleQuestionChanged()"
-                        (onQuestionUpdated)="handleQuestionChanged()"
+                        (onQuestionUpdated)="handleQuestionChanged($event)"
                     />
                 }
             </div>
@@ -257,7 +257,7 @@
                         </div>
                     }
                     <div class="form-group">
-                        @if (!pendingChangesCache && !isSaving) {
+                        @if (!pendingChangesCache && !isSaving && !isCreation) {
                             <span jhiTranslate="artemisApp.quizExercise.edit.saved" class="badge bg-success"></span>
                         }
                         @if (pendingChangesCache && quizIsValid && !isSaving) {
