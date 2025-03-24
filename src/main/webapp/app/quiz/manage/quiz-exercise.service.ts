@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
 

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
 import { AttachmentUnitResolve } from 'app/lecture/manage/lecture-units/lecture-unit-management-resolve.service';
 
 export const lectureUnitRoute: Routes = [

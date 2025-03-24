@@ -81,6 +81,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @BeforeEach
     void createJobs() {
+        buildJobRepository.deleteAll();
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
@@ -136,6 +137,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.clear();
         processingJobs.clear();
         buildAgentInformation.clear();
+        buildJobRepository.deleteAll();
     }
 
     @Test
@@ -261,7 +263,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetFinishedBuildJobs_returnsSortedJobs() throws Exception {
-        buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         buildJobRepository.save(finishedJob3);
@@ -278,7 +279,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetFinishedBuildJobs_returnsFilteredJobs() throws Exception {
-        buildJobRepository.deleteAll();
 
         // Create a failed job to filter for
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
@@ -314,7 +314,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFinishedBuildJobsForCourse_returnsJobs() throws Exception {
-        buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
@@ -350,7 +349,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildJobStatistics() throws Exception {
-        buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         var response = request.get("/api/core/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
