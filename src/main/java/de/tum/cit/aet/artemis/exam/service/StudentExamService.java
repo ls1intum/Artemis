@@ -623,6 +623,11 @@ public class StudentExamService {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
         // TODO: Michael Allgaier: schedule a lock operation for all involved student repositories of this student exam (test exam) at the end of the individual working time
+        // Since students can participate in the test exam multiple times, we need to associate their exercise participations with a specific student exam
+        if (!generatedParticipations.isEmpty()) {
+            studentExam.setStudentParticipations(generatedParticipations);
+            this.studentExamRepository.save(studentExam);
+        }
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -664,10 +669,6 @@ public class StudentExamService {
                             student.getParticipantIdentifier(), ex.getMessage(), ex);
                 }
             }
-        }
-        if (!generatedParticipations.isEmpty()) {
-            studentExam.setStudentParticipations(generatedParticipations);
-            this.studentExamRepository.save(studentExam);
         }
     }
 

@@ -142,7 +142,7 @@ describe('ProfileService', () => {
             },
         },
         operatorName: 'TUM',
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
     };
 
     const expectedProfileInfo: ProfileInfo = {
@@ -253,7 +253,7 @@ describe('ProfileService', () => {
                 },
             },
         },
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
         operatorName: 'TUM',
     };
 
