@@ -10,7 +10,7 @@ import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';

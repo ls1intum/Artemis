@@ -91,14 +91,14 @@ jobs:
 
       # If the workflow is triggered by a pull request, we need to run the tests on single node Artemis instance.
       - name: Run E2E Playwright tests (MySQL, Local)
-        if: ${{ github.event.workflow_run.pull_requests != null && github.event.workflow_run.pull_requests.length > 0 }}
+        if: ${{ github.event.workflow_run.event == 'pull_request' }}
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      # If the workflow is triggered by a push to a branch (e.g. develop, main), we need to run the tests on multi-node Artemis instance.
+      # If the workflow is triggered other events (by a push to a branch e.g. develop, main, or release), we need to run the tests on multi-node Artemis instance.
       - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
-        if: ${{ github.event.workflow_run.pull_requests == null || github.event.workflow_run.pull_requests.length == 0 }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         run: .ci/E2E-tests/execute.sh multi-node playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75

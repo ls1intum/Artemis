@@ -545,9 +545,6 @@
                 "submissionBuildPlan": "Abgabe-Build-Plan",
                 "solutionBuildPlan": "Lösungs-Build-Plan"
             },
-            "orion": {
-                "openEditor": "Editor Öffnen"
-            },
             "reEvaluate": "Alle erneut bewerten",
             "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",

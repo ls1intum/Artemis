@@ -258,8 +258,6 @@
 
         @if (tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun) {
             <div class="d-flex">
-                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                <!--                <div *jhiExtensionPoint="overrideAssessmentTable" class="guided-tour-exercise-dashboard-table flex-grow-1">-->
                 <div class="guided-tour-exercise-dashboard-table flex-grow-1">
                     @if (tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun) {
                         <div class="alert alert-warning row" role="alert">
@@ -435,24 +433,6 @@
                                                                 </td>
                                                             }
                                                             <td>
-                                                                <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                                                                <!--                                                                <a-->
-                                                                <!--                                                                    *jhiExtensionPoint="-->
-                                                                <!--                                                                        overrideOpenAssessmentButton;-->
-                                                                <!--                                                                        context: {-->
-                                                                <!--                                                                            submission: 'new',-->
-                                                                <!--                                                                            queryParams: getAssessmentQueryParams(correctionRound),-->
-                                                                <!--                                                                            buttonLabel: 'startAssessment',-->
-                                                                <!--                                                                        }-->
-                                                                <!--                                                                    "-->
-                                                                <!--                                                                    id="start-new-assessment"-->
-                                                                <!--                                                                    class="btn btn-success btn-sm guided-tour-new-assessment-btn"-->
-                                                                <!--                                                                    [routerLink]="getAssessmentLink('new')"-->
-                                                                <!--                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"-->
-                                                                <!--                                                                    [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"-->
-                                                                <!--                                                                    [class.guided-tour]="exercise === exerciseForGuidedTour"-->
-                                                                <!--                                                                    [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"-->
-                                                                <!--                                                                >-->
                                                                 <a
                                                                     id="start-new-assessment"
                                                                     class="btn btn-success btn-sm guided-tour-new-assessment-btn"
@@ -489,20 +469,6 @@
                                                             }
                                                             <td>
                                                                 @if ((isTestRun && complaints.length === 0) || !isTestRun) {
-                                                                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                                                                    <!--                                                                    <ng-container-->
-                                                                    <!--                                                                        *jhiExtensionPoint="-->
-                                                                    <!--                                                                            overrideOpenAssessmentButton;-->
-                                                                    <!--                                                                            context: {-->
-                                                                    <!--                                                                                submission: submission,-->
-                                                                    <!--                                                                                queryParams: getAssessmentQueryParams(correctionRound),-->
-                                                                    <!--                                                                                buttonLabel:-->
-                                                                    <!--                                                                                    submission && calculateSubmissionStatusIsDraft(submission, correctionRound)-->
-                                                                    <!--                                                                                        ? 'continueAssessment'-->
-                                                                    <!--                                                                                        : 'openAssessment',-->
-                                                                    <!--                                                                            }-->
-                                                                    <!--                                                                        "-->
-                                                                    <!--                                                                    >-->
                                                                     @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
                                                                         <a
                                                                             [routerLink]="getAssessmentLink(submission)"
@@ -637,18 +603,6 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                                                    <!--                                                    <ng-container-->
-                                                    <!--                                                        *jhiExtensionPoint="-->
-                                                    <!--                                                            overrideOpenAssessmentButton;-->
-                                                    <!--                                                            context: {-->
-                                                    <!--                                                                submission: submissionWithComplaint.submission,-->
-                                                    <!--                                                                queryParams: getComplaintQueryParams(submissionWithComplaint.complaint),-->
-                                                    <!--                                                                disabled: isComplaintLocked(submissionWithComplaint.complaint),-->
-                                                    <!--                                                                buttonLabel: submissionWithComplaint.complaint.accepted === undefined ? 'evaluateComplaint' : 'showComplaint',-->
-                                                    <!--                                                            }-->
-                                                    <!--                                                        "-->
-                                                    <!--                                                    >-->
                                                     @if (submissionWithComplaint.complaint.accepted === undefined) {
                                                         <a
                                                             [class.disabled]="isComplaintLocked(submissionWithComplaint.complaint)"
@@ -750,20 +704,6 @@
                                                     }
                                                 </td>
                                                 <td>
-                                                    <!-- TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution -->
-                                                    <!--                                                    <ng-container-->
-                                                    <!--                                                        *jhiExtensionPoint="-->
-                                                    <!--                                                            overrideOpenAssessmentButton;-->
-                                                    <!--                                                            context: {-->
-                                                    <!--                                                                submission: moreFeedbackRequest.submission,-->
-                                                    <!--                                                                queryParams: getComplaintQueryParams(moreFeedbackRequest.complaint),-->
-                                                    <!--                                                                buttonLabel:-->
-                                                    <!--                                                                    moreFeedbackRequest.complaint.accepted === undefined-->
-                                                    <!--                                                                        ? 'evaluateMoreFeedbackRequest'-->
-                                                    <!--                                                                        : 'showMoreFeedbackRequests',-->
-                                                    <!--                                                            }-->
-                                                    <!--                                                        "-->
-                                                    <!--                                                    >-->
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
                                                         <a
                                                             class="btn btn-success btn-sm"
