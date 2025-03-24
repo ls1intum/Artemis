@@ -56,6 +56,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -398,65 +399,54 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Extracts the settingsIds of a notification settings set
-     * E.g. used to compare two sets of notification settings based on setting id
+     * Compares two notification settings sets based on their notification setting IDs.
      *
-     * @param notificationSettings set which setting ids should be extracted
-     * @return a set of settings ids
+     * @param notificationSettingsA the first set
+     * @param notificationSettingsB the second set
+     * @return true if both sets have the same notification setting IDs, otherwise false
      */
-    private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
-        Set<String> settingsIds = new HashSet<>();
-        notificationSettings.forEach(setting -> settingsIds.add(setting.getSettingId()));
-        return settingsIds;
+    private boolean haveSameNotificationSettingIds(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
+        return Objects.equals(notificationSettingsA.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()),
+                notificationSettingsB.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()));
     }
 
     /**
-     * Compares two notification settings sets based on their notification setting ids
+     * Checks and updates the personal notification settings retrieved from the DB.
+     * If the loaded set is empty, use default settings.
+     * If the loaded set has different setting IDs than the default settings, merge both sets.
      *
-     * @param notificationSettingsA is the first set
-     * @param notificationSettingsB is the second set
-     * @return true if the notification setting ids of both are the same else return false
-     */
-    private boolean compareTwoNotificationSettingsSetsBasedOnSettingsId(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
-        Set<String> settingIdsA = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsA);
-        Set<String> settingIdsB = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsB);
-        return settingIdsA.equals(settingIdsB);
-    }
-
-    /**
-     * Checks the personal notificationSettings retrieved from the DB.
-     * If the loaded set is empty substitute it with the default settings
-     * If the loaded set has different notification setting ids than the default settings both sets have to be merged
-     *
-     * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
-     * @param user                     the user for which the settings should be loaded
-     * @return the updated and correct notification settings
+     * @param userNotificationSettings The notification settings retrieved from the DB for the user (it's important that the entities are not detached).
+     * @param user                     The user for whom the settings should be checked.
+     * @return The updated and correct notification settings.
      */
     public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings, User user) {
+        var defaultSettings = DEFAULT_NOTIFICATION_SETTINGS;
         if (userNotificationSettings.isEmpty()) {
-            return DEFAULT_NOTIFICATION_SETTINGS;
+            return defaultSettings;
         }
-        // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
-        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(userNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedDefaultNotificationSettings = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
-
-            userNotificationSettings.forEach(userNotificationSetting -> DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
-                if (defaultSetting.getSettingId().equals(userNotificationSetting.getSettingId())) {
-                    updatedDefaultNotificationSettings.remove(defaultSetting);
-                    updatedDefaultNotificationSettings.add(userNotificationSetting);
-                }
-            }));
-
-            updatedDefaultNotificationSettings.forEach(userNotificationSetting -> userNotificationSetting.setUser(user));
-            // update DB to fix inconsistencies and avoid redundant future merges
-            // first remove all settings of the current user in the DB
-            notificationSettingRepository.deleteAll(userNotificationSettings);
-            // save correct merge to DB
-            notificationSettingRepository.saveAll(updatedDefaultNotificationSettings);
-            return updatedDefaultNotificationSettings;
+        // If all default settings are available in the database, return them
+        if (haveSameNotificationSettingIds(userNotificationSettings, defaultSettings)) {
+            return userNotificationSettings;
         }
-        return userNotificationSettings;
+
+        Map<String, NotificationSetting> settingsMap = userNotificationSettings.stream().collect(Collectors.toMap(NotificationSetting::getSettingId, setting -> setting));
+
+        // defaultSettings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
+        //
+        // Merge user-specific settings with default settings:
+        // - If the user already has a setting with the same ID, use the user’s version.
+        // - If the user doesn’t have a specific setting, fall back to the default version.
+        Set<NotificationSetting> mergedSettings = defaultSettings.stream().map(defaultSetting -> settingsMap.getOrDefault(defaultSetting.getSettingId(), defaultSetting))
+                .collect(Collectors.toSet());
+
+        // Assign user reference to the updated settings
+        mergedSettings.forEach(setting -> setting.setUser(user));
+
+        // Save only **new or updated** settings, avoiding unnecessary deletes
+        notificationSettingRepository.saveAll(mergedSettings);
+
+        return mergedSettings;
     }
 
     /**
