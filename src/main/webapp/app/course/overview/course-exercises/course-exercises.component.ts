@@ -59,6 +59,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private ltiSubscription: Subscription;
+    private multiLaunchSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
     course?: Course;
@@ -85,19 +86,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
-            this.isMultiLaunch = params['isMultiLaunch'] === 'true';
-            if (this.isMultiLaunch) {
-                sessionStorage.setItem('isMultiLaunch', 'true');
-            }
-
+            //this.isMultiLaunch = params['isMultiLaunch'] === 'true';
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
         });
-
-        if (!this.isMultiLaunch && sessionStorage.getItem('isMultiLaunch') === 'true') {
-            this.isMultiLaunch = true;
-        }
 
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
@@ -115,6 +108,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.isShownViaLti = isShownViaLti;
         });
 
+        this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
+            this.isMultiLaunch = isMultiLaunch;
+        });
+
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
         this.navigateToExercise();
     }
@@ -123,9 +120,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
         let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
-        const queryParams = {
-            isMultiLaunch: this.isMultiLaunch,
-        };
 
         if (!exerciseId) {
             // Get the exerciseId from the URL
@@ -138,9 +132,9 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
 
         if (!exerciseId && lastSelectedExercise) {
-            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true, queryParams: this.isMultiLaunch ? queryParams : {} });
+            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
-            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true, queryParams: this.isMultiLaunch ? queryParams : {} });
+            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             this.exerciseSelected = !!exerciseId;
         }
