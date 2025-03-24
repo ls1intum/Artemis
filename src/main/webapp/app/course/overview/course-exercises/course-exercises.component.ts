@@ -202,6 +202,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
+        this.multiLaunchSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
     }
 }
