@@ -69,3 +69,8 @@
 /src/test/javascript/spec/component/quiz-statistic              @ls1intum/quiz-maintainers
 /src/test/javascript/spec/component/short-answer-question       @ls1intum/quiz-maintainers
 
+# Other
+/docker     @ls1intum/operations-maintainers
+/.github    @ls1intum/operations-maintainers
+/.ci        @ls1intum/operations-maintainers
+
