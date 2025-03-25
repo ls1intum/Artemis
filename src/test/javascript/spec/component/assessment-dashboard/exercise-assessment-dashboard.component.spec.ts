@@ -18,13 +18,13 @@ import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submis
 import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -50,7 +50,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

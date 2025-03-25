@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/entities/result.model';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';

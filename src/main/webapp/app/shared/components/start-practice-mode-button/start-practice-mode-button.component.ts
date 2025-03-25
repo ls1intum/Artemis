@@ -8,12 +8,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
-import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../language/translate.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-start-practice-mode-button',

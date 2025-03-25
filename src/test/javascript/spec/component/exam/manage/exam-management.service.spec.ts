@@ -9,7 +9,7 @@ import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

@@ -3,7 +3,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Observable, of, throwError } from 'rxjs';

@@ -14,7 +14,7 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';

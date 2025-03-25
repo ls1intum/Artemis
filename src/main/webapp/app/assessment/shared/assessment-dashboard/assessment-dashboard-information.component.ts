@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';

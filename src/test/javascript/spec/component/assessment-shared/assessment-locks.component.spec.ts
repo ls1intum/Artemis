@@ -7,7 +7,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
@@ -16,7 +16,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming/manage
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -7,7 +7,7 @@ import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { map } from 'rxjs/operators';

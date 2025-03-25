@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
-import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
-import { TranslateDirective } from '../../language/translate.directive';
-import { HelpIconComponent } from '../../components/help-icon.component';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 
 @Component({
     selector: 'jhi-ide-preferences',

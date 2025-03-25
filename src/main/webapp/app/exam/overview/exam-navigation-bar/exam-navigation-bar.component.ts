@@ -16,7 +16,7 @@ import { ExamSession } from 'app/entities/exam/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
 import { NgClass } from '@angular/common';
