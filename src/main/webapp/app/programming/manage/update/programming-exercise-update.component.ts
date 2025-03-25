@@ -55,7 +55,7 @@ import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/upda
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import { ProgrammingExerciseVersionControlComponent } from 'app/exercises/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
+import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
