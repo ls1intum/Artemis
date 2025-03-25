@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,7 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -87,6 +86,7 @@ public class LectureTranscriptionResource {
      */
     @PostMapping(value = "{lectureId}/lecture-unit/{lectureUnitId}/transcription")
     @EnforceAdmin
+    @ManualConfig
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long lectureId,
             @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
@@ -105,23 +105,6 @@ public class LectureTranscriptionResource {
         LectureTranscription result = lectureTranscriptionRepository.save(lectureTranscription);
 
         return ResponseEntity.created(new URI("/api/lecture/" + lectureId + "/transcriptions/" + result.getId())).body(result);
-    }
-
-    /**
-     * GET /lectures/:lectureId/transcriptions/:transcriptionId : get the transcription for the transcriptionId.
-     *
-     * @param lectureId       the lectureId of the lecture from the transcription
-     * @param transcriptionId the transcriptionId of the transcription to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the transcription, or with status 404 (Not Found)
-     */
-    @GetMapping("{lectureId}/transcription/{transcriptionId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<LectureTranscription> getLectureTranscriptions(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
-        log.debug("REST request to get transcription {}", transcriptionId);
-        LectureTranscription transcription = lectureTranscriptionRepository.findById(transcriptionId).orElseThrow();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(transcription.getLectureUnit().getLecture(), userRepository.getUserWithGroupsAndAuthorities());
-
-        return ResponseEntity.ok(transcription);
     }
 
     /**
