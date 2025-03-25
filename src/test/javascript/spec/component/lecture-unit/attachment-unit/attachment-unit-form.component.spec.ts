@@ -91,6 +91,8 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
         attachmentUnitFormComponent.fileName.set(exampleFileName);
+        const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
+        attachmentUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
 
         attachmentUnitFormComponentFixture.detectChanges();
         expect(attachmentUnitFormComponent.form.valid).toBeTrue();
@@ -110,6 +112,8 @@ describe('AttachmentUnitFormComponent', () => {
                 competencyLinks: null,
                 version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
+                videoSource: exampleVideoUrl,
+                urlHelper: null,
             },
             fileProperties: {
                 file: fakeFile,
@@ -120,6 +124,7 @@ describe('AttachmentUnitFormComponent', () => {
         submitFormSpy.mockRestore();
         submitFormEventSpy.mockRestore();
     });
+
     it('should not submit a form when name is missing', () => {
         attachmentUnitFormComponentFixture.detectChanges();
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
@@ -168,5 +173,139 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         expect(attachmentUnitFormComponent.isFileTooBig()).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
+    });
+
+    it('should not submit a form when file and videoSource is missing', () => {
+        attachmentUnitFormComponentFixture.detectChanges();
+        const exampleName = 'test';
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
+        const exampleDescription = 'lorem ipsum';
+        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentUnitFormComponent.versionControl!.enable();
+        const exampleVersion = 42;
+        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        const exampleUpdateNotificationText = 'updated';
+        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        // Do not set file and ensure videoSource is empty
+        attachmentUnitFormComponent.videoSourceControl!.setValue('');
+        attachmentUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+
+        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+
+        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        submitButton.click();
+
+        expect(submitFormSpy).not.toHaveBeenCalled();
+        expect(submitFormEventSpy).not.toHaveBeenCalled();
+
+        submitFormSpy.mockRestore();
+        submitFormEventSpy.mockRestore();
+    });
+
+    it('should submit a form when file is missing but videoSource is set', () => {
+        attachmentUnitFormComponentFixture.detectChanges();
+        const exampleName = 'test';
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
+        const exampleDescription = 'lorem ipsum';
+        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentUnitFormComponent.versionControl!.enable();
+        const exampleVersion = 42;
+        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        const exampleUpdateNotificationText = 'updated';
+        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
+        attachmentUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
+        // Do not set file
+
+        attachmentUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+
+        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+
+        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        submitButton.click();
+
+        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormEventSpy).toHaveBeenCalledWith({
+            formProperties: {
+                name: exampleName,
+                description: exampleDescription,
+                releaseDate: exampleReleaseDate,
+                competencyLinks: null,
+                version: exampleVersion,
+                updateNotificationText: exampleUpdateNotificationText,
+                videoSource: exampleVideoUrl,
+                urlHelper: null,
+            },
+            fileProperties: {
+                file: undefined,
+                fileName: undefined,
+            },
+        });
+
+        submitFormSpy.mockRestore();
+        submitFormEventSpy.mockRestore();
+    });
+
+    it('should submit a form when file is set but videoSource is missing', () => {
+        attachmentUnitFormComponentFixture.detectChanges();
+        const exampleName = 'test';
+        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
+        const exampleDescription = 'lorem ipsum';
+        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentUnitFormComponent.versionControl!.enable();
+        const exampleVersion = 42;
+        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        const exampleUpdateNotificationText = 'updated';
+        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        // Set file and fileName
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
+        const exampleFileName = 'lorem Ipsum';
+        attachmentUnitFormComponent.fileName.set(exampleFileName);
+        // Ensure videoSource is missing
+        attachmentUnitFormComponent.videoSourceControl!.setValue('');
+
+        attachmentUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+
+        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+
+        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        submitButton.click();
+
+        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormEventSpy).toHaveBeenCalledWith({
+            formProperties: {
+                name: exampleName,
+                description: exampleDescription,
+                releaseDate: exampleReleaseDate,
+                competencyLinks: null,
+                version: exampleVersion,
+                updateNotificationText: exampleUpdateNotificationText,
+                videoSource: '',
+                urlHelper: null,
+            },
+            fileProperties: {
+                file: fakeFile,
+                fileName: exampleFileName,
+            },
+        });
+
+        submitFormSpy.mockRestore();
+        submitFormEventSpy.mockRestore();
     });
 });
