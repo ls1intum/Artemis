@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
@@ -78,9 +77,6 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
-
-    @Autowired
-    private PlagiarismResultRepository plagiarismResultRepo;
 
     @Autowired
     private ExamUtilService examUtilService;

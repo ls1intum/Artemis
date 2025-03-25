@@ -29,13 +29,16 @@ public class ModelingExercise extends Exercise {
         return "modeling";
     }
 
+    // TODO: move to secondary table
     @Enumerated(EnumType.STRING)
     @Column(name = "diagram_type")
     private DiagramType diagramType;
 
+    // TODO: move to secondary table
     @Column(name = "example_solution_model")
     private String exampleSolutionModel;
 
+    // TODO: move to secondary table
     @Column(name = "example_solution_explanation")
     private String exampleSolutionExplanation;
 

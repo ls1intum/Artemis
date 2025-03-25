@@ -273,10 +273,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     void testUpdateModelingExercise_updatingCourseId_conflict() throws Exception {
         // Create a modeling exercise.
         ModelingExercise createdModelingExercise = classExercise;
-        Long oldCourseId = createdModelingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Create a new course with different id.
-        Long newCourseId = oldCourseId + 1;
         Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the modeling exercise.
@@ -478,7 +476,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var importedExercise = request.postWithResponseBody("/api/modeling/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport,
                 ModelingExercise.class, HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "plagiarismDetectionConfig.id", "competencyLinks").isEqualTo(modelingExerciseToImport);
+                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks").isEqualTo(modelingExerciseToImport);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
@@ -511,8 +509,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseRepository.findById(importedModelingExercise.getId())).isPresent();
-        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(modelingExercise.getId())
-                .orElseThrow();
+        importedModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
 
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
         assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
@@ -933,14 +930,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteModelingExerciseClustersAndElementsAsAdmin() throws Exception {
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        request.delete("/api/modeling/admin/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
@@ -1109,8 +1098,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(importedFeedbackGradingInstruction.getCredits()).isEqualTo(gradingInstruction.getCredits());
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
-        var importedModelingExerciseFromDb = modelingExerciseRepository
-                .findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(importedModelingExercise.getId()).orElseThrow();
+        var importedModelingExerciseFromDb = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.getId()).orElseThrow();
         var importedFeedbackGradingInstructionFromDb = importedModelingExerciseFromDb.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
                 .getFeedbacks().getFirst().getGradingInstruction();
 

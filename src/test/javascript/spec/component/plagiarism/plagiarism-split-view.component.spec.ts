@@ -98,7 +98,7 @@ describe('Plagiarism Split View Component', () => {
         comp.exercise = textExercise;
         jest.spyOn(comp, 'parseTextMatches');
         jest.spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView').mockReturnValue(
-            of({ body: comparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>),
+            of({ body: comparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement>>),
         );
         comp.ngOnChanges({
             exercise: { currentValue: textExercise } as SimpleChange,
@@ -291,14 +291,14 @@ describe('Plagiarism Split View Component', () => {
                         { file: '', column: 8, line: 8 },
                     ],
                 },
-            } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+            } as PlagiarismComparison<TextSubmissionElement>;
         }
 
         const plagiarismComparison = createPlagiarismComparison();
 
         const plagiarismCasesServiceSpy = jest
             .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
-            .mockReturnValue(of({ body: plagiarismComparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>));
+            .mockReturnValue(of({ body: plagiarismComparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement>>));
 
         comp.sortByStudentLogin = studentLogin;
         comp.exercise = textExercise;

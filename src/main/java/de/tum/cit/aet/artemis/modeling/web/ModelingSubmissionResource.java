@@ -32,8 +32,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -56,7 +54,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -69,8 +66,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
-
-    private final ResultRepository resultRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -85,23 +80,16 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
-    private final PlagiarismService plagiarismService;
-
-    private final ResultService resultService;
-
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ResultService resultService, ResultRepository resultRepository) {
+            ModelingSubmissionRepository modelingSubmissionRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.plagiarismService = plagiarismService;
-        this.resultService = resultService;
-        this.resultRepository = resultRepository;
     }
 
     /**
@@ -192,7 +180,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param submissionId    the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
      * @param resultId        the resultId for which we want to get the submission
-     * @param withoutResults  No result will be created or loaded and the exercise won't be locked when this is set so plagiarism detection doesn't lock results
+     * @param withoutResults  No result will be created or loaded and the exercise won't be locked when this is set
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
@@ -212,8 +200,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
-            // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin(), studentParticipation);
+            // anonymize the submission
+            modelingSubmission.setParticipation(null);
+            modelingSubmission.setResults(null);
+            modelingSubmission.setSubmissionDate(null);
             return ResponseEntity.ok(modelingSubmission);
         }
 

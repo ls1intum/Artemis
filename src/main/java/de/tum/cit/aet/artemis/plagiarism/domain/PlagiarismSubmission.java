@@ -74,8 +74,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     /**
      * Size of the related submission.
      * <p>
-     * For modeling submissions, this is the number of modeling elements. For text and programming
-     * submissions, this is the number of words or tokens.
+     * For text and programming submissions, this is the number of words or tokens.
      */
     @Column(name = "size")
     private int size;

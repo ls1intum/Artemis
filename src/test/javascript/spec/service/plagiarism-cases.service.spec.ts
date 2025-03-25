@@ -40,7 +40,7 @@ describe('Plagiarism Cases Service', () => {
         submissionB: plagiarismSubmission2,
         similarity: 0.5,
         status: PlagiarismStatus.CONFIRMED,
-    } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    } as PlagiarismComparison<TextSubmissionElement>;
 
     const textExercise = {
         id: 1,
