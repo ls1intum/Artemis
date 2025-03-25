@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -270,10 +271,16 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         pageableSearchDTO.setSortingOrder(SortingOrder.ASCENDING);
         var result = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
-        assertThat(result).hasSize(3);
-        assertThat(result.getFirst().id()).isEqualTo(finishedJob2.getBuildJobId());
-        assertThat(result.get(1).id()).isEqualTo(finishedJob3.getBuildJobId());
-        assertThat(result.get(2).id()).isEqualTo(finishedJob1.getBuildJobId());
+
+        assertThat(result).isNotEmpty();
+
+        List<String> resultIds = result.stream().map(FinishedBuildJobDTO::id).toList();
+        List<String> expectedOrderedIds = List.of(finishedJob2.getBuildJobId(), finishedJob3.getBuildJobId(), finishedJob1.getBuildJobId());
+
+        // Ensure the saved jobs appear in the result list and are in the correct order. Other jobs could be inbetween the expected jobs.
+        assertThat(resultIds).containsAll(expectedOrderedIds);
+        assertThat(IntStream.range(0, expectedOrderedIds.size() - 1)
+                .allMatch(i -> resultIds.indexOf(expectedOrderedIds.get(i)) < resultIds.indexOf(expectedOrderedIds.get(i + 1)))).isTrue();
     }
 
     @Test
