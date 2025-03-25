@@ -22,15 +22,15 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
-describe('EditAttachmentUnitComponent', () => {
+describe('EditAttachmentVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditAttachmentUnitComponent>;
 
-    let attachmentUnitService;
+    let attachmentVideoUnitService;
     let router: Router;
     let navigateSpy: jest.SpyInstance;
-    let updateAttachmentUnitSpy: jest.SpyInstance;
+    let updateAttachmentVideoUnitSpy: jest.SpyInstance;
     let attachment: Attachment;
-    let attachmentUnit: AttachmentVideoUnit;
+    let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
     let fakeFile: File;
 
@@ -79,7 +79,7 @@ describe('EditAttachmentUnitComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(EditAttachmentUnitComponent);
         router = TestBed.inject(Router);
-        attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         attachment = new Attachment();
         attachment.id = 1;
@@ -90,30 +90,30 @@ describe('EditAttachmentUnitComponent', () => {
         attachment.name = 'test';
         attachment.link = '/path/to/file';
 
-        attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.id = 1;
-        attachmentUnit.name = 'test';
-        attachmentUnit.description = 'lorem ipsum';
-        attachmentUnit.attachment = attachment;
-        attachmentUnit.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachmentUnit.videoSource = 'https://live.rbg.tum.de';
+        attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.name = 'test';
+        attachmentVideoUnit.description = 'lorem ipsum';
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de';
 
         fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         baseFormData = new FormData();
         baseFormData.append('file', fakeFile, 'updated file');
         baseFormData.append('attachment', objectToJsonBlob(attachment));
-        baseFormData.append('attachmentVideoUnit', objectToJsonBlob(attachmentUnit));
+        baseFormData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        jest.spyOn(attachmentUnitService, 'findById').mockReturnValue(
+        jest.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
             of(
                 new HttpResponse({
-                    body: attachmentUnit,
+                    body: attachmentVideoUnit,
                     status: 200,
                 }),
             ),
         );
-        updateAttachmentUnitSpy = jest.spyOn(attachmentUnitService, 'update');
+        updateAttachmentVideoUnitSpy = jest.spyOn(attachmentVideoUnitService, 'update');
         navigateSpy = jest.spyOn(router, 'navigate');
     });
 
@@ -123,30 +123,30 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should set form data correctly', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
-        expect(attachmentUnitFormComponent.formData()?.formProperties.name).toEqual(attachmentUnit.name);
-        expect(attachmentUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachmentUnit.releaseDate);
-        expect(attachmentUnitFormComponent.formData()?.formProperties.updateNotificationText).toBeUndefined();
-        expect(attachmentUnitFormComponent.formData()?.formProperties.version).toBe(1);
-        expect(attachmentUnitFormComponent.formData()?.formProperties.description).toEqual(attachmentUnit.description);
-        expect(attachmentUnitFormComponent.formData()?.formProperties.videoSource).toEqual(attachmentUnit.videoSource);
-        expect(attachmentUnitFormComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
-        expect(attachmentUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.formData()?.formProperties.name).toEqual(attachmentVideoUnit.name);
+        expect(attachmentVideoUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachmentVideoUnit.releaseDate);
+        expect(attachmentVideoUnitFormComponent.formData()?.formProperties.updateNotificationText).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.formData()?.formProperties.version).toBe(1);
+        expect(attachmentVideoUnitFormComponent.formData()?.formProperties.description).toEqual(attachmentVideoUnit.description);
+        expect(attachmentVideoUnitFormComponent.formData()?.formProperties.videoSource).toEqual(attachmentVideoUnit.videoSource);
+        expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.fileName).toEqual(attachment.link);
+        expect(attachmentVideoUnitFormComponent.formData()?.fileProperties.file).toBeUndefined();
     });
 
     it('should update attachment unit with file change without notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
-                name: attachmentUnit.name,
-                description: attachmentUnit.description,
-                releaseDate: attachmentUnit.releaseDate,
-                videoSource: attachmentUnit.videoSource,
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: attachmentVideoUnit.videoSource,
                 version: 1,
                 updateNotificationText: undefined,
             },
@@ -156,27 +156,27 @@ describe('EditAttachmentUnitComponent', () => {
             },
         };
 
-        updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
-        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should update attachment unit with file change with notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
 
         const notification = 'test notification';
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
-                name: attachmentUnit.name,
-                description: attachmentUnit.description,
-                releaseDate: attachmentUnit.releaseDate,
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
                 version: 1,
                 updateNotificationText: notification,
             },
@@ -186,24 +186,24 @@ describe('EditAttachmentUnitComponent', () => {
             },
         };
 
-        updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
-        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, notification);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, notification);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should update attachment unit without file change without notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
-                name: attachmentUnit.name,
-                description: attachmentUnit.description,
-                releaseDate: attachmentUnit.releaseDate,
-                videoSource: attachmentUnit.videoSource,
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: attachmentVideoUnit.videoSource,
                 version: 1,
                 updateNotificationText: undefined,
             },
@@ -212,13 +212,13 @@ describe('EditAttachmentUnitComponent', () => {
 
         const formData = new FormData();
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
-        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, formData, undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, formData, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 });

@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 
-export class MockAttachmentUnitsService {
+export class MockAttachmentVideoUnitsService {
     getSplitUnitsData = (lectureId: number, filename: string) => of({});
 
     createUnits = (lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) => of({});

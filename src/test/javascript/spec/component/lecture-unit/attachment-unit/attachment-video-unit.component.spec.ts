@@ -25,14 +25,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 
-describe('AttachmentUnitComponent', () => {
+describe('AttachmentVideoUnitComponent', () => {
     let scienceService: ScienceService;
     let fileService: FileService;
 
     let component: AttachmentUnitComponent;
     let fixture: ComponentFixture<AttachmentUnitComponent>;
 
-    const attachmentUnit: AttachmentVideoUnit = {
+    const attachmentVideoUnit: AttachmentVideoUnit = {
         id: 1,
         description: 'lorem ipsum',
         attachment: {
@@ -64,7 +64,7 @@ describe('AttachmentUnitComponent', () => {
         fixture = TestBed.createComponent(AttachmentUnitComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('lectureUnit', attachmentUnit);
+        fixture.componentRef.setInput('lectureUnit', attachmentVideoUnit);
     });
 
     afterEach(() => {

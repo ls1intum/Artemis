@@ -9,7 +9,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { MockAttachmentUnitsService } from '../../../helpers/mocks/service/mock-attachment-units.service';
+import { MockAttachmentVideoUnitsService } from '../../../helpers/mocks/service/mock-attachment-video-units.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,38 +24,38 @@ class LectureUnitLayoutStubComponent {
     isLoading = false;
 }
 
-type AttachmentUnitsInfoResponseType = {
+type AttachmentVideoUnitsInfoResponseType = {
     unitName: string;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
 };
 
-type AttachmentUnitsResponseType = {
-    units: AttachmentUnitsInfoResponseType[];
+type AttachmentVideoUnitsResponseType = {
+    units: AttachmentVideoUnitsInfoResponseType[];
     numberOfPages: number;
 };
 
-describe('AttachmentUnitsComponent', () => {
-    let attachmentUnitsComponentFixture: ComponentFixture<AttachmentVideoUnitsComponent>;
-    let attachmentUnitsComponent: AttachmentVideoUnitsComponent;
+describe('AttachmentVideoUnitsComponent', () => {
+    let attachmentVideoUnitsComponentFixture: ComponentFixture<AttachmentVideoUnitsComponent>;
+    let attachmentVideoUnitsComponent: AttachmentVideoUnitsComponent;
 
-    let attachmentUnitService: AttachmentVideoUnitService;
+    let attachmentVideoUnitService: AttachmentVideoUnitService;
     let router: Router;
 
-    const unit1: AttachmentUnitsInfoResponseType = {
+    const unit1: AttachmentVideoUnitsInfoResponseType = {
         unitName: 'Unit 1',
         releaseDate: dayjs().year(2022).month(3).date(5),
         startPage: 1,
         endPage: 20,
     };
-    const unit2: AttachmentUnitsInfoResponseType = {
+    const unit2: AttachmentVideoUnitsInfoResponseType = {
         unitName: 'Unit 2',
         releaseDate: dayjs().year(2022).month(3).date(5),
         startPage: 21,
         endPage: 40,
     };
-    const unit3: AttachmentUnitsInfoResponseType = {
+    const unit3: AttachmentVideoUnitsInfoResponseType = {
         unitName: 'Unit 3',
         releaseDate: dayjs().year(2022).month(3).date(5),
         startPage: 41,
@@ -78,7 +78,7 @@ describe('AttachmentUnitsComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AttachmentVideoUnitService, useClass: MockAttachmentUnitsService },
+                { provide: AttachmentVideoUnitService, useClass: MockAttachmentVideoUnitsService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -116,14 +116,14 @@ describe('AttachmentUnitsComponent', () => {
             extras: { state: { file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' } },
         } as any);
 
-        attachmentUnitsComponentFixture = TestBed.createComponent(AttachmentVideoUnitsComponent);
-        attachmentUnitsComponent = attachmentUnitsComponentFixture.componentInstance;
-        attachmentUnitsComponentFixture.detectChanges();
+        attachmentVideoUnitsComponentFixture = TestBed.createComponent(AttachmentVideoUnitsComponent);
+        attachmentVideoUnitsComponent = attachmentVideoUnitsComponentFixture.componentInstance;
+        attachmentVideoUnitsComponentFixture.detectChanges();
 
-        attachmentUnitsComponent.units = units;
-        attachmentUnitsComponent.numberOfPages = numberOfPages;
+        attachmentVideoUnitsComponent.units = units;
+        attachmentVideoUnitsComponent.numberOfPages = numberOfPages;
 
-        attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         router = TestBed.get(Router);
     });
 
@@ -132,90 +132,90 @@ describe('AttachmentUnitsComponent', () => {
     });
 
     it('should initialize with remove slides key phrases empty', () => {
-        expect(attachmentUnitsComponent.keyphrases).toMatch('');
+        expect(attachmentVideoUnitsComponent.keyphrases).toMatch('');
     });
 
     it('should create attachment units', fakeAsync(() => {
         const lectureUnitInformation: LectureUnitInformationDTO = { units: units, numberOfPages: numberOfPages, removeSlidesCommaSeparatedKeyPhrases: '' };
         const filename = 'filename-on-server';
-        attachmentUnitsComponent.filename = filename;
+        attachmentVideoUnitsComponent.filename = filename;
 
-        const responseBody: AttachmentUnitsResponseType = {
+        const responseBody: AttachmentVideoUnitsResponseType = {
             units,
             numberOfPages,
         };
 
-        const attachmentUnitsResponse: HttpResponse<AttachmentUnitsResponseType> = new HttpResponse({
+        const attachmentVideoUnitsResponse: HttpResponse<AttachmentVideoUnitsResponseType> = new HttpResponse({
             body: responseBody,
             status: 201,
         });
-        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'createUnits').mockReturnValue(of(attachmentUnitsResponse));
+        const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'createUnits').mockReturnValue(of(attachmentVideoUnitsResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        attachmentUnitsComponent.createAttachmentVideoUnits();
-        attachmentUnitsComponentFixture.detectChanges();
-        expect(createAttachmentUnitStub).toHaveBeenCalledWith(1, filename, lectureUnitInformation);
-        expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+        attachmentVideoUnitsComponent.createAttachmentVideoUnits();
+        attachmentVideoUnitsComponentFixture.detectChanges();
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(1, filename, lectureUnitInformation);
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
     }));
 
     it('should validate valid table correctly', () => {
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeTrue();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeUndefined();
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeTrue();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeUndefined();
     });
 
     it('should validate valid start page', () => {
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 0, endPage: 1 }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 0, endPage: 1 }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         // @ts-ignore
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: null, endPage: 10 }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: null, endPage: 10 }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 10, endPage: 1 }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 10, endPage: 1 }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should validate valid end page', () => {
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: numberOfPages + 10 }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: numberOfPages + 10 }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: 0 }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: 0 }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         // @ts-ignore
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 2, endPage: null }];
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        attachmentVideoUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 2, endPage: null }];
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should add row to table and delete row from table only if there are more then 1 rows in table', () => {
-        attachmentUnitsComponent.units = [{ unitName: '', startPage: 0, endPage: 0 }];
-        attachmentUnitsComponent.addRow();
-        expect(attachmentUnitsComponent.units).toHaveLength(2);
-        attachmentUnitsComponent.deleteRow(0);
-        expect(attachmentUnitsComponent.units).toHaveLength(1);
-        expect(attachmentUnitsComponent.deleteRow(0)).toBeFalse();
+        attachmentVideoUnitsComponent.units = [{ unitName: '', startPage: 0, endPage: 0 }];
+        attachmentVideoUnitsComponent.addRow();
+        expect(attachmentVideoUnitsComponent.units).toHaveLength(2);
+        attachmentVideoUnitsComponent.deleteRow(0);
+        expect(attachmentVideoUnitsComponent.units).toHaveLength(1);
+        expect(attachmentVideoUnitsComponent.deleteRow(0)).toBeFalse();
 
-        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
-        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+        expect(attachmentVideoUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentVideoUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should navigate to previous state', fakeAsync(() => {
-        attachmentUnitsComponentFixture.detectChanges();
+        attachmentVideoUnitsComponentFixture.detectChanges();
 
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const previousState = jest.spyOn(attachmentUnitsComponent, 'cancelSplit');
-        attachmentUnitsComponent.cancelSplit();
+        const previousState = jest.spyOn(attachmentVideoUnitsComponent, 'cancelSplit');
+        attachmentVideoUnitsComponent.cancelSplit();
         expect(previousState).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
     }));
@@ -228,20 +228,20 @@ describe('AttachmentUnitsComponent', () => {
             body: expectedSlideIndexes,
             status: 200,
         });
-        attachmentUnitsComponent.searchTerm = 'key, phrases';
-        const getSlidesToRemoveSpy = jest.spyOn(attachmentUnitService, 'getSlidesToRemove').mockReturnValue(of(expectedResponse));
+        attachmentVideoUnitsComponent.searchTerm = 'key, phrases';
+        const getSlidesToRemoveSpy = jest.spyOn(attachmentVideoUnitService, 'getSlidesToRemove').mockReturnValue(of(expectedResponse));
         tick(1000);
         expect(getSlidesToRemoveSpy).toHaveBeenCalledOnce();
-        expect(attachmentUnitsComponent.removedSlidesNumbers).toEqual(expectedSlideNumbers);
+        expect(attachmentVideoUnitsComponent.removedSlidesNumbers).toEqual(expectedSlideNumbers);
     }));
 
     it('should not get slides to remove if query is empty', fakeAsync(() => {
-        attachmentUnitsComponent.removedSlidesNumbers = [1, 2, 3];
-        attachmentUnitsComponent.searchTerm = '';
-        const getSlidesToRemoveSpy = jest.spyOn(attachmentUnitService, 'getSlidesToRemove');
+        attachmentVideoUnitsComponent.removedSlidesNumbers = [1, 2, 3];
+        attachmentVideoUnitsComponent.searchTerm = '';
+        const getSlidesToRemoveSpy = jest.spyOn(attachmentVideoUnitService, 'getSlidesToRemove');
         tick(1000);
         expect(getSlidesToRemoveSpy).not.toHaveBeenCalled();
-        expect(attachmentUnitsComponent.removedSlidesNumbers).toBeEmpty();
+        expect(attachmentVideoUnitsComponent.removedSlidesNumbers).toBeEmpty();
     }));
 
     it('should start uploading file again after timeout', fakeAsync(() => {
@@ -258,13 +258,13 @@ describe('AttachmentUnitsComponent', () => {
             status: 200,
         });
 
-        const uploadSlidesSpy = jest.spyOn(attachmentUnitService, 'uploadSlidesForProcessing').mockReturnValue(of(response1));
-        attachmentUnitService.getSplitUnitsData = jest.fn().mockReturnValue(of(response2));
-        attachmentUnitsComponent.ngOnInit();
-        attachmentUnitsComponentFixture.detectChanges();
+        const uploadSlidesSpy = jest.spyOn(attachmentVideoUnitService, 'uploadSlidesForProcessing').mockReturnValue(of(response1));
+        attachmentVideoUnitService.getSplitUnitsData = jest.fn().mockReturnValue(of(response2));
+        attachmentVideoUnitsComponent.ngOnInit();
+        attachmentVideoUnitsComponentFixture.detectChanges();
 
         expect(uploadSlidesSpy).toHaveBeenCalledOnce();
-        tick(1000 * 60 * attachmentUnitsComponent.MINUTES_UNTIL_DELETION);
+        tick(1000 * 60 * attachmentVideoUnitsComponent.MINUTES_UNTIL_DELETION);
         expect(uploadSlidesSpy).toHaveBeenCalledTimes(2);
         discardPeriodicTasks();
     }));

@@ -22,8 +22,8 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
-describe('CreateAttachmentUnitComponent', () => {
-    let createAttachmentUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
+describe('CreateAttachmentVideoUnitComponent', () => {
+    let createAttachmentVideoUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -69,7 +69,7 @@ describe('CreateAttachmentUnitComponent', () => {
             schemas: [],
         }).compileComponents();
 
-        createAttachmentUnitComponentFixture = TestBed.createComponent(CreateAttachmentVideoUnitComponent);
+        createAttachmentVideoUnitComponentFixture = TestBed.createComponent(CreateAttachmentVideoUnitComponent);
     });
 
     afterEach(() => {
@@ -78,11 +78,11 @@ describe('CreateAttachmentUnitComponent', () => {
 
     it('should upload file, send POST for attachment and post for attachment unit', fakeAsync(() => {
         const router: Router = TestBed.inject(Router);
-        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -102,36 +102,36 @@ describe('CreateAttachmentUnitComponent', () => {
         const attachment = new Attachment();
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
-        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentVideoUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
-        attachmentUnit.attachment = attachment;
-        attachmentUnit.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
-        attachmentUnit.name = attachmentUnitFormData.formProperties.name;
-        attachmentUnit.videoSource = attachmentUnitFormData.formProperties.videoSource;
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
+        attachmentVideoUnit.attachment = attachment;
+        attachmentVideoUnit.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
+        attachmentVideoUnit.name = attachmentVideoUnitFormData.formProperties.name;
+        attachmentVideoUnit.videoSource = attachmentVideoUnitFormData.formProperties.videoSource;
 
         const formData = new FormData();
-        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
-            body: attachmentUnit,
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+            body: attachmentVideoUnit,
             status: 201,
         });
-        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(of(attachmentUnitResponse));
+        const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
 
         const navigateSpy = jest.spyOn(router, 'navigate');
-        createAttachmentUnitComponentFixture.detectChanges();
+        createAttachmentVideoUnitComponentFixture.detectChanges();
 
-        const attachmentUnitFormComponent = createAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-        attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
+        const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
-        createAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);
+        createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
+            expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(formData, 1);
             expect(navigateSpy).toHaveBeenCalledOnce();
         });
     }));

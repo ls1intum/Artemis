@@ -12,7 +12,7 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/att
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 
-describe('AttachmentUnitService', () => {
+describe('AttachmentVideoUnitService', () => {
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
@@ -53,7 +53,7 @@ describe('AttachmentUnitService', () => {
         httpMock.verify();
     });
 
-    it('should find a AttachmentUnit', fakeAsync(() => {
+    it('should find a AttachmentVideoUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
             .findById(1, 1)
@@ -64,13 +64,13 @@ describe('AttachmentUnitService', () => {
         expect(expectedResult.body).toEqual(elemDefault);
     }));
 
-    it('should create an AttachmentUnit', fakeAsync(() => {
+    it('should create an AttachmentVideoUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         const formData = new FormData();
         formData.append('file', new Blob(), 'filename.pdf');
         formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
-        formData.append('attachmentUnit', objectToJsonBlob(elemDefault));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(elemDefault));
         service
             .create(formData, 1)
             .pipe(take(1))
@@ -80,13 +80,13 @@ describe('AttachmentUnitService', () => {
         expect(expectedResult.body).toEqual(expected);
     }));
 
-    it('should update a AttachmentUnit', fakeAsync(() => {
+    it('should update a AttachmentVideoUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
         elemDefault.id = 42;
         const formData = new FormData();
         formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
-        formData.append('attachmentUnit', objectToJsonBlob(elemDefault));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(elemDefault));
         service
             .update(1, 42, formData)
             .pipe(take(1))
@@ -96,8 +96,8 @@ describe('AttachmentUnitService', () => {
         expect(expectedResult.body).toEqual(expected);
     }));
 
-    it('should create AttachmentUnits', fakeAsync(() => {
-        const returnedAttachmentUnits = [
+    it('should create AttachmentVideoUnits', fakeAsync(() => {
+        const returnedAttachmentVideoUnits = [
             {
                 type: 'attachment',
                 id: 1,
@@ -120,7 +120,7 @@ describe('AttachmentUnitService', () => {
             },
         ];
         let response: any;
-        const returnedFromService = { ...returnedAttachmentUnits };
+        const returnedFromService = { ...returnedAttachmentVideoUnits };
 
         const expected = { ...returnedFromService };
         const filename = 'filename-on-server';
@@ -204,15 +204,15 @@ describe('AttachmentUnitService', () => {
     describe('getAttachmentFile', () => {
         it('should retrieve a file as Blob for a given course and attachment unit ID', () => {
             const courseId = 5;
-            const attachmentUnitId = 10;
+            const attachmentVideoUnitId = 10;
             const expectedBlob = new Blob(['example data'], { type: 'application/pdf' });
 
-            service.getAttachmentFile(courseId, attachmentUnitId).subscribe((response) => {
+            service.getAttachmentFile(courseId, attachmentVideoUnitId).subscribe((response) => {
                 expect(response).toEqual(expectedBlob);
             });
 
             const req = httpMock.expectOne({
-                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
+                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentVideoUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

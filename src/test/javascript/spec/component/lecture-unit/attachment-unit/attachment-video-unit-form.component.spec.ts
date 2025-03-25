@@ -13,9 +13,9 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
-describe('AttachmentUnitFormComponent', () => {
-    let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
-    let attachmentUnitFormComponent: AttachmentVideoUnitFormComponent;
+describe('AttachmentVideoUnitFormComponent', () => {
+    let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
+    let attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -31,8 +31,8 @@ describe('AttachmentUnitFormComponent', () => {
             schemas: [],
         }).compileComponents();
 
-        attachmentUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
-        attachmentUnitFormComponent = attachmentUnitFormComponentFixture.componentInstance;
+        attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+        attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
     });
 
     afterEach(() => {
@@ -40,14 +40,14 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should initialize', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
-        expect(attachmentUnitFormComponent).not.toBeNull();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent).not.toBeNull();
     });
 
     it('should correctly set form values in edit mode', () => {
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        attachmentUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
@@ -61,46 +61,46 @@ describe('AttachmentUnitFormComponent', () => {
                 fileName: 'lorem ipsum',
             },
         };
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
-        attachmentUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        attachmentUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
+        attachmentVideoUnitFormComponent.ngOnChanges();
 
-        expect(attachmentUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
-        expect(attachmentUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
-        expect(attachmentUnitFormComponent.descriptionControl?.value).toEqual(formData.formProperties.description);
-        expect(attachmentUnitFormComponent.versionControl?.value).toEqual(formData.formProperties.version);
-        expect(attachmentUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
-        expect(attachmentUnitFormComponent.fileName()).toEqual(formData.fileProperties.fileName);
-        expect(attachmentUnitFormComponent.file).toEqual(formData.fileProperties.file);
+        expect(attachmentVideoUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
+        expect(attachmentVideoUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
+        expect(attachmentVideoUnitFormComponent.descriptionControl?.value).toEqual(formData.formProperties.description);
+        expect(attachmentVideoUnitFormComponent.versionControl?.value).toEqual(formData.formProperties.version);
+        expect(attachmentVideoUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
+        expect(attachmentVideoUnitFormComponent.fileName()).toEqual(formData.fileProperties.fileName);
+        expect(attachmentVideoUnitFormComponent.file).toEqual(formData.fileProperties.file);
     });
     it('should submit valid form', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
-        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
-        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
-        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentUnitFormComponent.versionControl!.enable();
+        attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentVideoUnitFormComponent.versionControl!.enable();
         const exampleVersion = 42;
-        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
-        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
-        attachmentUnitFormComponent.file = fakeFile;
+        attachmentVideoUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
-        attachmentUnitFormComponent.fileName.set(exampleFileName);
+        attachmentVideoUnitFormComponent.fileName.set(exampleFileName);
         const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
-        attachmentUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
 
-        attachmentUnitFormComponentFixture.detectChanges();
-        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
-        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
-        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
         expect(submitFormSpy).toHaveBeenCalledOnce();
@@ -126,24 +126,24 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should not submit a form when name is missing', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
-        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
         const exampleDescription = 'lorem ipsum';
-        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
         const exampleVersion = 42;
-        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
-        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
-        attachmentUnitFormComponent.file = fakeFile;
-        attachmentUnitFormComponent.fileName.set('lorem Ipsum');
+        attachmentVideoUnitFormComponent.file = fakeFile;
+        attachmentVideoUnitFormComponent.fileName.set('lorem Ipsum');
 
-        expect(attachmentUnitFormComponent.form.invalid).toBeTrue();
-        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+        expect(attachmentVideoUnitFormComponent.form.invalid).toBeTrue();
+        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
-        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
         expect(submitFormSpy).not.toHaveBeenCalled();
@@ -154,9 +154,9 @@ describe('AttachmentUnitFormComponent', () => {
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
         // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
-        const onFileChangeStub = jest.spyOn(attachmentUnitFormComponent, 'onFileChange');
-        attachmentUnitFormComponentFixture.detectChanges();
-        const fileInput = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
+        const onFileChangeStub = jest.spyOn(attachmentVideoUnitFormComponent, 'onFileChange');
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const fileInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
@@ -167,37 +167,37 @@ describe('AttachmentUnitFormComponent', () => {
         // Set file size to exceed the maximum file size
         Object.defineProperty(fakeFile, 'size', { value: MAX_FILE_SIZE + 1 });
 
-        attachmentUnitFormComponent.onFileChange({ target: { files: [fakeFile] } as unknown as EventTarget } as Event);
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponent.onFileChange({ target: { files: [fakeFile] } as unknown as EventTarget } as Event);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
-        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        expect(attachmentUnitFormComponent.isFileTooBig()).toBeTrue();
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
     });
 
     it('should not submit a form when file and videoSource is missing', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         const exampleDescription = 'lorem ipsum';
-        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
-        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
-        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentUnitFormComponent.versionControl!.enable();
+        attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentVideoUnitFormComponent.versionControl!.enable();
         const exampleVersion = 42;
-        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
-        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         // Do not set file and ensure videoSource is empty
-        attachmentUnitFormComponent.videoSourceControl!.setValue('');
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('');
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
-        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
-        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
-        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
         expect(submitFormSpy).not.toHaveBeenCalled();
@@ -208,30 +208,30 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should submit a form when file is missing but videoSource is set', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         const exampleDescription = 'lorem ipsum';
-        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
-        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
-        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentUnitFormComponent.versionControl!.enable();
+        attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentVideoUnitFormComponent.versionControl!.enable();
         const exampleVersion = 42;
-        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
-        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
-        attachmentUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
         // Do not set file
 
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
-        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
-        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
-        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
         expect(submitFormSpy).toHaveBeenCalledOnce();
@@ -257,34 +257,34 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should submit a form when file is set but videoSource is missing', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         const exampleName = 'test';
         const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
         const exampleDescription = 'lorem ipsum';
-        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
-        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
-        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        attachmentUnitFormComponent.versionControl!.enable();
+        attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
+        attachmentVideoUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
+        attachmentVideoUnitFormComponent.descriptionControl!.setValue(exampleDescription);
+        attachmentVideoUnitFormComponent.versionControl!.enable();
         const exampleVersion = 42;
-        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
+        attachmentVideoUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
-        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
+        attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         // Set file and fileName
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
-        attachmentUnitFormComponent.file = fakeFile;
+        attachmentVideoUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
-        attachmentUnitFormComponent.fileName.set(exampleFileName);
+        attachmentVideoUnitFormComponent.fileName.set(exampleFileName);
         // Ensure videoSource is missing
-        attachmentUnitFormComponent.videoSourceControl!.setValue('');
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('');
 
-        attachmentUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
-        expect(attachmentUnitFormComponent.form.valid).toBeTrue();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
-        const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(attachmentUnitFormComponent.formSubmitted, 'emit');
+        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
 
-        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
         expect(submitFormSpy).toHaveBeenCalledOnce();
