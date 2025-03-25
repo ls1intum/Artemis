@@ -6,8 +6,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { NgModel } from '@angular/forms';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { QueryList } from '@angular/core';

@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { BuildJob } from 'app/entities/programming/build-job.model';
-import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { BuildJob } from 'app/programming/shared/entities/build-job.model';
+import { BuildAgent } from 'app/programming/shared/entities/build-agent.model';
 import dayjs from 'dayjs/esm';
 
 export enum BuildAgentStatus {

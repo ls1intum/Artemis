@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 export const enum ErrorType {
     TEMPLATE_REPO_MISSING = 'TEMPLATE_REPO_MISSING',

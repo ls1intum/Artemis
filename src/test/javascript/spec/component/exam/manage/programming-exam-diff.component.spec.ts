@@ -3,14 +3,14 @@ import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-ex
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
-import { ProgrammingExerciseGitDiffReport } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal.component';
-import { ProgrammingExerciseGitDiffEntry } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

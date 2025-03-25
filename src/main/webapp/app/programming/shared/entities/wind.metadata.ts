@@ -1,4 +1,4 @@
-import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
+import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
 
 export class WindMetadata {
     author: string | any;

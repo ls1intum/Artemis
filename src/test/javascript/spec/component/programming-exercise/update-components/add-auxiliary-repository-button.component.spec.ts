@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent } from 'ng-mocks';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/programming/manage/update/add-auxiliary-repository-button.component';
-import { ProgrammingExercise } from '../../../../../../main/webapp/app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('AddAuxiliaryRepositoryButtonComponent', () => {

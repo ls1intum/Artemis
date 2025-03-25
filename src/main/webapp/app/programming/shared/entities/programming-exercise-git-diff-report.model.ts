@@ -1,6 +1,6 @@
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 
 export class ProgrammingExerciseGitDiffReport implements BaseEntity {
     public id?: number;
