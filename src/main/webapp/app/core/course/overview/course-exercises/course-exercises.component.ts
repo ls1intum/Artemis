@@ -86,7 +86,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
-            //this.isMultiLaunch = params['isMultiLaunch'] === 'true';
             if (params['exerciseIDs']) {
                 this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
             }
