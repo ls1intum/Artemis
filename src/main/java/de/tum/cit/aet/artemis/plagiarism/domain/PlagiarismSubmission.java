@@ -24,9 +24,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.jplag.Submission;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 
 @Entity
@@ -122,25 +119,6 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO
-
-        return submission;
-    }
-
-    /**
-     * Create a new PlagiarismSubmission instance from an existing Modeling Submission
-     *
-     * @param modelingSubmission the Modeling Submission to create the PlagiarismSubmission from
-     * @return a new PlagiarismSubmission instance
-     */
-    public static PlagiarismSubmission<ModelingSubmissionElement> fromModelingSubmission(ModelingSubmission modelingSubmission) {
-        PlagiarismSubmission<ModelingSubmissionElement> submission = new PlagiarismSubmission<>();
-
-        submission.setSubmissionId(modelingSubmission.getId());
-        submission.setStudentLogin(((StudentParticipation) modelingSubmission.getParticipation()).getParticipantIdentifier());
-
-        if (modelingSubmission.getLatestResult() != null) {
-            submission.setScore(modelingSubmission.getLatestResult().getScore());
-        }
 
         return submission;
     }

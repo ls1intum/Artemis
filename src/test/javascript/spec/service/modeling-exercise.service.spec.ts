@@ -189,41 +189,6 @@ describe('ModelingExercise Service', () => {
         tick();
     }));
 
-    it('should get number of clusters', fakeAsync(() => {
-        elemDefault.id = 756;
-        const expected = 1;
-        service
-            .getNumberOfClusters(elemDefault.id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/${elemDefault.id}/check-clusters` });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should build clusters', fakeAsync(() => {
-        elemDefault.id = 756;
-        const expected = {};
-        service
-            .buildClusters(elemDefault.id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.adminResourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should delete clusters', fakeAsync(() => {
-        elemDefault.id = 756;
-
-        // We use a fake async and don't need to await the promise
-        // eslint-disable-next-line jest/valid-expect
-        expect(lastValueFrom(service.deleteClusters(elemDefault.id))).toResolve();
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.adminResourceUrl}/${elemDefault.id}/clusters` });
-        req.flush(null);
-        tick();
-    }));
-
     afterEach(() => {
         httpMock.verify();
     });

@@ -103,33 +103,6 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     }
 
     /**
-     * Get the number of clusters for the exercise with the given ID.
-     *
-     * @param exerciseId
-     */
-    getNumberOfClusters(exerciseId: number): Observable<HttpResponse<number>> {
-        return this.http.get<number>(`${this.adminResourceUrl}/${exerciseId}/check-clusters`, {
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Build the clusters to use in Compass
-     * @param modelingExerciseId id of the exercise to build the clusters for
-     */
-    buildClusters(modelingExerciseId: number): Observable<any> {
-        return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
-    }
-
-    /**
-     * Delete the clusters used in Compass
-     * @param modelingExerciseId id of the exercise to delete the clusters of
-     */
-    deleteClusters(modelingExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
-    }
-
-    /**
      * Re-evaluates and updates a modeling exercise.
      *
      * @param modelingExercise that should be updated of type {ModelingExercise}

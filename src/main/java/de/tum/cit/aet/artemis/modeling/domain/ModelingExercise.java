@@ -2,17 +2,13 @@ package de.tum.cit.aet.artemis.modeling.domain;
 
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING;
 
-import java.time.ZonedDateTime;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.SecondaryTable;
-import jakarta.persistence.Transient;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -43,9 +39,6 @@ public class ModelingExercise extends Exercise {
     @Column(name = "example_solution_explanation")
     private String exampleSolutionExplanation;
 
-    @Transient
-    private ZonedDateTime clusterBuildDate;
-
     public DiagramType getDiagramType() {
         return diagramType;
     }
@@ -68,15 +61,6 @@ public class ModelingExercise extends Exercise {
 
     public void setExampleSolutionExplanation(String exampleSolutionExplanation) {
         this.exampleSolutionExplanation = exampleSolutionExplanation;
-    }
-
-    @JsonIgnore
-    public ZonedDateTime getClusterBuildDate() {
-        return clusterBuildDate;
-    }
-
-    public void setClusterBuildDate(ZonedDateTime examEndDate) {
-        this.clusterBuildDate = examEndDate;
     }
 
     /**

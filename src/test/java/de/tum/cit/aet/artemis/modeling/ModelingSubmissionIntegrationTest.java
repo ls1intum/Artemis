@@ -22,8 +22,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -49,16 +47,9 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -87,18 +78,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private CompassService compassService;
-
-    @Autowired
-    private PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
-    private PlagiarismCaseRepository plagiarismCaseRepository;
-
-    @Autowired
-    private PostTestRepository postRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -132,8 +111,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private String validModel;
 
-    private String validSameModel;
-
     private TextExercise textExercise;
 
     private Course course;
@@ -152,7 +129,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         emptyModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        validSameModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727-copy.json");
         submittedSubmission = generateSubmittedSubmission();
         unsubmittedSubmission = generateUnsubmittedSubmission();
 
@@ -456,57 +432,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getModelSubmissionWithResult_involved_allowed() throws Exception {
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
-        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        PlagiarismComparison<ModelingSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
-        PlagiarismSubmission<ModelingSubmissionElement> submissionA = new PlagiarismSubmission<>();
-        submissionA.setStudentLogin(TEST_PREFIX + "student1");
-        submissionA.setSubmissionId(submission.getId());
-        plagiarismComparison.setSubmissionA(submissionA);
-        PlagiarismCase plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(classExercise);
-        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
-        Post post = new Post();
-        post.setAuthor(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
-        post.setTitle("Title Plagiarism Case Post");
-        post.setContent("Content Plagiarism Case Post");
-        post.setVisibleForStudents(true);
-        post.setPlagiarismCase(plagiarismCase);
-        postRepository.save(post);
-        submissionA.setPlagiarismCase(plagiarismCase);
-        plagiarismComparisonRepository.save(plagiarismComparison);
-
-        var submissionResult = request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.OK, ModelingSubmission.class);
-
-        assertThat(submissionResult.getParticipation()).as("Should anonymize participation").isNull();
-        assertThat(submissionResult.getResults()).as("Should anonymize results").isEmpty();
-        assertThat(submissionResult.getSubmissionDate()).as("Should anonymize submission date").isNull();
-    }
-
-    @Test
     @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
     void getModelSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
-    void getModelSubmissionWithResult_notOwner_beforeDueDate_notAllowed() throws Exception {
-        var submission = ParticipationFactory.generateModelingSubmission(validModel, true);
-        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student2");
-
-        var plagiarismComparison = new PlagiarismComparison<ModelingSubmissionElement>();
-        var submissionA = new PlagiarismSubmission<ModelingSubmissionElement>();
-        submissionA.setStudentLogin(TEST_PREFIX + "student2");
-        submissionA.setSubmissionId(submission.getId());
-        plagiarismComparison.setSubmissionA(submissionA);
-
-        plagiarismComparisonRepository.save(plagiarismComparison);
-
         request.get("/api/modeling/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
@@ -578,26 +507,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
         assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getModelSubmissionWithSimilarElements() throws Exception {
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
-        modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission(validSameModel, true);
-        modelingExerciseUtilService.addModelingSubmission(classExercise, submission2, TEST_PREFIX + "student2");
-
-        exerciseUtilService.updateExerciseDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
-
-        compassService.build(classExercise);
-
-        ModelingSubmission storedSubmission = request.get("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment?lock=true", HttpStatus.OK,
-                ModelingSubmission.class);
-
-        assertThat(storedSubmission).as("submission was found").isNotNull();
-        assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").isNotNull();
-        assertThat(storedSubmission.getSimilarElements()).as("similarity count is set").hasSize(10);
     }
 
     @Test
@@ -919,10 +828,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // Verify that only the ATHENA result is returned
         assertThat(submissions).hasSize(1);
-        Submission returnedSubmission = submissions.get(0);
+        Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(1);
-        assertThat(returnedSubmission.getResults().get(0).getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
-        assertThat(returnedSubmission.getResults().get(0).getAssessor()).isNull(); // Sensitive info filtered
+        assertThat(returnedSubmission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(returnedSubmission.getResults().getFirst().getAssessor()).isNull(); // Sensitive info filtered
     }
 
     @Test
@@ -949,11 +858,11 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // Verify that only the ATHENA result is returned before the assessment due date
         assertThat(submissions).hasSize(1);
-        Submission returnedSubmission = submissions.get(0);
+        Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(1);
-        assertThat(returnedSubmission.getResults().get(0).getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(returnedSubmission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
         // Sensitive information should be filtered
-        assertThat(returnedSubmission.getResults().get(0).getAssessor()).isNull();
+        assertThat(returnedSubmission.getResults().getFirst().getAssessor()).isNull();
     }
 
     @Test
@@ -979,7 +888,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         // Verify that both results are returned after the assessment due date
         assertThat(submissions).hasSize(1);
-        Submission returnedSubmission = submissions.get(0);
+        Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(2);
         // Sensitive information should be filtered
         returnedSubmission.getResults().forEach(result -> assertThat(result.getAssessor()).isNull());
@@ -1033,10 +942,10 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         List<Submission> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK, Submission.class);
 
         assertThat(submissions).hasSize(1);
-        Submission returnedSubmission = submissions.get(0);
+        Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(1);
         // Verify that the tutor can see the manual result
-        Result returnedResult = returnedSubmission.getResults().get(0);
+        Result returnedResult = returnedSubmission.getResults().getFirst();
         assertThat(returnedResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(returnedResult.getAssessor()).isNull();
     }

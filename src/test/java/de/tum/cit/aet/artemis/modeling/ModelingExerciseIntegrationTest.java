@@ -69,8 +69,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
@@ -864,37 +862,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPlagiarismResult() throws Exception {
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-
-        ModelingPlagiarismResult expectedResult = modelingExerciseUtilService.createModelingPlagiarismResultForExercise(modelingExercise);
-
-        var result = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
-        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPlagiarismResultWithoutResult() throws Exception {
-        final Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        var result = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
-        assertThat(result).isNullOrEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetPlagiarismResultWithoutExercise() throws Exception {
-        Long exerciseId = classExercise.getId();
-        modelingExerciseRepository.deleteById(exerciseId);
-        ModelingPlagiarismResult result = request.get("/api/modeling/modeling-exercises/" + exerciseId + "/plagiarism-result", HttpStatus.NOT_FOUND,
-                ModelingPlagiarismResult.class);
-        assertThat(result).isNull();
     }
 
     @Test

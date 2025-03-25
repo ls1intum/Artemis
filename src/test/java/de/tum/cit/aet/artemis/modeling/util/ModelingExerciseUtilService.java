@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 
 /**
@@ -430,19 +429,5 @@ public class ModelingExerciseUtilService {
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
-    }
-
-    /**
-     * Creates and saves a ModelingPlagiarismResult for the given Exercise.
-     *
-     * @param exercise The Exercise the ModelingPlagiarismResult belongs to
-     * @return The created ModelingPlagiarismResult
-     */
-    public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
-        ModelingPlagiarismResult result = new ModelingPlagiarismResult();
-        result.setExercise(exercise);
-        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-        result.setDuration(4);
-        return plagiarismResultRepo.save(result);
     }
 }

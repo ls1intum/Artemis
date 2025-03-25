@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
@@ -176,22 +175,6 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void getTextSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         textSubmission = textExerciseUtilService.saveTextSubmission(finishedTextExercise, textSubmission, TEST_PREFIX + "student1");
         request.get("/api/text/text-submissions/" + this.textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class);
-    }
-
-    @Test
-    @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
-    void getTextSubmissionWithResult_notOwner_beforeDueDate_notAllowed() throws Exception {
-        textSubmission = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, TEST_PREFIX + "student1");
-
-        var plagiarismComparison = new PlagiarismComparison<ModelingSubmissionElement>();
-        var submissionA = new PlagiarismSubmission<ModelingSubmissionElement>();
-        submissionA.setStudentLogin(TEST_PREFIX + "student2");
-        submissionA.setSubmissionId(textSubmission.getId());
-        plagiarismComparison.setSubmissionA(submissionA);
-
-        plagiarismComparisonRepository.save(plagiarismComparison);
-
-        request.get("/api/text/text-submissions/" + textSubmission.getId(), HttpStatus.FORBIDDEN, TextSubmission.class);
     }
 
     @Test
