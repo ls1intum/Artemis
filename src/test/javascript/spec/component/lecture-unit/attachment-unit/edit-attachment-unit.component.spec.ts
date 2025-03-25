@@ -5,7 +5,7 @@ import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { EditAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -123,7 +123,7 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should set form data correctly', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
         expect(attachmentUnitFormComponent.formData()?.formProperties.name).toEqual(attachmentUnit.name);
         expect(attachmentUnitFormComponent.formData()?.formProperties.releaseDate).toEqual(attachmentUnit.releaseDate);
@@ -137,11 +137,11 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should update attachment unit with file change without notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: attachmentUnit.name,
                 description: attachmentUnit.description,
@@ -166,13 +166,13 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should update attachment unit with file change with notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
         const fileName = 'updated file';
 
         const notification = 'test notification';
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: attachmentUnit.name,
                 description: attachmentUnit.description,
@@ -196,9 +196,9 @@ describe('EditAttachmentUnitComponent', () => {
 
     it('should update attachment unit without file change without notification', async () => {
         fixture.detectChanges();
-        const attachmentUnitFormComponent: AttachmentUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: attachmentUnit.name,
                 description: attachmentUnit.description,

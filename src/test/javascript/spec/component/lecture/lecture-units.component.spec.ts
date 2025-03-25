@@ -20,7 +20,7 @@ import { TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-for
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
@@ -468,7 +468,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -547,7 +547,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -613,7 +613,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -667,7 +667,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -720,7 +720,7 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should not send POST request upon empty attachment form submission', fakeAsync(() => {
         const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
-        const formData: AttachmentUnitFormData = {
+        const formData: AttachmentVideoUnitFormData = {
             formProperties: {},
             fileProperties: {},
         };

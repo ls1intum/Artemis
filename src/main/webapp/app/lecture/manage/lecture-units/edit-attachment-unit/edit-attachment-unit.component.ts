@@ -6,7 +6,7 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/att
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
@@ -15,7 +15,7 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
 @Component({
     selector: 'jhi-edit-attachment-unit',
     templateUrl: './edit-attachment-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent],
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
 })
 export class EditAttachmentUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
@@ -23,12 +23,12 @@ export class EditAttachmentUnitComponent implements OnInit {
     private attachmentUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
-    @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentUnitFormComponent;
+    @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentVideoUnitFormComponent;
 
     isLoading = false;
     attachmentUnit: AttachmentVideoUnit;
     attachment: Attachment;
-    formData: AttachmentUnitFormData;
+    formData: AttachmentVideoUnitFormData;
     lectureId: number;
     notificationText: string;
 
@@ -73,7 +73,7 @@ export class EditAttachmentUnitComponent implements OnInit {
             });
     }
 
-    updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
+    updateAttachmentUnit(attachmentUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 

@@ -7,7 +7,7 @@ import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.mo
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -35,7 +35,7 @@ import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/cr
         TextUnitFormComponent,
         VideoUnitFormComponent,
         OnlineUnitFormComponent,
-        AttachmentUnitFormComponent,
+        AttachmentVideoUnitFormComponent,
         CreateExerciseUnitComponent,
     ],
 })
@@ -54,7 +54,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     textUnitForm = viewChild(TextUnitFormComponent);
     videoUnitForm = viewChild(VideoUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
-    attachmentUnitForm = viewChild(AttachmentUnitFormComponent);
+    attachmentUnitForm = viewChild(AttachmentVideoUnitFormComponent);
     isUnitConfigurationValid = computed(() => {
         return (
             (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
@@ -78,7 +78,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     textUnitFormData: TextUnitFormData;
     videoUnitFormData: VideoUnitFormData;
     onlineUnitFormData: OnlineUnitFormData;
-    attachmentUnitFormData: AttachmentUnitFormData;
+    attachmentUnitFormData: AttachmentVideoUnitFormData;
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
@@ -200,7 +200,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         });
     }
 
-    createEditAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
+    createEditAttachmentUnit(attachmentUnitFormData: AttachmentVideoUnitFormData): void {
         if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
