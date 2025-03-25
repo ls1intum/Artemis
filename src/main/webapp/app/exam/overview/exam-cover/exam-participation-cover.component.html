@@ -3,7 +3,7 @@
       -->
 <div
     class="px-3 pb-3 overflow-auto"
-    [ngClass]="{ 'content-height-dev': (!isProduction() || isTestServer()) && !testRunStartTime(), 'scrollable-content-exam()-cover': !testRunStartTime() && startView() }"
+    [ngClass]="{ 'content-height-dev': (!isProduction() || isTestServer()) && !testRunStartTime(), 'scrollable-content-exam-cover': !testRunStartTime() && startView() }"
 >
     @if (startView()) {
         <div class="d-flex justify-content-between">
