@@ -11,10 +11,10 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-<!--            TODO: check with length required
-https://www.corbado.com/blog/passkey-webauthn-database-guide#passkeys-mysql-users-table-schema why did they choose such a long credential id?
--->
-            <column name="credential_id" type="varchar(20)">
+            <column name="name" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="credential_id" type="varbinary(1024)">
                 <constraints nullable="false" unique="true"/>
             </column>
             <column name="public_key" type="TEXT"/>

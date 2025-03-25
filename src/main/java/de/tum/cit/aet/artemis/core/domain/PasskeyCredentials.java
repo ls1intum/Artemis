@@ -38,7 +38,6 @@ import com.webauthn4j.data.extension.client.AuthenticationExtensionsClientOutput
 import com.webauthn4j.data.extension.client.RegistrationExtensionClientOutput;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecord;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordImpl;
-import com.webauthn4j.util.Base64UrlUtil;
 
 @Entity
 @Table(name = "passkey_credentials")
@@ -48,8 +47,12 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "credential_id", length = 1023, nullable = false, unique = true)
-    private String credentialId;
+    @Column(name = "name", length = 32, nullable = false)
+    // user specified
+    private String name;
+
+    @Column(name = "credential_id", length = 1024, nullable = false, unique = true)
+    private byte[] credentialId;
 
     @Lob
     @Column(name = "public_key")
@@ -91,11 +94,11 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
         this.user = user;
     }
 
-    public String getCredentialId() {
+    public byte[] getCredentialId() {
         return credentialId;
     }
 
-    public void setCredentialId(String credentialId) {
+    public void setCredentialId(byte[] credentialId) {
         this.credentialId = credentialId;
     }
 
@@ -173,8 +176,6 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
 
     // TODO: WORK IN PROGRESS, double check if the webauthn4j framework offers and easier conversion
     public WebAuthnCredentialRecord toWebAuthnCredentialRecord() {
-        // Assuming `name` is equivalent to the `credentialId` or another unique identifier
-        String name = this.credentialId;
 
         // Assuming `userPrincipal` is represented by the `user` entity, which could be a user identifier or object
         String userPrincipal = this.user.getLogin(); // or another appropriate user identifier
@@ -193,9 +194,6 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
 
         // Convert AAGUID string to AAGUID object
         AAGUID aaguid = new AAGUID(this.aaGUID.getBytes(StandardCharsets.UTF_8)); // or use a proper conversion
-
-        // Convert credentialId string to byte[]
-        byte[] credentialIdBytes = this.credentialId.getBytes(StandardCharsets.UTF_8);
 
         // Assuming publicKey is a string representation of a COSEKey, convert it to a COSEKey object
         COSEKey coseKey;
@@ -237,7 +235,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
         }
 
         // Assuming `attestedCredentialData` can be derived from `credentialId` and `publicKey`
-        AttestedCredentialData attestedCredentialData = new AttestedCredentialData(aaguid, credentialIdBytes, coseKey);
+        AttestedCredentialData attestedCredentialData = new AttestedCredentialData(aaguid, credentialId, coseKey);
 
         // Assuming these fields can be derived from the entity or other sources
         AuthenticationExtensionsAuthenticatorOutputs<RegistrationExtensionAuthenticatorOutput> authenticatorExtensions = null; // TODO: Replace with actual data
@@ -256,8 +254,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
         PasskeyCredentials passkeyCredentials = new PasskeyCredentials();
 
         // Set the credentialId
-        var credentialIdString = Base64UrlUtil.encodeToString(record.getAttestedCredentialData().getCredentialId());
-        passkeyCredentials.setCredentialId(credentialIdString);
+        passkeyCredentials.setCredentialId(record.getAttestedCredentialData().getCredentialId());
 
         // Associate the user entity
         passkeyCredentials.setUser(user);
