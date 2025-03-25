@@ -111,7 +111,7 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
         ReflectionTestUtils.setField(courseNotificationService, "serviceMap", mockServiceMap);
 
-        var notification = new NewPostNotification(1L, course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", 1L, "Test Channel", "coursewide", "Test Author",
+        var notification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", 1L, "Test Channel", "coursewide", "Test Author",
                 "image.url", 1L);
 
         courseNotificationService.sendCourseNotification(notification, List.of(user));
