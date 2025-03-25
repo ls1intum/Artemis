@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
-import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -79,7 +79,7 @@ public class LectureUtilService {
     private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    private AttachmentUnitTestRepository attachmentUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentUnitRepository;
 
     @Autowired
     private AttachmentRepository attachmentRepository;

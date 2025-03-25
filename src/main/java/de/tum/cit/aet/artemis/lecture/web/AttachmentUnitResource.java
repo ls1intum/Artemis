@@ -43,9 +43,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.service.AttachmentUnitService;
+import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 
@@ -58,7 +58,7 @@ public class AttachmentUnitResource {
 
     private static final String ENTITY_NAME = "attachmentUnit";
 
-    private final AttachmentUnitRepository attachmentUnitRepository;
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final LectureRepository lectureRepository;
 
@@ -66,7 +66,7 @@ public class AttachmentUnitResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final AttachmentUnitService attachmentUnitService;
+    private final AttachmentVideoUnitService attachmentVideoUnitService;
 
     private final LectureUnitProcessingService lectureUnitProcessingService;
 
@@ -76,15 +76,16 @@ public class AttachmentUnitResource {
 
     private final FileService fileService;
 
-    public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
-            AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService) {
-        this.attachmentUnitRepository = attachmentUnitRepository;
+    public AttachmentUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
+            LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
+            AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
+            FileService fileService) {
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
-        this.attachmentUnitService = attachmentUnitService;
+        this.attachmentVideoUnitService = attachmentVideoUnitService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
@@ -101,7 +102,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentVideoUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(attachmentVideoUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentVideoUnit.getLecture().getCourse(), null);
 
@@ -126,14 +127,15 @@ public class AttachmentUnitResource {
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
-        AttachmentVideoUnit existingAttachmentVideoUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         log.debug("REST request to update an attachment unit 1: {}", attachmentVideoUnit);
         checkAttachmentUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
         log.debug("REST request to update an attachment unit 2: {}", attachmentVideoUnit);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentVideoUnit.getLecture().getCourse(), null);
 
         log.debug("REST request to update an attachment unit 3: {}", attachmentVideoUnit);
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file, keepFilename);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
+                keepFilename);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), notificationText);
@@ -179,12 +181,12 @@ public class AttachmentUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.createAttachmentUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
+        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentVideoUnit);
         }
-        attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentVideoUnit);
+        attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
@@ -239,7 +241,7 @@ public class AttachmentUnitResource {
             byte[] fileBytes = fileService.getFileForPath(filePath);
             List<AttachmentVideoUnit> savedAttachmentVideoUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes,
                     lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
-            savedAttachmentVideoUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
+            savedAttachmentVideoUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
             if (competencyProgressApi.isPresent()) {
                 var api = competencyProgressApi.get();

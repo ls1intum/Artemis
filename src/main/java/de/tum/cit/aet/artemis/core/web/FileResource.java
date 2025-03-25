@@ -76,7 +76,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -105,7 +105,7 @@ public class FileResource {
 
     private final LectureRepository lectureRepository;
 
-    private final AttachmentUnitRepository attachmentUnitRepository;
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final SlideRepository slideRepository;
 
@@ -133,15 +133,15 @@ public class FileResource {
 
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
-            FileUploadService fileUploadService) {
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
+            LectureUnitService lectureUnitService, FileUploadService fileUploadService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.attachmentRepository = attachmentRepository;
-        this.attachmentUnitRepository = attachmentUnitRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -474,7 +474,7 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentVideoUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
+        List<AttachmentVideoUnit> lectureAttachments = attachmentVideoUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
@@ -501,7 +501,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
         Attachment attachment = attachmentVideoUnit.getAttachment();
@@ -524,7 +524,7 @@ public class FileResource {
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the file for attachment unit {} for editors", attachmentUnitId);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Attachment attachment = attachmentVideoUnit.getAttachment();
         checkAttachmentUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
@@ -562,7 +562,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
         log.debug("REST request to get the slide : {}", slideNumber);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         Attachment attachment = attachmentVideoUnit.getAttachment();
         Course course = attachmentVideoUnit.getLecture().getCourse();

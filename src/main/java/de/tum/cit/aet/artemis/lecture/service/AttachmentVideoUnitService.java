@@ -27,14 +27,14 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
-public class AttachmentUnitService {
+public class AttachmentVideoUnitService {
 
-    private final AttachmentUnitRepository attachmentUnitRepository;
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final AttachmentRepository attachmentRepository;
 
@@ -52,10 +52,10 @@ public class AttachmentUnitService {
 
     private final LectureUnitService lectureUnitService;
 
-    public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
+    public AttachmentVideoUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
             Optional<IrisSettingsRepository> irisSettingsRepository, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
-        this.attachmentUnitRepository = attachmentUnitRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
@@ -69,18 +69,19 @@ public class AttachmentUnitService {
     /**
      * Creates a new attachment unit for the given lecture.
      *
-     * @param attachmentVideoUnit The attachmentUnit to create
-     * @param attachment          The attachment to create the attachmentUnit for
-     * @param lecture             The lecture linked to the attachmentUnit
+     * @param attachmentVideoUnit The attachmentVideoUnit to create
+     * @param attachment          The attachment to create the attachmentVideoUnit for
+     * @param lecture             The lecture linked to the attachmentVideoUnit
      * @param file                The file to upload
      * @param keepFilename        Whether to keep the original filename or not.
      * @return The created attachment unit
      */
-    public AttachmentVideoUnit createAttachmentUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, Lecture lecture, MultipartFile file, boolean keepFilename) {
+    public AttachmentVideoUnit createAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, Lecture lecture, MultipartFile file,
+            boolean keepFilename) {
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentVideoUnit.setLecture(null);
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentUnitRepository::saveAndFlush);
+        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         attachmentVideoUnit.setLecture(lecture);
         lecture.addLectureUnit(savedAttachmentVideoUnit);
@@ -105,7 +106,7 @@ public class AttachmentUnitService {
      * @param keepFilename                Whether to keep the original filename or not.
      * @return The updated attachment unit.
      */
-    public AttachmentVideoUnit updateAttachmentUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
+    public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
 
@@ -115,7 +116,7 @@ public class AttachmentUnitService {
         existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
         existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentUnitRepository::saveAndFlush);
+        AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
         existingAttachmentVideoUnit.setCompetencyLinks(existingCompetencyLinks);
@@ -138,7 +139,7 @@ public class AttachmentUnitService {
             existingAttachment.setVersion(revision);
             Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
             savedAttachmentVideoUnit.setAttachment(savedAttachment);
-            prepareAttachmentUnitForClient(savedAttachmentVideoUnit);
+            prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
             evictCache(updateFile, savedAttachmentVideoUnit);
 
             if (updateFile != null) {
@@ -202,11 +203,11 @@ public class AttachmentUnitService {
      * @param attachment   Attachment linked to the file.
      * @param keepFilename Whether to keep the original filename or not.
      */
-    private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
+    private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentVideoUnitId) {
         if (file != null && !file.isEmpty()) {
-            Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentUnitId.toString());
+            Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnitId.toString());
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
+            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentVideoUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -228,7 +229,7 @@ public class AttachmentUnitService {
      *
      * @param attachmentVideoUnit The attachment unit to clean.
      */
-    public void prepareAttachmentUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
+    public void prepareAttachmentVideoUnitForClient(AttachmentVideoUnit attachmentVideoUnit) {
         attachmentVideoUnit.getLecture().setLectureUnits(null);
         attachmentVideoUnit.getLecture().setAttachments(null);
         attachmentVideoUnit.getLecture().setPosts(null);

@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
-import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -44,7 +44,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
 
     @Autowired
-    private AttachmentUnitTestRepository attachmentUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentUnitRepository;
 
     @Autowired
     private SlideTestRepository slideRepository;

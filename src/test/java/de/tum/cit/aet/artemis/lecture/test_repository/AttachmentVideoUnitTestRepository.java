@@ -7,11 +7,11 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 
 @Repository
 @Primary
-public interface AttachmentUnitTestRepository extends AttachmentUnitRepository {
+public interface AttachmentVideoUnitTestRepository extends AttachmentVideoUnitRepository {
 
     @EntityGraph(type = LOAD, attributePaths = "competencyLinks")
     AttachmentVideoUnit findOneWithCompetencyLinksById(long attachmentVideoUnitId);

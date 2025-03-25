@@ -51,7 +51,7 @@ public class LectureUnitProcessingService {
 
     private final LectureRepository lectureRepository;
 
-    private final AttachmentUnitService attachmentUnitService;
+    private final AttachmentVideoUnitService attachmentVideoUnitService;
 
     private final PDFTextStripper pdfTextStripper = new PDFTextStripper();
 
@@ -59,11 +59,11 @@ public class LectureUnitProcessingService {
     private final Splitter pdfSinglePageSplitter = new Splitter();
 
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
-            AttachmentUnitService attachmentUnitService) {
+            AttachmentVideoUnitService attachmentVideoUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.lectureRepository = lectureRepository;
-        this.attachmentUnitService = attachmentUnitService;
+        this.attachmentVideoUnitService = attachmentVideoUnitService;
     }
 
     /**
@@ -108,7 +108,7 @@ public class LectureUnitProcessingService {
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.createAttachmentUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
+                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
                 units.add(savedAttachmentVideoUnit);

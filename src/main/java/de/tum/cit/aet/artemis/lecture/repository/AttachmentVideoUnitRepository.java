@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
  */
 @Profile(PROFILE_CORE)
 @Repository
-public interface AttachmentUnitRepository extends ArtemisJpaRepository<AttachmentVideoUnit, Long> {
+public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<AttachmentVideoUnit, Long> {
 
     @Query("""
             SELECT lectureUnit
@@ -38,7 +38,7 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
     List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
     /**
-     * Find all attachment units by lecture id and attachment type or throw if ist is empty.
+     * Find all attachment video units by lecture id and attachment type or throw if ist is empty.
      * The list is sorted according to the order of units in the lecture.
      *
      * @param lectureId      the id of the lecture
@@ -50,7 +50,7 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
     default List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
         List<AttachmentVideoUnit> attachmentVideoUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
         if (attachmentVideoUnits.isEmpty()) {
-            throw new EntityNotFoundException("AttachmentUnit");
+            throw new EntityNotFoundException("AttachmentVideoUnit");
         }
         return attachmentVideoUnits;
     }
@@ -61,11 +61,11 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
                 LEFT JOIN FETCH attachmentVideoUnit.slides slides
                 LEFT JOIN FETCH attachmentVideoUnit.competencyLinks cl
                 LEFT JOIN FETCH cl.competency
-            WHERE attachmentVideoUnit.id = :attachmentUnitId
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
             """)
-    Optional<AttachmentVideoUnit> findWithSlidesAndCompetenciesById(@Param("attachmentUnitId") long attachmentUnitId);
+    Optional<AttachmentVideoUnit> findWithSlidesAndCompetenciesById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
 
-    default AttachmentVideoUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentUnitId) {
-        return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentUnitId), attachmentUnitId);
+    default AttachmentVideoUnit findWithSlidesAndCompetenciesByIdElseThrow(long attachmentVideoUnitId) {
+        return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentVideoUnitId), attachmentVideoUnitId);
     }
 }
