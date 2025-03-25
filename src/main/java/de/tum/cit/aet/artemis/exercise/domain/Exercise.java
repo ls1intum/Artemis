@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -332,8 +333,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return the course class member
      */
-    @JsonInclude
-    public Course getCourse() {
+    @JsonProperty
+    protected Course getCourse() {
         return course;
     }
 
