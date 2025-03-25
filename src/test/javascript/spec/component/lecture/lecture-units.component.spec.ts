@@ -105,7 +105,7 @@ describe('LectureUpdateUnitsComponent', () => {
         unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen()).toBeTrue();
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
         });
     }));
 
@@ -140,7 +140,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeFalse();
             expect(wizardUnitComponent.isTextUnitFormOpen()).toBeFalse();
             expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeFalse();
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeFalse();
             expect(wizardUnitComponent.isVideoUnitFormOpen()).toBeFalse();
         });
     }));
@@ -526,9 +526,9 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             const lectureIdCallArgument: number = createAttachmentUnitStub.mock.calls[0][1];
@@ -595,9 +595,9 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
-        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
@@ -651,9 +651,9 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
@@ -707,9 +707,9 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
@@ -730,9 +730,9 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentUnit(formData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(createStub).not.toHaveBeenCalled();
@@ -805,7 +805,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.startEditLectureUnit(attachmentUnit);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBeTrue();
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen).toBeTrue();
         });
     }));
 

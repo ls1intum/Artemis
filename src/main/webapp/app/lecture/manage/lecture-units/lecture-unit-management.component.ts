@@ -256,8 +256,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit!.type) {
             case LectureUnitType.ATTACHMENT: {
-                const attachmentUnit = <AttachmentVideoUnit>lectureUnit;
-                return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
+                const attachmentVideoUnit = <AttachmentVideoUnit>lectureUnit;
+                return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
             }
             default:
                 return false;
@@ -348,8 +348,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    getIcon(attachmentUnit: AttachmentVideoUnit): IconDefinition {
-        switch (attachmentUnit.pyrisIngestionState) {
+    getIcon(attachmentVideoUnit: AttachmentVideoUnit): IconDefinition {
+        switch (attachmentVideoUnit.pyrisIngestionState) {
             case IngestionState.NOT_STARTED:
                 return this.faFileExport;
             case IngestionState.IN_PROGRESS:

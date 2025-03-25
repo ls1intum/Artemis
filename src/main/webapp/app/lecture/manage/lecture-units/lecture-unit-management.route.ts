@@ -86,7 +86,7 @@ export const lectureUnitRoute: Routes = [
                 loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                 resolve: {
                     course: CourseManagementResolve,
-                    attachmentUnit: AttachmentVideoUnitResolve,
+                    attachmentVideoUnit: AttachmentVideoUnitResolve,
                 },
             },
             {
