@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { InputFieldEditModeMapping } from 'app/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-version-control',
@@ -12,5 +12,5 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 })
 export class ProgrammingExerciseVersionControlComponent {
     programmingExercise = input.required<ProgrammingExercise>();
-    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    isEditFieldDisplayedRecord = input.required<InputFieldEditModeMapping>();
 }
