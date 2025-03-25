@@ -5,11 +5,11 @@ import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentUnitResolve implements Resolve<AttachmentVideoUnit> {
-    private attachmentUnitService = inject(AttachmentUnitService);
+    private attachmentUnitService = inject(AttachmentVideoUnitService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<AttachmentVideoUnit> {
         const lectureId = route.params['lectureId'];

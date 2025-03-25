@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
@@ -52,7 +52,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Injected services
     private readonly route = inject(ActivatedRoute);
     private readonly attachmentService = inject(AttachmentService);
-    private readonly attachmentUnitService = inject(AttachmentUnitService);
+    private readonly attachmentUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
     private readonly router = inject(Router);

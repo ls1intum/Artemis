@@ -18,7 +18,7 @@ import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.ser
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -45,7 +45,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected textUnitService = inject(TextUnitService);
     protected videoUnitService = inject(VideoUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
-    protected attachmentUnitService = inject(AttachmentUnitService);
+    protected attachmentUnitService = inject(AttachmentVideoUnitService);
 
     @Input() lecture: Lecture;
 

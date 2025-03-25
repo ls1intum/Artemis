@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockAttachmentUnitsService } from '../../../helpers/mocks/service/mock-attachment-units.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -40,7 +40,7 @@ describe('AttachmentUnitsComponent', () => {
     let attachmentUnitsComponentFixture: ComponentFixture<AttachmentVideoUnitsComponent>;
     let attachmentUnitsComponent: AttachmentVideoUnitsComponent;
 
-    let attachmentUnitService: AttachmentUnitService;
+    let attachmentUnitService: AttachmentVideoUnitService;
     let router: Router;
 
     const unit1: AttachmentUnitsInfoResponseType = {
@@ -78,7 +78,7 @@ describe('AttachmentUnitsComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AttachmentUnitService, useClass: MockAttachmentUnitsService },
+                { provide: AttachmentVideoUnitService, useClass: MockAttachmentUnitsService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -123,7 +123,7 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponent.units = units;
         attachmentUnitsComponent.numberOfPages = numberOfPages;
 
-        attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
         router = TestBed.get(Router);
     });
 

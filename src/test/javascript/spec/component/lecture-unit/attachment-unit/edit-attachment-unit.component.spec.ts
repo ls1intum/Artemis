@@ -6,7 +6,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { EditAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -38,7 +38,7 @@ describe('EditAttachmentUnitComponent', () => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
-                MockProvider(AttachmentUnitService),
+                MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -79,7 +79,7 @@ describe('EditAttachmentUnitComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(EditAttachmentUnitComponent);
         router = TestBed.inject(Router);
-        attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         attachment = new Attachment();
         attachment.id = 1;

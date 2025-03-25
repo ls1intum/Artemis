@@ -8,12 +8,12 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 
 describe('AttachmentUnitService', () => {
-    let service: AttachmentUnitService;
+    let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
     let expectedResult: any;
@@ -31,7 +31,7 @@ describe('AttachmentUnitService', () => {
             ],
         });
         expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
-        service = TestBed.inject(AttachmentUnitService);
+        service = TestBed.inject(AttachmentVideoUnitService);
         httpMock = TestBed.inject(HttpTestingController);
 
         const attachment = new Attachment();

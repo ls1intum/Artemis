@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -20,7 +20,7 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
 export class EditAttachmentUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentUnitService = inject(AttachmentUnitService);
+    private attachmentUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
     @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentUnitFormComponent;

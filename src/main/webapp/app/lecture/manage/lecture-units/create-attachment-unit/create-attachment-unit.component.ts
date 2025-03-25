@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
@@ -20,7 +20,7 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
 export class CreateAttachmentUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentUnitService = inject(AttachmentUnitService);
+    private attachmentUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
     @ViewChild('attachmentUnitForm')

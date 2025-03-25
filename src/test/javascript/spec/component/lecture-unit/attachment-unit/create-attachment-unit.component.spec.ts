@@ -7,7 +7,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
 import { CreateAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -29,7 +29,7 @@ describe('CreateAttachmentUnitComponent', () => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
-                MockProvider(AttachmentUnitService),
+                MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -78,7 +78,7 @@ describe('CreateAttachmentUnitComponent', () => {
 
     it('should upload file, send POST for attachment and post for attachment unit', fakeAsync(() => {
         const router: Router = TestBed.inject(Router);
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
