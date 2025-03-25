@@ -231,14 +231,14 @@ public class LectureUnitService {
 
     /**
      * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
-     * `AttachmentUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
+     * `AttachmentVideoUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
      * database.
      * The method responds with different HTTP status codes based on the result:
      * Returns {OK} if the ingestion is successful.
      * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
-     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentUnit}.
+     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentVideoUnit}.
      *
-     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentUnit.
+     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentVideoUnit.
      * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
      */
     public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {

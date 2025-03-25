@@ -210,7 +210,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
         lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
-        lectures.forEach(lectureService::filterActiveAttachmentUnits);
+        lectures.forEach(lectureService::filterActiveAttachmentVideoUnits);
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -338,7 +338,7 @@ public class LectureResource {
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
         competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
-        lectureService.filterActiveAttachmentUnits(lecture);
+        lectureService.filterActiveAttachmentVideoUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
     }

@@ -89,17 +89,17 @@ public class LectureService {
     /**
      * Lecture with only active attachment units
      *
-     * @param lectureWithAttachmentUnits lecture that has attachment units
+     * @param lectureWithAttachmentVideoUnits lecture that has attachment units
      */
-    public void filterActiveAttachmentUnits(Lecture lectureWithAttachmentUnits) {
+    public void filterActiveAttachmentVideoUnits(Lecture lectureWithAttachmentVideoUnits) {
 
-        List<LectureUnit> filteredAttachmentUnits = new ArrayList<>();
-        for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
+        List<LectureUnit> filteredAttachmentVideoUnits = new ArrayList<>();
+        for (LectureUnit unit : lectureWithAttachmentVideoUnits.getLectureUnits()) {
             if (unit instanceof AttachmentVideoUnit && (unit.getReleaseDate() == null || unit.getReleaseDate().isBefore(ZonedDateTime.now()))) {
-                filteredAttachmentUnits.add(unit);
+                filteredAttachmentVideoUnits.add(unit);
             }
         }
-        lectureWithAttachmentUnits.setLectureUnits(filteredAttachmentUnits);
+        lectureWithAttachmentVideoUnits.setLectureUnits(filteredAttachmentVideoUnits);
     }
 
     /**
@@ -152,8 +152,8 @@ public class LectureService {
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
         if (pyrisWebhookService.isPresent()) {
-            Lecture lectureWithAttachmentUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentUnits.getLectureUnits().stream()
+            Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
                     .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
             if (!attachmentVideoUnitList.isEmpty()) {
                 pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);

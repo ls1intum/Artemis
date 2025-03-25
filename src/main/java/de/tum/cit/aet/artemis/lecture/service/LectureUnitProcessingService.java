@@ -100,7 +100,7 @@ public class LectureUnitProcessingService {
                 documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
                 documentUnits.getFirst().save(outputStream);
 
-                // setup attachmentUnit and attachment
+                // setup attachmentVideoUnit and attachment
                 attachmentVideoUnit.setDescription("");
                 attachment.setName(lectureUnit.unitName());
                 attachment.setAttachmentType(AttachmentType.FILE);

@@ -248,7 +248,7 @@ public class FilePathService {
             return URI.create("attachments/attachment-unit/" + id + "/" + filename);
         }
         try {
-            // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
+            // The last name is the file name, the one before that is the slide number and the one before that is the attachmentVideoUnitId, in which we are interested
             // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
             final String expectedAttachmentVideoUnitId = path.getName(path.getNameCount() - 4).toString();
             final long attachmentVideoUnitId = Long.parseLong(expectedAttachmentVideoUnitId);

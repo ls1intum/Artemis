@@ -52,11 +52,11 @@ import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/lecture/")
-public class AttachmentUnitResource {
+public class AttachmentVideoUnitResource {
 
-    private static final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);
+    private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitResource.class);
 
-    private static final String ENTITY_NAME = "attachmentUnit";
+    private static final String ENTITY_NAME = "attachmentVideoUnit";
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -76,7 +76,7 @@ public class AttachmentUnitResource {
 
     private final FileService fileService;
 
-    public AttachmentUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
+    public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
             FileService fileService) {
@@ -92,44 +92,44 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
+     * GET lectures/:lectureId/attachment-units/:attachmentVideoUnitId : gets the attachment unit with the specified id
      *
-     * @param attachmentUnitId the id of the attachmentUnit to retrieve
-     * @param lectureId        the id of the lecture to which the unit belongs
+     * @param attachmentVideoUnitId the id of the attachmentVideoUnit to retrieve
+     * @param lectureId             the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
-    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}")
+    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<AttachmentVideoUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
-        log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
-        checkAttachmentUnitCourseAndLecture(attachmentVideoUnit, lectureId);
+    public ResponseEntity<AttachmentVideoUnit> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
+        log.debug("REST request to get AttachmentVideoUnit : {}", attachmentVideoUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
+        checkAttachmentVideoUnitCourseAndLecture(attachmentVideoUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentVideoUnit.getLecture().getCourse(), null);
 
         return ResponseEntity.ok().body(attachmentVideoUnit);
     }
 
     /**
-     * PUT lectures/:lectureId/attachment-units/:attachmentUnitId : Updates an existing attachment unit
+     * PUT lectures/:lectureId/attachment-units/:attachmentVideoUnitId : Updates an existing attachment unit
      *
-     * @param lectureId           the id of the lecture to which the attachment unit belongs to update
-     * @param attachmentUnitId    the id of the attachment unit to update
-     * @param attachmentVideoUnit the attachment unit with updated content
-     * @param attachment          the attachment with updated content
-     * @param file                the optional file to upload
-     * @param keepFilename        specifies if the original filename should be kept or not
-     * @param notificationText    the text to be used for the notification. No notification will be sent if the parameter is not set
-     * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
+     * @param lectureId             the id of the lecture to which the attachment unit belongs to update
+     * @param attachmentVideoUnitId the id of the attachment unit to update
+     * @param attachmentVideoUnit   the attachment video unit with updated content
+     * @param attachment            the attachment with updated content
+     * @param file                  the optional file to upload
+     * @param keepFilename          specifies if the original filename should be kept or not
+     * @param notificationText      the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
-    @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
-        AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         log.debug("REST request to update an attachment unit 1: {}", attachmentVideoUnit);
-        checkAttachmentUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
+        checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
         log.debug("REST request to update an attachment unit 2: {}", attachmentVideoUnit);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentVideoUnit.getLecture().getCourse(), null);
 
@@ -150,7 +150,7 @@ public class AttachmentUnitResource {
      * POST lectures/:lectureId/attachment-units : creates a new attachment unit.
      *
      * @param lectureId           the id of the lecture to which the attachment unit should be added
-     * @param attachmentVideoUnit the attachment unit that should be created
+     * @param attachmentVideoUnit the attachment video unit that should be created
      * @param attachment          the attachment that should be created
      * @param file                the file to upload
      * @param keepFilename        specifies if the original filename should be kept or not
@@ -159,10 +159,10 @@ public class AttachmentUnitResource {
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<AttachmentVideoUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
+    public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
             @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
             throws URISyntaxException {
-        log.debug("REST request to create AttachmentUnit {} with Attachment {}", attachmentVideoUnit, attachment);
+        log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnit, attachment);
         if (attachmentVideoUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -230,9 +230,9 @@ public class AttachmentUnitResource {
      */
     @PostMapping("lectures/{lectureId}/attachment-units/split/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<AttachmentVideoUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO,
-            @PathVariable String filename) {
-        log.debug("REST request to create AttachmentUnits {} with lectureId {} for file {}", lectureUnitSplitInformationDTO, lectureId, filename);
+    public ResponseEntity<List<AttachmentVideoUnit>> createAttachmentVideoUnits(@PathVariable Long lectureId,
+            @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, @PathVariable String filename) {
+        log.debug("REST request to create AttachmentVideoUnits {} with lectureId {} for file {}", lectureUnitSplitInformationDTO, lectureId, filename);
         checkLecture(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
@@ -260,11 +260,11 @@ public class AttachmentUnitResource {
      *
      * @param lectureId the id of the lecture to which the file is going to be split
      * @param filename  the name of the lecture file to be split, located in the temp folder
-     * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
+     * @return the ResponseEntity with status 200 (ok) and with body attachmentVideoUnitsData
      */
     @GetMapping("lectures/{lectureId}/attachment-units/data/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
+    public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
 
         checkLecture(lectureId);
@@ -273,8 +273,8 @@ public class AttachmentUnitResource {
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            LectureUnitSplitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
-            return ResponseEntity.ok().body(attachmentUnitsData);
+            LectureUnitSplitInformationDTO attachmentVideoUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
+            return ResponseEntity.ok().body(attachmentVideoUnitsData);
         }
         catch (IOException e) {
             log.error("Could not calculate lecture units automatically", e);
@@ -315,7 +315,7 @@ public class AttachmentUnitResource {
      * @param attachmentVideoUnit The attachment unit to check
      * @param lectureId           The id of the lecture to check against
      */
-    private void checkAttachmentUnitCourseAndLecture(AttachmentVideoUnit attachmentVideoUnit, Long lectureId) {
+    private void checkAttachmentVideoUnitCourseAndLecture(AttachmentVideoUnit attachmentVideoUnit, Long lectureId) {
         if (attachmentVideoUnit.getLecture() == null || attachmentVideoUnit.getLecture().getCourse() == null) {
             throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
         }
