@@ -17,6 +17,7 @@ import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-app',
@@ -67,10 +68,25 @@ export class AppComponent implements OnInit, OnDestroy {
 
     constructor() {
         this.setupErrorHandling().then(undefined);
+        this.reportIfPasskeyIsNotSupported();
+    }
 
+    /**
+     * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
+     *
+     * The message is only reported once per day per browser/device.
+     */
+    private reportIfPasskeyIsNotSupported() {
         /* eslint-disable no-undef */
         if (!window.PublicKeyCredential) {
             console.info('WebAuthn NOT supported by this browser');
+            const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!lastReported || lastReported.split('T')[0] !== today) {
+                localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
+                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'));
+            }
         } else {
             console.info('WebAuthn supported by this browser');
         }
