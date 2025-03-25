@@ -16,7 +16,6 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
@@ -69,6 +68,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../shared/actions/programming-exercise-instructor-exercise-sharing.component';
+import { ProgrammingExerciseSharingService } from './services/programming-exercise-sharing.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',

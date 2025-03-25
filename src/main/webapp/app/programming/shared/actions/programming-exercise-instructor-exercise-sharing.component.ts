@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseSharingService } from '../../manage/services/programming-exercise-sharing.service';
 import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-exercise-sharing',

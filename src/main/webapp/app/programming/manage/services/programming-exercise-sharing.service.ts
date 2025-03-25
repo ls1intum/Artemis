@@ -8,10 +8,10 @@ import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import { Course } from 'app/entities/course.model';
+import { ExerciseService } from 'app/exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -80,12 +80,10 @@ export class ProgrammingExerciseSharingService {
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { exercise, results, ...filteredTemplateParticipation } = copy.templateParticipation;
             copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
         }
         if (copy.solutionParticipation) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { exercise, results, ...filteredSolutionParticipation } = copy.solutionParticipation;
             copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
         }

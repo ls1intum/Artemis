@@ -6,18 +6,24 @@ import { Course } from 'app/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
-import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { FormsModule } from '@angular/forms';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgStyle } from '@angular/common';
+import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterModule, ArtemisSharedModule, SharingComponent],
+    imports: [RouterModule, SharingComponent, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle, ButtonComponent],
     standalone: true,
 })
 export class SharingComponent implements OnInit {

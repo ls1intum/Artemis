@@ -388,6 +388,11 @@ public final class Constants {
     public static final String PROFILE_SHARING = "sharing";
 
     /**
+     * sharing configution resource path for sharing config request
+     */
+    public static final String SHARINGCONFIG_RESOURCE_PATH = "/sharing/config";
+
+    /**
      * The name of the profile for integration independent tests
      */
     public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
