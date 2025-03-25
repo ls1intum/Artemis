@@ -7,7 +7,6 @@ import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } 
 import { of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockExamParticipationLiveEventsService } from '../../../../helpers/mocks/service/mock-exam-participation-live-events.service';
-import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 import { input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/exam-live-events-overlay.component';
