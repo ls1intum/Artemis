@@ -5,7 +5,7 @@ Server
 0. Folder structure
 ===================
 
-The main application is stored under ``/src/main`` and the main folders are:
+The main application is stored under ``/src/main``. It is separated into modules with the following main folders:
 
 * resources - script, config files and templates are stored here.
     * config - different configurations (production, development, etc.) for application.
@@ -14,15 +14,14 @@ The main application is stored under ``/src/main`` and the main folders are:
                       To understand how to create new changelog file you can check existing changelog files or read documentation: https://www.liquibase.org/documentation/databasechangelog.html.
 * java - Artemis Spring Boot application is located here. It contains the following folders:
     * config - different classes for configuring database, Sentry, Liquibase, etc.
-    * domain - all the entities and data classes are located here (the model of the server application).
+    * **domain** - all the entities and data classes are located here (the model of the server application).
+    * **dto** - contains Data Transfer Objects (DTOs) that are used to transfer data between the server and the client.
     * exception - store custom types of exceptions here. We encourage to create custom exceptions to help other developers understand what problem exactly happened.
                   This can also be helpful when we want to provide specific exception handling logic.
+    * **repository** - used to access or change objects in the database. There are several techniques to query database: named queries, queries with SpEL expressions and Entity Graphs.
     * security - contains different POJOs (simple classes that don't implement/extend any interface/class and don't have annotations) and component classes related to security.
-    * repository - used to access or change objects in the database. There are several techniques to query database: named queries, queries with SpEL expressions and Entity Graphs.
-    * service - represents the controller of the server application. Add the application logic here. Retrieve and change objects using repositories.
-    * web - contains two folders:
-        * rest - contains REST controllers that act as the view of the server application. Validate input and security here, but do not include complex application logic
-        * websocket - contains controllers that handle real-time communication with the client based on the Websocket protocol. Use the ``MessagingTemplate`` to push data to the client or to notify the client about events.
+    * **service** - represents the controller of the server application. Add the application logic here. Retrieve and change objects using repositories.
+    * **web** - contains REST and websocket controllers that act as the view of the server application. Validate input and security here, but do not include complex application logic. For websockets, use the ``MessagingTemplate`` to push small data to the client or to notify the client about events.
 
 1. Naming convention
 ====================
@@ -52,7 +51,7 @@ Example:
 2. Single responsibility principle
 ==================================
 
-One method should be responsible for only one action, it should do it well and do nothing else. Reduce coupling, if our method does two or three different things at a time then we should consider splitting the functionality.
+One class and one method should be responsible for only one action, it should do it well and do nothing else. Reduce coupling, if the method does two or three different things at a time then we should consider splitting the functionality.
 
 3. Small methods
 ================

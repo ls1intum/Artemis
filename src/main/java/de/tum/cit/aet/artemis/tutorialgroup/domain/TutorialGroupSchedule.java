@@ -111,7 +111,10 @@ public class TutorialGroupSchedule extends DomainObject {
     /**
      * The sessions that were generated from this schedule, i.e. the sessions that follow this recurrence pattern.
      */
-    @OneToMany(mappedBy = "tutorialGroupSchedule", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    /**
+     * Do NOT use orphanRemoval = true, as it will delete the sessions when they are disconnected from the schedule.
+     */
+    @OneToMany(mappedBy = "tutorialGroupSchedule", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "tutorialGroupSchedule", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<TutorialGroupSession> tutorialGroupSessions = new ArrayList<>();

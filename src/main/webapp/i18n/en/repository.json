@@ -33,6 +33,21 @@
                 "error": "VCS Access log could not be retrieved",
                 "numberOfPages": "There are {{ count }} pages",
                 "onePage": "There is only one page"
+            },
+            "userRepository": {
+                "title": "Assignment-Repository"
+            },
+            "templateRepository": {
+                "title": "Template-Repository"
+            },
+            "solutionRepository": {
+                "title": "Solution-Repository"
+            },
+            "testsRepository": {
+                "title": "Test-Repository"
+            },
+            "auxiliaryRepository": {
+                "title": "Auxiliary-Repository"
             }
         }
     }

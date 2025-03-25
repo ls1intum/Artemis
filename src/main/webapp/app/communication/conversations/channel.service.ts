@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ChannelDTO, ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {

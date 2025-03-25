@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,9 +74,7 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisTextMessageContent createMockContent() {
-        var content = new IrisTextMessageContent("Not relevant for the test cases");
-        content.setId(ThreadLocalRandom.current().nextLong());
-        return content;
+        return new IrisTextMessageContent("Not relevant for the test cases");
     }
 
     private static String exerciseChatUrl(long sessionId) {

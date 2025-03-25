@@ -33,6 +33,21 @@
                 "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden",
                 "numberOfPages": "Es gibt {{ count }} Seiten",
                 "onePage": "Es gibt nur eine Seite"
+            },
+            "userRepository": {
+                "title": "Assignment-Repository"
+            },
+            "templateRepository": {
+                "title": "Template-Repository"
+            },
+            "solutionRepository": {
+                "title": "Lösungs-Repository"
+            },
+            "testsRepository": {
+                "title": "Test-Repository"
+            },
+            "auxiliaryRepository": {
+                "title": "Hilfs-Repository"
             }
         }
     }
