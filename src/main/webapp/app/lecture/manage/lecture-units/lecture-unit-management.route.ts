@@ -40,7 +40,9 @@ export const lectureUnitRoute: Routes = [
             {
                 path: 'attachment-units/create',
                 loadComponent: () =>
-                    import('app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component').then((m) => m.CreateAttachmentUnitComponent),
+                    import('app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component').then(
+                        (m) => m.CreateAttachmentVideoUnitComponent,
+                    ),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentUnit.createAttachmentVideoUnit.title',

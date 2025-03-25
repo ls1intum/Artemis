@@ -3,7 +3,7 @@ import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -39,7 +39,7 @@ export type LectureUnitInformationDTO = {
 export class AttachmentVideoUnitsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentVideoUnitService = inject(AttachmentUnitService);
+    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 

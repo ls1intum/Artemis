@@ -11,15 +11,15 @@ type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 @Injectable({
     providedIn: 'root',
 })
-export class AttachmentUnitService {
+export class AttachmentVideoUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
 
     private resourceURL = 'api/lecture';
 
-    findById(attachmentUnitId: number, lectureId: number) {
+    findById(attachmentVideoUnitId: number, lectureId: number) {
         return this.httpClient
-            .get<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
+            .get<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentVideoUnitId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
@@ -35,13 +35,13 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
+    update(lectureId: number, attachmentVideoUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
         /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
          * See: https://issues.chromium.org/issues/374550348
          **/
         return this.httpClient
             .put<AttachmentVideoUnit>(
-                `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
+                `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentVideoUnitId}?keepFilename=true` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,
                 { headers: { 'ngsw-bypass': 'true' }, observe: 'response' },
@@ -72,10 +72,10 @@ export class AttachmentUnitService {
      * Retrieve the file associated with a given attachment ID as a Blob object
      *
      * @param courseId The ID of the course that the Attachment Unit belongs to
-     * @param attachmentUnitId The ID of the attachment to retrieve
+     * @param attachmentVideoUnitId The ID of the attachment to retrieve
      * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
      */
-    getAttachmentFile(courseId: number, attachmentUnitId: number): Observable<Blob> {
-        return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`, { responseType: 'blob' });
+    getAttachmentFile(courseId: number, attachmentVideoUnitId: number): Observable<Blob> {
+        return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-units/${attachmentVideoUnitId}`, { responseType: 'blob' });
     }
 }

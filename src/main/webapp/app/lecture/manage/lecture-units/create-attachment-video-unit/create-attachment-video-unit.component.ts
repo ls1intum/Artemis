@@ -4,27 +4,27 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
     selector: 'jhi-create-attachment-unit',
-    templateUrl: './create-attachment-unit.component.html',
-    imports: [LectureUnitLayoutComponent, AttachmentUnitFormComponent],
+    templateUrl: './create-attachment-video-unit.component.html',
+    imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
 })
-export class CreateAttachmentUnitComponent implements OnInit {
+export class CreateAttachmentVideoUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentUnitService = inject(AttachmentUnitService);
+    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
-    @ViewChild('attachmentUnitForm')
-    attachmentUnitForm: AttachmentUnitFormComponent;
+    @ViewChild('attachmentVideoUnitForm')
+    attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
     attachmentVideoUnitToCreate: AttachmentVideoUnit = new AttachmentVideoUnit();
     attachmentToCreate: Attachment = new Attachment();
 
@@ -42,9 +42,9 @@ export class CreateAttachmentUnitComponent implements OnInit {
         this.attachmentToCreate = new Attachment();
     }
 
-    createAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
-        const { name, videoSource, description, releaseDate, competencyLinks } = attachmentUnitFormData?.formProperties || {};
-        const { file, fileName } = attachmentUnitFormData?.fileProperties || {};
+    createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
+        const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
+        const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
 
         if (!name || (!(file && fileName) && !videoSource)) {
             return;
@@ -57,7 +57,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         this.attachmentToCreate.version = 1;
         this.attachmentToCreate.uploadDate = dayjs();
 
-        // === Setting attachmentUnit ===
+        // === Setting attachmentVideoUnit ===
         this.attachmentVideoUnitToCreate.name = name;
         this.attachmentVideoUnitToCreate.releaseDate = releaseDate;
         this.attachmentVideoUnitToCreate.description = description;
@@ -74,7 +74,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnitToCreate));
 
-        this.attachmentUnitService
+        this.attachmentVideoUnitService
             .create(formData, this.lectureId)
             .subscribe({
                 next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),

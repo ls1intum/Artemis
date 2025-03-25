@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
@@ -14,14 +14,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('AttachmentUnitFormComponent', () => {
-    let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
-    let attachmentUnitFormComponent: AttachmentUnitFormComponent;
+    let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
+    let attachmentUnitFormComponent: AttachmentVideoUnitFormComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
-                AttachmentUnitFormComponent,
+                AttachmentVideoUnitFormComponent,
                 FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
@@ -31,7 +31,7 @@ describe('AttachmentUnitFormComponent', () => {
             schemas: [],
         }).compileComponents();
 
-        attachmentUnitFormComponentFixture = TestBed.createComponent(AttachmentUnitFormComponent);
+        attachmentUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
         attachmentUnitFormComponent = attachmentUnitFormComponentFixture.componentInstance;
     });
 
@@ -48,7 +48,7 @@ describe('AttachmentUnitFormComponent', () => {
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         attachmentUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
-        const formData: AttachmentUnitFormData = {
+        const formData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',

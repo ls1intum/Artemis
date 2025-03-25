@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { signal } from '@angular/core';
@@ -94,7 +94,7 @@ describe('PdfPreviewComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },
-                { provide: AttachmentUnitService, useValue: attachmentUnitServiceMock },
+                { provide: AttachmentVideoUnitService, useValue: attachmentUnitServiceMock },
                 { provide: LectureUnitService, useValue: lectureUnitServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -162,7 +162,7 @@ describe('PdfPreviewComponent', () => {
                 error: 'File not found',
             });
 
-            const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+            const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
             jest.spyOn(attachmentUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
             const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
 

@@ -13,14 +13,14 @@ import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
 import { TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
@@ -49,7 +49,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(TextUnitService),
                 MockProvider(OnlineUnitService),
-                MockProvider(AttachmentUnitService),
+                MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -464,11 +464,11 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should send POST request upon attachment form submission and update units', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -543,11 +543,11 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should send POST request upon attachment form submission and update units when editing lecture', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -608,12 +608,12 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should show alert upon unsuccessful attachment form submission', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -662,12 +662,12 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should show alert upon unsuccessful attachment form submission with error information', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -718,9 +718,9 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should not send POST request upon empty attachment form submission', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
-        const formData: AttachmentUnitFormData = {
+        const formData: AttachmentVideoUnitFormData = {
             formProperties: {},
             fileProperties: {},
         };

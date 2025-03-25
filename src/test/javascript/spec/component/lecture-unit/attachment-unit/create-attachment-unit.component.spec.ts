@@ -5,9 +5,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
-import { CreateAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+import { CreateAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
@@ -23,13 +23,13 @@ import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CreateAttachmentUnitComponent', () => {
-    let createAttachmentUnitComponentFixture: ComponentFixture<CreateAttachmentUnitComponent>;
+    let createAttachmentUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlNativeDateTimeModule],
             providers: [
-                MockProvider(AttachmentUnitService),
+                MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -69,7 +69,7 @@ describe('CreateAttachmentUnitComponent', () => {
             schemas: [],
         }).compileComponents();
 
-        createAttachmentUnitComponentFixture = TestBed.createComponent(CreateAttachmentUnitComponent);
+        createAttachmentUnitComponentFixture = TestBed.createComponent(CreateAttachmentVideoUnitComponent);
     });
 
     afterEach(() => {
@@ -78,11 +78,11 @@ describe('CreateAttachmentUnitComponent', () => {
 
     it('should upload file, send POST for attachment and post for attachment unit', fakeAsync(() => {
         const router: Router = TestBed.inject(Router);
-        const attachmentUnitService = TestBed.inject(AttachmentUnitService);
+        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -127,7 +127,7 @@ describe('CreateAttachmentUnitComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         createAttachmentUnitComponentFixture.detectChanges();
 
-        const attachmentUnitFormComponent = createAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentUnitFormComponent)).componentInstance;
+        const attachmentUnitFormComponent = createAttachmentUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
         attachmentUnitFormComponent.formSubmitted.emit(attachmentUnitFormData);
 
         createAttachmentUnitComponentFixture.whenStable().then(() => {

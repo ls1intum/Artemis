@@ -14,7 +14,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-export interface AttachmentUnitFormData {
+export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
 }
@@ -84,10 +84,10 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 
 @Component({
     selector: 'jhi-attachment-unit-form',
-    templateUrl: './attachment-unit-form.component.html',
+    templateUrl: './attachment-video-unit-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
-export class AttachmentUnitFormComponent implements OnChanges {
+export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
@@ -95,10 +95,10 @@ export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    formData = input<AttachmentUnitFormData>();
+    formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
 
-    formSubmitted = output<AttachmentUnitFormData>();
+    formSubmitted = output<AttachmentVideoUnitFormData>();
 
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
@@ -199,7 +199,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         });
     }
 
-    private setFormValues(formData: AttachmentUnitFormData) {
+    private setFormValues(formData: AttachmentVideoUnitFormData) {
         if (formData?.formProperties) {
             this.form.patchValue(formData.formProperties);
         }
