@@ -33,13 +33,13 @@ export type LectureUnitInformationDTO = {
 
 @Component({
     selector: 'jhi-attachment-units',
-    templateUrl: './attachment-units.component.html',
+    templateUrl: './attachment-video-units.component.html',
     imports: [LectureUnitLayoutComponent, TranslateDirective, FormsModule, FormDateTimePickerComponent, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
-export class AttachmentUnitsComponent implements OnInit {
+export class AttachmentVideoUnitsComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentUnitService = inject(AttachmentUnitService);
+    private attachmentVideoUnitService = inject(AttachmentUnitService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 
@@ -94,7 +94,7 @@ export class AttachmentUnitsComponent implements OnInit {
         //regularly re-upload the file when it gets deleted in the backend
         setTimeout(
             () => {
-                this.attachmentUnitService
+                this.attachmentVideoUnitService
                     .uploadSlidesForProcessing(this.lectureId, this.file)
                     .pipe(repeat({ delay: 1000 * 60 * this.MINUTES_UNTIL_DELETION }))
                     .subscribe({
@@ -110,7 +110,7 @@ export class AttachmentUnitsComponent implements OnInit {
             1000 * 60 * this.MINUTES_UNTIL_DELETION,
         );
 
-        this.attachmentUnitService
+        this.attachmentVideoUnitService
             .uploadSlidesForProcessing(this.lectureId, this.file)
             .pipe(
                 switchMap((res) => {
@@ -118,7 +118,7 @@ export class AttachmentUnitsComponent implements OnInit {
                         throw new Error(res.message);
                     } else {
                         this.filename = res.body!;
-                        return this.attachmentUnitService.getSplitUnitsData(this.lectureId, this.filename);
+                        return this.attachmentVideoUnitService.getSplitUnitsData(this.lectureId, this.filename);
                     }
                 }),
             )
@@ -138,7 +138,7 @@ export class AttachmentUnitsComponent implements OnInit {
             .pipe(
                 debounceTime(500),
                 switchMap(() => {
-                    return this.attachmentUnitService.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
+                    return this.attachmentVideoUnitService.getSlidesToRemove(this.lectureId, this.filename, this.keyphrases);
                 }),
             )
             .subscribe({
@@ -156,7 +156,7 @@ export class AttachmentUnitsComponent implements OnInit {
     /**
      * Creates the attachment units with the information given on this page
      */
-    createAttachmentUnits(): void {
+    createAttachmentVideoUnits(): void {
         if (this.validUnitInformation()) {
             this.isLoading = true;
             const lectureUnitInformation: LectureUnitInformationDTO = {
@@ -165,7 +165,7 @@ export class AttachmentUnitsComponent implements OnInit {
                 removeSlidesCommaSeparatedKeyPhrases: this.keyphrases,
             };
 
-            this.attachmentUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
+            this.attachmentVideoUnitService.createUnits(this.lectureId, this.filename, lectureUnitInformation).subscribe({
                 next: () => {
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                     this.isLoading = false;

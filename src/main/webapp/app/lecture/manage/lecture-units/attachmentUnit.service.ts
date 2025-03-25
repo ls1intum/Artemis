@@ -4,7 +4,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
+import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 

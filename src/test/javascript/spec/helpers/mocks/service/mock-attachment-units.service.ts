@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
+import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 
 export class MockAttachmentUnitsService {
     getSplitUnitsData = (lectureId: number, filename: string) => of({});
