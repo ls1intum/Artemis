@@ -37,6 +37,8 @@ import { captureException } from '@sentry/angular';
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {
+    protected readonly FeatureToggle = FeatureToggle;
+
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -68,40 +70,6 @@ export class AppComponent implements OnInit, OnDestroy {
 
     constructor() {
         this.setupErrorHandling().then(undefined);
-        this.reportIfPasskeyIsNotSupported();
-    }
-
-    /**
-     * Extracts the date part from an ISO 8601 formatted string.
-     *
-     * @param isoString The ISO 8601 formatted string (e.g., "YYYY-MM-DDTHH:mm:ss.sssZ").
-     * @return The date part of the ISO string (e.g., "YYYY-MM-DD").
-     */
-    private getDatePartFromISOString(isoString: string): string {
-        return isoString.split('T')[0];
-    }
-
-    /**
-     * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
-     *
-     * The message is only reported once per day per browser/device.
-     */
-    private reportIfPasskeyIsNotSupported() {
-        /* eslint-disable no-undef */
-        if (!window.PublicKeyCredential) {
-            console.info('WebAuthn NOT supported by this browser');
-            const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
-            const dateToday = this.getDatePartFromISOString(new Date().toISOString());
-            const dateLastReported = this.getDatePartFromISOString(lastReported);
-
-            if (!lastReported || dateLastReported !== dateToday) {
-                localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
-                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'));
-            }
-        } else {
-            console.info('WebAuthn supported by this browser');
-        }
-        /* eslint-enable no-undef */
     }
 
     private async setupErrorHandling() {
@@ -173,6 +141,8 @@ export class AppComponent implements OnInit, OnDestroy {
         });
 
         this.themeService.initialize();
+
+        this.reportIfPasskeyIsNotSupported();
     }
 
     /**
@@ -193,5 +163,36 @@ export class AppComponent implements OnInit, OnDestroy {
         this.ltiSubscription?.unsubscribe();
     }
 
-    protected readonly FeatureToggle = FeatureToggle;
+    /**
+     * Extracts the date part from an ISO 8601 formatted string.
+     *
+     * @param isoString The ISO 8601 formatted string (e.g., "YYYY-MM-DDTHH:mm:ss.sssZ").
+     * @return The date part of the ISO string (e.g., "YYYY-MM-DD").
+     */
+    private getDatePartFromISOString(isoString: string | null): string {
+        return isoString ? isoString.split('T')[0] : '';
+    }
+
+    /**
+     * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
+     *
+     * The message is only reported once per day per browser/device.
+     */
+    private reportIfPasskeyIsNotSupported() {
+        /* eslint-disable no-undef */
+        if (!window.PublicKeyCredential) {
+            console.info('WebAuthn NOT supported by this browser');
+            const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
+            const dateToday = this.getDatePartFromISOString(new Date().toISOString());
+            const dateLastReported = this.getDatePartFromISOString(lastReported);
+
+            if (!lastReported || dateLastReported !== dateToday) {
+                localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
+                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'));
+            }
+        } else {
+            console.info('WebAuthn supported by this browser');
+        }
+        /* eslint-enable no-undef */
+    }
 }
