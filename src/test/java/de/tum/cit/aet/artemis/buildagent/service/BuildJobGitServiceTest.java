@@ -7,16 +7,9 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-@ExtendWith(MockitoExtension.class)
-class BuildJobGitServiceTest {
-
-    @InjectMocks
-    private BuildJobGitService buildJobGitService;
+class BuildJobGitServiceTest extends BuildAgentIntegrationTest {
 
     @BeforeEach
     void setUp() {
