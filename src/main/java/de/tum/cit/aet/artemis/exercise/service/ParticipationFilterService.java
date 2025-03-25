@@ -80,8 +80,6 @@ public class ParticipationFilterService {
             Result latestResult = submission.getLatestResult();
             if (latestResult != null) {
                 results = Set.of(latestResult);
-                // avoid circular reference when converting to JSON later
-                latestResult.setParticipation(null);
                 if (isStudent) {
                     latestResult.filterSensitiveInformation();
                 }
@@ -91,7 +89,6 @@ public class ParticipationFilterService {
 
         // add submission to participation or set it to null
         participation.setSubmissions(optionalSubmission.map(Set::of).orElse(null));
-        participation.setResults(results);
 
         // remove inner exercise from participation
         participation.setExercise(null);
