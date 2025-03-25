@@ -40,6 +40,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -200,7 +201,9 @@ function sharedSetup(url: string[]) {
             .then(() => {
                 fixture = TestBed.createComponent(ExamResultSummaryComponent);
                 component = fixture.componentInstance;
-                component.studentExam = studentExam;
+                TestBed.runInInjectionContext(() => {
+                    component.studentExam = input(studentExam);
+                });
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
             });
@@ -244,7 +247,7 @@ describe('ExamResultSummaryComponent', () => {
         fixture.detectChanges();
 
         const courseId = 1;
-        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExam()).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
         expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
@@ -302,42 +305,54 @@ describe('ExamResultSummaryComponent', () => {
         component.courseId = courseId;
 
         const studentExam2 = { id: 2 } as StudentExam;
-        component.studentExam = studentExam2;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam2);
+        });
         expect(component.studentExamGradeInfoDTO).toBeUndefined();
-        expect(component.studentExam.id).toBe(studentExam2.id);
+        expect(component.studentExam().id).toBe(studentExam2.id);
         expect(plagiarismServiceSpy).not.toHaveBeenCalled();
 
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam);
+        });
         fixture.detectChanges();
 
-        expect(component.studentExam).toEqual(studentExam);
+        expect(component.studentExam()).toEqual(studentExam);
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam);
-        expect(component.studentExam.id).toBe(studentExam.id);
+        expect(component.studentExam().id).toBe(studentExam.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
         expect(plagiarismServiceSpy).toHaveBeenCalledWith(courseId, [1, 2, 3, 4]);
 
         const studentExam3 = { id: 3 } as StudentExam;
-        component.studentExam = studentExam3;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam3);
+        });
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
-        expect(component.studentExam.id).toBe(studentExam3.id);
+        expect(component.studentExam().id).toBe(studentExam3.id);
         expect(plagiarismServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should correctly identify a TestExam', () => {
-        component.studentExam = studentExamForTestExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExamForTestExam);
+        });
         component.ngOnInit();
         expect(component.isTestExam).toBeTrue();
         expect(component.testExamConduction).toBeTrue();
 
         studentExamForTestExam.submitted = true;
-        component.studentExam = studentExamForTestExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExamForTestExam);
+        });
         component.ngOnInit();
         expect(component.isTestExam).toBeTrue();
         expect(component.testExamConduction).toBeFalse();
     });
 
     it('should correctly identify a RealExam', () => {
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam);
+        });
         component.ngOnInit();
         expect(component.isTestExam).toBeFalse();
         expect(component.testExamConduction).toBeFalse();
@@ -345,7 +360,9 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.testRunConduction).toBeFalse();
 
         studentExam.submitted = true;
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam);
+        });
         component.ngOnInit();
         expect(component.isTestExam).toBeFalse();
         expect(component.testExamConduction).toBeFalse();
@@ -354,7 +371,9 @@ describe('ExamResultSummaryComponent', () => {
     });
 
     it('should correctly determine if the results are published', () => {
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam);
+        });
         component.testRunConduction = true;
         expect(component.resultsArePublished).toBeFalse();
 
@@ -374,12 +393,14 @@ describe('ExamResultSummaryComponent', () => {
         // const publishResultsDate is in the past
         expect(component.resultsArePublished).toBeTrue();
 
-        component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
+        component.studentExam().exam!.publishResultsDate = dayjs().add(2, 'hours');
         expect(component.resultsArePublished).toBeFalse();
     });
 
     it('should load exam summary when results are published', () => {
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.studentExam = input(studentExam);
+        });
         const loadStudentExamGradeInfoForSummarySpy = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
         const isExamResultPublishedSpy = jest.spyOn(ExamUtils, 'isExamResultPublished').mockReturnValue(true);
 
@@ -403,12 +424,12 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.isAfterStudentReviewStart).toBeTrue();
 
         component.isTestRun = false;
-        component.studentExam.exam!.examStudentReviewStart = examStudentReviewStart;
-        component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
+        component.studentExam().exam!.examStudentReviewStart = examStudentReviewStart;
+        component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart).toBeTrue();
 
-        component.studentExam.exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
+        component.studentExam().exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart).toBeFalse();
 
@@ -429,11 +450,11 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
         component.isTestRun = false;
-        component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
+        component.studentExam().exam!.examStudentReviewEnd = examStudentReviewEnd;
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd).toBeTrue();
 
-        component.studentExam.exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
+        component.studentExam().exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd).toBeFalse();
 
@@ -527,7 +548,9 @@ describe('ExamResultSummaryComponent', () => {
                 scrollIntoView: scrollIntoViewSpy,
             } as unknown as HTMLElement);
 
-            component.studentExam = studentExam;
+            TestBed.runInInjectionContext(() => {
+                component.studentExam = input(studentExam);
+            });
             component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
 
             fixture.detectChanges();
