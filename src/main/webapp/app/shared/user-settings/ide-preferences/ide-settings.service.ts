@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 import { Observable, lastValueFrom } from 'rxjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Ide, IdeMappingDTO } from 'app/shared/user-settings/ide-preferences/ide.model';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class IdeSettingsService {
