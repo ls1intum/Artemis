@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "pyristranscriptioncreationtest";
 
