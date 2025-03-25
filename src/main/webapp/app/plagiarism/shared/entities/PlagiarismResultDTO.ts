@@ -1,5 +1,5 @@
-import { PlagiarismResult } from 'app/plagiarism/shared/types/PlagiarismResult';
-import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/types/PlagiarismSubmissionElement';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
+import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 
 /**
  * Result of the automatic plagiarism detection for modeling exercises.
