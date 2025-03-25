@@ -5,16 +5,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
+import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { Result } from 'app/entities/result.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
-import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 
 describe('Quiz Scoring Info Student Modal Component', () => {
     let fixture: ComponentFixture<QuizScoringInfoStudentModalComponent>;

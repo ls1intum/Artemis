@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 
 @Component({

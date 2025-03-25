@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';

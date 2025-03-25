@@ -5,7 +5,7 @@ import { ExerciseAPIRequests } from '../../requests/ExerciseAPIRequests';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { AdditionalData, ExerciseType, Exercise as PlaywrightExercise } from '../../constants';
 import { generateUUID } from '../../utils';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
