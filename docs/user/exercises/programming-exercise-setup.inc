@@ -224,7 +224,7 @@ Update exercise code in repositories
 
 - **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse).
 
-  - To execute tests, copy the template (or solution) code into a folder **assignment** either inside the test repository or its parent directory (depending on the selected language) and execute the tests (e.g. using maven clean test)
+  - To execute tests, copy the template (or solution) code into a folder **assignment** either inside the test repository or its parent directory (depending on the selected language) and execute the tests (e.g. using ``mvn clean test``)
   - Commit and push your changes via Git
 
   - **Notes for Haskell:** In addition to the assignment folder, the executables of the build file expect the solution repository checked out in the **solution** subdirectory of the test folder and also allow for a **template** subdirectory to easily test the template on your local machine.
