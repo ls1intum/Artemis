@@ -295,7 +295,8 @@ public class ProgrammingExerciseImportFromFileService {
      */
     private void checkDetailsJsonExists(Path path) throws IOException {
         try (Stream<Path> stream = Files.walk(path)) {
-            long count = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().startsWith(ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX))
+            long count = stream.filter(Files::isRegularFile)
+                    .filter(file -> file.getFileName().toString().startsWith(ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX))
                     .filter(file -> file.toString().endsWith(".json")).count();
 
             if (count == 0) {
