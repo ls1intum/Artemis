@@ -32,7 +32,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
@@ -55,7 +55,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
         NgClass,
         RouterLink,
         ExerciseUnitComponent,
-        AttachmentUnitComponent,
+        AttachmentVideoUnitComponent,
         VideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,

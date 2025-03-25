@@ -1,6 +1,6 @@
 import { FileService } from 'app/shared/http/file.service';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentType } from 'app/entities/attachment.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -29,8 +29,8 @@ describe('AttachmentUnitComponent', () => {
     let scienceService: ScienceService;
     let fileService: FileService;
 
-    let component: AttachmentUnitComponent;
-    let fixture: ComponentFixture<AttachmentUnitComponent>;
+    let component: AttachmentVideoUnitComponent;
+    let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
 
     const attachmentUnit: AttachmentVideoUnit = {
         id: 1,
@@ -46,7 +46,7 @@ describe('AttachmentUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [AttachmentUnitComponent],
+            imports: [AttachmentVideoUnitComponent],
             providers: [
                 provideHttpClient(),
                 {
@@ -61,7 +61,7 @@ describe('AttachmentUnitComponent', () => {
         scienceService = TestBed.inject(ScienceService);
         fileService = TestBed.inject(FileService);
 
-        fixture = TestBed.createComponent(AttachmentUnitComponent);
+        fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lectureUnit', attachmentUnit);

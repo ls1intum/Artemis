@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -82,7 +82,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(VideoUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(FaIconComponent),

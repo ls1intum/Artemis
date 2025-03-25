@@ -3,7 +3,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';

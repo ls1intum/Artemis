@@ -10,7 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -19,7 +19,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from './unit-creation-card/unit-creation-card.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
@@ -41,7 +41,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         UnitCreationCardComponent,
         CdkDropList,
         CdkDrag,
-        AttachmentUnitComponent,
+        AttachmentVideoUnitComponent,
         ExerciseUnitComponent,
         VideoUnitComponent,
         TextUnitComponent,

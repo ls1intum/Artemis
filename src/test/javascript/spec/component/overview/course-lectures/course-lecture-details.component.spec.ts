@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
@@ -20,7 +20,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -101,7 +101,7 @@ describe('CourseLectureDetailsComponent', () => {
             imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
             declarations: [
                 CourseLectureDetailsComponent,
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(VideoUnitComponent),

@@ -10,7 +10,7 @@ import { LectureService } from 'app/lecture/manage/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;

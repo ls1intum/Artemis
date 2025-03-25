@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/exercise.service';

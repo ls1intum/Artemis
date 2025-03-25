@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Exam } from 'app/entities/exam/exam.model';

@@ -22,7 +22,7 @@ import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';

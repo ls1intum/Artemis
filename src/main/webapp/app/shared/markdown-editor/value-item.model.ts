@@ -3,5 +3,5 @@ export type ValueItem = {
     value: string;
     type?: string;
     elements?: ValueItem[];
-    attachmentUnits?: ValueItem[];
+    attachmentVideoUnits?: ValueItem[];
 };

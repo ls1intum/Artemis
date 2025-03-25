@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, vie
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';

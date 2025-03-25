@@ -2,7 +2,7 @@ import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-pa
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -81,7 +81,7 @@ describe('LearningPathLectureUnitComponent', () => {
         })
             .overrideComponent(LearningPathLectureUnitComponent, {
                 remove: {
-                    imports: [VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, ExerciseUnitComponent, OnlineUnitComponent],
+                    imports: [VideoUnitComponent, TextUnitComponent, AttachmentVideoUnitComponent, ExerciseUnitComponent, OnlineUnitComponent],
                 },
             })
             .compileComponents();
