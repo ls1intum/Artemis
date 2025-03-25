@@ -1,5 +1,5 @@
 import { Component, OnInit, effect, inject, input } from '@angular/core';
-import { BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
+import { BuildJobStatistics, SpanType } from 'app/programming/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';

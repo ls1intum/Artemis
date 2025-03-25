@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
-import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
-import { WindFile } from 'app/entities/programming/wind.file';
-import { WindMetadata } from 'app/entities/programming/wind.metadata';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';
+import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
