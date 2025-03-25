@@ -779,13 +779,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void shouldIncludeDirectMessagesWhenFindingCourseWideMessagesUsingGetRequest() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("searchText", "SearchTest");
         params.add("courseWideChannelIds", "");
 
-        List<Post> resultPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        List<Post> resultPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
         assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
     }
