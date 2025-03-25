@@ -297,7 +297,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const lecturesWithDetails = lectures.map((lecture) => ({
                 id: lecture.id!,
                 title: lecture.title!,
-                attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
                 attachments: lecture.attachments?.map((attachment) => ({
                     ...attachment,
                     link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,

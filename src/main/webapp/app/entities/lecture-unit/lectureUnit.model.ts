@@ -8,7 +8,7 @@ import { faDownload, faLink, faQuestion, faScroll, faVideo } from '@fortawesome/
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java
 export enum LectureUnitType {
-    ATTACHMENT = 'attachment',
+    ATTACHMENT_VIDEO = 'attachment',
     EXERCISE = 'exercise',
     TEXT = 'text',
     VIDEO = 'video',
@@ -16,7 +16,7 @@ export enum LectureUnitType {
 }
 
 export const lectureUnitIcons = {
-    [LectureUnitType.ATTACHMENT]: faDownload,
+    [LectureUnitType.ATTACHMENT_VIDEO]: faDownload,
     [LectureUnitType.EXERCISE]: faQuestion,
     [LectureUnitType.TEXT]: faScroll,
     [LectureUnitType.VIDEO]: faVideo,
@@ -24,7 +24,7 @@ export const lectureUnitIcons = {
 };
 
 export const lectureUnitTooltips = {
-    [LectureUnitType.ATTACHMENT]: 'artemisApp.attachmentUnit.tooltip',
+    [LectureUnitType.ATTACHMENT_VIDEO]: 'artemisApp.attachmentVideoUnit.tooltip',
     [LectureUnitType.EXERCISE]: '',
     [LectureUnitType.TEXT]: 'artemisApp.textUnit.tooltip',
     [LectureUnitType.VIDEO]: 'artemisApp.videoUnit.tooltip',

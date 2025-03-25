@@ -24,7 +24,7 @@ export const metisAttachmentUnit = {
     name: 'Metis Attachment Unit',
     attachment: metisAttachment,
     slides: [metisSlide1],
-    type: LectureUnitType.ATTACHMENT,
+    type: LectureUnitType.ATTACHMENT_VIDEO,
 } as AttachmentVideoUnit;
 export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
 

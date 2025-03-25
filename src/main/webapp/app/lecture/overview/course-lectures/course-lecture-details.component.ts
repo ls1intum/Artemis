@@ -143,7 +143,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
                             this.hasPdfLectureUnit =
-                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT)).filter(
+                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }

@@ -102,7 +102,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
-        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT);
+        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT_VIDEO);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();

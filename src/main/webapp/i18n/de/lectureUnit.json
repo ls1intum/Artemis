@@ -178,7 +178,7 @@
                 "fileLimitation": "(max. Größe 20 MB)",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
-            "editAttachmentUnit": {
+            "editAttachmentVideoUnit": {
                 "title": "Bearbeite Dateieinheit"
             },
             "tooltip": "Das ist eine Datei",

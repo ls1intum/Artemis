@@ -101,7 +101,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
-        [LectureUnitType.ATTACHMENT]: 'attachment-units',
+        [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-units',
         [LectureUnitType.VIDEO]: 'video-units',
         [LectureUnitType.TEXT]: 'text-units',
         [LectureUnitType.ONLINE]: 'online-units',
@@ -205,7 +205,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
                 return 'artemisApp.exerciseUnit.delete.question';
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 return 'artemisApp.attachmentVideoUnit.delete.question';
             case LectureUnitType.VIDEO:
                 return 'artemisApp.videoUnit.delete.question';
@@ -222,7 +222,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit.type) {
             case LectureUnitType.EXERCISE:
                 return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 return 'artemisApp.attachmentVideoUnit.delete.typeNameToConfirm';
             case LectureUnitType.VIDEO:
                 return 'artemisApp.videoUnit.delete.typeNameToConfirm';
@@ -255,7 +255,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
         switch (lectureUnit!.type) {
-            case LectureUnitType.ATTACHMENT: {
+            case LectureUnitType.ATTACHMENT_VIDEO: {
                 const attachmentVideoUnit = <AttachmentVideoUnit>lectureUnit;
                 return attachmentVideoUnit.attachment?.link?.endsWith('.pdf') ?? false;
             }
@@ -266,7 +266,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     editButtonAvailable(lectureUnit: LectureUnit) {
         switch (lectureUnit?.type) {
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
             case LectureUnitType.TEXT:
             case LectureUnitType.VIDEO:
             case LectureUnitType.ONLINE:
@@ -291,7 +291,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     getAttachmentVersion(lectureUnit: LectureUnit) {
         switch (lectureUnit.type) {
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 return (<AttachmentVideoUnit>lectureUnit)?.attachment?.version || undefined;
             default:
                 return undefined;

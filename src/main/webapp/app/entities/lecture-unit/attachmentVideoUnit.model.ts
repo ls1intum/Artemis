@@ -10,7 +10,7 @@ export class AttachmentVideoUnit extends LectureUnit {
     public pyrisIngestionState?: IngestionState;
 
     constructor() {
-        super(LectureUnitType.ATTACHMENT);
+        super(LectureUnitType.ATTACHMENT_VIDEO);
     }
 }
 

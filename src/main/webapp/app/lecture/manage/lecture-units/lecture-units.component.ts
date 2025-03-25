@@ -105,7 +105,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             case LectureUnitType.ONLINE:
                 this.isOnlineUnitFormOpen.set(true);
                 break;
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 this.isAttachmentVideoUnitFormOpen.set(true);
                 break;
         }
@@ -286,7 +286,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.VIDEO);
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
         this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
-        this.isAttachmentVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT);
+        this.isAttachmentVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
 
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
@@ -312,7 +312,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                     source: this.currentlyProcessedOnlineUnit.source,
                 };
                 break;
-            case LectureUnitType.ATTACHMENT:
+            case LectureUnitType.ATTACHMENT_VIDEO:
                 this.attachmentVideoUnitFormData = {
                     formProperties: {
                         name: this.currentlyProcessedAttachmentVideoUnit.attachment!.name,

@@ -178,7 +178,7 @@
                 "fileLimitation": "(max. size 20 MB)",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },
-            "editAttachmentUnit": {
+            "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"
             },
             "tooltip": "This is a lecture attachment",

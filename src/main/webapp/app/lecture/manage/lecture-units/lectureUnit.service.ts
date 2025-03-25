@@ -58,7 +58,7 @@ export class LectureUnitService {
     }
 
     convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             if ((<AttachmentVideoUnit>lectureUnit).attachment) {
                 (<AttachmentVideoUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentDatesFromClient((<AttachmentVideoUnit>lectureUnit).attachment!);
                 return lectureUnit;
@@ -86,7 +86,7 @@ export class LectureUnitService {
 
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
-            if (res.body.type === LectureUnitType.ATTACHMENT) {
+            if (res.body.type === LectureUnitType.ATTACHMENT_VIDEO) {
                 if ((<AttachmentVideoUnit>res.body).attachment) {
                     (<AttachmentVideoUnit>res.body).attachment = this.attachmentService.convertAttachmentFromServer((<AttachmentVideoUnit>res.body).attachment);
                 }
@@ -103,7 +103,7 @@ export class LectureUnitService {
     }
 
     convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             if ((<AttachmentVideoUnit>lectureUnit).attachment) {
                 (<AttachmentVideoUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentFromServer((<AttachmentVideoUnit>lectureUnit).attachment);
             }
@@ -137,7 +137,7 @@ export class LectureUnitService {
     }
 
     getLectureUnitName(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             return (<AttachmentVideoUnit>lectureUnit)?.attachment?.name;
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return (<ExerciseUnit>lectureUnit)?.exercise?.title;
@@ -147,7 +147,7 @@ export class LectureUnitService {
     }
 
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             return (<AttachmentVideoUnit>lectureUnit)?.attachment?.releaseDate;
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate;

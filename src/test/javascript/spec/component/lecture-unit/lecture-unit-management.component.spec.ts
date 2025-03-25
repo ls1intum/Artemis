@@ -283,7 +283,7 @@ describe('LectureUnitManagementComponent', () => {
     describe('isViewButtonAvailable', () => {
         it('should return true for an attachment unit with a PDF link', () => {
             const lectureUnit = {
-                type: LectureUnitType.ATTACHMENT,
+                type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.pdf' },
             } as LectureUnit;
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
@@ -291,7 +291,7 @@ describe('LectureUnitManagementComponent', () => {
 
         it('should return false for file extension different than .pdf', () => {
             const lectureUnit = {
-                type: LectureUnitType.ATTACHMENT,
+                type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.txt' },
             };
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();

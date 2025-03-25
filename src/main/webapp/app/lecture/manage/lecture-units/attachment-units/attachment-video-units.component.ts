@@ -86,7 +86,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
         this.isProcessingMode = true;
 
         if (!this.file) {
-            this.alertService.error(this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.noFile`));
+            this.alertService.error(this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.noFile`));
             this.isLoading = true;
             return;
         }
@@ -220,46 +220,46 @@ export class AttachmentVideoUnitsComponent implements OnInit {
     validUnitInformation(): boolean {
         for (const unit of this.units) {
             if (!unit.unitName) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.empty.unitName`);
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.unitName`);
                 return false;
             }
 
             if (unit.startPage === null) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.empty.startPage`);
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.startPage`);
                 return false;
             }
 
             if (unit.endPage === null) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.empty.endPage`);
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.empty.endPage`);
                 return false;
             }
 
             if (unit.startPage < 1) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.startPage`);
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPage`);
                 return false;
             }
 
             if (unit.startPage > this.numberOfPages) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.startPageBigger`, {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.startPageBigger`, {
                     max: this.numberOfPages ?? '',
                 });
                 return false;
             }
 
             if (unit.endPage < 1) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.endPageLower`);
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPageLower`);
                 return false;
             }
 
             if (unit.endPage > this.numberOfPages) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.endPage`, {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.endPage`, {
                     max: this.numberOfPages ?? '',
                 });
                 return false;
             }
 
             if (unit.startPage > unit.endPage) {
-                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentVideoUnits.validation.invalidPages`, {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.validation.invalidPages`, {
                     unitName: unit.unitName ?? '',
                 });
                 return false;

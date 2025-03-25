@@ -58,7 +58,7 @@
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
                                     }
-                                    @case (LectureUnitType.ATTACHMENT) {
+                                    @case (LectureUnitType.ATTACHMENT_VIDEO) {
                                         <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.VIDEO) {

@@ -61,7 +61,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                         return {
                             id: lecture.id!,
                             title: lecture.title!,
-                            attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                            attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
                             attachments: attachmentsWithFileUrls,
                         };
                     });

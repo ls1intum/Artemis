@@ -15,7 +15,7 @@
                 @case (LectureUnitType.TEXT) {
                     <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
-                @case (LectureUnitType.ATTACHMENT) {
+                @case (LectureUnitType.ATTACHMENT_VIDEO) {
                     <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
                 }
                 @case (LectureUnitType.EXERCISE) {
