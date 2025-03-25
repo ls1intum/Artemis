@@ -71,7 +71,7 @@
             },
             "overview": {
                 "title": "Nachrichten",
-                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen (Strg/Cmd + K)",
+                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen, Direkt-Chats und Gruppen (Strg/Cmd + K)",
                 "sortedByDate": "Sortiert nach Datum",
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
