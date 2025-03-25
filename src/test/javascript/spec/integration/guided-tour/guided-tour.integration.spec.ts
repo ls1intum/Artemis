@@ -24,6 +24,25 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+
+class MockFeatureToggleService implements Partial<FeatureToggleService> {
+    private featureToggles = new Map<FeatureToggle, boolean>();
+
+    constructor() {
+        Object.values(FeatureToggle).forEach((toggle) => {
+            this.featureToggles.set(toggle, false);
+        });
+    }
+
+    getFeatureToggleActive(feature: FeatureToggle) {
+        return of(this.featureToggles.get(feature) || false);
+    }
+
+    setMockFeatureToggle(feature: FeatureToggle, active: boolean) {
+        this.featureToggles.set(feature, active);
+    }
+}
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -37,6 +56,7 @@ describe('Guided tour integration', () => {
     let footerComponentFixture: ComponentFixture<FooterComponent>;
     let guidedTourService: GuidedTourService;
     let exerciseService: ExerciseService;
+    let featureToggleService: MockFeatureToggleService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -49,10 +69,15 @@ describe('Guided tour integration', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+
+        featureToggleService.setMockFeatureToggle(FeatureToggle.CourseSpecificNotifications, false);
 
         guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);
         courseCardComponentFixture = TestBed.createComponent(CourseCardComponent);

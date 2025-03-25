@@ -1,4 +1,4 @@
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 /**
  * calculate the maximal  possible Score for the quiz

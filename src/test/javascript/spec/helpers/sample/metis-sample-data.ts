@@ -14,7 +14,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
