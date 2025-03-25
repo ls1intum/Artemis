@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, effect, inject, input } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -106,6 +106,8 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly PlagiarismVerdict = PlagiarismVerdict;
 
+    studentExam = input.required<StudentExam>();
+
     faFolderOpen = faFolderOpen;
     faInfoCircle = faInfoCircle;
     faPrint = faPrint;
@@ -113,26 +115,8 @@ export class ExamResultSummaryComponent implements OnInit {
     faEyeSlash = faEyeSlash;
     faArrowUp = faArrowUp;
 
-    /**
-     * Current student's exam.
-     */
-    private _studentExam: StudentExam;
-
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
     exampleSolutionPublished = false;
-
-    get studentExam(): StudentExam {
-        return this._studentExam;
-    }
-
-    @Input()
-    set studentExam(studentExam: StudentExam) {
-        this._studentExam = studentExam;
-        if (this.studentExamGradeInfoDTO) {
-            this.studentExamGradeInfoDTO.studentExam = studentExam;
-        }
-        this.tryLoadPlagiarismCaseInfosForStudent();
-    }
 
     /**
      * Grade info for current student's exam.
@@ -181,31 +165,31 @@ export class ExamResultSummaryComponent implements OnInit {
     ngOnInit(): void {
         // flags required to display test runs correctly
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-        this.isTestExam = this.studentExam.exam!.testExam!;
+        this.isTestExam = this.studentExam().exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
+        this.testExamConduction = this.isTestExam && !this.studentExam().submitted;
         this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
-        if (!this.studentExam?.id) {
+        if (!this.studentExam().id) {
             throw new Error('studentExam.id should be present to fetch grade info');
         }
-        if (!this.studentExam?.exam?.id) {
+        if (!this.studentExam().exam?.id) {
             throw new Error('studentExam.exam.id should be present to fetch grade info');
         }
-        if (!this.studentExam?.user?.id) {
+        if (!this.studentExam().user?.id) {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
+        if (isExamResultPublished(this.isTestRun, this.studentExam().exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.id, this.studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam().exam!.id!, this.studentExam().id!, this.studentExam().user!.id!)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                    studentExamWithGrade.studentExam = this.studentExam;
+                    studentExamWithGrade.studentExam = this.studentExam();
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
                     this.exerciseInfos = this.getExerciseInfos(studentExamWithGrade);
                 });
         }
 
-        this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
+        this.exampleSolutionPublished = !!this.studentExam().exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam().exam?.exampleSolutionPublicationDate);
 
         this.exerciseInfos = this.getExerciseInfos();
 
@@ -213,6 +197,18 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
         this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
+    }
+
+    constructor() {
+        effect(() => {
+            const exam = this.studentExam();
+
+            // replicate the setter logic
+            if (this.studentExamGradeInfoDTO) {
+                this.studentExamGradeInfoDTO.studentExam = exam;
+            }
+            this.tryLoadPlagiarismCaseInfosForStudent();
+        });
     }
 
     get resultsArePublished(): boolean | any {
@@ -224,8 +220,8 @@ export class ExamResultSummaryComponent implements OnInit {
             return false;
         }
 
-        if (this.studentExam?.exam?.publishResultsDate) {
-            return dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
+        if (this.studentExam().exam?.publishResultsDate) {
+            return dayjs(this.studentExam().exam?.publishResultsDate).isBefore(dayjs());
         }
 
         return false;
@@ -234,14 +230,14 @@ export class ExamResultSummaryComponent implements OnInit {
     private tryLoadPlagiarismCaseInfosForStudent() {
         // If the exam has not yet ended, or we're only a few minutes after the end, we can assume that there are no plagiarism cases yet.
         // We should avoid trying to load them to reduce server load.
-        if (this.studentExam?.exam?.endDate) {
-            const endDateWithTimeExtension = dayjs(this.studentExam.exam.endDate).add(2, 'hours');
+        if (this.studentExam().exam?.endDate) {
+            const endDateWithTimeExtension = dayjs(this.studentExam().exam?.endDate).add(2, 'hours');
             if (dayjs().isBefore(endDateWithTimeExtension)) {
                 return;
             }
         }
 
-        const exerciseIds = this.studentExam?.exercises?.map((exercise) => exercise.id!);
+        const exerciseIds = this.studentExam().exercises?.map((exercise) => exercise.id!);
         if (exerciseIds?.length && this.courseId) {
             this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {
                 this.plagiarismCaseInfos = res.body ?? {};
@@ -335,10 +331,10 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     setExamWithOnlyIdAndStudentReviewPeriod() {
         const exam = new Exam();
-        exam.id = this.studentExam?.exam?.id;
-        exam.examStudentReviewStart = this.studentExam?.exam?.examStudentReviewStart;
-        exam.examStudentReviewEnd = this.studentExam?.exam?.examStudentReviewEnd;
-        exam.course = this.studentExam?.exam?.course;
+        exam.id = this.studentExam().exam?.id;
+        exam.examStudentReviewStart = this.studentExam().exam?.examStudentReviewStart;
+        exam.examStudentReviewEnd = this.studentExam().exam?.examStudentReviewEnd;
+        exam.course = this.studentExam().exam?.course;
         this.examWithOnlyIdAndStudentReviewPeriod = exam;
     }
 
@@ -346,8 +342,8 @@ export class ExamResultSummaryComponent implements OnInit {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
-        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
+        if (this.studentExam().exam?.examStudentReviewStart && this.studentExam().exam?.examStudentReviewEnd) {
+            return this.serverDateService.now().isAfter(this.studentExam().exam!.examStudentReviewStart);
         }
         return false;
     }
@@ -356,15 +352,15 @@ export class ExamResultSummaryComponent implements OnInit {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
-        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
+        if (this.studentExam().exam?.examStudentReviewStart && this.studentExam().exam?.examStudentReviewEnd) {
+            return this.serverDateService.now().isBefore(this.studentExam().exam!.examStudentReviewEnd);
         }
         return false;
     }
 
     private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
         const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
-        for (const exercise of this.studentExam?.exercises ?? []) {
+        for (const exercise of this.studentExam().exercises ?? []) {
             if (exercise.id === undefined) {
                 this.alertService.error('artemisApp.exam.error.cannotDisplayExerciseDetails', { exerciseGroupTitle: exercise.exerciseGroup?.title });
                 const errorMessage = 'Cannot getExerciseInfos as exerciseId is undefined';
