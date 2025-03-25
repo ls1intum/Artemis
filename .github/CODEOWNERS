@@ -7,8 +7,65 @@
 # Each line is a file pattern followed by one or more owners.
 
 # These owners will be the default owners for everything in the repo.
-# Unless a later match takes precedence, @krusche and @jpbernius will be
+# Unless a later match takes precedence, @krusche will be
 # requested for review when someone opens a pull request.
 
-*    @ls1intum/artemis-maintainers
+* @krusche
+
+# Server code
+/src/main/java/de/tum/cit/aet/artemis/athena         @ls1intum/athena-maintainers
+/src/main/java/de/tum/cit/aet/artemis/atlas          @ls1intum/atlas-maintainers
+/src/main/java/de/tum/cit/aet/artemis/buildagent     @ls1intum/programming-maintainers
+/src/main/java/de/tum/cit/aet/artemis/communication  @ls1intum/communication-maintainers
+/src/main/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
+/src/main/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
+/src/main/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
+/src/main/java/de/tum/cit/aet/artemis/modeling       @ls1intum/apollon-maintainers
+/src/main/java/de/tum/cit/aet/artemis/plagiarism     @ls1intum/plagiarism-maintainers
+/src/main/java/de/tum/cit/aet/artemis/programming    @ls1intum/programming-maintainers
+/src/main/java/de/tum/cit/aet/artemis/quiz           @ls1intum/quiz-maintainers
+
+# Client code
+/src/main/webapp/app/atlas          @ls1intum/atlas-maintainers
+/src/main/webapp/app/buildagent     @ls1intum/programming-maintainers
+/src/main/webapp/app/communication  @ls1intum/communication-maintainers
+/src/main/webapp/app/iris           @ls1intum/iris-maintainers
+/src/main/webapp/app/lecture        @ls1intum/lectures-maintainers
+/src/main/webapp/app/lti            @ls1intum/lti-maintainers
+/src/main/webapp/app/modeling       @ls1intum/apollon-maintainers
+/src/main/webapp/app/plagiarism     @ls1intum/plagiarism-maintainers
+/src/main/webapp/app/programming    @ls1intum/programming-maintainers
+/src/main/webapp/app/quiz           @ls1intum/quiz-maintainers
+
+# Server tests
+/src/test/java/de/tum/cit/aet/artemis/athena         @ls1intum/athena-maintainers
+/src/test/java/de/tum/cit/aet/artemis/atlas          @ls1intum/atlas-maintainers
+/src/test/java/de/tum/cit/aet/artemis/buildagent     @ls1intum/programming-maintainers
+/src/test/java/de/tum/cit/aet/artemis/communication  @ls1intum/communication-maintainers
+/src/test/java/de/tum/cit/aet/artemis/iris           @ls1intum/iris-maintainers
+/src/test/java/de/tum/cit/aet/artemis/lecture        @ls1intum/lectures-maintainers
+/src/test/java/de/tum/cit/aet/artemis/lti            @ls1intum/lti-maintainers
+/src/test/java/de/tum/cit/aet/artemis/modeling       @ls1intum/apollon-maintainers
+/src/test/java/de/tum/cit/aet/artemis/plagiarism     @ls1intum/plagiarism-maintainers
+/src/test/java/de/tum/cit/aet/artemis/programming    @ls1intum/programming-maintainers
+/src/test/java/de/tum/cit/aet/artemis/quiz           @ls1intum/quiz-maintainers
+
+# Client tests
+/src/test/javascript/spec/component/exercises/programming       @ls1intum/programming-maintainers
+/src/test/javascript/spec/component/exercises/quiz              @ls1intum/quiz-maintainers
+/src/test/javascript/spec/component/iris                        @ls1intum/iris-maintainers
+/src/test/javascript/spec/component/lecture                     @ls1intum/lectures-maintainers
+/src/test/javascript/spec/component/lecture-unit                @ls1intum/lectures-maintainers
+/src/test/javascript/spec/component/modeling-assessment         @ls1intum/apollon-maintainers
+/src/test/javascript/spec/component/modeling-assessment-editor  @ls1intum/apollon-maintainers
+/src/test/javascript/spec/component/modeling-editor             @ls1intum/apollon-maintainers
+/src/test/javascript/spec/component/modeling-exercise           @ls1intum/apollon-maintainers
+/src/test/javascript/spec/component/modeling-explanation-editor @ls1intum/apollon-maintainers
+/src/test/javascript/spec/component/modeling-submission         @ls1intum/apollon-maintainers
+/src/test/javascript/spec/component/plagiarism                  @ls1intum/plagiarism-maintainers
+/src/test/javascript/spec/component/programming-assessment      @ls1intum/programming-maintainers
+/src/test/javascript/spec/component/programming-exercise        @ls1intum/programming-maintainers
+/src/test/javascript/spec/component/quiz-exercise               @ls1intum/quiz-maintainers
+/src/test/javascript/spec/component/quiz-statistic              @ls1intum/quiz-maintainers
+/src/test/javascript/spec/component/short-answer-question       @ls1intum/quiz-maintainers
 
