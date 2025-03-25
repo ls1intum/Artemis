@@ -7,7 +7,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
-import { EditAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component';
+import { EditAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-video-unit.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -23,7 +23,7 @@ import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditAttachmentUnitComponent', () => {
-    let fixture: ComponentFixture<EditAttachmentUnitComponent>;
+    let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
 
     let attachmentUnitService;
     let router: Router;
@@ -77,7 +77,7 @@ describe('EditAttachmentUnitComponent', () => {
             ],
             schemas: [],
         }).compileComponents();
-        fixture = TestBed.createComponent(EditAttachmentUnitComponent);
+        fixture = TestBed.createComponent(EditAttachmentVideoUnitComponent);
         router = TestBed.inject(Router);
         attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
 

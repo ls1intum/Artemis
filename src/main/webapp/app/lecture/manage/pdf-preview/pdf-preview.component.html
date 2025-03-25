@@ -6,8 +6,8 @@
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
                     @if (attachment()) {
                         {{ attachment()!.id! }}: {{ attachment()!.name! }}
-                    } @else if (attachmentUnit()) {
-                        {{ attachmentUnit()!.id! }}: {{ attachmentUnit()!.name! }}
+                    } @else if (attachmentVideoUnit()) {
+                        {{ attachmentVideoUnit()!.id! }}: {{ attachmentVideoUnit()!.name! }}
                     }
                 </h4>
                 @if (isPdfLoading()) {
@@ -58,7 +58,7 @@
                     [routerLink]="
                         attachment()
                             ? ['/course-management', course()!.id, 'lectures', attachment()!.lecture!.id, 'attachments']
-                            : ['/course-management', course()!.id, 'lectures', attachmentUnit()!.lecture!.id, 'unit-management']
+                            : ['/course-management', course()!.id, 'lectures', attachmentVideoUnit()!.lecture!.id, 'unit-management']
                     "
                     [ngbTooltip]="'entity.action.view' | artemisTranslate"
                 >

@@ -74,7 +74,8 @@ export const lectureUnitRoute: Routes = [
             },
             {
                 path: 'attachment-units/:attachmentUnitId/edit',
-                loadComponent: () => import('app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component').then((m) => m.EditAttachmentUnitComponent),
+                loadComponent: () =>
+                    import('app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-video-unit.component').then((m) => m.EditAttachmentVideoUnitComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
