@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -298,6 +299,49 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         quizExercise = quizExerciseService.save(quizExercise);
 
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @EnumSource
+    void testQuizStartParticipationCorrectDataWhileActive_asStudent(QuizMode quizMode) throws Exception {
+        var quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(20), ZonedDateTime.now().plusHours(1), quizMode);
+        quizExercise.setDuration(500);
+        quizExercise = exerciseRepository.save(quizExercise);
+
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+        if (quizMode != QuizMode.SYNCHRONIZED) {
+            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()), QuizBatch.class, HttpStatus.OK);
+        }
+        var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(participation).isNotNull();
+        Exercise exercise = participation.getExercise();
+        assertThat(exercise).isNotNull();
+        assertThat(exercise).isInstanceOf(QuizExercise.class);
+
+        QuizExercise quizExerciseFromParticipation = (QuizExercise) exercise;
+        List<QuizQuestion> questions = quizExerciseFromParticipation.getQuizQuestions();
+        assertThat(questions).isNotNull();
+        assertThat(questions).hasSize(3);
+        assertThat(questions.get(0)).isInstanceOf(MultipleChoiceQuestion.class);
+        assertThat(questions.get(1)).isInstanceOf(DragAndDropQuestion.class);
+        assertThat(questions.get(2)).isInstanceOf(ShortAnswerQuestion.class);
+
+        MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) questions.get(0);
+        for (var answerOption : mcQuestion.getAnswerOptions()) {
+            assertThat(answerOption.getExplanation()).isNull();
+            assertThat(answerOption.isIsCorrect()).isNull();
+        }
+
+        DragAndDropQuestion dndQuestion = (DragAndDropQuestion) questions.get(1);
+        assertThat(dndQuestion.getCorrectMappings()).hasSize(0);
+
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) questions.get(2);
+        assertThat(saQuestion.getCorrectMappings()).hasSize(0);
     }
 
     @Test

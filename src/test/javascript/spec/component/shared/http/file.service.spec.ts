@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { v4 as uuid } from 'uuid';
 import { provideHttpClient } from '@angular/common/http';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 jest.mock('uuid', () => ({
     v4: jest.fn(),

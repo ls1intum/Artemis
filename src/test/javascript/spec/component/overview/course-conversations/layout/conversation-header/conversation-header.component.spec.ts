@@ -13,7 +13,7 @@ import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
-import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
+import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';

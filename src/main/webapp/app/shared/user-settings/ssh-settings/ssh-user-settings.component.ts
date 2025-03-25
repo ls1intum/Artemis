@@ -4,16 +4,16 @@ import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { TranslateDirective } from '../../language/translate.directive';
-import { DocumentationLinkComponent } from '../../components/documentation-link/documentation-link.component';
 import { RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 @Component({
     selector: 'jhi-account-information',

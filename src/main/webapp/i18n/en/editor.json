@@ -129,9 +129,6 @@
                 "templateInfo": "No result found for the Template Repository.",
                 "exerciseHasNoIssues": "No issues were identified in the repositories."
             },
-            "orion": {
-                "testLocally": "Test Locally"
-            },
             "switchEditors": "Switch code editor"
         }
     }

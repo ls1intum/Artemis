@@ -49,16 +49,47 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running...","target_url":"${{ env.TARGET_URL }}"}'
+
+      # Save the triggering workflow information as an artifact for later reference
+      - name: Save triggering workflow info
+        run: |
+          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
+          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
+          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
+          cat workflow-context.txt
+
+      - name: Upload workflow context
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-context
+          path: workflow-context.txt
+
+      # Add a notice in this workflow run's timeline showing which Build workflow triggered it
+      # This helps developers navigate between related workflow runs
+      - name: Add link to triggering workflow
+        run: |
+          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
+
       - name: Git Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
-      - name: Download Artemis.war
+      - name: Download Docker tag
         uses: actions/download-artifact@v4
         with:
-          name: Artemis.war
+          name: docker-tag
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+      - name: Set Docker Tag Environment Variable
+        run: |
+          if [ -f "docker-tag.txt" ]; then
+            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
+            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
+            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
+          else
+            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
+            exit 1
+          fi
 
       - name: Make scripts executable
         run: |
@@ -70,14 +101,14 @@ jobs:
 
       # If the workflow is triggered by a pull request, we need to run the tests on single node Artemis instance.
       - name: Run E2E Playwright tests (MySQL, Local)
-        if: ${{ github.event.workflow_run.pull_requests != null && github.event.workflow_run.pull_requests.length > 0 }}
+        if: ${{ github.event.workflow_run.event == 'pull_request' }}
         run: .ci/E2E-tests/execute.sh mysql-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
-      # If the workflow is triggered by a push to a branch (e.g. develop, main), we need to run the tests on multi-node Artemis instance.
+      # If the workflow is triggered other events (by a push to a branch e.g. develop, main, or release), we need to run the tests on multi-node Artemis instance.
       - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
-        if: ${{ github.event.workflow_run.pull_requests == null || github.event.workflow_run.pull_requests.length == 0 }}
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
         run: .ci/E2E-tests/execute.sh multi-node playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 75
