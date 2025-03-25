@@ -7,7 +7,6 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';

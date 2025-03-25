@@ -6,18 +6,15 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismMatch, SimpleMatch } from 'app/plagiarism/shared/entities/PlagiarismMatch';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ModelingSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/modeling-submission-viewer/modeling-submission-viewer.component';
 import { TextSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -36,7 +33,6 @@ describe('Plagiarism Split View Component', () => {
     let fixture: ComponentFixture<PlagiarismSplitViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
 
-    const modelingExercise = { id: 123, type: ExerciseType.MODELING } as ModelingExercise;
     const textExercise = { id: 234, type: ExerciseType.TEXT, course: { id: 1 } } as TextExercise;
     const splitControlSubject = new Subject<string>();
 
@@ -56,7 +52,7 @@ describe('Plagiarism Split View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(ModelingSubmissionViewerComponent), MockComponent(TextSubmissionViewerComponent)],
+            declarations: [PlagiarismSplitViewComponent, MockPipe(ArtemisDatePipe), MockComponent(TextSubmissionViewerComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         }).compileComponents();
 
@@ -76,22 +72,12 @@ describe('Plagiarism Split View Component', () => {
         jest.resetAllMocks();
     });
 
-    it('checks type of modeling exercise', () => {
-        comp.ngOnChanges({
-            exercise: { currentValue: modelingExercise } as SimpleChange,
-        });
-
-        expect(comp.isModelingExercise).toBeTrue();
-        expect(comp.isProgrammingOrTextExercise).toBeFalse();
-    });
-
     it('checks type of text exercise', () => {
         comp.ngOnChanges({
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
         expect(comp.isProgrammingOrTextExercise).toBeTrue();
-        expect(comp.isModelingExercise).toBeFalse();
     });
 
     it('should parse text matches for comparison', fakeAsync(() => {
@@ -108,7 +94,6 @@ describe('Plagiarism Split View Component', () => {
         tick();
 
         expect(comp.isProgrammingOrTextExercise).toBeTrue();
-        expect(comp.isModelingExercise).toBeFalse();
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     }));
 
@@ -146,16 +131,6 @@ describe('Plagiarism Split View Component', () => {
         comp.handleSplitControl('even');
 
         expect(setSizes).toHaveBeenCalledWith([50, 50]);
-    });
-
-    it('should get the first modeling submission', () => {
-        const modelingSubmissionA = comp.getModelingSubmissionA();
-        expect(modelingSubmissionA).toEqual(submissionA);
-    });
-
-    it('should get the second modeling submission', () => {
-        const modelingSubmissionB = comp.getModelingSubmissionB();
-        expect(modelingSubmissionB).toEqual(submissionB);
     });
 
     it('should get the first text submission', () => {
