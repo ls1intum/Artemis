@@ -5,7 +5,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -24,6 +23,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/p
 import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 
 export interface DetailOverviewSection {
     headline: string;

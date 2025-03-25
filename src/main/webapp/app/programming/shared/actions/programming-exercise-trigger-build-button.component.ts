@@ -8,7 +8,7 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/participat
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
