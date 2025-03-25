@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
-import { AttachmentUnitResolve } from 'app/lecture/manage/lecture-units/lecture-unit-management-resolve.service';
+import { AttachmentVideoUnitResolve } from 'app/lecture/manage/lecture-units/lecture-unit-management-resolve.service';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -86,7 +86,7 @@ export const lectureUnitRoute: Routes = [
                 loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                 resolve: {
                     course: CourseManagementResolve,
-                    attachmentUnit: AttachmentUnitResolve,
+                    attachmentUnit: AttachmentVideoUnitResolve,
                 },
             },
             {

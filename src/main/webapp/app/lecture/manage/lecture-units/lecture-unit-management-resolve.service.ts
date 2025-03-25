@@ -8,16 +8,16 @@ import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.mo
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 
 @Injectable({ providedIn: 'root' })
-export class AttachmentUnitResolve implements Resolve<AttachmentVideoUnit> {
-    private attachmentUnitService = inject(AttachmentVideoUnitService);
+export class AttachmentVideoUnitResolve implements Resolve<AttachmentVideoUnit> {
+    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<AttachmentVideoUnit> {
         const lectureId = route.params['lectureId'];
-        const attachmentUnitId = route.params['attachmentUnitId'];
-        if (attachmentUnitId) {
-            return this.attachmentUnitService.findById(attachmentUnitId, lectureId).pipe(
+        const attachmentVideoUnitId = route.params['attachmentUnitId'];
+        if (attachmentVideoUnitId) {
+            return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, lectureId).pipe(
                 filter((response: HttpResponse<AttachmentVideoUnit>) => response.ok),
-                map((attachmentUnit: HttpResponse<AttachmentVideoUnit>) => attachmentUnit.body!),
+                map((attachmentVideoUnit: HttpResponse<AttachmentVideoUnit>) => attachmentVideoUnit.body!),
             );
         }
         return of(new AttachmentVideoUnit());
