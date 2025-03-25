@@ -11,7 +11,7 @@ import {
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
+import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-feedback-groups';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';

@@ -14,7 +14,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +24,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { ProgrammingExerciseTheiaConfig } from 'app/entities/programming/programming-exercise-theia.config';
+import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
