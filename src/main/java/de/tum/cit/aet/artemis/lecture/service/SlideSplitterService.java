@@ -219,7 +219,8 @@ public class SlideSplitterService {
                 }));
             }
             catch (Exception e) {
-                log.warn("Failed to parse hidden pages data: {}", e.getMessage());
+                log.error("Failed to parse hidden pages data: {}", e.getMessage(), e);
+                throw new InternalServerErrorException("Could not parse hidden pages data: " + e.getMessage());
             }
         }
 
@@ -335,10 +336,12 @@ public class SlideSplitterService {
                 }
                 else {
                     log.warn("Could not find existing slide file at path: {}", originalPath);
+                    throw new InternalServerErrorException("Could not find existing slide file at path: " + originalPath);
                 }
             }
             catch (IOException e) {
                 log.error("Failed to update slide image for reordering", e);
+                throw new InternalServerErrorException("Failed to update slide image for reordering: " + e.getMessage());
             }
         }
     }
