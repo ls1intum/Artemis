@@ -67,6 +67,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
     constructor() {
         this.setupErrorHandling().then(undefined);
+
+        /* eslint-disable no-undef */
+        if (!window.PublicKeyCredential) {
+            console.info('WebAuthn NOT supported by this browser');
+        } else {
+            console.info('WebAuthn supported by this browser');
+        }
+        /* eslint-enable no-undef */
     }
 
     private async setupErrorHandling() {
