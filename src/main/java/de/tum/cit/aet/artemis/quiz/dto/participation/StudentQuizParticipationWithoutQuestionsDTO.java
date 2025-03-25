@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.quiz.dto.result.ResultBeforeEvaluationDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentQuizParticipationWithoutQuestionsDTO(@JsonUnwrapped StudentQuizParticipationBaseDTO studentQuizParticipationBaseDTO, QuizExerciseWithoutQuestionsDTO exercise,
-        Set<ResultBeforeEvaluationDTO> results) implements StudentQuizParticipation {
+        Set<ResultBeforeEvaluationDTO> results) implements StudentQuizParticipationDTO {
 
     /**
      * Creates a StudentQuizParticipationWithoutQuestionsDTO object from a StudentParticipation object.

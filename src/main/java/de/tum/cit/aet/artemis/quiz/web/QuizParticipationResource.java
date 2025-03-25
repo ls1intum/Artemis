@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipation;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
@@ -76,7 +76,7 @@ public class QuizParticipationResource {
      */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<StudentQuizParticipation> startParticipation(@PathVariable Long exerciseId) {
+    public ResponseEntity<StudentQuizParticipationDTO> startParticipation(@PathVariable Long exerciseId) {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
@@ -105,7 +105,7 @@ public class QuizParticipationResource {
         participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
-        StudentQuizParticipation responseDTO;
+        StudentQuizParticipationDTO responseDTO;
         if (exercise.isQuizEnded()) {
             responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
         }
