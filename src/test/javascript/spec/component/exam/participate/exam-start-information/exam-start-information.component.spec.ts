@@ -162,8 +162,10 @@ describe('ExamStartInformationComponent', () => {
     it('should initialize start date of the test exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
         exam.testExam = true;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.studentExam = input(studentExam);
+        });
         fixture.detectChanges();
         expect(component.startDate).toStrictEqual(examStartDate);
     });
@@ -171,8 +173,10 @@ describe('ExamStartInformationComponent', () => {
     it('should initialize end date of the test exam correctly', () => {
         const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
         exam.testExam = true;
-        component.exam = exam;
-        component.studentExam = studentExam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.studentExam = input(studentExam);
+        });
         fixture.detectChanges();
         expect(component.endDate).toStrictEqual(examEndDate);
     });
