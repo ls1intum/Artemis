@@ -81,8 +81,8 @@ describe('CourseLectureDetailsComponent', () => {
         lecture.title = 'Test lecture';
         lecture.course = course;
 
-        lectureUnit1 = getAttachmentUnit(lecture, 1, releaseDate);
-        lectureUnit2 = getAttachmentUnit(lecture, 2, releaseDate);
+        lectureUnit1 = getAttachmentVideoUnit(lecture, 1, releaseDate);
+        lectureUnit2 = getAttachmentVideoUnit(lecture, 2, releaseDate);
 
         lectureUnit3 = new TextUnit();
         lectureUnit3.id = 3;
@@ -178,9 +178,9 @@ describe('CourseLectureDetailsComponent', () => {
     it('should display all three lecture units: 2 attachment units and 1 text unit', fakeAsync(() => {
         fixture.detectChanges();
 
-        const attachmentUnits = debugElement.queryAll(By.css('jhi-attachment-unit'));
+        const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-unit'));
         const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
-        expect(attachmentUnits).toHaveLength(2);
+        expect(attachmentVideoUnits).toHaveLength(2);
         expect(textUnits).toHaveLength(1);
     }));
 
@@ -237,7 +237,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should check attachment release date', fakeAsync(() => {
-        const attachment = getAttachmentUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
 
         expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeTrue();
 
@@ -249,7 +249,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should get the attachment extension', fakeAsync(() => {
-        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
         expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('pdf');
 
@@ -284,7 +284,7 @@ describe('CourseLectureDetailsComponent', () => {
     it('should download file for attachment', fakeAsync(() => {
         const fileService = TestBed.inject(FileService);
         const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
-        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
         courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
 
@@ -321,7 +321,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 });
 
-const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {
+const getAttachmentVideoUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {
     const attachment = new Attachment();
     attachment.id = id;
     attachment.version = 1;
@@ -331,12 +331,12 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
 
-    const attachmentUnit = new AttachmentVideoUnit();
-    attachmentUnit.id = id;
-    attachmentUnit.name = 'Unit 1';
-    attachmentUnit.releaseDate = attachment.releaseDate;
-    attachmentUnit.lecture = lecture;
-    attachmentUnit.attachment = attachment;
-    attachment.attachmentVideoUnit = attachmentUnit;
-    return attachmentUnit;
+    const attachmentVideoUnit = new AttachmentVideoUnit();
+    attachmentVideoUnit.id = id;
+    attachmentVideoUnit.name = 'Unit 1';
+    attachmentVideoUnit.releaseDate = attachment.releaseDate;
+    attachmentVideoUnit.lecture = lecture;
+    attachmentVideoUnit.attachment = attachment;
+    attachment.attachmentVideoUnit = attachmentVideoUnit;
+    return attachmentVideoUnit;
 };

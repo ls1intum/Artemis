@@ -56,7 +56,7 @@ describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let attachmentServiceMock: any;
-    let attachmentUnitServiceMock: any;
+    let attachmentVideoUnitServiceMock: any;
     let lectureUnitServiceMock: any;
     let alertServiceMock: any;
     let routeMock: any;
@@ -68,7 +68,7 @@ describe('PdfPreviewComponent', () => {
             update: jest.fn().mockReturnValue(of({})),
             delete: jest.fn().mockReturnValue(of({})),
         };
-        attachmentUnitServiceMock = {
+        attachmentVideoUnitServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
             update: jest.fn().mockReturnValue(of({})),
             delete: jest.fn().mockReturnValue(of({})),
@@ -94,7 +94,7 @@ describe('PdfPreviewComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },
-                { provide: AttachmentVideoUnitService, useValue: attachmentUnitServiceMock },
+                { provide: AttachmentVideoUnitService, useValue: attachmentVideoUnitServiceMock },
                 { provide: LectureUnitService, useValue: lectureUnitServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -121,7 +121,7 @@ describe('PdfPreviewComponent', () => {
         it('should load attachment file and verify service calls when attachment data is available', () => {
             component.ngOnInit();
             expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
-            expect(attachmentUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
+            expect(attachmentVideoUnitServiceMock.getAttachmentFile).not.toHaveBeenCalled();
         });
 
         it('should load attachment unit file and verify service calls when attachment unit data is available', () => {
@@ -130,7 +130,7 @@ describe('PdfPreviewComponent', () => {
                 attachmentUnit: { id: 1, name: 'Chapter 1' },
             });
             component.ngOnInit();
-            expect(attachmentUnitServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
+            expect(attachmentVideoUnitServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
             expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalled();
         });
 
@@ -162,8 +162,8 @@ describe('PdfPreviewComponent', () => {
                 error: 'File not found',
             });
 
-            const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
-            jest.spyOn(attachmentUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            jest.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
             const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
 
             component.ngOnInit();
@@ -180,7 +180,7 @@ describe('PdfPreviewComponent', () => {
             expect(spySub).toHaveBeenCalled();
         });
 
-        it('should unsubscribe attachmentUnit subscription during component destruction', () => {
+        it('should unsubscribe attachmentVideoUnit subscription during component destruction', () => {
             routeMock.data = of({
                 course: { id: 1, name: 'Example Course' },
                 attachmentUnit: { id: 1, name: 'Chapter 1' },
@@ -242,11 +242,11 @@ describe('PdfPreviewComponent', () => {
                 lecture: { id: 1 },
                 attachment: { id: 1, version: 1 },
             });
-            attachmentUnitServiceMock.update.mockReturnValue(of({}));
+            attachmentVideoUnitServiceMock.update.mockReturnValue(of({}));
 
             component.updateAttachmentWithFile();
 
-            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+            expect(attachmentVideoUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
             expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
         });
 
@@ -258,11 +258,11 @@ describe('PdfPreviewComponent', () => {
                 attachment: { id: 1, version: 1 },
             });
             const errorResponse = { message: 'Update failed' };
-            attachmentUnitServiceMock.update.mockReturnValue(throwError(() => errorResponse));
+            attachmentVideoUnitServiceMock.update.mockReturnValue(throwError(() => errorResponse));
 
             component.updateAttachmentWithFile();
 
-            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+            expect(attachmentVideoUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
         });
     });

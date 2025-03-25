@@ -19,7 +19,7 @@ describe('LectureUnitService', () => {
     let service: LectureUnitService;
     let httpMock: HttpTestingController;
     let exerciseUnit: ExerciseUnit;
-    let attachmentUnit: AttachmentVideoUnit;
+    let attachmentVideoUnit: AttachmentVideoUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
     let lecture: Lecture;
@@ -43,10 +43,10 @@ describe('LectureUnitService', () => {
         attachment.name = 'Example attachment';
         attachment.link = '/path/to/file/test.pdf';
 
-        attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.id = 37;
-        attachmentUnit.description = 'Lorem Ipsum Attachment';
-        attachmentUnit.attachment = attachment;
+        attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 37;
+        attachmentVideoUnit.description = 'Lorem Ipsum Attachment';
+        attachmentVideoUnit.attachment = attachment;
 
         const course = new Course();
         const exercise = new TextExercise(course, undefined);
@@ -81,7 +81,7 @@ describe('LectureUnitService', () => {
 
     it('should receive updated order array', fakeAsync(() => {
         convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
-        const orderArray = [videoUnit, attachmentUnit, textUnit, exerciseUnit];
+        const orderArray = [videoUnit, attachmentVideoUnit, textUnit, exerciseUnit];
         service.updateOrder(1, orderArray).subscribe((resp) => (expectedResultArray = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(orderArray);
@@ -90,14 +90,14 @@ describe('LectureUnitService', () => {
     }));
 
     it('should get title of associated element', async () => {
-        expect(service.getLectureUnitName(attachmentUnit)).toEqual(attachmentUnit.attachment!.name);
+        expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.attachment!.name);
         expect(service.getLectureUnitName(exerciseUnit)).toEqual(exerciseUnit.exercise!.title);
         expect(service.getLectureUnitName(textUnit)).toEqual(textUnit.name);
         expect(service.getLectureUnitName(videoUnit)).toEqual(videoUnit.name);
     });
 
     it('should get release date of associated element', async () => {
-        expect(service.getLectureUnitReleaseDate(attachmentUnit)).toEqual(attachmentUnit.attachment!.releaseDate);
+        expect(service.getLectureUnitReleaseDate(attachmentVideoUnit)).toEqual(attachmentVideoUnit.attachment!.releaseDate);
         expect(service.getLectureUnitReleaseDate(exerciseUnit)).toEqual(exerciseUnit.exercise!.releaseDate);
         expect(service.getLectureUnitReleaseDate(textUnit)).toEqual(textUnit.releaseDate);
         expect(service.getLectureUnitReleaseDate(videoUnit)).toEqual(videoUnit.releaseDate);

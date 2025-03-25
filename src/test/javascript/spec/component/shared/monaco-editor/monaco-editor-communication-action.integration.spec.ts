@@ -297,7 +297,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const lecturesWithDetails = lectures.map((lecture) => ({
                 id: lecture.id!,
                 title: lecture.title!,
-                attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
                 attachments: lecture.attachments?.map((attachment) => ({
                     ...attachment,
                     link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
@@ -364,22 +364,22 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         it('should reference an attachment unit without brackets', () => {
             fixture.detectChanges();
 
-            const attachmentUnitNameWithBrackets = 'Test (AttachmentUnit) With [Brackets] And (More) [Bracket(s)]';
-            const attachmentUnitNameWithoutBrackets = 'Test AttachmentUnit With Brackets And More Brackets';
+            const attachmentVideoUnitNameWithBrackets = 'Test (AttachmentVideoUnit) With [Brackets] And (More) [Bracket(s)]';
+            const attachmentVideoUnitNameWithoutBrackets = 'Test AttachmentVideoUnit With Brackets And More Brackets';
 
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentVideoUnits![0];
-            const previousName = attachmentUnit.name;
-            attachmentUnit.name = attachmentUnitNameWithBrackets;
-            const attachmentUnitFileName = 'Metis-Attachment.pdf';
+            const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
+            const previousName = attachmentVideoUnit.name;
+            attachmentVideoUnit.name = attachmentVideoUnitNameWithBrackets;
+            const attachmentVideoUnitFileName = 'Metis-Attachment.pdf';
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
-                attachmentVideoUnit: attachmentUnit,
+                attachmentVideoUnit: attachmentVideoUnit,
             });
-            attachmentUnit.name = previousName;
-            expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnitNameWithoutBrackets}(${attachmentUnitFileName})[/lecture-unit]`);
+            attachmentVideoUnit.name = previousName;
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnitNameWithoutBrackets}(${attachmentVideoUnitFileName})[/lecture-unit]`);
         });
 
         it('should reference an attachment', () => {
@@ -413,14 +413,14 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentVideoUnits![0];
-            const attachmentUnitFileName = 'Metis-Attachment.pdf';
+            const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
+            const attachmentVideoUnitFileName = 'Metis-Attachment.pdf';
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
-                attachmentVideoUnit: attachmentUnit,
+                attachmentVideoUnit: attachmentVideoUnit,
             });
-            expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnit.name}(${attachmentUnitFileName})[/lecture-unit]`);
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(${attachmentVideoUnitFileName})[/lecture-unit]`);
         });
 
         it('should error when trying to reference a nonexistent attachment unit', () => {
@@ -440,28 +440,28 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentVideoUnits![0];
-            const slide = attachmentUnit.slides![0];
+            const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
+            const slide = attachmentVideoUnit.slides![0];
             const slideLink = 'slides';
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.SLIDE,
                 lecture,
-                attachmentVideoUnit: attachmentUnit,
+                attachmentVideoUnit: attachmentVideoUnit,
                 slide,
             });
-            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${slideLink})[/slide]`);
+            expect(comp.getText()).toBe(`[slide]${attachmentVideoUnit.name} Slide ${slide.slideNumber}(${slideLink})[/slide]`);
         });
 
         it('should error when incorrectly referencing a slide', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentVideoUnits![0];
+            const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
             const executeAction = () =>
                 lectureAttachmentReferenceAction.executeInCurrentEditor({
                     reference: ReferenceType.SLIDE,
                     lecture,
-                    attachmentVideoUnit: attachmentUnit,
+                    attachmentVideoUnit: attachmentVideoUnit,
                     slide: undefined,
                 });
             expect(executeAction).toThrow(Error);

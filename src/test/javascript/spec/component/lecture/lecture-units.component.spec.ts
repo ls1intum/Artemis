@@ -464,11 +464,11 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should send POST request upon attachment form submission and update units', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -500,24 +500,24 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachment = new Attachment();
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
-        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentVideoUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
-        attachmentUnit.attachment = attachment;
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
+        attachmentVideoUnit.attachment = attachment;
 
         const formData = new FormData();
-        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
-            body: attachmentUnit,
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+            body: attachmentVideoUnit,
             status: 201,
         });
-        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(of(attachmentUnitResponse));
+        const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -528,13 +528,13 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            const lectureIdCallArgument: number = createAttachmentUnitStub.mock.calls[0][1];
+            const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][1];
 
             expect(lectureIdCallArgument).toBe(1);
-            expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);
+            expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(formData, 1);
 
             expect(updateSpy).toHaveBeenCalledOnce();
 
@@ -543,11 +543,11 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should send POST request upon attachment form submission and update units when editing lecture', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -566,24 +566,24 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachment = new Attachment();
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
-        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentVideoUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
-        attachmentUnit.attachment = attachment;
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
+        attachmentVideoUnit.attachment = attachment;
 
         const formData = new FormData();
-        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const attachmentUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
-            body: attachmentUnit,
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+            body: attachmentVideoUnit,
             status: 201,
         });
-        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'update').mockReturnValue(of(attachmentUnitResponse));
+        const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(attachmentVideoUnitResponse));
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -597,10 +597,10 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+            expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
 
             updateSpy.mockRestore();
@@ -608,12 +608,12 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should show alert upon unsuccessful attachment form submission', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -632,20 +632,20 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachment = new Attachment();
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
-        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentVideoUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
-        attachmentUnit.attachment = attachment;
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
+        attachmentVideoUnit.attachment = attachment;
 
         const formData = new FormData();
-        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
+        const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertStub = jest.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
@@ -653,21 +653,21 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+            expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
             expect(alertStub).toHaveBeenCalledOnce();
         });
     }));
 
     it('should show alert upon unsuccessful attachment form submission with error information', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
 
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        const attachmentUnitFormData: AttachmentVideoUnitFormData = {
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: 'test',
                 description: 'lorem ipsum',
@@ -686,21 +686,21 @@ describe('LectureUpdateUnitsComponent', () => {
         const attachment = new Attachment();
         attachment.version = 1;
         attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = attachmentUnitFormData.formProperties.releaseDate;
-        attachment.name = attachmentUnitFormData.formProperties.name;
+        attachment.releaseDate = attachmentVideoUnitFormData.formProperties.releaseDate;
+        attachment.name = attachmentVideoUnitFormData.formProperties.name;
         attachment.link = examplePath;
 
-        const attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.description = attachmentUnitFormData.formProperties.description;
-        attachmentUnit.attachment = attachment;
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.description = attachmentVideoUnitFormData.formProperties.description;
+        attachmentVideoUnit.attachment = attachment;
 
         const formData = new FormData();
-        formData.append('file', fakeFile, attachmentUnitFormData.fileProperties.fileName);
+        formData.append('file', fakeFile, attachmentVideoUnitFormData.fileProperties.fileName);
         formData.append('attachment', objectToJsonBlob(attachment));
-        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const createAttachmentUnitStub = jest
-            .spyOn(attachmentUnitService, 'create')
+        const createAttachmentVideoUnitStub = jest
+            .spyOn(attachmentVideoUnitService, 'create')
             .mockReturnValue(throwError(() => ({ status: 404, error: { params: 'file', title: 'Test Title' } })));
         const alertStub = jest.spyOn(alertService, 'error');
 
@@ -709,23 +709,23 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
-        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentUnitFormData);
+        wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+            expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
             expect(alertStub).toHaveBeenCalledOnce();
         });
     }));
 
     it('should not send POST request upon empty attachment form submission', fakeAsync(() => {
-        const attachmentUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const formData: AttachmentVideoUnitFormData = {
             formProperties: {},
             fileProperties: {},
         };
 
-        const createStub = jest.spyOn(attachmentUnitService, 'create');
+        const createStub = jest.spyOn(attachmentVideoUnitService, 'create');
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -799,10 +799,10 @@ describe('LectureUpdateUnitsComponent', () => {
         attachment.name = 'test';
         attachment.link = '/path/to/file';
 
-        const attachmentUnit = new AttachmentVideoUnit();
-        attachmentUnit.attachment = attachment;
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.attachment = attachment;
 
-        wizardUnitComponent.startEditLectureUnit(attachmentUnit);
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen).toBeTrue();

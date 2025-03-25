@@ -65,7 +65,7 @@ describe('LectureUnitManagementComponent', () => {
     let getProfileInfo: jest.SpyInstance;
     let getCombinedCourseSettings: jest.SpyInstance;
 
-    let attachmentUnit: AttachmentVideoUnit;
+    let attachmentVideoUnit: AttachmentVideoUnit;
     let exerciseUnit: ExerciseUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
@@ -135,15 +135,15 @@ describe('LectureUnitManagementComponent', () => {
                 videoUnit.id = 1;
                 exerciseUnit = new ExerciseUnit();
                 exerciseUnit.id = 2;
-                attachmentUnit = new AttachmentVideoUnit();
-                attachmentUnit.id = 3;
+                attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.id = 3;
                 course = new Course();
                 course.id = 99;
 
                 lecture = new Lecture();
                 lecture.id = 0;
                 lecture.course = course;
-                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
+                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentVideoUnit];
 
                 const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
                 findLectureSpy.mockReturnValue(returnValue);
@@ -263,7 +263,7 @@ describe('LectureUnitManagementComponent', () => {
         );
         lectureUnitManagementComponent.updateIngestionStates();
         expect(lectureUnitService.getIngestionState).toHaveBeenCalledWith(lecture.course!.id!, lecture.id);
-        expect(attachmentUnit.pyrisIngestionState).toBe(IngestionState.DONE);
+        expect(attachmentVideoUnit.pyrisIngestionState).toBe(IngestionState.DONE);
     });
 
     it('should handle error when ingestLectureUnitInPyris fails', () => {
