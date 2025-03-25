@@ -274,13 +274,17 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         assertThat(result).isNotEmpty();
 
+        // Ensure the saved jobs appear in the result list and are in the correct order, even if other jobs are in between
         List<String> resultIds = result.stream().map(FinishedBuildJobDTO::id).toList();
         List<String> expectedOrderedIds = List.of(finishedJob2.getBuildJobId(), finishedJob3.getBuildJobId(), finishedJob1.getBuildJobId());
 
-        // Ensure the saved jobs appear in the result list and are in the correct order. Other jobs could be inbetween the expected jobs.
         assertThat(resultIds).containsAll(expectedOrderedIds);
-        assertThat(IntStream.range(0, expectedOrderedIds.size() - 1)
-                .allMatch(i -> resultIds.indexOf(expectedOrderedIds.get(i)) < resultIds.indexOf(expectedOrderedIds.get(i + 1)))).isTrue();
+        assertThat(IntStream.range(0, expectedOrderedIds.size() - 1).allMatch(i -> resultIds.indexOf(expectedOrderedIds.get(i)) < resultIds.indexOf(expectedOrderedIds.get(i + 1))))
+                .isTrue();
+
+        // Ensure the jobs are sorted by buildCompletionDate in ascending order
+        List<ZonedDateTime> completionDates = result.stream().map(FinishedBuildJobDTO::buildCompletionDate).toList();
+        assertThat(completionDates).isSorted();
     }
 
     @Test
