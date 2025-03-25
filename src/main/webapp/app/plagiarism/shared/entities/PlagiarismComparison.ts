@@ -1,8 +1,8 @@
 import { PlagiarismStatus } from './PlagiarismStatus';
 import { PlagiarismSubmission } from './PlagiarismSubmission';
 import { PlagiarismMatch } from './PlagiarismMatch';
-import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/types/PlagiarismSubmissionElement';
-import { PlagiarismResult } from 'app/plagiarism/shared/types/PlagiarismResult';
+import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
+import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
