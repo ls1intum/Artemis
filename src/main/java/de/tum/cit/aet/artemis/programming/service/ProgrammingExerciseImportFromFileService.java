@@ -291,7 +291,7 @@ public class ProgrammingExerciseImportFromFileService {
      *
      * @param path the path to the extracted zip directory
      * @throws IOException              if there is an error reading the directory
-     * @throws BadRequestAlertException if the Exercise-Details.json file is not found
+     * @throws BadRequestAlertException if the Exercise-Details.json file is not found or not unique
      */
     private void checkDetailsJsonExists(Path path) throws IOException {
         try (Stream<Path> stream = Files.walk(path)) {
