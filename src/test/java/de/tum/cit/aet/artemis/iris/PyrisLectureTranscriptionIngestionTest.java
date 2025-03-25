@@ -47,7 +47,13 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     private Lecture lecture1;
 
+    private Lecture lecture2;
+
     private LectureUnit lectureUnit;
+
+    private LectureUnit emptyLectureUnit;
+
+    private LectureUnit attachmentUnit;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -58,7 +64,15 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
         this.lectureUnit = lectureUtilService.createVideoUnit();
-        this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit));
+        this.emptyLectureUnit = lectureUtilService.createVideoUnit();
+        this.attachmentUnit = lectureUtilService.createAttachmentUnit(false);
+        this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit, this.emptyLectureUnit, this.attachmentUnit));
+
+        Course course2 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getLast().getId());
+        this.lecture2 = new Lecture();
+        this.lecture2.setTitle("Lecture 2" + lecture2.getId());
+        this.lecture2.setCourse(course2);
+        this.lecture2 = lectureRepository.save(this.lecture2);
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -69,6 +83,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
         LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
 
+        LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.attachmentUnit);
         lectureTranscriptionRepository.save(transcription);
     }
 
@@ -88,6 +103,27 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     void testIngestTranscriptionWithInvalidLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
         request.put("/api/lecture/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIngestTranscriptionWithLectureIdFromDifferentUnit() throws Exception {
+        activateIrisFor(lecture2.getCourse());
+        request.put("/api/lecture/" + lecture2.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIngestTranscriptionWithoutTranscription() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + emptyLectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIngestTranscriptionWithAttachmentUnit() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + attachmentUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -128,5 +164,15 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testDeleteTranscriptionInPyrisWithoutTranscription() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + emptyLectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
     }
 }

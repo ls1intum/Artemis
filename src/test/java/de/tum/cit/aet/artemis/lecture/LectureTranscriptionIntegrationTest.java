@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
@@ -74,6 +76,39 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(response.language()).isEqualTo("en");
         assertThat(response.segments()).hasSize(2);
         assertThat(response.segments().getFirst().text()).isEqualTo("Welcome to Artemis");
+
+        var savedTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
+        assertThat(savedTranscription).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
+    void testCreateLectureTranscriptionTwice_success() throws Exception {
+        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Artemis", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2)));
+
+        var response = request.postWithResponseBody("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO,
+                LectureTranscriptionDTO.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.language()).isEqualTo("en");
+        assertThat(response.segments()).hasSize(2);
+        assertThat(response.segments().getFirst().text()).isEqualTo("Welcome to Artemis");
+
+        transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Pyris", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2)));
+
+        response = request.postWithResponseBody("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO,
+                LectureTranscriptionDTO.class, HttpStatus.CREATED);
+
+        assertThat(response).isNotNull();
+        assertThat(response.language()).isEqualTo("en");
+        assertThat(response.segments()).hasSize(2);
+        assertThat(response.segments().getFirst().text()).isEqualTo("Welcome to Pyris");
+
+        Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
+        assertThat(transcription).isPresent();
+        assertThat(transcription.get().getSegments().getFirst().text()).isEqualTo("Welcome to Pyris");
 
         var savedTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
         assertThat(savedTranscription).isPresent();
