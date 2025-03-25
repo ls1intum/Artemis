@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
