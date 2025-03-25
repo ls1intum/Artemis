@@ -43,4 +43,12 @@ describe('ProgrammingExerciseVersionControlComponent', () => {
         fixture.detectChanges();
         expect(comp.programmingExercise().allowBranching).toBeTrue();
     });
+
+    it('should update allowBranching attribute when unchecking the option', () => {
+        comp.programmingExercise().allowBranching = true;
+        const checkbox = fixture.debugElement.query(By.css('#field_allowBranching'));
+        checkbox.triggerEventHandler('change', { target: { checked: false } });
+        fixture.detectChanges();
+        expect(comp.programmingExercise().allowBranching).toBeFalse();
+    });
 });
