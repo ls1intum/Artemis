@@ -1,5 +1,5 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
-import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/types/PlagiarismSubmissionElement';
+import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 
