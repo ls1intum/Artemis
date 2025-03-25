@@ -114,8 +114,8 @@ describe('CourseExercisesComponent', () => {
 
     it('should initialize', () => {
         expect(component.course).toEqual(course);
-        expect(courseStorageStub).toHaveBeenCalledTimes(1);
-        expect(courseStorageStub).toHaveBeenCalledWith(course.id);
+        expect(courseStorageStub.mock.calls).toHaveLength(1);
+        expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
         component.ngOnDestroy();
     });
 

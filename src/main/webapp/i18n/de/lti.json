@@ -22,7 +22,7 @@
                 "groupedContent": {
                     "groupedExercises": {
                         "header": "Gruppierung von Übungen aktivieren:",
-                        "selector": "Beim Auswählen mehrere Übungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Übungsansicht angezeigt."
+                        "selector": "Beim Auswählen mehrerer Übungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Übungsansicht angezeigt."
                     }
                 }
             },
