@@ -26,6 +26,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly usernameTouched = false;
+    protected readonly passwordTouched = false;
+
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
@@ -69,11 +73,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo | undefined = undefined;
-
-    // Icons
-    faCircleNotch = faCircleNotch;
-    usernameTouched = false;
-    passwordTouched = false;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
