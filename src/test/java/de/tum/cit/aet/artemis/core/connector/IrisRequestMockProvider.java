@@ -200,6 +200,7 @@ public class IrisRequestMockProvider {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookLectureIngestionExecutionDTO.class);
             responseConsumer.accept(dto);
+            System.out.println("hellothere");
             return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
         });
     }

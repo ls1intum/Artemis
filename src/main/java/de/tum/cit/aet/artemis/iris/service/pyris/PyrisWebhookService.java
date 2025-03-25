@@ -35,15 +35,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisTranscriptionIngestionWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -81,39 +78,6 @@ public class PyrisWebhookService {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureTranscriptionRepository = lectureTranscriptionRepository;
-    }
-
-    /**
-     * delete the lecture transcription in pyris
-     *
-     * @param lectureTranscription The lecture transcription that gets erased
-     * @return jobToken if the job was created
-     */
-    public String deleteLectureTranscription(LectureTranscription lectureTranscription) {
-        Lecture lecture = lectureTranscription.getLectureUnit().getLecture();
-        Course course = lecture.getCourse();
-        LectureUnit lectureUnit = lectureTranscription.getLectureUnit();
-        if (!(lectureUnit instanceof VideoUnit)) {
-            throw new IllegalArgumentException("Lecture Transcription must belong to a VideoUnit");
-        }
-        return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
-                course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), ((VideoUnit) lectureUnit).getSource()));
-    }
-
-    /**
-     * executes the lecture transcription deletion webhook to delete lecture transcriptions from the vector database on pyris
-     *
-     * @param toUpdateLectureTranscription The lecture transcription that got Updated as webhook DTO
-     * @return jobToken if the job was created else null
-     */
-    private String executeLectureTranscriptionDeletionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateLectureTranscription) {
-        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(toUpdateLectureTranscription.courseId(), toUpdateLectureTranscription.lectureId(),
-                toUpdateLectureTranscription.transcription().getLectureUnit().getId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        PyrisWebhookTranscriptionDeletionExecutionDTO executionDTO = new PyrisWebhookTranscriptionDeletionExecutionDTO(toUpdateLectureTranscription, settingsDTO, List.of());
-        pyrisConnectorService.executeLectureTranscriptionDeletionWebhook(executionDTO);
-
-        return jobToken;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -163,7 +127,7 @@ public class PyrisWebhookService {
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
 
-            return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : null,
+            return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
                     transcription, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink,
                     attachmentVideoUnit.getVideoSource());
         }

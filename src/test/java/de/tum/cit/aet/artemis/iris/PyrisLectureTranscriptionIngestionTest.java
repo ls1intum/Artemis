@@ -76,11 +76,13 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionInPyrisWithLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            System.out.println("TOKEN: " + dto.settings().authenticationToken());
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        Optional<LectureUnit> lu = lectureUnitRepository.findById(this.lectureUnit.getId());
-        request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.OK);
+        // request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.OK);
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), boolean.class,
+                HttpStatus.OK);
     }
 
     @Test
@@ -94,39 +96,9 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testIngestTranscriptionInPyrisWithoutPermission() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteTranscriptionInPyris() throws Exception {
-        activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
-        request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.OK);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteTranscriptionInPyrisInvalidLecture() throws Exception {
-        activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
-        request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testDeleteTranscriptionInPyrisWithoutPermission() throws Exception {
-        activateIrisFor(lecture1.getCourse());
-        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
-            assertThat(dto.settings().authenticationToken()).isNotNull();
-        });
-        request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
     }
 }

@@ -223,7 +223,6 @@ public class LectureUnitResource {
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
-        int kk = 0;
         Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
         if (lectureUnitOptional.isEmpty()) {
@@ -231,6 +230,8 @@ public class LectureUnitResource {
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture(), null);
-        return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
+        ResponseEntity<Void> r = lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
+        System.out.println(r);
+        return r;
     }
 }

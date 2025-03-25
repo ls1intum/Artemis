@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 
@@ -109,26 +108,6 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send request to Pyris", e);
             throw new PyrisConnectorException("Could not fetch response from Iris");
-        }
-    }
-
-    /**
-     * This webhook deletes a lecture transcription in the Pyris system.
-     *
-     * @param executionDTO The DTO sent as a body for the execution
-     */
-    public void executeLectureTranscriptionDeletionWebhook(PyrisWebhookTranscriptionDeletionExecutionDTO executionDTO) {
-        var endpoint = "/api/v1/webhooks/transcriptions/delete";
-        try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
-        }
-        catch (HttpStatusCodeException e) {
-            log.error("Failed to send lecture transcriptions to Pyris", e);
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send lecture transcriptions to Pyris", e);
-            throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }
 
