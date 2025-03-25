@@ -179,20 +179,24 @@ export class AppComponent implements OnInit, OnDestroy {
      * The message is only reported once per day per browser/device.
      */
     private reportIfPasskeyIsNotSupported() {
-        /* eslint-disable no-undef */
-        if (!window.PublicKeyCredential) {
-            console.info('WebAuthn NOT supported by this browser');
+        const isWebAuthnUsable = window.PublicKeyCredential;
+        if (!isWebAuthnUsable) {
             const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
             const dateToday = this.getDatePartFromISOString(new Date().toISOString());
             const dateLastReported = this.getDatePartFromISOString(lastReported);
 
             if (!lastReported || dateLastReported !== dateToday) {
                 localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
-                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'));
+                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'), {
+                    tags: {
+                        feature: 'Passkey Authentication',
+                        browser: navigator.userAgent,
+                    },
+                    extra: {
+                        timestamp: new Date().toISOString(),
+                    },
+                });
             }
-        } else {
-            console.info('WebAuthn supported by this browser');
         }
-        /* eslint-enable no-undef */
     }
 }
