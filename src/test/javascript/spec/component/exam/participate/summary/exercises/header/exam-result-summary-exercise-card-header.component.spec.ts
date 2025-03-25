@@ -15,6 +15,8 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participate/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { input } from '@angular/core';
+import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
+import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
 let component: ExamResultSummaryExerciseCardHeaderComponent;

@@ -1,6 +1,6 @@
 import { EMPTY, Subject, of } from 'rxjs';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpRequest, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';

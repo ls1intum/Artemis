@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';
+import { FeatureOverviewComponent, TargetAudience } from 'app/core/feature-overview/feature-overview.component';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';

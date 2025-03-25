@@ -1,11 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TextTourStep } from 'app/guided-tour/guided-tour-step.model';
-import { GuidedTour } from 'app/guided-tour/guided-tour.model';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { Orientation, OverlayPosition, ResetParticipation } from 'app/guided-tour/guided-tour.constants';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -16,6 +12,10 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
+import { TextTourStep } from 'app/core/guided-tour/guided-tour-step.model';
+import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
+import { Orientation, OverlayPosition, ResetParticipation } from 'app/core/guided-tour/guided-tour.constants';
+import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 
 describe('GuidedTourComponent', () => {
     const tourStep = new TextTourStep({

@@ -2,14 +2,14 @@ import { Component, Input, OnChanges, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
-import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { RouterLink } from '@angular/router';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../language/translate.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-open-code-editor-button',

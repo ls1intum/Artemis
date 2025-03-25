@@ -1,19 +1,19 @@
 import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
-import { AlertOverlayComponent } from './shared/alert/alert-overlay.component';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { PageRibbonComponent } from './shared/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from './shared/notification/notification-popup/notification-popup.component';
-import { FooterComponent } from './shared/layouts/footer/footer.component';
+import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 
 @Component({
     selector: 'jhi-app',

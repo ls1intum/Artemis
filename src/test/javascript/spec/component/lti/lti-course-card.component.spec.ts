@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
+import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';

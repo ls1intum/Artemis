@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
+import { IntervalGradingSystemComponent } from 'app/assessment/manage/grading-system/interval-grading-system/interval-grading-system.component';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { MockProvider } from 'ng-mocks';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -9,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

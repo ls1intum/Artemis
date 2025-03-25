@@ -5,7 +5,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
+import { StatisticsComponent } from 'app/core/admin/statistics/statistics.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/entities/statistics.model';
 import { provideRouter } from '@angular/router';

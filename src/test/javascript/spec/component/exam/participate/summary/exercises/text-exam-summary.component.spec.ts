@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TextExamSummaryComponent } from 'app/exam/participate/summary/exercises/text-exam-summary/text-exam-summary.component';
+import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
+import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';

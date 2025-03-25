@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { RepositoryType } from '../../../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();
@@ -17,6 +17,9 @@ export class MockProgrammingExerciseService {
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
     getDiffReport = (exerciseId: number) => of({});
     getBuildLogStatistics = (exerciseId: number) => of({});
+    getTheiaConfig = (exerciseId: number) => of({});
+    createStructuralSolutionEntries = (exerciseId: number) => of({});
+    createBehavioralSolutionEntries = (exerciseId: number) => of({});
     getLatestResult = (participation: Participation) => of({});
     combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});

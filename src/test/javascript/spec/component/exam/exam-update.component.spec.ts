@@ -16,11 +16,11 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';

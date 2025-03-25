@@ -3,8 +3,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 
-import { ModelingExerciseUpdateComponent } from 'app/exercises/modeling/manage/modeling-exercise-update.component';
-import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/modeling-exercise-update.component';
+import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,20 +15,20 @@ import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
-import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
-import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import * as Utils from 'app/exercise/course-exercises/course-utils';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { NgModel } from '@angular/forms';
-import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;

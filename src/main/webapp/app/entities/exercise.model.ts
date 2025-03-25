@@ -8,16 +8,16 @@ import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Team } from 'app/entities/team.model';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { CompetencyExerciseLink } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
-import { CourseScores } from 'app/course/course-scores/course-scores';
+import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 
 export enum DifficultyLevel {
     EASY = 'EASY',

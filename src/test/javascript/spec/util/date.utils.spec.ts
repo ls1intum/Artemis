@@ -5,7 +5,7 @@ import {
     isDateLessThanAWeekInTheFuture,
     toISO8601DateString,
     toISO8601DateTimeString,
-} from 'app/utils/date.utils';
+} from 'app/shared/util/date.utils';
 import dayjs from 'dayjs/esm';
 
 describe('DateUtils', () => {

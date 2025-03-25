@@ -18,7 +18,7 @@ import {
     FilterDetails,
     FilterOption,
     RangeFilter,
-} from 'app/types/exercise-filter';
+} from 'app/shared/types/exercise-filter';
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
 import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
