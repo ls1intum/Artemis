@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { BaseEntityWithTempId, DropLocation } from 'app/entities/quiz/drop-location.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { BaseEntityWithTempId, DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 
 @Injectable({ providedIn: 'root' })
 export class DragAndDropQuestionUtil {

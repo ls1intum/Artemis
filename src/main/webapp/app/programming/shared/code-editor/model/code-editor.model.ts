@@ -1,8 +1,8 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 
 /**
  * Enumeration defining type of the exported file.

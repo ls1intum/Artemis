@@ -45,7 +45,7 @@
                 @if (course) {
                     <div
                         id="course-title-bar-test"
-                        class="h5 module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top"
+                        class="module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top"
                         [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }"
                     >
                         <div class="align-self-center d-flex">
@@ -69,7 +69,7 @@
                                     </div>
                                 </button>
                             }
-                            <div class="align-self-center" [jhiTranslate]="'artemisApp.courseOverview.menu.' + pageTitle"></div>
+                            <div class="align-self-center h5 mb-0" [jhiTranslate]="'artemisApp.courseOverview.menu.' + pageTitle"></div>
                         </div>
                         <div class="d-flex gap-2">
                             @if (isNotManagementView && course.isAtLeastTutor) {
@@ -87,6 +87,9 @@
                                     <fa-icon [icon]="faSync" [animation]="refreshingCourse ? 'spin' : undefined" />
                                     <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
                                 </button>
+                            }
+                            @if (course!.id) {
+                                <jhi-course-notification-overview [jhiFeatureToggleHide]="FeatureToggle.CourseSpecificNotifications" [courseId]="course!.id" />
                             }
                         </div>
                     </div>

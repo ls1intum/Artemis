@@ -7,7 +7,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled.component';
 import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { provideRouter } from '@angular/router';
