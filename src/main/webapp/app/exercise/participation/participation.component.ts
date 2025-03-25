@@ -17,7 +17,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
