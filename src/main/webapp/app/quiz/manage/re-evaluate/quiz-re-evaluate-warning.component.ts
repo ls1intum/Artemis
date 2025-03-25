@@ -8,7 +8,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 

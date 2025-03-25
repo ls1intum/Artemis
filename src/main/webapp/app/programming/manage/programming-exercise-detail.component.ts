@@ -49,10 +49,10 @@ import { ConsistencyCheckService } from 'app/shared/consistency-check/consistenc
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { Detail } from 'app/detail-overview-list/detail.model';
+import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/programming/service/aeolus.service';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
@@ -60,7 +60,6 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exerc
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from 'app/programming/shared/actions/programming-exercise-instructor-exercise-download.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -79,7 +78,6 @@ import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
         DocumentationButtonComponent,
         RouterLink,
         FaIconComponent,
-        OrionFilterDirective,
         FeatureToggleLinkDirective,
         NgbTooltip,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
