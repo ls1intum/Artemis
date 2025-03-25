@@ -33,6 +33,8 @@ export class SentryErrorHandler extends ErrorHandler {
             integrations: [dedupeIntegration()],
             tracesSampleRate: this.environment !== 'prod' ? 1.0 : 0.2,
         });
+
+        this.reportIfPasskeyIsNotSupported();
     }
 
     /**
@@ -49,5 +51,42 @@ export class SentryErrorHandler extends ErrorHandler {
             captureException(exception);
         }
         super.handleError(error);
+    }
+
+    /**
+     * Extracts the date part from an ISO 8601 formatted string.
+     *
+     * @param isoString The ISO 8601 formatted string (e.g., "YYYY-MM-DDTHH:mm:ss.sssZ").
+     * @return The date part of the ISO string (e.g., "YYYY-MM-DD").
+     */
+    private getDatePartFromISOString(isoString: string | null): string {
+        return isoString ? isoString.split('T')[0] : '';
+    }
+
+    /**
+     * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
+     *
+     * The message is only reported once per day per browser/device.
+     */
+    private reportIfPasskeyIsNotSupported() {
+        const isWebAuthnUsable = window.PublicKeyCredential;
+        if (isWebAuthnUsable) {
+            const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
+            const dateToday = this.getDatePartFromISOString(new Date().toISOString());
+            const dateLastReported = this.getDatePartFromISOString(lastReported);
+
+            if (!lastReported || dateLastReported !== dateToday) {
+                localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
+                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'), {
+                    tags: {
+                        feature: 'Passkey Authentication',
+                        browser: navigator.userAgent,
+                    },
+                    extra: {
+                        timestamp: new Date().toISOString(),
+                    },
+                });
+            }
+        }
     }
 }
