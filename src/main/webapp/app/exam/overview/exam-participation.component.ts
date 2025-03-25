@@ -49,8 +49,8 @@ import {
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/exam-participation-live-events.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';

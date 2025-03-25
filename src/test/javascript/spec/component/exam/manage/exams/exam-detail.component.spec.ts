@@ -33,14 +33,14 @@ import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-web
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { QuizPoolService } from 'app/quiz/manage/quiz-pool.service';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { QuizPool } from 'app/quiz/shared/entities/quiz-pool.model';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
-import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
+import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercise-detail.directive';
 import { NoDataComponent } from 'app/shared/no-data-component';
 
 @Component({

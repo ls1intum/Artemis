@@ -23,7 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
-    styleUrls: ['../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['../quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
@@ -49,15 +49,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     @ViewChild('visual', { static: false })
     visualChild: MultipleChoiceVisualQuestionComponent;
 
-    @Input()
-    question: MultipleChoiceQuestion;
-    @Input()
-    questionIndex: number;
+    @Input() question: MultipleChoiceQuestion;
+    @Input() questionIndex: number;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
 
     questionEditorText = '';
     isQuestionCollapsed: boolean;

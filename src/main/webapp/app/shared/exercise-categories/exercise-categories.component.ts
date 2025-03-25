@@ -4,11 +4,11 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { NotReleasedTagComponent } from '../components/not-released-tag.component';
-import { TranslateDirective } from '../language/translate.directive';
 import { IncludedInScoreBadgeComponent } from '../../exercise/exercise-headers/included-in-score-badge.component';
 import { DifficultyBadgeComponent } from '../../exercise/exercise-headers/difficulty-badge.component';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 interface ShowTagsConfig {
     notReleased?: boolean;

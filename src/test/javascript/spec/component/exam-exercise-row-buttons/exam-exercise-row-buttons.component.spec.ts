@@ -11,7 +11,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';

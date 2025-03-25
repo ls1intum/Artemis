@@ -15,7 +15,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 @Component({
     selector: 'jhi-course-lecture-row',
     templateUrl: './course-lecture-row.component.html',
-    styleUrls: ['../../../overview/course-exercises/course-exercise-row.scss'],
+    styleUrls: ['../../../core/course/overview/course-exercises/course-exercise-row.scss'],
     imports: [RouterLink, FaIconComponent, NgbTooltip, NgClass, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
 })
 export class CourseLectureRowComponent {

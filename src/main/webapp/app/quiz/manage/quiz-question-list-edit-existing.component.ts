@@ -6,7 +6,7 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
