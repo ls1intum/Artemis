@@ -101,8 +101,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         link = competencyLectureUnitLinkRepository.save(link);
         textUnitOfLectureOne = (TextUnit) link.getLectureUnit();
 
-        attachmentVideoUnitOfLectureOne = lectureUtilService.createAttachmentUnit(true);
-        attachmentVideoUnitOfLectureOne.setName("AttachmentUnitOfLectureOne");
+        attachmentVideoUnitOfLectureOne = lectureUtilService.createAttachmentVideoUnit(true);
+        attachmentVideoUnitOfLectureOne.setName("AttachmentVideoUnitOfLectureOne");
 
         link = new CompetencyLectureUnitLink(competency, attachmentVideoUnitOfLectureOne, 1);
         link = competencyLectureUnitLinkRepository.save(link);

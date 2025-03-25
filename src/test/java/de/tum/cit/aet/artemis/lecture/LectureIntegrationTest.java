@@ -79,7 +79,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Attachment attachmentDirectOfLecture;
 
-    private Attachment attachmentOfAttachmentUnit;
+    private Attachment attachmentOfAttachmentVideoUnit;
 
     private TextExercise textExercise;
 
@@ -117,8 +117,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
-        attachmentVideoUnit = lectureUtilService.createAttachmentUnit(true);
-        attachmentOfAttachmentUnit = attachmentVideoUnit.getAttachment();
+        attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
+        attachmentOfAttachmentVideoUnit = attachmentVideoUnit.getAttachment();
         VideoUnit videoUnit = lectureUtilService.createVideoUnit();
         TextUnit textUnit = lectureUtilService.createTextUnit();
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
@@ -255,7 +255,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         int numberOfSlides = 2;
         Lecture lectureWithSlides = LectureFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
         lectureWithSlides = lectureRepository.save(lectureWithSlides);
-        AttachmentVideoUnit attachmentVideoUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlides(numberOfSlides);
+        AttachmentVideoUnit attachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlides(numberOfSlides);
         lectureWithSlides = lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithSlides));
 
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
@@ -263,14 +263,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         final Lecture finalLectureWithSlides = lectureWithSlides;
         Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
 
-        assertThat(filteredLecture.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
+        assertThat(filteredLecture.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentVideoUnitWithSlides
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
         AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentVideoUnit.getSlides()).hasSize(numberOfSlides);
 
         Lecture lectureWithDetails = request.get("/api/lecture/lectures/" + lectureWithSlides.getId() + "/details-with-slides", HttpStatus.OK, Lecture.class);
 
-        assertThat(lectureWithDetails.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
+        assertThat(lectureWithDetails.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentVideoUnitWithSlides
         assertThat(lectureWithDetails.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
         AttachmentVideoUnit attachmentVideoUnitDetails = (AttachmentVideoUnit) lectureWithDetails.getLectureUnits().getFirst();
         assertThat(attachmentVideoUnitDetails.getSlides()).hasSize(numberOfSlides);
@@ -337,8 +337,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getLecture_AttachmentNotReleased_shouldGetLectureWithoutAttachmentUnitAndAttachment() throws Exception {
-        Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentUnit.getId()).orElseThrow();
+    void getLecture_AttachmentNotReleased_shouldGetLectureWithoutAttachmentVideoUnitAndAttachment() throws Exception {
+        Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentVideoUnit.getId()).orElseThrow();
         unitAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
         Attachment lectureAttachment = attachmentRepository.findById(attachmentDirectOfLecture.getId()).orElseThrow();
         lectureAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));

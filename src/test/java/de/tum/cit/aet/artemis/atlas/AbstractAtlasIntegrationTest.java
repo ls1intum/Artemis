@@ -106,7 +106,7 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected TextUnitRepository textUnitRepository;
 
     @Autowired
-    protected AttachmentVideoUnitTestRepository attachmentUnitRepository;
+    protected AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     protected ExerciseUnitRepository exerciseUnitRepository;

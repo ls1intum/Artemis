@@ -42,18 +42,18 @@ public class LectureFactory {
     }
 
     /**
-     * Generates an AttachmentUnit with an Attachment. The attachment can't be generated with a file. Use {@link #generateAttachmentWithFile(ZonedDateTime, Long, boolean)} to
+     * Generates an AttachmentVideoUnit with an Attachment. The attachment can't be generated with a file. Use {@link #generateAttachmentWithFile(ZonedDateTime, Long, boolean)} to
      * replace the attachment for this use case.
      *
-     * @return The generated AttachmentUnit
+     * @return The generated AttachmentVideoUnit
      */
-    public static AttachmentVideoUnit generateAttachmentUnit() {
+    public static AttachmentVideoUnit generateAttachmentVideoUnit() {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = generateAttachment(started);
+        Attachment attachmentOfAttachmentVideoUnit = generateAttachment(started);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
-        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
         return attachmentVideoUnit;
     }
 

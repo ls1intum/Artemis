@@ -83,15 +83,15 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         int numberOfSlides = 2;
-        AttachmentVideoUnit pdfAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlidesAndFile(numberOfSlides, true);
-        AttachmentVideoUnit imageAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentUnitWithSlidesAndFile(numberOfSlides, false);
+        AttachmentVideoUnit pdfAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(numberOfSlides, true);
+        AttachmentVideoUnit imageAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(numberOfSlides, false);
         lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(pdfAttachmentVideoUnitWithSlides, imageAttachmentVideoUnitWithSlides));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void autoIngestionWhenAttachmentUnitCreatedAndAutoUpdateEnabled() {
+    void autoIngestionWhenAttachmentVideoUnitCreatedAndAutoUpdateEnabled() {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("temp/example.txt");
@@ -109,7 +109,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void noAutoIngestionWhenAttachmentUnitCreatedAndAutoUpdateDisabled() {
+    void noAutoIngestionWhenAttachmentVideoUnitCreatedAndAutoUpdateDisabled() {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("temp/example.txt");

@@ -41,10 +41,10 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
+    private static final String TEST_PREFIX = "attachmentvideounitsintegrationtest";
 
     @Autowired
-    private AttachmentVideoUnitTestRepository attachmentUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     private SlideTestRepository slideRepository;
@@ -167,7 +167,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getAttachmentUnitsData_asInstructor_shouldGetUnitsInformationVideo() throws Exception {
+    void getAttachmentVideoUnitsData_asInstructor_shouldGetUnitsInformationVideo() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
@@ -233,7 +233,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachmentUnits_asInstructor_shouldCreateAttachmentUnits() throws Exception {
+    void createAttachmentVideoUnits_asInstructor_shouldCreateAttachmentVideoUnits() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
@@ -251,8 +251,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attachmentVideoUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(20); // 20 slides should be created for 2 attachment units
 
-        List<Long> attachmentUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnit::getId).toList();
-        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
+        List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnit::getId).toList();
+        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);
 
         assertThat(attachmentVideoUnitList).hasSize(2);
         assertThat(attachmentVideoUnitList).isEqualTo(attachmentVideoUnits);
@@ -260,7 +260,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachmentUnits_asInstructor_shouldRemoveSlides() throws Exception {
+    void createAttachmentVideoUnits_asInstructor_shouldRemoveSlides() throws Exception {
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
@@ -277,8 +277,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attachmentVideoUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment units (1 break slide is removed and 1 solution slide is removed)
 
-        List<Long> attachmentUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnit::getId).toList();
-        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
+        List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnit::getId).toList();
+        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);
 
         assertThat(attachmentVideoUnitList).hasSize(2);
         assertThat(attachmentVideoUnitList).isEqualTo(attachmentVideoUnits);
@@ -305,7 +305,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachmentUnits_asInstructor_shouldThrowError() throws Exception {
+    void createAttachmentVideoUnits_asInstructor_shouldThrowError() throws Exception {
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 

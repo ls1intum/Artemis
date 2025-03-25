@@ -74,7 +74,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         this.textUnit = lectureUtilService.createTextUnit();
         this.textUnit2 = lectureUtilService.createTextUnit();
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(false);
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
         // textUnit3 is not one of the lecture units connected to the lecture
         this.textUnit3 = lectureUtilService.createTextUnit();
