@@ -10,7 +10,7 @@ import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/communication/course-conversations/other/conversation.util';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;
 
