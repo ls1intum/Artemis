@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { SimpleChange } from '@angular/core';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
 describe('Plagiarism Sidebar Component', () => {
     let comp: PlagiarismSidebarComponent;

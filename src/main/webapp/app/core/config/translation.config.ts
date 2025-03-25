@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { MissingTranslationHandler, MissingTranslationHandlerParams, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { I18N_HASH } from 'app/environments/environment';
+import { I18N_HASH } from 'app/core/environments/environment';
 
 export const translationNotFoundMessage = 'translation-not-found';
 

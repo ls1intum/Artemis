@@ -509,6 +509,10 @@ public class SharedQueueProcessingService {
      */
     private boolean nodeIsAvailable() {
         var buildExecutorService = buildAgentConfiguration.getBuildExecutor();
+        if (buildExecutorService == null) {
+            log.error("buildExecutorService is null!");
+            return false;
+        }
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 buildExecutorService.getActiveCount(), buildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < buildExecutorService.getMaximumPoolSize() && buildExecutorService.getActiveCount() < buildExecutorService.getMaximumPoolSize()

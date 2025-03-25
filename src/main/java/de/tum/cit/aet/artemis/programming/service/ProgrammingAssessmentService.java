@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 @Profile(PROFILE_CORE)
@@ -158,8 +157,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         if (isManualFeedbackRequest && isBeforeDueDate) {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);
-
-            programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
         }
     }
 

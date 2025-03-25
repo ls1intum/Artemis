@@ -214,8 +214,6 @@ public class ConversationMessagingService extends PostingService {
                 .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
 
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
-        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        notificationRecipients.addAll(mentionedUsers);
 
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
@@ -245,7 +243,7 @@ public class ConversationMessagingService extends PostingService {
     /**
      * Filters the given list of recipients for users that should receive a notification about a new message.
      * <p>
-     * In all cases, the author will be filtered out.
+     * The author will be filtered out, unless he is also in the list of mentioned users.
      * If the conversation is not an announcement channel, the method filters out participants, that have muted or hidden the conversation.
      * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
      *
@@ -263,8 +261,7 @@ public class ConversationMessagingService extends PostingService {
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that muted or hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(summary -> summary.shouldNotifyRecipient() || mentionedUsers
-                        .contains(new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
+                filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
             }
 
             // If a channel is not visible to students, filter out participants that are only students
@@ -275,6 +272,10 @@ public class ConversationMessagingService extends PostingService {
         else {
             filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
         }
+
+        var mentionedUserIds = mentionedUsers.stream().map(User::getId).collect(Collectors.toSet());
+        // We explicitly also want to add the author to the recipients in case he tagged himself
+        filter = filter.or(summary -> mentionedUserIds.contains(summary.userId()));
 
         return notificationRecipients.stream().filter(filter)
                 .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))

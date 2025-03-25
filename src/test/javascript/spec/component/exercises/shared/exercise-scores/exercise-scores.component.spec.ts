@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -12,11 +12,11 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { Team } from 'app/entities/team.model';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ExerciseScoresComponent, FilterProp } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
+import { ExerciseScoresComponent, FilterProp } from 'app/exercise/exercise-scores/exercise-scores.component';
+import { ExerciseService } from 'app/exercise/exercise.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';

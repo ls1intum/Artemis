@@ -58,7 +58,6 @@ describe('ProfileService', () => {
             dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2',
         },
         'display-ribbon-on-profiles': 'dev',
-        'allowed-minimum-orion-version': '1.0.0',
         build: {
             artifact: 'Artemis',
             name: 'Artemis',
@@ -142,7 +141,7 @@ describe('ProfileService', () => {
             },
         },
         operatorName: 'TUM',
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
     };
 
     const expectedProfileInfo: ProfileInfo = {
@@ -153,7 +152,6 @@ describe('ProfileService', () => {
         ]),
         useExternal: false,
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
-        allowedMinimumOrionVersion: '1.0.0',
         testServer: true,
         ribbonEnv: '',
         guidedTourMapping: {
@@ -253,7 +251,7 @@ describe('ProfileService', () => {
                 },
             },
         },
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
         operatorName: 'TUM',
     };
 

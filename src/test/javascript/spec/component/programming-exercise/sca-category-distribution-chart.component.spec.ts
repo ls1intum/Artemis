@@ -1,10 +1,10 @@
-import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
+import { ScaCategoryDistributionChartComponent } from 'app/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CategoryIssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('SCA category distribution chart', () => {

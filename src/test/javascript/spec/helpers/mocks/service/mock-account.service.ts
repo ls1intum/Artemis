@@ -41,4 +41,5 @@ export class MockAccountService implements IAccountService {
     save = (account: any) => ({}) as any;
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
+    getToolToken = () => of();
 }

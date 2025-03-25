@@ -112,7 +112,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(500);
+            Thread.sleep(1000);
             return null;
         }).when(startContainerCmd).exec();
         // For this test, we need to return different test result streams for different containers. This is necessary since the first job would close the stream

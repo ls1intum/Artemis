@@ -7,18 +7,18 @@ import { Observable, of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
+import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LoadingIndicatorContainerStubComponent } from '../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({ selector: 'jhi-course-group', template: '' })

@@ -3,21 +3,20 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Authority } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
-
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
 const routes: Routes = [
     ...LAYOUT_ROUTES,
     {
         path: '',
-        loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+        loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',
         },
     },
     {
         path: '',
-        loadChildren: () => import('./shared/user-settings/user-settings.route').then((m) => m.routes),
+        loadChildren: () => import('app/shared/user-settings/user-settings.route').then((m) => m.routes),
     },
     {
         path: 'admin',
@@ -25,7 +24,7 @@ const routes: Routes = [
             authorities: [Authority.ADMIN],
         },
         canActivate: [UserRouteAccessService],
-        loadChildren: () => import('./admin/admin.routes'),
+        loadChildren: () => import('app/core/admin/admin.routes'),
     },
     {
         path: 'privacy',
@@ -67,11 +66,11 @@ const routes: Routes = [
     // ===== TEAM ====
     {
         path: 'course-management/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercises/shared/team/team.route').then((m) => m.teamRoute),
+        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/teams',
-        loadChildren: () => import('./exercises/shared/team/team.route').then((m) => m.teamRoute),
+        loadChildren: () => import('./exercise/team/team.route').then((m) => m.teamRoute),
     },
     // ===== ACCOUNT ====
     {
@@ -80,7 +79,7 @@ const routes: Routes = [
             {
                 path: 'activate',
                 pathMatch: 'full',
-                loadComponent: () => import('./account/activate/activate.component').then((m) => m.ActivateComponent),
+                loadComponent: () => import('app/core/account/activate/activate.component').then((m) => m.ActivateComponent),
                 data: {
                     pageTitle: 'activate.title',
                 },
@@ -88,7 +87,7 @@ const routes: Routes = [
             {
                 path: 'password',
                 pathMatch: 'full',
-                loadComponent: () => import('./account/password/password.component').then((m) => m.PasswordComponent),
+                loadComponent: () => import('app/core/account/password/password.component').then((m) => m.PasswordComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'global.menu.account.password',
@@ -98,7 +97,7 @@ const routes: Routes = [
             {
                 path: 'reset/finish',
                 pathMatch: 'full',
-                loadComponent: () => import('./account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
+                loadComponent: () => import('app/core/account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
                 data: {
                     pageTitle: 'global.menu.account.password',
                 },
@@ -106,7 +105,7 @@ const routes: Routes = [
             {
                 path: 'reset/request',
                 pathMatch: 'full',
-                loadComponent: () => import('./account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
+                loadComponent: () => import('app/core/account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
                 data: {
                     pageTitle: 'global.menu.account.password',
                 },
@@ -114,7 +113,7 @@ const routes: Routes = [
             {
                 path: 'register',
                 pathMatch: 'full',
-                loadComponent: () => import('./account/register/register.component').then((m) => m.RegisterComponent),
+                loadComponent: () => import('app/core/account/register/register.component').then((m) => m.RegisterComponent),
                 data: {
                     pageTitle: 'register.title',
                 },
@@ -122,7 +121,7 @@ const routes: Routes = [
             {
                 path: 'settings',
                 pathMatch: 'full',
-                loadComponent: () => import('./account/settings/settings.component').then((m) => m.SettingsComponent),
+                loadComponent: () => import('app/core/account/settings/settings.component').then((m) => m.SettingsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'global.menu.account.settings',
@@ -134,42 +133,42 @@ const routes: Routes = [
     // ===== COURSE MANAGEMENT =====
     {
         path: 'course-management',
-        loadChildren: () => import('./course/manage/course-management.route').then((m) => m.courseManagementState),
+        loadChildren: () => import('./core/course/manage/course-management.route').then((m) => m.courseManagementState),
     },
     {
         path: 'course-management/:courseId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('./exercises/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
+        loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
     },
 
     {
         path: 'courses',
-        loadChildren: () => import('./overview/courses.route').then((m) => m.routes),
+        loadChildren: () => import('app/core/course/overview/courses.route').then((m) => m.routes),
     },
     {
         path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
         pathMatch: 'full',
-        loadComponent: () => import('./lecture/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
+        loadComponent: () => import('./lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
     },
     // ===== GRADING SYSTEM =====
     {
         path: 'courses/:courseId/grading-system',
-        loadChildren: () => import('./grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
 
     {
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
         pathMatch: 'full',
-        loadComponent: () => import('./overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         pathMatch: 'full',
         path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-        loadComponent: () => import('./overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
+        loadComponent: () => import('app/core/course/overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
     },
     {
         path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',
         pathMatch: 'full',
-        loadComponent: () => import('./exercises/shared/feedback/standalone-feedback/standalone-feedback.component').then((m) => m.StandaloneFeedbackComponent),
+        loadComponent: () => import('app/exercise/feedback/standalone-feedback/standalone-feedback.component').then((m) => m.StandaloneFeedbackComponent),
     },
 
     // ===== EXAM =====
@@ -179,24 +178,24 @@ const routes: Routes = [
     },
     {
         path: 'courses/:courseId/exams/:examId/grading-system',
-        loadChildren: () => import('./grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('./assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
     },
     {
         path: 'courses/:courseId/exams/:examId/exercises/:exerciseId/repository',
-        loadChildren: () => import('./exercises/programming/participate/programming-repository.route').then((m) => m.routes),
+        loadChildren: () => import('./programming/overview/programming-repository.route').then((m) => m.routes),
     },
     {
         path: 'features',
-        loadChildren: () => import('./feature-overview/feature-overview.route').then((m) => m.routes),
+        loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.routes),
     },
     {
         path: 'lti',
-        loadChildren: () => import('./lti/lti.route').then((m) => m.ltiLaunchRoutes),
+        loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },
     {
         path: 'about-iris',
         pathMatch: 'full',
-        loadComponent: () => import('./iris/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
+        loadComponent: () => import('app/iris/overview/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
         data: {
             pageTitle: 'artemisApp.exerciseChatbot.title',
         },

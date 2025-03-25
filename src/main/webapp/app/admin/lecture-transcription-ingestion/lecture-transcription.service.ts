@@ -11,7 +11,7 @@ export class LectureTranscriptionService {
     ingestTranscription(courseId: number, lectureId: number, lectureUnitId: number): Observable<boolean> {
         return this.httpClient
             .put(
-                `api/lecture/lectures/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription`,
+                `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription`,
                 {},
                 {
                     observe: 'response',
@@ -25,7 +25,7 @@ export class LectureTranscriptionService {
 
     createTranscription(lectureId: number, lectureUnitId: number, transcription: any): Observable<boolean> {
         return this.httpClient
-            .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriptions`, transcription, {
+            .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcription`, transcription, {
                 observe: 'response',
             })
             .pipe(

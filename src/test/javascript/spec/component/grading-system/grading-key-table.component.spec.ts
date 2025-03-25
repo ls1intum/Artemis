@@ -1,4 +1,4 @@
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -13,13 +13,13 @@ import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BonusService } from 'app/grading-system/bonus/bonus.service';
+import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
-import { CourseScores, StudentScores } from 'app/course/course-scores/course-scores';
-import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { CourseScores, StudentScores } from 'app/core/course/manage/course-scores/course-scores';
+import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
 
 describe('GradingKeyTableComponent', () => {
     let fixture: ComponentFixture<GradingKeyTableComponent>;

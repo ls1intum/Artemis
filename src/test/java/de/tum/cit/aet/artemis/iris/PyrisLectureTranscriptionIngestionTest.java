@@ -51,7 +51,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
@@ -80,14 +80,14 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         Optional<LectureUnit> lu = lectureUnitRepository.findById(this.lectureUnit.getId());
-        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-unit/" + this.lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
+        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + this.lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionWithInvalidLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        request.put("/api/lecture/lectures/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.NOT_FOUND);
+        request.put("/api/lecture/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -97,7 +97,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
+        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -107,8 +107,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.delete("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription",
-                HttpStatus.OK);
+        request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.OK);
     }
 
     @Test
@@ -118,8 +117,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.delete("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription",
-                HttpStatus.NOT_FOUND);
+        request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -129,7 +127,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.delete("/api/lecture/courses/" + lecture1.getCourse().getId() + "/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription",
-                HttpStatus.FORBIDDEN);
+        request.delete("/api/lecture/" + 1000L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
     }
 }

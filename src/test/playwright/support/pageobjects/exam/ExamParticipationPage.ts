@@ -124,4 +124,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         const response = await this.examStartEnd.finishExam();
         expect(response.status()).toBe(200);
     }
+
+    async checkExerciseScore(expectedResult: string) {
+        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
+        await resultScore.waitFor({ state: 'visible' });
+        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+    }
 }

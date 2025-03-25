@@ -2,16 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
+import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { User } from 'app/core/user/user.model';
-import { CourseCardComponent } from 'app/overview/course-card.component';
+import { CourseCardComponent } from 'app/core/course/overview/course-card.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -24,6 +22,8 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ActivatedRoute } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;

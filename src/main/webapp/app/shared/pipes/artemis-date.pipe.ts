@@ -2,8 +2,8 @@ import { OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
-import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
+import { dayOfWeekZeroSundayToZeroMonday } from 'app/shared/util/date.utils';
+import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
 
 export type DateType = Date | dayjs.Dayjs | string | number | null | undefined;
 export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';

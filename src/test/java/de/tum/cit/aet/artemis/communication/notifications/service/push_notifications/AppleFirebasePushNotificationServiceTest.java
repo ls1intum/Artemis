@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotific
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -49,6 +50,9 @@ class AppleFirebasePushNotificationServiceTest {
     private ApplePushNotificationService applePushNotificationService;
 
     private FirebasePushNotificationService firebasePushNotificationService;
+
+    @Mock
+    private CourseNotificationPushProxyService courseNotificationPushProxyService;
 
     private Notification notification;
 
@@ -77,8 +81,8 @@ class AppleFirebasePushNotificationServiceTest {
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
 
-        applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
-        firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);
+        applePushNotificationService = new ApplePushNotificationService(courseNotificationPushProxyService, repositoryMock, appleRestTemplateMock);
+        firebasePushNotificationService = new FirebasePushNotificationService(courseNotificationPushProxyService, repositoryMock, firebaseRestTemplateMock);
 
         ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", "test");
         ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", "test");

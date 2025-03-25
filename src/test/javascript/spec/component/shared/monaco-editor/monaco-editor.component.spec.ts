@@ -4,11 +4,11 @@ import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-o
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
 
 describe('MonacoEditorComponent', () => {

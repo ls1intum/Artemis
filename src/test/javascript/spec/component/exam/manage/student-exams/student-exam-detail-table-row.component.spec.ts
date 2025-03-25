@@ -14,12 +14,12 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
