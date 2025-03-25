@@ -224,8 +224,8 @@ Update exercise code in repositories
 
 - **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse).
 
-  - To execute tests, copy the template (or solution) code into a folder **assignment** in the test repository and execute the tests (e.g. using maven clean test)
-  - Commit and push your changes |submit|
+  - To execute tests, copy the template (or solution) code into a folder **assignment** either inside the test repository or its parent directory (depending on the selected language) and execute the tests (e.g. using maven clean test)
+  - Commit and push your changes via Git
 
   - **Notes for Haskell:** In addition to the assignment folder, the executables of the build file expect the solution repository checked out in the **solution** subdirectory of the test folder and also allow for a **template** subdirectory to easily test the template on your local machine.
     You can use the following script to conveniently checkout an exercise and create the right folder structure:
@@ -334,12 +334,59 @@ Update exercise code in repositories
 
 - **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in the online code editor
 
-  - You can change between the different repos and submit the code when needed
+  - You can change between the different repos and submit |submit| the code when needed
 
   **Edit in Editor**
 
   .. figure:: programming/instructor-editor.png
             :align: center
+
+- You write the test cases in the **Test** repository using the language-specific testing framework. It should create JUnit-style XML files.
+  The templates are configured with the following frameworks:
+
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Programming Language | Testing Framework                                                                          |
+  +======================+============================================================================================+
+  | Java                 | `JUnit 5 <https://junit.org/junit5/>`_                                                     |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Python               | Python scripts                                                                             |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | C                    | Python scripts / `FACT <https://fact.readthedocs.io/en/latest/>`_                          |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Haskell              | `Tasty <https://hackage.haskell.org/package/tasty>`_                                       |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Kotlin               | `JUnit 5 <https://junit.org/junit5/>`_                                                     |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | VHDL                 | Python scripts                                                                             |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Assembler            | Python scripts                                                                             |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Swift                | `XCTest <https://developer.apple.com/documentation/xctest>`_                               |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | OCaml                | `OUnit2 <https://gildor478.github.io/ounit/ounit2/index.html>`_                            |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Rust                 | `cargo test <https://doc.rust-lang.org/book/ch11-00-testing.html>`_                        |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | JavaScript           | `Jest <https://jestjs.io/>`_                                                               |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | R                    | `testthat <https://testthat.r-lib.org/>`_                                                  |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | C++                  | `Catch2 <https://github.com/catchorg/Catch2>`_                                             |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | TypeScript           | `Jest <https://jestjs.io/>`_                                                               |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | C#                   | `NUnit <https://nunit.org/>`_                                                              |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Go                   | `go testing <https://pkg.go.dev/testing>`_                                                 |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Bash                 | `Bats <https://bats-core.readthedocs.io/en/stable/>`_                                      |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | MATLAB               | `matlab.unittest <https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html>`_ |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Ruby                 | `minitest <https://docs.seattlerb.org/minitest/>`_                                         |
+  +----------------------+--------------------------------------------------------------------------------------------+
+  | Dart                 | `package.test <https://dart.dev/tools/testing>`_                                           |
+  +----------------------+--------------------------------------------------------------------------------------------+
 
 - Check the results of the template and the solution build plan
 - They should not have the status |build_failed|
@@ -439,7 +486,7 @@ Configure static code analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - The **Test** repository contains files for the configuration of static code analysis tools if static code analysis was activated during the creation/import of the exercise
-- The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
+- For Java exercises, the folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
 - On exercise creation, Artemis generates a default configuration for each tool, which contains a predefined set of parameterized activated/excluded rules. The configuration files serve as a documented template that instructors can freely tailor to their needs.
 - On exercise import, Artemis copies the configuration files from the imported exercise
 - The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools, and the name of their respective configuration files
@@ -447,6 +494,12 @@ Configure static code analysis
 +----------------------+---------------------------+-------------------------------+------------------------------+
 | Programming Language | Execution Mechanism       | Supported Tools               | Configuration File           |
 +======================+===========================+===============================+==============================+
+| C                    | Script                    | GCC                           |                              |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| C++                  | Script                    | `Clang-Tidy`_                 | .clang-tidy                  |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| Dart                 | Script                    | `dart analyze`_               | analysis_options.yaml        |
++----------------------+---------------------------+-------------------------------+------------------------------+
 | Java                 | Maven plugins             | Spotbugs                      | spotbugs-exclusions.xml      |
 |                      | (pom.xml or build.gradle) +-------------------------------+------------------------------+
 |                      |                           | Checkstyle                    | checkstyle-configuration.xml |
@@ -455,10 +508,28 @@ Configure static code analysis
 |                      |                           +-------------------------------+------------------------------+
 |                      |                           | PMD Copy/Paste Detector (CPD) |                              |
 +----------------------+---------------------------+-------------------------------+------------------------------+
+| JavaScript           | npm                       | `ESLint`_                     | eslint.config.mjs            |
++----------------------+                           |                               |                              |
+| TypeScript           |                           |                               |                              |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| Python               | Script                    | `Ruff`_                       | ruff-student.toml            |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| R                    | Script                    | `lintr`_                      | .lintr                       |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| Ruby                 | Bundler                   | `Rubocop`_                    | .rubocop.yml                 |
++----------------------+---------------------------+-------------------------------+------------------------------+
+| Rust                 | cargo                     | `Clippy`_                     | clippy.toml                  |
++----------------------+---------------------------+-------------------------------+------------------------------+
 | Swift                | Script                    | SwiftLint                     | .swiftlint.yml               |
 +----------------------+---------------------------+-------------------------------+------------------------------+
-| C                    | Script                    | GCC                           |                              |
-+----------------------+---------------------------+-------------------------------+------------------------------+
+
+.. _Clang-Tidy: https://clang.llvm.org/extra/clang-tidy/
+.. _dart analyze: https://dart.dev/tools/analysis
+.. _ESLint: https://eslint.org/
+.. _Ruff: https://docs.astral.sh/ruff/
+.. _lintr: https://lintr.r-lib.org/
+.. _Rubocop: https://rubocop.org/
+.. _Clippy: https://doc.rust-lang.org/clippy/
 
 .. note::
   The Maven plugins for the Java static code analysis tools provide additional configuration options.
@@ -649,6 +720,23 @@ To get a better understanding of the feature, you can watch the following video:
   .. note::
     The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the :ref:`rules <c_sca_default_config>`.
 
+  - Other languages use categories defined by their static code analysis tool:
+
+    - JavaScript, TypeScript, C++ and R only use the ``Lint`` category.
+    - Dart's analyzer can generate these categories:
+
+      - ``TODO``
+      - ``HINT``
+      - ``COMPILE_TIME_ERROR``
+      - ``CHECKED_MODE_COMPILE_TIME_ERROR``
+      - ``STATIC_WARNING``
+      - ``SYNTACTIC_ERROR``
+      - ``LINT``
+
+    - Python uses Ruff's tool names: https://docs.astral.sh/ruff/rules/
+    - Ruby uses Rubocop's Department names: https://docs.rubocop.org/rubocop/cops.html
+    - Rust uses Clippy's lint groups: https://rust-lang.github.io/rust-clippy/stable/index.html
+
   - On the left side of the page, instructors can configure the static code analysis categories.
 
     - **Category**: The name of category defined by Artemis
@@ -800,4 +888,3 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
     <iframe src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
         Watch this video on TUM-Live.
     </iframe>
-
