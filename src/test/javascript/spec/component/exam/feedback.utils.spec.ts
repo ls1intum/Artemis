@@ -2,7 +2,7 @@ import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedba
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';

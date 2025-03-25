@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })

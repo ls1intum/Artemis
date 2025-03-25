@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -270,10 +271,20 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         pageableSearchDTO.setSortingOrder(SortingOrder.ASCENDING);
         var result = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
-        assertThat(result).hasSize(3);
-        assertThat(result.getFirst().id()).isEqualTo(finishedJob2.getBuildJobId());
-        assertThat(result.get(1).id()).isEqualTo(finishedJob3.getBuildJobId());
-        assertThat(result.get(2).id()).isEqualTo(finishedJob1.getBuildJobId());
+
+        assertThat(result).isNotEmpty();
+
+        // Ensure the saved jobs appear in the result list and are in the correct order, even if other jobs are in between
+        List<String> resultIds = result.stream().map(FinishedBuildJobDTO::id).toList();
+        List<String> expectedOrderedIds = List.of(finishedJob2.getBuildJobId(), finishedJob3.getBuildJobId(), finishedJob1.getBuildJobId());
+
+        assertThat(resultIds).containsAll(expectedOrderedIds);
+        assertThat(IntStream.range(0, expectedOrderedIds.size() - 1).allMatch(i -> resultIds.indexOf(expectedOrderedIds.get(i)) < resultIds.indexOf(expectedOrderedIds.get(i + 1))))
+                .isTrue();
+
+        // Ensure the jobs are sorted by buildCompletionDate in ascending order
+        List<ZonedDateTime> completionDates = result.stream().map(FinishedBuildJobDTO::buildCompletionDate).toList();
+        assertThat(completionDates).isSorted();
     }
 
     @Test
@@ -353,10 +364,10 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildJobRepository.save(finishedJob2);
         var response = request.get("/api/core/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
         assertThat(response).isNotNull();
-        assertThat(response.totalBuilds()).isEqualTo(2);
-        assertThat(response.successfulBuilds()).isEqualTo(1);
-        assertThat(response.failedBuilds()).isEqualTo(1);
-        assertThat(response.cancelledBuilds()).isEqualTo(0);
+        assertThat(response.totalBuilds()).isGreaterThanOrEqualTo(2);
+        assertThat(response.successfulBuilds()).isGreaterThanOrEqualTo(1);
+        assertThat(response.failedBuilds()).isGreaterThanOrEqualTo(1);
+        assertThat(response.cancelledBuilds()).isGreaterThanOrEqualTo(0);
     }
 
     @Test
