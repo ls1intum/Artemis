@@ -6,10 +6,10 @@ import { map } from 'rxjs/operators';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
-import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
+import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
-import { PlagiarismResultDTO } from 'app/plagiarism/shared/types/PlagiarismResultDTO';
+import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;

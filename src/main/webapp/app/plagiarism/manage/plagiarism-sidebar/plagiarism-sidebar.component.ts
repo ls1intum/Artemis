@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
-import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
+import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
+import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { faArrowLeft, faArrowRight, faChevronRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
