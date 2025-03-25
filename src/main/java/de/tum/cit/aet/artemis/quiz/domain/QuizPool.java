@@ -15,11 +15,9 @@ import jakarta.persistence.Transient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @Entity
 @Table(name = "quiz_pool")
@@ -38,7 +36,6 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
     private int maxPoints;
 
     @Column(name = "randomize_question_order")
-    @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder = false;
 
     @Transient
@@ -49,12 +46,12 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
         this.quizQuestions = new ArrayList<>();
     }
 
-    public void setExam(Exam exam) {
-        this.exam = exam;
-    }
-
     public Exam getExam() {
         return exam;
+    }
+
+    public void setExam(Exam exam) {
+        this.exam = exam;
     }
 
     public int getMaxPoints() {
@@ -118,4 +115,5 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
         }
         return true;
     }
+
 }
