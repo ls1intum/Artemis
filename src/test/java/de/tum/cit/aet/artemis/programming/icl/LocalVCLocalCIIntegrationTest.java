@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerS
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_NORMAL;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
@@ -395,11 +397,10 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_studentAssignmentRepository_afterDueDate() throws Exception {
-        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // After the due date of the exercise, students should be able to fetch but not push.
         // Teaching assistants should be able to fetch and instructors should be able to fetch and push.
@@ -418,6 +419,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
+
+        vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        var vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+
+        // Assert the expected logs
+        assertThat(vcsAccessLogs).hasSize(6);
+        assertThat(vcsAccessLogs).extracting("repositoryActionType", "user.login").containsExactly(tuple(RepositoryActionType.PULL, student1Login),
+                tuple(RepositoryActionType.PUSH_FAIL, student1Login), tuple(RepositoryActionType.PULL, tutor1Login), tuple(RepositoryActionType.PUSH_FAIL, tutor1Login),
+                tuple(RepositoryActionType.PULL, instructor1Login), tuple(RepositoryActionType.PUSH, instructor1Login));
     }
 
     @Disabled
