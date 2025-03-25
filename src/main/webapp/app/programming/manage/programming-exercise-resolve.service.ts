@@ -1,7 +1,7 @@
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Injectable, inject } from '@angular/core';
 
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';

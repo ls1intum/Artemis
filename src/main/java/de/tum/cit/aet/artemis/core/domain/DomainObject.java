@@ -11,9 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * Base abstract class for entities which have an id that is generated automatically (basically all domain objects).
@@ -28,7 +25,6 @@ public abstract class DomainObject implements Serializable {
     @Id
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(QuizView.Before.class)
     private Long id;
 
     public Long getId() {
