@@ -57,7 +57,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
-        this.lectureUnit = lectureUtilService.createVideoUnit();
+        this.lectureUnit = lectureUtilService.createAttachmentVideoUnitWithVideoSource("https://www.youtube.com/");
         this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit));
 
         // Add users that are not in the course
@@ -80,14 +80,14 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         Optional<LectureUnit> lu = lectureUnitRepository.findById(this.lectureUnit.getId());
-        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + this.lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.OK);
+        request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + this.lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIngestTranscriptionWithInvalidLectureId() throws Exception {
         activateIrisFor(lecture1.getCourse());
-        request.put("/api/lecture/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.NOT_FOUND);
+        request.post("/api/lecture/lectures/" + 9999L + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -97,7 +97,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         irisRequestMockProvider.mockTranscriptionIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.put("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/ingest-transcription", Optional.empty(), HttpStatus.FORBIDDEN);
+        request.post("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
     @Test

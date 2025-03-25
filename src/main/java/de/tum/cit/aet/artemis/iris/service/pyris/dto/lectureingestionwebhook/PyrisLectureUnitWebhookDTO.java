@@ -12,5 +12,5 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 
 public record PyrisLectureUnitWebhookDTO(String pdfFile, int attachmentVersion, LectureTranscription transcription, long lectureUnitId, String lectureUnitName, long lectureId,
-        String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink) {
+        String lectureName, long courseId, String courseName, String courseDescription, String lectureUnitLink, String videoLink) {
 }

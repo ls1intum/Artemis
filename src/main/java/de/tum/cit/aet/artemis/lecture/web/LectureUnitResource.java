@@ -223,6 +223,7 @@ public class LectureUnitResource {
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
+        int kk = 0;
         Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
         if (lectureUnitOptional.isEmpty()) {

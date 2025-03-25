@@ -206,7 +206,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureAttachmentUnitWithSameFileName() throws Exception {
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(true);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
         lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentVideoUnit));
 
         String fileName = Path.of(attachmentVideoUnit.getAttachment().getLink()).getFileName().toString();
@@ -290,7 +290,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         persistAttachmentUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(false);
         lecture1.addLectureUnit(attachmentVideoUnit);
         lecture1 = lectureRepository.save(lecture1);
 

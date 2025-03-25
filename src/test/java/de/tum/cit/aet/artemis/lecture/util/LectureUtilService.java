@@ -159,7 +159,7 @@ public class LectureUtilService {
                 TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
                 VideoUnit videoUnit = createVideoUnit();
                 TextUnit textUnit = createTextUnit();
-                AttachmentVideoUnit attachmentVideoUnit = createAttachmentUnit(withFiles);
+                AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnit(withFiles);
                 ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
                 lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentVideoUnit, exerciseUnit)));
             }
@@ -231,7 +231,7 @@ public class LectureUtilService {
      * @param withFile True, if the Attachment should link to a file
      * @return The created AttachmentUnit
      */
-    public AttachmentVideoUnit createAttachmentUnit(Boolean withFile) {
+    public AttachmentVideoUnit createAttachmentVideoUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
@@ -245,6 +245,21 @@ public class LectureUtilService {
     }
 
     /**
+     * Creates and saves an AttachmentUnit with a video.
+     *
+     * @param videoSource the link to the lecture video
+     * @return The created AttachmentVideoUnit
+     */
+    public AttachmentVideoUnit createAttachmentVideoUnitWithVideoSource(String videoSource) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.setDescription("Lorem Ipsum");
+        attachmentVideoUnit.setVideoSource(videoSource);
+        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
+        return attachmentUnitRepository.save(attachmentVideoUnit);
+    }
+
+    /**
      * Creates and saves an AttachmentUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentUnit.
      * The Slides link to image files.
      *
@@ -252,7 +267,7 @@ public class LectureUtilService {
      * @param shouldBePdf    if true file will be pdf, else image
      * @return The created AttachmentUnit
      */
-    public AttachmentVideoUnit createAttachmentUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
