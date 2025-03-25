@@ -11,8 +11,7 @@
                 <!-- Traditional Authentication -->
                 @if (!accountName) {
                     <div [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
-                }
-                @if (accountName) {
+                } @else {
                     <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName }" class="lead text-center mb-4">
                         Sign in with your account.
                     </div>

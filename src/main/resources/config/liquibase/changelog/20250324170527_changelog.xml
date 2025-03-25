@@ -11,7 +11,10 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="credential_id" type="varchar(1023)">
+<!--            TODO: check with length required
+https://www.corbado.com/blog/passkey-webauthn-database-guide#passkeys-mysql-users-table-schema why did they choose such a long credential id?
+-->
+            <column name="credential_id" type="varchar(20)">
                 <constraints nullable="false" unique="true"/>
             </column>
             <column name="public_key" type="TEXT"/>
@@ -39,13 +42,13 @@
 
         <!-- Create index for userId -->
         <createIndex indexName="userId_index" tableName="passkey_credentials">
-            <column name="userId"/>
+            <column name="user_id"/>
         </createIndex>
 
         <!-- Add foreign key constraint for userId referencing jhi_user -->
         <addForeignKeyConstraint
                 baseTableName="passkey_credentials"
-                baseColumnNames="userId"
+                baseColumnNames="user_id"
                 constraintName="FK_passkey_credentials_userId"
                 referencedTableName="jhi_user"
                 referencedColumnNames="id"
