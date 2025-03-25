@@ -5,7 +5,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
-import { BuildPlan } from 'app/entities/programming/build-plan.model';
+import { BuildPlan } from 'app/programming/shared/entities/build-plan.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockBuildPlanService } from '../../helpers/mocks/service/mock-build-plan.service';
@@ -13,7 +13,7 @@ import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/he
 import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';

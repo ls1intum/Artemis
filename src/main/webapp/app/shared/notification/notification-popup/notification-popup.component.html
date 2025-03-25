@@ -1,33 +1,35 @@
-<div #scrollContainer class="notification-popup-container">
-    @for (notification of notifications; track notification; let i = $index) {
-        <div (click)="removeNotification(i); navigateToTarget(notification)">
-            <div class="icon-container d-flex flex-column justify-content-center p-4">
-                @if (notification.title === QuizNotificationTitleHtmlConst) {
-                    <fa-icon [icon]="faCheckDouble" />
-                } @else {
-                    <fa-icon [icon]="faMessage" class="text-info" />
-                }
-            </div>
-            <div class="pe-4 py-3">
-                <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
-                    <fa-icon [icon]="faTimes" />
-                </button>
-                <h5 class="pe-4">
-                    {{ getNotificationTitleTranslation(notification) }}
-                </h5>
-
-                <div class="text-break">
-                    {{ getNotificationTextTranslation(notification) }}
-                </div>
-                <div class="text-end">
-                    {{ 'artemisApp.notification.by' | artemisTranslate }}
-                    @if (notification.author) {
-                        <span>{{ notification.author.name }}</span>
+@if (!courseSpecificNotificationFeatureActive) {
+    <div #scrollContainer class="notification-popup-container">
+        @for (notification of notifications; track notification; let i = $index) {
+            <div (click)="removeNotification(i); navigateToTarget(notification)">
+                <div class="icon-container d-flex flex-column justify-content-center p-4">
+                    @if (notification.title === QuizNotificationTitleHtmlConst) {
+                        <fa-icon [icon]="faCheckDouble" />
                     } @else {
-                        <span jhiTranslate="global.title"></span>
+                        <fa-icon [icon]="faMessage" class="text-info" />
                     }
                 </div>
+                <div class="pe-4 py-3">
+                    <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
+                        <fa-icon [icon]="faTimes" />
+                    </button>
+                    <h5 class="pe-4">
+                        {{ getNotificationTitleTranslation(notification) }}
+                    </h5>
+
+                    <div class="text-break">
+                        {{ getNotificationTextTranslation(notification) }}
+                    </div>
+                    <div class="text-end">
+                        {{ 'artemisApp.notification.by' | artemisTranslate }}
+                        @if (notification.author) {
+                            <span>{{ notification.author.name }}</span>
+                        } @else {
+                            <span jhiTranslate="global.title"></span>
+                        }
+                    </div>
+                </div>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
+}

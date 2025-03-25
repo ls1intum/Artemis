@@ -1,7 +1,7 @@
 import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';

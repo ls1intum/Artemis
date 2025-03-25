@@ -16,11 +16,11 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
