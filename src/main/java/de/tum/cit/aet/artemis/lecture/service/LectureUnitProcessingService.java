@@ -109,7 +109,7 @@ public class LectureUnitProcessingService {
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
                 AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
                 units.add(savedAttachmentVideoUnit);
             }

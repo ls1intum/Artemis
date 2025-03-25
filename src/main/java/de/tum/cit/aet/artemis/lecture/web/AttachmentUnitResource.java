@@ -184,7 +184,7 @@ public class AttachmentUnitResource {
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
         }
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));

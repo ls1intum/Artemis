@@ -91,7 +91,7 @@ public class AttachmentVideoUnitService {
         }
 
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit));
+            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit));
         }
         return savedAttachmentVideoUnit;
     }
@@ -146,13 +146,13 @@ public class AttachmentVideoUnitService {
                 deleteSlides(existingAttachmentVideoUnit);
                 // Split the updated file into single slides only if it is a pdf
                 if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                 }
             }
         }
 
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit));
+            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit));
         }
 
         return savedAttachmentVideoUnit;

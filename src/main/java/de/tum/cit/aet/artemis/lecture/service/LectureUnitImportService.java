@@ -77,7 +77,7 @@ public class LectureUnitImportService {
 
         // Send lectures to pyris
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
+            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(),
                     lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList());
         }
     }
@@ -119,7 +119,7 @@ public class LectureUnitImportService {
                 attachment.setAttachmentVideoUnit(attachmentVideoUnit);
                 attachmentRepository.save(attachment);
                 if (attachment.getLink().endsWith(".pdf")) {
-                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentVideoUnit);
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(attachmentVideoUnit);
                 }
                 attachmentVideoUnit.setAttachment(attachment);
                 return attachmentVideoUnit;
