@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, vie
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,12 +33,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
     attachmentSub: Subscription;
-    attachmentUnitSub: Subscription;
+    attachmentVideoUnitSub: Subscription;
 
     // Signals
     course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
-    attachmentUnit = signal<AttachmentVideoUnit | undefined>(undefined);
+    attachmentVideoUnit = signal<AttachmentVideoUnit | undefined>(undefined);
     isPdfLoading = signal<boolean>(false);
     attachmentToBeEdited = signal<Attachment | undefined>(undefined);
     currentPdfBlob = signal<Blob | undefined>(undefined);
@@ -52,7 +52,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     // Injected services
     private readonly route = inject(ActivatedRoute);
     private readonly attachmentService = inject(AttachmentService);
-    private readonly attachmentUnitService = inject(AttachmentVideoUnitService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
     private readonly router = inject(Router);
@@ -80,8 +80,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             } else if ('attachmentUnit' in data) {
-                this.attachmentUnit.set(data.attachmentUnit);
-                this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
+                this.attachmentVideoUnit.set(data.attachmentUnit);
+                this.attachmentVideoUnitSub = this.attachmentVideoUnitService.getAttachmentFile(this.course()!.id!, this.attachmentVideoUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);
                         this.currentPdfUrl.set(URL.createObjectURL(blob));
@@ -94,7 +94,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.attachmentSub?.unsubscribe();
-        this.attachmentUnitSub?.unsubscribe();
+        this.attachmentVideoUnitSub?.unsubscribe();
     }
 
     /**
@@ -126,20 +126,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
-        } else if (this.attachmentUnit()) {
-            this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
+        } else if (this.attachmentVideoUnit()) {
+            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment!);
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
             formData.append('file', pdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+            formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit()!));
 
-            this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+            this.attachmentVideoUnitService.update(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -163,10 +163,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
-        } else if (this.attachmentUnit()) {
-            this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture!.id!).subscribe({
+        } else if (this.attachmentVideoUnit()) {
+            this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {

@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -28,10 +28,10 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 @Component({
     selector: 'jhi-attachment-unit',
     imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
-    templateUrl: './attachment-unit.component.html',
-    styleUrl: './attachment-unit.component.scss',
+    templateUrl: './attachment-video-unit.component.html',
+    styleUrl: './attachment-video-unit.component.scss',
 })
-export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
+export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);

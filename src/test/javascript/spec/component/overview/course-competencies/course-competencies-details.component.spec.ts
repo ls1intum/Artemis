@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
@@ -59,7 +59,7 @@ describe('CourseCompetenciesDetails', () => {
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(VideoUnitComponent),

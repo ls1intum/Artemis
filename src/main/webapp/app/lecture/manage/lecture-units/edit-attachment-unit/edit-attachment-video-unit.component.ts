@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -14,19 +14,19 @@ import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
-    templateUrl: './edit-attachment-unit.component.html',
+    templateUrl: './edit-attachment-video-unit.component.html',
     imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
 })
-export class EditAttachmentUnitComponent implements OnInit {
+export class EditAttachmentVideoUnitComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
-    private attachmentUnitService = inject(AttachmentVideoUnitService);
+    private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
 
-    @ViewChild('attachmentUnitForm') attachmentUnitForm: AttachmentVideoUnitFormComponent;
+    @ViewChild('attachmentVideoUnitForm') attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
 
     isLoading = false;
-    attachmentUnit: AttachmentVideoUnit;
+    attachmentVideoUnit: AttachmentVideoUnit;
     attachment: Attachment;
     formData: AttachmentVideoUnitFormData;
     lectureId: number;
@@ -39,30 +39,30 @@ export class EditAttachmentUnitComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const attachmentUnitId = Number(params.get('attachmentUnitId'));
+                    const attachmentVideoUnitId = Number(params.get('attachmentUnitId'));
                     this.lectureId = Number(parentParams.get('lectureId'));
-                    return this.attachmentUnitService.findById(attachmentUnitId, this.lectureId);
+                    return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId);
                 }),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe({
-                next: (attachmentUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    this.attachmentUnit = attachmentUnitResponse.body!;
-                    this.attachment = this.attachmentUnit.attachment || {};
+                next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
+                    this.attachmentVideoUnit = attachmentVideoUnitResponse.body!;
+                    this.attachment = this.attachmentVideoUnit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
-                    this.attachmentUnit.attachment = undefined;
+                    this.attachmentVideoUnit.attachment = undefined;
                     this.attachment.attachmentVideoUnit = undefined;
 
                     this.formData = {
                         formProperties: {
-                            name: this.attachmentUnit.name,
-                            description: this.attachmentUnit.description,
-                            releaseDate: this.attachmentUnit.releaseDate,
+                            name: this.attachmentVideoUnit.name,
+                            description: this.attachmentVideoUnit.description,
+                            releaseDate: this.attachmentVideoUnit.releaseDate,
                             version: this.attachment.version,
-                            competencyLinks: this.attachmentUnit.competencyLinks,
-                            videoSource: this.attachmentUnit.videoSource,
+                            competencyLinks: this.attachmentVideoUnit.competencyLinks,
+                            videoSource: this.attachmentVideoUnit.videoSource,
                         },
                         fileProperties: {
                             fileName: this.attachment.link,
@@ -73,9 +73,9 @@ export class EditAttachmentUnitComponent implements OnInit {
             });
     }
 
-    updateAttachmentUnit(attachmentUnitFormData: AttachmentVideoUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentUnitFormData.formProperties;
-        const { file, fileName } = attachmentUnitFormData.fileProperties;
+    updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
+        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -86,14 +86,14 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachment.name = name;
         this.attachment.releaseDate = releaseDate;
         this.attachment.attachmentType = AttachmentType.FILE;
-        // === Setting attachmentUnit ===
+        // === Setting attachmentVideoUnit ===
 
-        this.attachmentUnit.name = name;
-        this.attachmentUnit.description = description;
-        this.attachmentUnit.releaseDate = releaseDate;
-        this.attachmentUnit.competencyLinks = competencyLinks;
+        this.attachmentVideoUnit.name = name;
+        this.attachmentVideoUnit.description = description;
+        this.attachmentVideoUnit.releaseDate = releaseDate;
+        this.attachmentVideoUnit.competencyLinks = competencyLinks;
 
-        this.attachmentUnit.videoSource = videoSource;
+        this.attachmentVideoUnit.videoSource = videoSource;
 
         this.isLoading = true;
 
@@ -102,10 +102,10 @@ export class EditAttachmentUnitComponent implements OnInit {
             formData.append('file', file, fileName);
         }
         formData.append('attachment', objectToJsonBlob(this.attachment));
-        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentUnit));
+        formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit));
 
-        this.attachmentUnitService
-            .update(this.lectureId, this.attachmentUnit.id!, formData, this.notificationText)
+        this.attachmentVideoUnitService
+            .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
             .subscribe({
                 next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

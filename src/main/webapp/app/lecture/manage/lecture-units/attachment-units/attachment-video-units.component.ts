@@ -64,7 +64,7 @@ export class AttachmentVideoUnitsComponent implements OnInit {
 
     file: File;
     filename: string;
-    //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
+    //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentVideoUnitResource.java
     readonly MINUTES_UNTIL_DELETION = 29;
 
     constructor() {

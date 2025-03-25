@@ -5,7 +5,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';

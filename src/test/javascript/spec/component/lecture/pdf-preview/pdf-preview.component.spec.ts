@@ -187,8 +187,8 @@ describe('PdfPreviewComponent', () => {
             });
             component.ngOnInit();
             fixture.detectChanges();
-            expect(component.attachmentUnitSub).toBeDefined();
-            const spySub = jest.spyOn(component.attachmentUnitSub, 'unsubscribe');
+            expect(component.attachmentVideoUnitSub).toBeDefined();
+            const spySub = jest.spyOn(component.attachmentVideoUnitSub, 'unsubscribe');
             component.ngOnDestroy();
             expect(spySub).toHaveBeenCalled();
         });
@@ -237,7 +237,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should update attachment unit successfully and show success alert', () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 1,
                 lecture: { id: 1 },
                 attachment: { id: 1, version: 1 },
@@ -252,7 +252,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should handle errors when updating an attachment unit fails', () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 1,
                 lecture: { id: 1 },
                 attachment: { id: 1, version: 1 },
@@ -383,7 +383,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should delete the attachment unit and navigate to unit management on success', () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
             component.course.set({ id: 6 });
 
             component.deleteAttachmentFile();
@@ -409,7 +409,7 @@ describe('PdfPreviewComponent', () => {
             const error = { message: 'Deletion failed' };
             lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set(undefined);
-            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
             component.course.set({ id: 6 });
 
             component.deleteAttachmentFile();

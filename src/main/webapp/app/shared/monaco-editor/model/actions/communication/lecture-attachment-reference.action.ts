@@ -3,7 +3,7 @@ import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';

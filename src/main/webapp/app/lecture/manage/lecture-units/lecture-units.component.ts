@@ -3,7 +3,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
@@ -45,7 +45,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected textUnitService = inject(TextUnitService);
     protected videoUnitService = inject(VideoUnitService);
     protected onlineUnitService = inject(OnlineUnitService);
-    protected attachmentUnitService = inject(AttachmentVideoUnitService);
+    protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
     @Input() lecture: Lecture;
 
@@ -54,13 +54,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
     textUnitForm = viewChild(TextUnitFormComponent);
     videoUnitForm = viewChild(VideoUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
-    attachmentUnitForm = viewChild(AttachmentVideoUnitFormComponent);
+    attachmentVideoUnitForm = viewChild(AttachmentVideoUnitFormComponent);
     isUnitConfigurationValid = computed(() => {
         return (
             (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
             (this.videoUnitForm()?.isFormValid() || !this.isVideoUnitFormOpen()) &&
             (this.onlineUnitForm()?.isFormValid() || !this.isOnlineUnitFormOpen()) &&
-            (this.attachmentUnitForm()?.isFormValid() || !this.isAttachmentUnitFormOpen())
+            (this.attachmentVideoUnitForm()?.isFormValid() || !this.isAttachmentVideoUnitFormOpen())
         );
     });
 
@@ -69,7 +69,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     isExerciseUnitFormOpen = signal<boolean>(false);
     isVideoUnitFormOpen = signal<boolean>(false);
     isOnlineUnitFormOpen = signal<boolean>(false);
-    isAttachmentUnitFormOpen = signal<boolean>(false);
+    isAttachmentVideoUnitFormOpen = signal<boolean>(false);
 
     currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedVideoUnit: VideoUnit;
@@ -78,7 +78,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     textUnitFormData: TextUnitFormData;
     videoUnitFormData: VideoUnitFormData;
     onlineUnitFormData: OnlineUnitFormData;
-    attachmentUnitFormData: AttachmentVideoUnitFormData;
+    attachmentVideoUnitFormData: AttachmentVideoUnitFormData;
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((params) => {
@@ -106,20 +106,20 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 this.isOnlineUnitFormOpen.set(true);
                 break;
             case LectureUnitType.ATTACHMENT:
-                this.isAttachmentUnitFormOpen.set(true);
+                this.isAttachmentVideoUnitFormOpen.set(true);
                 break;
         }
     }
 
     isAnyUnitFormOpen = computed(() => {
-        return this.isTextUnitFormOpen() || this.isVideoUnitFormOpen() || this.isOnlineUnitFormOpen() || this.isAttachmentUnitFormOpen() || this.isExerciseUnitFormOpen();
+        return this.isTextUnitFormOpen() || this.isVideoUnitFormOpen() || this.isOnlineUnitFormOpen() || this.isAttachmentVideoUnitFormOpen() || this.isExerciseUnitFormOpen();
     });
 
     onCloseLectureUnitForms() {
         this.isTextUnitFormOpen.set(false);
         this.isVideoUnitFormOpen.set(false);
         this.isOnlineUnitFormOpen.set(false);
-        this.isAttachmentUnitFormOpen.set(false);
+        this.isAttachmentVideoUnitFormOpen.set(false);
         this.isExerciseUnitFormOpen.set(false);
     }
 
@@ -200,13 +200,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
         });
     }
 
-    createEditAttachmentUnit(attachmentUnitFormData: AttachmentVideoUnitFormData): void {
-        if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
+    createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
+        if (!attachmentVideoUnitFormData?.formProperties?.name || !attachmentVideoUnitFormData?.fileProperties?.file || !attachmentVideoUnitFormData?.fileProperties?.fileName) {
             return;
         }
 
-        const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentUnitFormData.formProperties;
-        const { file, fileName } = attachmentUnitFormData.fileProperties;
+        const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
 
         this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
         const attachmentToCreateOrEdit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit.attachment! : new Attachment();
@@ -245,8 +245,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
         (this.isEditingLectureUnit
-            ? this.attachmentUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
-            : this.attachmentUnitService.create(formData, this.lecture.id!)
+            ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
+            : this.attachmentVideoUnitService.create(formData, this.lecture.id!)
         ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
@@ -286,7 +286,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.VIDEO);
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
         this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
-        this.isAttachmentUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT);
+        this.isAttachmentVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT);
 
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
@@ -313,7 +313,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 };
                 break;
             case LectureUnitType.ATTACHMENT:
-                this.attachmentUnitFormData = {
+                this.attachmentVideoUnitFormData = {
                     formProperties: {
                         name: this.currentlyProcessedAttachmentVideoUnit.attachment!.name,
                         description: this.currentlyProcessedAttachmentVideoUnit.description,

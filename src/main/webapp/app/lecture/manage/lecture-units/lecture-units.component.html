@@ -44,13 +44,13 @@
                 [formData]="onlineUnitFormData"
             />
         }
-        @if (isAttachmentUnitFormOpen()) {
+        @if (isAttachmentVideoUnitFormOpen()) {
             <jhi-attachment-unit-form
                 [isEditMode]="isEditingLectureUnit"
                 [hasCancelButton]="true"
                 (onCancel)="onCloseLectureUnitForms()"
-                (formSubmitted)="createEditAttachmentUnit($event)"
-                [formData]="attachmentUnitFormData"
+                (formSubmitted)="createEditAttachmentVideoUnit($event)"
+                [formData]="attachmentVideoUnitFormData"
             />
         }
         @if (isExerciseUnitFormOpen()) {
