@@ -39,7 +39,7 @@
                 }
                 <button
                     [id]="'hide-show-button-' + page.slideId"
-                    style="'opacity' : activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
+                    [style.opacity]="activeButtonPage() && activeButtonPage()?.slideId === page.slideId ? '1' : '0'"
                     [class]="'hide-show-btn btn ' + (hiddenPages()[page.slideId] ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page.slideId, $event)"
                     [ngbPopover]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox"

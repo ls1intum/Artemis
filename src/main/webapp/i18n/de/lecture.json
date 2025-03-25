@@ -112,7 +112,7 @@
                 "deletePagesQuestion": "Möchtest du die ausgewählten Seiten wirklich löschen?",
                 "deleteAllPagesQuestion": "Möchtest du wirklich alle Seiten löschen? Dies führt zur Löschung des Anhangs.",
                 "confirmCancelEditing": "Abbruchvorgang bestätigen",
-                "cancelEditingQuestion": "Möchten Sie wirklich gehen, ohne Ihre Änderungen zu speichern?",
+                "cancelEditingQuestion": "Möchtest du wirklich gehen, ohne deine Änderungen zu speichern?",
                 "invalidFileType": "Du kannst nur PDF-Dateien hochladen.",
                 "studentVersionCreateError": "Die Studentenversion der Dateieinheit konnte nicht erstellt werden.",
                 "studentVersionUpdateError": "Die Studentenversion der Dateieinheit konnte nicht aktualisiert werden..",

@@ -160,144 +160,212 @@ public class SlideSplitterService {
         log.debug("Processing slides for Attachment Unit with hidden pages {}", attachmentUnit.getAttachment().getName());
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            List<Map<String, Object>> pageOrderList = objectMapper.readValue(pageOrder, new TypeReference<>() {
-            });
+            // Parse the page order and hidden pages information
+            List<Map<String, Object>> pageOrderList = parsePageOrder(pageOrder);
+            Map<String, Map<String, Object>> hiddenPagesMap = parseHiddenPages(hiddenPages);
 
-            Map<String, Map<String, Object>> hiddenPagesMap = new HashMap<>();
-            if (hiddenPages != null && !hiddenPages.isEmpty()) {
-                try {
-                    List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
-                    });
-
-                    hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
-                        Map<String, Object> data = new HashMap<>();
-                        String dateStr = (String) page.get("date");
-                        data.put("date", Timestamp.from(Instant.parse(dateStr)));
-
-                        if (page.get("exerciseId") != null) {
-                            data.put("exerciseId", page.get("exerciseId"));
-                        }
-                        return data;
-                    }));
-                }
-                catch (Exception e) {
-                    log.warn("Failed to parse hidden pages data: {}", e.getMessage());
-                }
-            }
-
+            // Retrieve existing slides
             List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
             Map<String, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), slide -> slide));
 
+            // Initialize PDF renderer and filename
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
 
+            // Process each slide in the page order
             for (Map<String, Object> page : pageOrderList) {
-                String slideId = String.valueOf(page.get("slideId"));
-                int order = ((Number) page.get("order")).intValue();
-
-                Slide slideEntity;
-                boolean isNewSlide = false;
-
-                if (slideId.startsWith("temp_") || !existingSlidesMap.containsKey(slideId)) {
-                    isNewSlide = true;
-                    slideEntity = new Slide();
-                    slideEntity.setAttachmentUnit(attachmentUnit);
-                }
-                else {
-                    slideEntity = existingSlidesMap.get(slideId);
-                }
-
-                slideEntity.setSlideNumber(order);
-
-                Map<String, Object> hiddenData = hiddenPagesMap.get(slideId);
-                java.util.Date previousHiddenValue = slideEntity.getHidden();
-
-                if (hiddenData != null && hiddenData.containsKey("date")) {
-                    slideEntity.setHidden((java.util.Date) hiddenData.get("date"));
-
-                    if (hiddenData.containsKey("exerciseId") && hiddenData.get("exerciseId") != null) {
-                        Number exerciseId = (Number) hiddenData.get("exerciseId");
-                        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId.longValue());
-                        exercise.ifPresent(slideEntity::setExercise);
-                    }
-                    else {
-                        slideEntity.setExercise(null);
-                    }
-                }
-                else {
-                    slideEntity.setHidden(null);
-                    slideEntity.setExercise(null);
-                }
-
-                if (isNewSlide) {
-                    int pdfPageIndex = order - 1;
-                    if (pdfPageIndex >= 0 && pdfPageIndex < document.getNumberOfPages()) {
-                        BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
-                        byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-                        String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
-                        MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-                        Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
-                                .resolve(String.valueOf(order)).resolve(filename));
-
-                        slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
-                    }
-                }
-                else {
-                    String oldPath = slideEntity.getSlideImagePath();
-                    if (oldPath != null && !oldPath.isEmpty()) {
-                        Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath));
-
-                        String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
-
-                        try {
-                            File existingFile = originalPath.toFile();
-                            if (existingFile.exists()) {
-                                BufferedImage image = ImageIO.read(existingFile);
-                                byte[] imageInByte = bufferedImageToByteArray(image, "png");
-
-                                MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
-                                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString())
-                                        .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
-
-                                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
-                                existingFile.delete();
-                            }
-                            else {
-                                log.warn("Could not find existing slide file at path: {}", originalPath);
-                            }
-                        }
-                        catch (IOException e) {
-                            log.error("Failed to update slide image for reordering", e);
-                        }
-                    }
-                }
-
-                Slide savedSlide = slideRepository.save(slideEntity);
-
-                // Schedule unhiding if the hidden date has changed
-                if (!Objects.equals(previousHiddenValue, slideEntity.getHidden())) {
-                    slideUnhideService.handleSlideHiddenUpdate(savedSlide);
-                    log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), slideEntity.getHidden());
-                }
+                processSlide(page, attachmentUnit, existingSlidesMap, hiddenPagesMap, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
             }
 
             // Clean up slides that are no longer in the page order
-            Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_"))
-                    .collect(Collectors.toSet());
-
-            if (!slideIdsInPageOrder.isEmpty()) {
-                List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
-
-                if (!slidesToRemove.isEmpty()) {
-                    slideRepository.deleteAll(slidesToRemove);
-                    log.debug("Removed {} slides that are no longer in the page order", slidesToRemove.size());
-                }
-            }
+            cleanupRemovedSlides(pageOrderList, existingSlides);
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
             throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Parse the page order JSON string into a list of maps.
+     */
+    private List<Map<String, Object>> parsePageOrder(String pageOrder) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(pageOrder, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * Parse the hidden pages JSON string into a map of slide ID to hidden page data.
+     */
+    private Map<String, Map<String, Object>> parseHiddenPages(String hiddenPages) {
+        Map<String, Map<String, Object>> hiddenPagesMap = new HashMap<>();
+
+        if (hiddenPages != null && !hiddenPages.isEmpty()) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
+                });
+
+                hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
+                    Map<String, Object> data = new HashMap<>();
+                    String dateStr = (String) page.get("date");
+                    data.put("date", Timestamp.from(Instant.parse(dateStr)));
+
+                    if (page.get("exerciseId") != null) {
+                        data.put("exerciseId", page.get("exerciseId"));
+                    }
+                    return data;
+                }));
+            }
+            catch (Exception e) {
+                log.warn("Failed to parse hidden pages data: {}", e.getMessage());
+            }
+        }
+
+        return hiddenPagesMap;
+    }
+
+    /**
+     * Process a single slide in the page order.
+     */
+    private void processSlide(Map<String, Object> page, AttachmentUnit attachmentUnit, Map<String, Slide> existingSlidesMap, Map<String, Map<String, Object>> hiddenPagesMap,
+            PDFRenderer pdfRenderer, String fileNameWithOutExt, int totalPages) throws IOException {
+        String slideId = String.valueOf(page.get("slideId"));
+        int order = ((Number) page.get("order")).intValue();
+
+        Slide slideEntity;
+        boolean isNewSlide = false;
+
+        // Determine if this is a new slide or an existing one
+        if (slideId.startsWith("temp_") || !existingSlidesMap.containsKey(slideId)) {
+            isNewSlide = true;
+            slideEntity = new Slide();
+            slideEntity.setAttachmentUnit(attachmentUnit);
+        }
+        else {
+            slideEntity = existingSlidesMap.get(slideId);
+        }
+
+        slideEntity.setSlideNumber(order);
+
+        // Handle hidden status and associated exercise
+        java.util.Date previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap.get(slideId));
+
+        // Handle slide image
+        if (isNewSlide) {
+            createNewSlideImage(slideEntity, pdfRenderer, fileNameWithOutExt, attachmentUnit, order, totalPages);
+        }
+        else {
+            updateExistingSlideImage(slideEntity, fileNameWithOutExt, attachmentUnit, order);
+        }
+
+        // Save slide and schedule unhiding if needed
+        Slide savedSlide = slideRepository.save(slideEntity);
+        scheduleUnhideIfNeeded(savedSlide, previousHiddenValue, slideEntity.getHidden());
+    }
+
+    /**
+     * Update the hidden status and associated exercise for a slide.
+     *
+     * @return The previous hidden value
+     */
+    private java.util.Date updateSlideHiddenStatus(Slide slideEntity, Map<String, Object> hiddenData) {
+        java.util.Date previousHiddenValue = slideEntity.getHidden();
+
+        if (hiddenData != null && hiddenData.containsKey("date")) {
+            slideEntity.setHidden((java.util.Date) hiddenData.get("date"));
+
+            if (hiddenData.containsKey("exerciseId") && hiddenData.get("exerciseId") != null) {
+                Number exerciseId = (Number) hiddenData.get("exerciseId");
+                Optional<Exercise> exercise = exerciseRepository.findById(exerciseId.longValue());
+                exercise.ifPresent(slideEntity::setExercise);
+            }
+            else {
+                slideEntity.setExercise(null);
+            }
+        }
+        else {
+            slideEntity.setHidden(null);
+            slideEntity.setExercise(null);
+        }
+
+        return previousHiddenValue;
+    }
+
+    /**
+     * Create image for a new slide.
+     */
+    private void createNewSlideImage(Slide slideEntity, PDFRenderer pdfRenderer, String fileNameWithOutExt, AttachmentUnit attachmentUnit, int order, int totalPages)
+            throws IOException {
+        int pdfPageIndex = order - 1;
+        if (pdfPageIndex >= 0 && pdfPageIndex < totalPages) {
+            BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
+            byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
+            String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+            MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
+            Path savePath = fileService.saveFile(slideFile,
+                    FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide").resolve(String.valueOf(order)).resolve(filename));
+
+            slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+        }
+    }
+
+    /**
+     * Update image for an existing slide.
+     */
+    private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentUnit attachmentUnit, int order) {
+        String oldPath = slideEntity.getSlideImagePath();
+        if (oldPath != null && !oldPath.isEmpty()) {
+            Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath));
+            String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+
+            try {
+                File existingFile = originalPath.toFile();
+                if (existingFile.exists()) {
+                    BufferedImage image = ImageIO.read(existingFile);
+                    byte[] imageInByte = bufferedImageToByteArray(image, "png");
+
+                    MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
+                    Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
+                            .resolve(String.valueOf(order)).resolve(newFilename));
+
+                    slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
+                    existingFile.delete();
+                }
+                else {
+                    log.warn("Could not find existing slide file at path: {}", originalPath);
+                }
+            }
+            catch (IOException e) {
+                log.error("Failed to update slide image for reordering", e);
+            }
+        }
+    }
+
+    /**
+     * Schedule unhiding for a slide if the hidden date has changed.
+     */
+    private void scheduleUnhideIfNeeded(Slide savedSlide, java.util.Date previousHiddenValue, java.util.Date newHiddenValue) {
+        if (!Objects.equals(previousHiddenValue, newHiddenValue)) {
+            slideUnhideService.handleSlideHiddenUpdate(savedSlide);
+            log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+        }
+    }
+
+    /**
+     * Clean up slides that are no longer in the page order.
+     */
+    private void cleanupRemovedSlides(List<Map<String, Object>> pageOrderList, List<Slide> existingSlides) {
+        Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
+
+        if (!slideIdsInPageOrder.isEmpty()) {
+            List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
+
+            if (!slidesToRemove.isEmpty()) {
+                slideRepository.deleteAll(slidesToRemove);
+                log.debug("Removed {} slides that are no longer in the page order", slidesToRemove.size());
+            }
         }
     }
 
