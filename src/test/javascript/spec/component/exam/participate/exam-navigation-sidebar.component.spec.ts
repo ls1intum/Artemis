@@ -25,14 +25,15 @@ describe('ExamNavigationSidebarComponent', () => {
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
     let comp: ExamNavigationSidebarComponent;
     let repositoryService: CodeEditorRepositoryService;
+    let examExerciseIdForNavigationSourceMock: BehaviorSubject<number>;
 
-    const examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
-    const mockExamExerciseUpdateService = {
-        currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
-    };
+    beforeEach(async () => {
+        examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
+        const mockExamExerciseUpdateService = {
+            currentExerciseIdForNavigation: examExerciseIdForNavigationSourceMock.asObservable(),
+        };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
