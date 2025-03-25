@@ -63,7 +63,7 @@ public class FilePathService {
         return Path.of(fileUploadPath, "attachments", "lecture");
     }
 
-    public static Path getAttachmentUnitFilePath() {
+    public static Path getAttachmentVideoUnitFilePath() {
         return Path.of(fileUploadPath, "attachments", "attachment-unit");
     }
 
@@ -135,7 +135,7 @@ public class FilePathService {
             return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
         }
         if (uriPath.startsWith("attachments/attachment-unit")) {
-            return actualPathForPublicAttachmentUnitFilePath(publicPath, filename);
+            return actualPathForPublicAttachmentVideoUnitFilePath(publicPath, filename);
         }
         if (uriPath.startsWith("file-upload-exercises")) {
             return actualPathForPublicFileUploadExercisesFilePath(publicPath, filename);
@@ -144,22 +144,22 @@ public class FilePathService {
         return null;
     }
 
-    private static Path actualPathForPublicAttachmentUnitFilePath(URI publicPath, String filename) {
+    private static Path actualPathForPublicAttachmentVideoUnitFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
         if (!publicPath.toString().contains("slide")) {
-            String attachmentUnitId = path.getName(2).toString();
-            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
+            String attachmentVideoUnitId = path.getName(2).toString();
+            return getAttachmentVideoUnitFilePath().resolve(Path.of(attachmentVideoUnitId, filename));
         }
         try {
-            String attachmentUnitId = path.getName(2).toString();
+            String attachmentVideoUnitId = path.getName(2).toString();
             String slideId = path.getName(4).toString();
             // check if the ids are valid long values
-            Long.parseLong(attachmentUnitId);
+            Long.parseLong(attachmentVideoUnitId);
             Long.parseLong(slideId);
-            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
+            return getAttachmentVideoUnitFilePath().resolve(Path.of(attachmentVideoUnitId, "slide", slideId, filename));
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("Public path does not contain correct attachmentUnitId or slideId: " + publicPath, e);
+            throw new FilePathParsingException("Public path does not contain correct attachmentVideoUnitId or slideId: " + publicPath, e);
         }
     }
 
@@ -233,8 +233,8 @@ public class FilePathService {
         if (path.startsWith(getLectureAttachmentFilePath())) {
             return URI.create("attachments/lecture/" + id + "/" + filename);
         }
-        if (path.startsWith(getAttachmentUnitFilePath())) {
-            return publicPathForActualAttachmentUnitFilePath(path, filename, id);
+        if (path.startsWith(getAttachmentVideoUnitFilePath())) {
+            return publicPathForActualAttachmentVideoUnitFilePath(path, filename, id);
         }
         if (path.startsWith(getFileUploadExercisesFilePath())) {
             return publicPathForActualFileUploadExercisesFilePath(path, filename, id);
@@ -243,19 +243,19 @@ public class FilePathService {
         return null;
     }
 
-    private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
+    private static URI publicPathForActualAttachmentVideoUnitFilePath(Path path, String filename, String id) {
         if (!path.toString().contains("slide")) {
-            return URI.create("attachments/attachment-unit/" + id + "/" + filename);
+            return URI.create("attachments/attachment-video-unit/" + id + "/" + filename);
         }
         try {
             // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
             // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
-            final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
-            final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
-            return URI.create("attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
+            final String expectedAttachmentVideoUnitId = path.getName(path.getNameCount() - 4).toString();
+            final long attachmentVideoUnitId = Long.parseLong(expectedAttachmentVideoUnitId);
+            return URI.create("attachments/attachment-video-unit/" + attachmentVideoUnitId + "/slide/" + id + "/" + filename);
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + path, e);
+            throw new FilePathParsingException("Unexpected String in upload file path. AttachmentVideoUnit ID should be present here: " + path, e);
         }
     }
 

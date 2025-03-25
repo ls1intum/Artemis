@@ -204,7 +204,7 @@ public class AttachmentUnitService {
      */
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
         if (file != null && !file.isEmpty()) {
-            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentUnitId.toString());
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
             attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());

@@ -131,11 +131,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // create unreleased attachment unit
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentUnit(true);
         attachmentVideoUnit.setLecture(lecture);
-        Attachment attachment = attachmentVideoUnit.getAttachment();
-        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
 
         lectureRepo.save(lecture);
-        attachmentRepo.save(attachment);
         attachmentVideoUnit = attachmentUnitRepo.save(attachmentVideoUnit);
 
         String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnit.getAttachment().getLink());
