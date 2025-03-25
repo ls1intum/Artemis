@@ -8,7 +8,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs.component';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ExerciseImportWrapperComponent', () => {
     let component: ExerciseImportWrapperComponent;

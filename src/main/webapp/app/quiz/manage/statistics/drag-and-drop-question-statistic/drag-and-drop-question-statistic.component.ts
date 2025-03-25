@@ -3,10 +3,10 @@ import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-quest
 import { QuizStatisticUtil } from 'app/quiz/shared/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragAndDropQuestionStatistic } from 'app/quiz/shared/entities/drag-and-drop-question-statistic.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -1,4 +1,4 @@
-import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 
 export class CourseManagementStatisticsDTO {
     averageScoreOfCourse: number;

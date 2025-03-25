@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/exercise.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
@@ -15,7 +15,6 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
@@ -25,6 +24,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { EntityTitleService } from 'app/shared/layouts/navbar/entity-title.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { provideHttpClient } from '@angular/common/http';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;

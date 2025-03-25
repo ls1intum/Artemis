@@ -17,7 +17,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 
 describe('AccountService', () => {
     let accountService: AccountService;

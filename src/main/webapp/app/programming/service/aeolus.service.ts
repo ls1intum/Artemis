@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
-import { WindFile } from 'app/entities/programming/wind.file';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class AeolusService {

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';

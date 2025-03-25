@@ -1,11 +1,11 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
+import { QuizPool } from 'app/quiz/shared/entities/quiz-pool.model';
 import { QuizPoolService } from 'app/quiz/manage/quiz-pool.service';
 import { QuizPoolMappingComponent } from 'app/quiz/manage/quiz-pool-mapping.component';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
