@@ -10,7 +10,7 @@ import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.mo
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
+import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 
 describe('AttachmentUnitService', () => {
     let service: AttachmentUnitService;

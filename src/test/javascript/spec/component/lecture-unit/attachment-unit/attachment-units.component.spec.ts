@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { AttachmentUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
+import { AttachmentVideoUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -37,8 +37,8 @@ type AttachmentUnitsResponseType = {
 };
 
 describe('AttachmentUnitsComponent', () => {
-    let attachmentUnitsComponentFixture: ComponentFixture<AttachmentUnitsComponent>;
-    let attachmentUnitsComponent: AttachmentUnitsComponent;
+    let attachmentUnitsComponentFixture: ComponentFixture<AttachmentVideoUnitsComponent>;
+    let attachmentUnitsComponent: AttachmentVideoUnitsComponent;
 
     let attachmentUnitService: AttachmentUnitService;
     let router: Router;
@@ -68,7 +68,7 @@ describe('AttachmentUnitsComponent', () => {
         TestBed.configureTestingModule({
             imports: [FormsModule, MockModule(NgbTooltipModule)],
             declarations: [
-                AttachmentUnitsComponent,
+                AttachmentVideoUnitsComponent,
                 LectureUnitLayoutStubComponent,
                 MockComponent(FormDateTimePickerComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -116,7 +116,7 @@ describe('AttachmentUnitsComponent', () => {
             extras: { state: { file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' } },
         } as any);
 
-        attachmentUnitsComponentFixture = TestBed.createComponent(AttachmentUnitsComponent);
+        attachmentUnitsComponentFixture = TestBed.createComponent(AttachmentVideoUnitsComponent);
         attachmentUnitsComponent = attachmentUnitsComponentFixture.componentInstance;
         attachmentUnitsComponentFixture.detectChanges();
 
@@ -152,7 +152,7 @@ describe('AttachmentUnitsComponent', () => {
         const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'createUnits').mockReturnValue(of(attachmentUnitsResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        attachmentUnitsComponent.createAttachmentUnits();
+        attachmentUnitsComponent.createAttachmentVideoUnits();
         attachmentUnitsComponentFixture.detectChanges();
         expect(createAttachmentUnitStub).toHaveBeenCalledWith(1, filename, lectureUnitInformation);
         expect(createAttachmentUnitStub).toHaveBeenCalledOnce();

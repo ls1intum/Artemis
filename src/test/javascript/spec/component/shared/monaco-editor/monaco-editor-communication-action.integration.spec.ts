@@ -369,14 +369,14 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentUnits![0];
+            const attachmentUnit = lecture.attachmentVideoUnits![0];
             const previousName = attachmentUnit.name;
             attachmentUnit.name = attachmentUnitNameWithBrackets;
             const attachmentUnitFileName = 'Metis-Attachment.pdf';
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
-                attachmentUnit,
+                attachmentVideoUnit: attachmentUnit,
             });
             attachmentUnit.name = previousName;
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnitNameWithoutBrackets}(${attachmentUnitFileName})[/lecture-unit]`);
@@ -413,12 +413,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentUnits![0];
+            const attachmentUnit = lecture.attachmentVideoUnits![0];
             const attachmentUnitFileName = 'Metis-Attachment.pdf';
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
-                attachmentUnit,
+                attachmentVideoUnit: attachmentUnit,
             });
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnit.name}(${attachmentUnitFileName})[/lecture-unit]`);
         });
@@ -431,7 +431,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 lectureAttachmentReferenceAction.executeInCurrentEditor({
                     reference: ReferenceType.ATTACHMENT_UNITS,
                     lecture,
-                    attachmentUnit: undefined,
+                    attachmentVideoUnit: undefined,
                 });
             expect(executeAction).toThrow(Error);
         });
@@ -440,13 +440,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentUnits![0];
+            const attachmentUnit = lecture.attachmentVideoUnits![0];
             const slide = attachmentUnit.slides![0];
             const slideLink = 'slides';
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.SLIDE,
                 lecture,
-                attachmentUnit,
+                attachmentVideoUnit: attachmentUnit,
                 slide,
             });
             expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${slideLink})[/slide]`);
@@ -456,12 +456,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             fixture.detectChanges();
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
-            const attachmentUnit = lecture.attachmentUnits![0];
+            const attachmentUnit = lecture.attachmentVideoUnits![0];
             const executeAction = () =>
                 lectureAttachmentReferenceAction.executeInCurrentEditor({
                     reference: ReferenceType.SLIDE,
                     lecture,
-                    attachmentUnit,
+                    attachmentVideoUnit: attachmentUnit,
                     slide: undefined,
                 });
             expect(executeAction).toThrow(Error);

@@ -16,14 +16,14 @@ import { addPublicFilePrefix } from 'app/app.constants';
 interface LectureWithDetails {
     id: number;
     title: string;
-    attachmentUnits?: AttachmentVideoUnit[];
+    attachmentVideoUnits?: AttachmentVideoUnit[];
     attachments?: Attachment[];
 }
 
 interface LectureAttachmentReferenceActionArgs {
     reference: ReferenceType;
     lecture: LectureWithDetails;
-    attachmentUnit?: AttachmentVideoUnit;
+    attachmentVideoUnit?: AttachmentVideoUnit;
     slide?: Slide;
     attachment?: Attachment;
 }
@@ -61,7 +61,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                         return {
                             id: lecture.id!,
                             title: lecture.title!,
-                            attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                            attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
                             attachments: attachmentsWithFileUrls,
                         };
                     });
@@ -100,15 +100,15 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.ATTACHMENT_UNITS:
-                if (args.attachmentUnit) {
-                    this.insertAttachmentUnitReference(editor, args.attachmentUnit);
+                if (args.attachmentVideoUnit) {
+                    this.insertAttachmentVideoUnitReference(editor, args.attachmentVideoUnit);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit provided to reference.`);
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
+                if (args.attachmentVideoUnit && args.slide) {
+                    this.insertSlideReference(editor, args.attachmentVideoUnit, args.slide);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -136,18 +136,18 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentVideoUnit, slide: Slide): void {
+    insertSlideReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit, slide: Slide): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Remove the trailing slash and the file name.
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
         this.replaceTextAtCurrentSelection(
             editor,
-            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
+            `[slide]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
         );
     }
 
-    insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentVideoUnit): void {
-        const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
+    insertAttachmentVideoUnitReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit): void {
+        const shortLink = attachmentVideoUnit.attachment?.link!.split('attachments/')[1];
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }
