@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/programming-exercise-detail.component';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
@@ -26,8 +26,8 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';

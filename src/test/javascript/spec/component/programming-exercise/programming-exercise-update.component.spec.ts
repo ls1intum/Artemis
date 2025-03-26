@@ -2,14 +2,14 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
-import { WindFile } from 'app/entities/programming/wind.file';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { of, Subject, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -24,7 +24,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/upd
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';

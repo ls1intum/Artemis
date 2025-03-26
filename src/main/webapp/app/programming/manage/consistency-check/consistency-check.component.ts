@@ -1,8 +1,8 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { getCourseId } from 'app/entities/exercise.model';
 import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';

@@ -7,7 +7,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SshUserSettingsKeyDetailsComponent } from 'app/core/user/settings/ssh-settings/details/ssh-user-settings-key-details.component';

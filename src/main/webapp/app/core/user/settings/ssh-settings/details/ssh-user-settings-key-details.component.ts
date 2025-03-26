@@ -10,7 +10,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { getOS } from 'app/shared/util/os-detector.util';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

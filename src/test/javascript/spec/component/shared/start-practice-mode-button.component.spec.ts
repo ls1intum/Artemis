@@ -8,7 +8,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';

@@ -20,13 +20,13 @@ import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/asse
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';

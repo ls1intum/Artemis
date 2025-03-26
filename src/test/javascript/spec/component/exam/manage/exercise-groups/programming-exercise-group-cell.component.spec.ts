@@ -4,7 +4,7 @@ import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';

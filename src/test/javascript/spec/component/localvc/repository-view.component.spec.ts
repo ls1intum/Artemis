@@ -12,12 +12,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;

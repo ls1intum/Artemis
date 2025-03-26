@@ -4,13 +4,13 @@ import { get } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgressBarComponent } from './progress-bar/progress-bar.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',

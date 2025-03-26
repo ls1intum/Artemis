@@ -1,20 +1,23 @@
 import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { ExerciseActionButtonComponent } from '../exercise-action-button.component';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -22,14 +25,13 @@ import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router, RouterLink } from '@angular/router';
 import { HelpIconComponent } from '../help-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
-import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
-import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';
-import { Ide } from 'app/core/user/settings/ide-preferences/ide.model';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { TheiaService } from 'app/programming/service/theia.service';
 
 export enum RepositoryAuthenticationMethod {
     Password = 'password',
@@ -66,7 +68,9 @@ export class CodeButtonComponent implements OnInit {
     private localStorage = inject(LocalStorageService);
     private participationService = inject(ParticipationService);
     private ideSettingsService = inject(IdeSettingsService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
+    private theiaService = inject(TheiaService);
     private router = inject(Router);
 
     protected readonly FeatureToggle = FeatureToggle;
@@ -117,6 +121,9 @@ export class CodeButtonComponent implements OnInit {
 
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
+
+    theiaEnabled = false;
+    theiaPortalURL: string;
 
     // Icons
     readonly faCode = faCode;
@@ -169,6 +176,7 @@ export class CodeButtonComponent implements OnInit {
 
             this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
             this.configureTooltips(profileInfo);
+            this.initTheia(profileInfo);
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
@@ -237,15 +245,16 @@ export class CodeButtonComponent implements OnInit {
      * Add the credentials to the http url, if a token should be used.
      *
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     * @param alwaysUsetoken if true, the token authentication method is always used, even if the user has not selected to use it
      */
-    getHttpOrSshRepositoryUri(insertPlaceholder = true): string {
+    getHttpOrSshRepositoryUri(insertPlaceholder = true, alwaysUsetoken = false): string {
         if (this.useSsh && this.sshTemplateUrl) {
             return this.getSshCloneUrl(this.getRepositoryUri());
         }
         const url = this.getRepositoryUri();
-        const token = insertPlaceholder ? '**********' : this.getUsedToken();
+        const token = insertPlaceholder ? '**********' : this.getUsedToken(alwaysUsetoken);
 
-        const credentials = `://${this.user.login}${this.useToken ? `:${token}` : ''}@`;
+        const credentials = `://${this.user.login}${this.useToken || alwaysUsetoken ? `:${token}` : ''}@`;
 
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
@@ -306,8 +315,8 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
-    private getUsedToken(): string | undefined {
-        if (this.useToken) {
+    private getUsedToken(alwaysUseToken = false): string | undefined {
+        if (this.useToken || alwaysUseToken) {
             if (this.isInCourseManagement) {
                 return this.user.vcsAccessToken;
             } else {
@@ -431,5 +440,33 @@ export class CodeButtonComponent implements OnInit {
         } else {
             return 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
+    }
+
+    private initTheia(profileInfo: ProfileInfo) {
+        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise()) {
+            const exercise = this.exercise()!;
+            // Theia requires the Build Config of the programming exercise to be set
+            this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
+                // Merge the theiaConfig (containing the theiaImage) into the buildConfig
+                this.exercise()!.buildConfig = { ...exercise.buildConfig, ...theiaConfig };
+
+                // Set variables now, sanitize later on
+                this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+
+                // Verify that all conditions are met
+                if (this.theiaPortalURL !== '' && exercise.allowOnlineIde && theiaConfig.theiaImage) {
+                    this.theiaEnabled = true;
+                }
+            });
+        }
+    }
+
+    async startOnlineIDE() {
+        const theiaImage = this.exercise()?.buildConfig?.theiaImage ?? '';
+        const repositoryUri = this.getHttpOrSshRepositoryUri(false, true);
+        const userName = this.user.name;
+        const userEmail = this.user.email;
+
+        await this.theiaService.startOnlineIDE(this.theiaPortalURL, theiaImage, repositoryUri, userName, userEmail);
     }
 }

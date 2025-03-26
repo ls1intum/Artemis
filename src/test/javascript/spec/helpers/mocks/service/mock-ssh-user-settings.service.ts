@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
-import { IASshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { IASshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 
 export class MockSshUserSettingsService implements IASshUserSettingsService {
     getCachedSshKeys = () => Promise.resolve([]);

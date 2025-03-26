@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';

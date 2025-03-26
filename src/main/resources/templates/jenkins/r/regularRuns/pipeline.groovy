@@ -30,7 +30,7 @@ private void runTestSteps() {
 private void test() {
     stage('Test') {
         sh '''
-        R CMD INSTALL assignment
+        Rscript -e 'remotes::install_local()'
         Rscript -e 'library("testthat"); options(testthat.output_file = "junit.xml"); test_local(".", reporter = "junit")'
         '''
     }

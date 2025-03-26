@@ -1,5 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
+import { NotificationService } from 'app/shared/notification/notification.service';
 import {
     MENTIONED_IN_MESSAGE_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
@@ -20,12 +21,12 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { RouteComponents } from 'app/communication/metis.util';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
-import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
+import { TranslateDirective } from '../../language/translate.directive';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 const conversationMessageNotificationTitles = [
     MENTIONED_IN_MESSAGE_TITLE,
@@ -54,6 +55,7 @@ export class NotificationPopupComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private notificationSettingsService = inject(NotificationSettingsService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private featureToggleService = inject(FeatureToggleService);
 
     notifications: Notification[] = [];
     QuizNotificationTitleHtmlConst = 'Quiz started';
@@ -71,9 +73,15 @@ export class NotificationPopupComponent implements OnInit {
     faCheckDouble = faCheckDouble;
     faExclamationTriangle = faExclamationTriangle;
 
+    protected courseSpecificNotificationFeatureActive: boolean = false;
+
     ngOnInit(): void {
         this.notificationService.subscribeToSingleIncomingNotifications().subscribe((notification: Notification) => {
             this.addNotification(notification);
+        });
+
+        this.featureToggleService.getFeatureToggleActive(FeatureToggle.CourseSpecificNotifications).subscribe((featureActive) => {
+            this.courseSpecificNotificationFeatureActive = featureActive;
         });
     }
 

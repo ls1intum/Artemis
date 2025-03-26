@@ -4,12 +4,12 @@ import { EntityResponseType, PlagiarismCasesService } from 'app/plagiarism/share
 import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

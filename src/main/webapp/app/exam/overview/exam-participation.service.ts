@@ -6,7 +6,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';

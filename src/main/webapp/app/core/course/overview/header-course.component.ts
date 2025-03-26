@@ -7,14 +7,14 @@ import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { getContrastingTextColor } from 'app/shared/util/color.utils';
-import { TranslateDirective } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-header-course',
     templateUrl: './header-course.component.html',
     styleUrls: ['./header-course.component.scss'],
-    imports: [NgStyle, FaIconComponent, TranslateDirective, RouterLink, SecuredImageComponent, ArtemisTranslatePipe],
+    imports: [NgStyle, FaIconComponent, RouterLink, SecuredImageComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class HeaderCourseComponent implements OnChanges {
     protected router = inject(Router);

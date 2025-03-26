@@ -2,7 +2,7 @@ import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/exercise-scores-export-button.component';
 import { merge } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -13,7 +13,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

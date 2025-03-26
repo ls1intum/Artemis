@@ -4,7 +4,7 @@ import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';

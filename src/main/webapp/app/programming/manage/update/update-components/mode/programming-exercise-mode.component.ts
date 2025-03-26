@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject, input } from '@angular/core';
-import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';

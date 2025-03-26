@@ -1,7 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
