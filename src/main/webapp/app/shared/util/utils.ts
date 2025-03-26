@@ -3,6 +3,7 @@ import { captureException } from '@sentry/angular';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
+import { Buffer } from 'buffer';
 
 export function cleanString(str?: string): string {
     if (!str) {
@@ -174,4 +175,29 @@ export function roundToNextMultiple(value: number, multiple: number, roundUp: bo
 
 export function removeSpecialCharacters(input: string): string {
     return input.replace(/[^a-zA-Z0-9]/g, '');
+}
+
+/**
+ * Decodes a base64 URL-encoded string.
+ *
+ * @param base64Url to decode.
+ * @param isUrlSafe If true, replaces URL-safe characters with standard base64 characters before decoding.
+ *                  Base64 URL encoding replaces certain characters to make the encoded string safe for use in URLs ('+' is replaced with '-', '/' is replaced with '_').
+ * @returns The decoded data as a BufferSource.
+ */
+export function base64UrlDecode(base64Url: string, isUrlSafe: boolean = false): BufferSource {
+    if (isUrlSafe) {
+        base64Url = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    }
+    const pad = base64Url.length % 4;
+    if (pad) {
+        base64Url += new Array(5 - pad).join('=');
+    }
+    const binaryString = Buffer.from(base64Url, 'base64').toString('binary');
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
 }

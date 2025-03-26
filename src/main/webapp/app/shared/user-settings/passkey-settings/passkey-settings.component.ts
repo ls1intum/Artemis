@@ -9,6 +9,8 @@ import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icon
 import { User } from 'app/core/user/user.model';
 import { Subject, Subscription, tap } from 'rxjs';
 import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
+import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
+import { base64UrlDecode } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-passkey-settings',
@@ -53,8 +55,43 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
-    addNewPasskey() {
-        this.passkeySettingsApiService.getWebauthnOptions();
+    async addNewPasskey() {
+        const options = await this.passkeySettingsApiService.getWebauthnOptions();
+        const credentialOptions = this.createCredentialOptions(options);
+        const credential = await navigator.credentials.create({
+            publicKey: credentialOptions,
+        });
+
+        return credential;
+    }
+
+    private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
+        const username = this.currentUser?.login ?? 'Should be defined';
+
+        const userId = this.currentUser?.id;
+
+        if (!userId) {
+            throw new Error('User ID is undefined');
+        }
+
+        // TODO verify values are set properly
+        return {
+            ...options,
+            challenge: base64UrlDecode(options.challenge, true),
+            user: {
+                id: new TextEncoder().encode(userId.toString()),
+                name: username,
+                displayName: username,
+            },
+            excludeCredentials: options.excludeCredentials.map((credential) => ({
+                ...credential,
+                id: base64UrlDecode(credential.id, true),
+            })),
+            authenticatorSelection: {
+                requireResidentKey: true,
+                userVerification: 'discouraged',
+            },
+        };
     }
 
     deletePasskey() {

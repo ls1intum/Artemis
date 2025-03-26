@@ -6,14 +6,14 @@ export interface PasskeyOptions {
     };
     challenge: string;
     pubKeyCredParams: Array<{
-        type: string;
+        type: 'public-key';
         alg: number;
     }>;
     excludeCredentials: any[];
     authenticatorSelection: {
         requireResidentKey: boolean;
     };
-    attestation: string;
+    attestation?: AttestationConveyancePreference;
     extensions: {
         uvm: boolean;
         credProps: boolean;
