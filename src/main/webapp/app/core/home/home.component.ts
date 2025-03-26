@@ -27,8 +27,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly faCircleNotch = faCircleNotch;
-    protected readonly usernameTouched = false;
-    protected readonly passwordTouched = false;
 
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
@@ -40,6 +38,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
+
+    protected usernameTouched = false;
+    protected passwordTouched = false;
 
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
