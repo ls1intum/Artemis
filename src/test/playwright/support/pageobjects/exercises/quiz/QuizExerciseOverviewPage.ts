@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { BASE_API } from '../../../constants';
-import { QuizBatch } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 export class QuizExerciseOverviewPage {
     private readonly page: Page;

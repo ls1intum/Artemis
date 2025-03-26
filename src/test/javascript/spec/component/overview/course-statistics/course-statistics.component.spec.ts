@@ -12,8 +12,8 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { CourseStatisticsComponent, NgxExercise } from 'app/core/course/overview/course-statistics/course-statistics.component';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';

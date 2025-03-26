@@ -48,7 +48,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
