@@ -65,7 +65,7 @@ import { ProblemStatementComponent } from 'app/core/course/overview/exercise-det
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ScienceService } from 'app/shared/science/science.service';
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';

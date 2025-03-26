@@ -32,7 +32,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
