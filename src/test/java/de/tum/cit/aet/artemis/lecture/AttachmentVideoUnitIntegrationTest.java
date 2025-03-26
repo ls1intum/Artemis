@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "attachmentvideounitintegrationtest"; // only lower case is supported
+    private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
 
     private static final int SLIDE_COUNT = 3;
 
