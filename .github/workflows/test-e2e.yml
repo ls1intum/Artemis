@@ -125,7 +125,7 @@ jobs:
         run: .ci/E2E-tests/cleanup.sh
 
       - name: Test Report
-        uses: mikepenz/action-junit-report@v5
+        uses: mikepenz/action-junit-report@v5.5.0
         id: test-reporter
         if: always()
         env:
