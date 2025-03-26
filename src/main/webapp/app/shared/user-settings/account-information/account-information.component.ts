@@ -22,6 +22,12 @@ import { UserSettingsService } from 'app/shared/user-settings/user-settings.serv
     imports: [TranslateDirective, SecuredImageComponent, FaIconComponent, ArtemisDatePipe],
 })
 export class AccountInformationComponent implements OnInit {
+    protected readonly faPen = faPencil;
+    protected readonly faTrash = faTrash;
+    protected readonly faPlus = faPlus;
+    protected readonly CachingStrategy = CachingStrategy;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     private accountService = inject(AccountService);
     private modalService = inject(NgbModal);
     private userSettingsService = inject(UserSettingsService);
@@ -31,11 +37,6 @@ export class AccountInformationComponent implements OnInit {
     croppedImage?: string;
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
-
-    // Icons
-    faPen = faPencil;
-    faTrash = faTrash;
-    faPlus = faPlus;
 
     ngOnInit() {
         this.accountService.getAuthenticationState().subscribe((user) => {
@@ -117,7 +118,4 @@ export class AccountInformationComponent implements OnInit {
             });
         }
     }
-
-    protected readonly CachingStrategy = CachingStrategy;
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

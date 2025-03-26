@@ -32,16 +32,19 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    protected readonly faEdit = faEdit;
+    protected readonly faSave = faSave;
+    protected readonly faTrash = faTrash;
+    protected readonly faCopy = faCopy;
+    protected readonly faBan = faBan;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
 
     currentUser?: User;
 
-    readonly faEdit = faEdit;
-    readonly faSave = faSave;
-    readonly faTrash = faTrash;
-    readonly faCopy = faCopy;
-    readonly faBan = faBan;
     private authStateSubscription: Subscription;
     expiryDate?: dayjs.Dayjs;
     validExpiryDate = false;
@@ -51,9 +54,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
 
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     ngOnInit() {
         this.authStateSubscription = this.accountService

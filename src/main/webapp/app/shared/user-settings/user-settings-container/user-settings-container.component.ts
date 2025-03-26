@@ -19,11 +19,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, RouterModule, FontAwesomeModule],
 })
 export class UserSettingsContainerComponent implements OnInit {
+    protected readonly faUser = faUser;
+
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
-
-    // Icons
-    faUser = faUser;
 
     currentUser?: User;
     localVCEnabled = true;
