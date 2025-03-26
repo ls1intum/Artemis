@@ -13,7 +13,7 @@ import {
     output,
     viewChild,
 } from '@angular/core';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/posting.directive';
 import { MetisService } from 'app/communication/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -22,8 +22,8 @@ import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faTh
 import dayjs from 'dayjs/esm';
 import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
-import { getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
@@ -34,7 +34,7 @@ import { MessageInlineInputComponent } from '../message/message-inline-input/mes
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Posting } from 'app/communication/entities/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { throwError } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content.components';

@@ -1,10 +1,10 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
-import { Post } from 'app/communication/entities/post.model';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
-import { Posting } from 'app/communication/entities/posting.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import dayjs from 'dayjs/esm';
-import { Conversation } from 'app/communication/entities/conversation/conversation.model';
+import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content.components';

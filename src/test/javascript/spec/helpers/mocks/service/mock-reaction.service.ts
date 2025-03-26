@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Reaction } from 'app/communication/entities/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 
 export class MockReactionService {
     create(courseId: number, reaction: Reaction): Observable<HttpResponse<Reaction>> {

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, signal } from '@angular/core';
 import { User } from 'app/core/user/user.model';
-import { Posting } from 'app/communication/entities/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
 import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';

@@ -1,7 +1,7 @@
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { Conversation, ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
-import { OneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
+import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
@@ -16,7 +16,7 @@ import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-b
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/communication/metis.service';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -31,15 +31,15 @@ import { CourseOverviewService } from 'app/core/course/overview/course-overview.
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
-import { GroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/communication/entities/posting.model';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
 import { ElementRef, signal } from '@angular/core';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 

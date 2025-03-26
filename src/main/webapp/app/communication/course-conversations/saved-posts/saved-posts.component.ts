@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { Posting, SavedPostStatus, SavedPostStatusMap } from 'app/communication/entities/posting.model';
+import { Posting, SavedPostStatus, SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

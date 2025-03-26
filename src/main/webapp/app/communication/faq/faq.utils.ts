@@ -3,8 +3,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, catchError, map, of } from 'rxjs';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { FaqCategory } from 'app/communication/entities/faq-category.model';
-import { FaqState } from 'app/communication/entities/faq.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { FaqState } from 'app/communication/shared/entities/faq.model';
 
 export function loadCourseFaqCategories(courseId: number | undefined, alertService: AlertService, faqService: FaqService, faqState?: FaqState): Observable<FaqCategory[]> {
     if (courseId === undefined) {

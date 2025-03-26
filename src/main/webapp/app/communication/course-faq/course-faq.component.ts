@@ -6,11 +6,11 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
-import { Faq, FaqState } from 'app/communication/entities/faq.model';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { FaqCategory } from 'app/communication/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';

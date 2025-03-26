@@ -1,5 +1,5 @@
-import { Post } from 'app/communication/entities/post.model';
-import { Posting } from 'app/communication/entities/posting.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 
 export class AnswerPost extends Posting {
     public resolvesPost?: boolean;

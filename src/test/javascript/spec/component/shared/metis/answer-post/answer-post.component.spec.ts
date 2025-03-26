@@ -9,13 +9,13 @@ import { metisPostExerciseUser1, metisResolvingAnswerPostUser1, post } from '../
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
-import { Reaction } from 'app/communication/entities/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Posting, PostingType } from 'app/communication/entities/posting.model';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

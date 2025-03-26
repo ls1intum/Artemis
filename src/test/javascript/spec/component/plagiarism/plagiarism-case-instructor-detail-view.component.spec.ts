@@ -12,7 +12,7 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { MetisService } from 'app/communication/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';

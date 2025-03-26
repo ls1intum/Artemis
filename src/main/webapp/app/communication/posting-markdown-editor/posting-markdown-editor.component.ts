@@ -36,7 +36,7 @@ import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';

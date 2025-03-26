@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Post } from 'app/communication/entities/post.model';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
-import { PostingType } from 'app/communication/entities/posting.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { PostingType } from 'app/communication/shared/entities/posting.model';
 
 export interface ForwardedMessageDTO {
     id?: number;

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../helpers/conversationExampleModels';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -10,8 +10,8 @@ import { ChannelService } from 'app/communication/conversations/channel.service'
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelDTO, isChannelDTO } from 'app/communication/entities/conversation/channel.model';
-import { isGroupChatDTO } from 'app/communication/entities/conversation/group-chat.model';
+import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations/generic-confirmation-dialog/generic-confirmation-dialog.component';

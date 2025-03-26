@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('FeedbackAnalysisService', () => {
     let service: FeedbackAnalysisService;

@@ -15,7 +15,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostComponent } from 'app/communication/post/post.component';
 import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { Channel } from 'app/communication/entities/conversation/channel.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('PostCreateEditModalComponent', () => {

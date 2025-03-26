@@ -3,7 +3,7 @@ import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageabl
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
-import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;

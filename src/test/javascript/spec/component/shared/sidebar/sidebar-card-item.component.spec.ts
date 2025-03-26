@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { DifficultyLevel } from 'app/entities/exercise.model';
-import { OneToOneChatDTO } from 'app/communication/entities/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { input, runInInjectionContext } from '@angular/core';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { ProfilePictureComponent } from '../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';

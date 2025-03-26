@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { Reaction } from 'app/communication/entities/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { ReactionService } from 'app/communication/reaction.service';
 import { metisReactionToCreate, metisReactionUser2 } from '../../helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';

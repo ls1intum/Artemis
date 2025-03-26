@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
-import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
-import { GroupChat } from 'app/communication/entities/conversation/group-chat.model';
-import { Post } from 'app/communication/entities/post.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.

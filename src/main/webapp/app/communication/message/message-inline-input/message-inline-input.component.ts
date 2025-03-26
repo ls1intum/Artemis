@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';

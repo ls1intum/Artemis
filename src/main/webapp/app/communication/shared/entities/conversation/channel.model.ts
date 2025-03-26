@@ -1,4 +1,4 @@
-import { Conversation, ConversationDTO, ConversationType } from 'app/communication/entities/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';

@@ -1,4 +1,4 @@
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisPostAction } from 'app/communication/metis.util';
 import { Notification } from 'app/core/shared/entities/notification.model';
 

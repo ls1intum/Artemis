@@ -1,15 +1,15 @@
 import { Observable, of } from 'rxjs';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
-import { Post } from 'app/communication/entities/post.model';
-import { Posting } from 'app/communication/entities/posting.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/core/user/user.model';
-import { Reaction } from 'app/communication/entities/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/metis.util';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
-import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 
 let pageType: PageType;
 

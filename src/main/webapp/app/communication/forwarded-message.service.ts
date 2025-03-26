@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
-import { ForwardedMessage, ForwardedMessageDTO } from 'app/communication/entities/forwarded-message.model';
-import { PostingType } from 'app/communication/entities/posting.model';
+import { ForwardedMessage, ForwardedMessageDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { PostingType } from 'app/communication/shared/entities/posting.model';
 
 type EntityResponseType = HttpResponse<ForwardedMessageDTO>;
 

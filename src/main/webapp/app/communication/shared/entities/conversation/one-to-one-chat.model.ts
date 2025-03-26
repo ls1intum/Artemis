@@ -1,5 +1,5 @@
-import { Conversation, ConversationDTO, ConversationType } from 'app/communication/entities/conversation/conversation.model';
-import { ConversationUserDTO } from 'app/communication/entities/conversation/conversation-user-dto.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 
 export class OneToOneChat extends Conversation {
     constructor() {

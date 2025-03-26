@@ -13,11 +13,11 @@ import {
     output,
     viewChild,
 } from '@angular/core';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingDirective } from 'app/communication/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Reaction } from 'app/communication/entities/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

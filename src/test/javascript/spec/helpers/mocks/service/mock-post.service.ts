@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
 import { messagesBetweenUser1User2, metisCoursePosts, metisPostExerciseUser1, metisPostInChannel, metisTags } from '../../sample/metis-sample-data';

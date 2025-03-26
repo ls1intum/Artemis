@@ -12,13 +12,13 @@ import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-cr
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from '../../../../helpers/sample/metis-sample-data';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { Injector, input, runInInjectionContext, signal } from '@angular/core';
-import { Posting } from 'app/communication/entities/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 interface PostGroup {
     author: User | undefined;

@@ -2,11 +2,11 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { SavedPostService } from 'app/communication/saved-post.service';
-import { Post } from 'app/communication/entities/post.model';
-import { Posting, PostingType, SavedPostStatus } from 'app/communication/entities/posting.model';
-import { AnswerPost } from 'app/communication/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ConversationType } from 'app/communication/entities/conversation/conversation.model';
+import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import Dayjs from 'dayjs/esm';
 
 describe('SavedPostService', () => {

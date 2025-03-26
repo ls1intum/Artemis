@@ -11,7 +11,7 @@ import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
-import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

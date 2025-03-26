@@ -6,13 +6,13 @@ import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/communication/metis.service';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/communication/course-discussion.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Channel, ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';

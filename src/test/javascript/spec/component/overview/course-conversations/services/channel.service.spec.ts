@@ -2,7 +2,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { ChannelService } from 'app/communication/conversations/channel.service';
-import { ChannelDTO } from 'app/communication/entities/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { generateExampleChannelDTO } from '../helpers/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';

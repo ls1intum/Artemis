@@ -1,10 +1,10 @@
 import { Course } from 'app/core/shared/entities/course.model';
 import { Page } from '@playwright/test';
-import { Channel, ChannelDTO, getAsChannelDTO } from 'app/communication/entities/conversation/channel.model';
-import { GroupChat } from 'app/communication/entities/conversation/group-chat.model';
+import { Channel, ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { UserCredentials } from '../users';
-import { Post } from 'app/communication/entities/post.model';
-import { ConversationDTO } from 'app/communication/entities/conversation/conversation.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 

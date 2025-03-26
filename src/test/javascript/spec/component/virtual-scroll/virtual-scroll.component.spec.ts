@@ -4,7 +4,7 @@ import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll
 import { metisCoursePosts, metisGeneralCourseWidePosts } from '../../helpers/sample/metis-sample-data';
 import { ReplaySubject } from 'rxjs';
 import { NavigationStart, Router, RouterEvent } from '@angular/router';
-import { Post } from 'app/communication/entities/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 const routerEventSubject = new ReplaySubject<RouterEvent>(1);
 
