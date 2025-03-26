@@ -66,18 +66,18 @@ export class SentryErrorHandler extends ErrorHandler {
     /**
      * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
      *
-     * The message is only reported once per day per browser/device.
+     * The message is only reported once per day per browser.
      */
     private reportIfPasskeyIsNotSupported() {
         const isWebAuthnUsable = window.PublicKeyCredential;
-        if (isWebAuthnUsable) {
+        if (!isWebAuthnUsable) {
             const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
             const dateToday = this.getDatePartFromISOString(new Date().toISOString());
             const dateLastReported = this.getDatePartFromISOString(lastReported);
 
             if (!lastReported || dateLastReported !== dateToday) {
                 localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
-                captureException(new Error('Browser/Device does not support WebAuthn - no Passkey authentication possible'), {
+                captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
                     tags: {
                         feature: 'Passkey Authentication',
                         browser: navigator.userAgent,
