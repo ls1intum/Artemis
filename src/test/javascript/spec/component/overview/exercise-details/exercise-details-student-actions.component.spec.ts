@@ -589,7 +589,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-    it('should display the request feedback button for modeling exercises when Athena is enabled and before due date', () => {
+    it('should display the request feedback button for text exercises when Athena is enabled and before due date', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(
             of({
