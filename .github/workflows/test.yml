@@ -52,6 +52,12 @@ jobs:
     timeout-minutes: 60
     steps:
     - uses: actions/checkout@v4
+    - name: Log env vars
+      run: |
+        echo "{{ github.event_name }}
+        echo "{{ github.event.pull_request }}"
+        echo "{{ github.event.repository.default_branch
+        echo "{{ env.RUN_ALL_TESTS }}"
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
