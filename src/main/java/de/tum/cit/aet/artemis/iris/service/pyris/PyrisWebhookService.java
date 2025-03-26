@@ -112,7 +112,7 @@ public class PyrisWebhookService {
         String lectureUnitLink;
         if (attachmentVideoUnit.getAttachment() != null) {
             base64EncodedPdf = attachmentToBase64(attachmentVideoUnit);
-            lectureUnitLink = artemisBaseUrl + attachmentVideoUnit.getAttachment().getLink();
+            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
         }
         else {
             base64EncodedPdf = "";
