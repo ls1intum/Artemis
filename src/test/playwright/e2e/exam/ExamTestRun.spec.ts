@@ -1,14 +1,14 @@
 import dayjs from 'dayjs';
 
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 import javaBuildErrorSubmission from '../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Exercise, ExerciseType } from '../../support/constants';
 import { admin, instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { test } from '../../support/fixtures';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
 
 // Common primitives

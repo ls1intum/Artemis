@@ -7,8 +7,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BehaviorSubject } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';

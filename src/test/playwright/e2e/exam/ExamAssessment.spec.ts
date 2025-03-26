@@ -4,7 +4,7 @@ import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, t
 import { Page, expect } from '@playwright/test';
 
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';

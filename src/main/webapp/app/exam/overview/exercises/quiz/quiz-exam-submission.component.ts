@@ -10,7 +10,6 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
@@ -27,6 +26,7 @@ import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',

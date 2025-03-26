@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';

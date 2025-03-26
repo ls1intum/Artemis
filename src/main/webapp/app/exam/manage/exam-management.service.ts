@@ -1,18 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
-import { ExamUserAttendanceCheckDTO } from 'app/entities/exam/exam-users-attendance-check-dto.model';
+import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
+import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { StudentDTO } from 'app/entities/student-dto.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
+import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,8 +20,8 @@ import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/da
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
-import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;

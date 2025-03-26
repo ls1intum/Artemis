@@ -1,5 +1,5 @@
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { Exercise, ExerciseType } from '../../../support/constants';

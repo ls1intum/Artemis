@@ -6,7 +6,7 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';

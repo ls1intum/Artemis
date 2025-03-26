@@ -19,9 +19,9 @@ import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 import { ExerciseCategory } from 'app/entities/exercise-category.model';

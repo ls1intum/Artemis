@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Submission } from 'app/entities/submission.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;

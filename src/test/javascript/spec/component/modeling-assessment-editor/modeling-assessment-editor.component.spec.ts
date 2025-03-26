@@ -11,8 +11,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';

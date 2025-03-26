@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Observable, of, Subject } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
 import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
@@ -19,7 +19,6 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import dayjs from 'dayjs/esm';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -37,6 +36,7 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;

@@ -2,10 +2,9 @@ import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ExamSession } from 'app/entities/exam/exam-session.model';
+import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
@@ -23,6 +22,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { SidebarData } from 'app/shared/types/sidebar';
 import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 export enum ExerciseButtonStatus {
     Synced = 'synced',

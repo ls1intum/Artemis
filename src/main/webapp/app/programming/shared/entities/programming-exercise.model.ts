@@ -1,6 +1,6 @@
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/core/shared/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';

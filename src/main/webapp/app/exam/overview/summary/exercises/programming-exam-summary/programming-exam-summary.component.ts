@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponentPreparedParams, prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
