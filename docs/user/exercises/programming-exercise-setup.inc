@@ -494,11 +494,11 @@ Configure static code analysis
 +-----+-----------------------+-------------------------------+------------------------------+
 | No. | Programming Language  | Supported Tools               | Configuration File           |
 +-----+=======================+===============================+==============================+
-|   1 | Java                  | Spotbugs                      | spotbugs-exclusions.xml      |
+|   1 | Java                  | `Spotbugs`_                   | spotbugs-exclusions.xml      |
 |     |                       +-------------------------------+------------------------------+
-|     |                       | Checkstyle                    | checkstyle-configuration.xml |
+|     |                       | `Checkstyle`_                 | checkstyle-configuration.xml |
 |     |                       +-------------------------------+------------------------------+
-|     |                       | PMD                           | pmd-configuration.xml        |
+|     |                       | `PMD`_                        | pmd-configuration.xml        |
 |     |                       +-------------------------------+------------------------------+
 |     |                       | PMD Copy/Paste Detector (CPD) |                              |
 +-----+-----------------------+-------------------------------+------------------------------+
@@ -506,7 +506,7 @@ Configure static code analysis
 +-----+-----------------------+-------------------------------+------------------------------+
 |   3 | C                     | GCC                           |                              |
 +-----+-----------------------+-------------------------------+------------------------------+
-|   8 | Swift                 | SwiftLint                     | .swiftlint.yml               |
+|   8 | Swift                 | `SwiftLint`_                  | .swiftlint.yml               |
 +-----+-----------------------+-------------------------------+------------------------------+
 |  10 | Rust                  | `Clippy`_                     | clippy.toml                  |
 +-----+-----------------------+-------------------------------+------------------------------+
@@ -523,13 +523,17 @@ Configure static code analysis
 |  20 | Dart                  | `dart analyze`_               | analysis_options.yaml        |
 +-----+-----------------------+-------------------------------+------------------------------+
 
+.. _Checkstyle: https://checkstyle.org/
 .. _Clang-Tidy: https://clang.llvm.org/extra/clang-tidy/
-.. _dart analyze: https://dart.dev/tools/analysis
-.. _ESLint: https://eslint.org/
-.. _Ruff: https://docs.astral.sh/ruff/
-.. _lintr: https://lintr.r-lib.org/
-.. _Rubocop: https://rubocop.org/
 .. _Clippy: https://doc.rust-lang.org/clippy/
+.. _ESLint: https://eslint.org/
+.. _PMD: https://pmd.github.io/
+.. _Rubocop: https://rubocop.org/
+.. _Ruff: https://docs.astral.sh/ruff/
+.. _Spotbugs: https://spotbugs.github.io/
+.. _SwiftLint: https://realm.github.io/SwiftLint/
+.. _dart analyze: https://dart.dev/tools/analysis
+.. _lintr: https://lintr.r-lib.org/
 
 .. note::
   The Maven plugins for the Java static code analysis tools provide additional configuration options.
