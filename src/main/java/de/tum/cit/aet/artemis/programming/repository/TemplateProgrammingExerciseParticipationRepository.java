@@ -35,7 +35,8 @@ public interface TemplateProgrammingExerciseParticipationRepository
     @Query("""
             SELECT p
             FROM TemplateProgrammingExerciseParticipation p
-                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH p.programmingExercise e
             WHERE p.buildPlanId = :buildPlanId
             """)

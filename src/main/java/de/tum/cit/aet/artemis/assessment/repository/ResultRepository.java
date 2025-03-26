@@ -265,7 +265,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
-                JOIN p.results r
+                JOIN p.submissions s
+                JOIN s.results r
                 JOIN p.exercise e
             WHERE e.id = :exerciseId
                 AND p.testRun = FALSE

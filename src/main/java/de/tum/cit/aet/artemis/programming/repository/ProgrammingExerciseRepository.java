@@ -56,12 +56,14 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation tp
                 LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH tp.results tpr
-                LEFT JOIN FETCH sp.results spr
+                LEFT JOIN FETCH tp.submissions tps
+                LEFT JOIN FETCH sp.submissions s
+                LEFT JOIN FETCH tps.results tpr
+                LEFT JOIN FETCH s.results spr
                 LEFT JOIN FETCH pe.categories
             WHERE pe.course.id = :courseId
-                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (tpr.id = (SELECT MAX(r1.id) FROM Submission stp JOIN stp.results r1 WHERE stp.participation = tp) OR tpr.id IS NULL)
+                AND (spr.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.results r2 WHERE s2.participation = sp) OR spr.id IS NULL)
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
@@ -158,12 +160,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation tp
-                LEFT JOIN FETCH tp.results AS tpr
+                LEFT JOIN FETCH tp.submissions tps
+                LEFT JOIN FETCH tps.results tpr
                 LEFT JOIN FETCH tpr.feedbacks tf
                 LEFT JOIN FETCH tf.testCase
                 LEFT JOIN FETCH tpr.submission
             WHERE pe.id = :exerciseId
-                AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                AND (tpr.id = (SELECT MAX(r1.id) FROM Submission stp JOIN stp.results r1 WHERE stp.participation = tp) OR tpr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
@@ -179,12 +182,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.solutionParticipation sp
-                LEFT JOIN FETCH sp.results AS spr
+                LEFT JOIN FETCH sp.submissions s
+                LEFT JOIN FETCH s.results spr
                 LEFT JOIN FETCH spr.feedbacks sf
                 LEFT JOIN FETCH sf.testCase
                 LEFT JOIN FETCH spr.submission
             WHERE pe.id = :exerciseId
-                AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+                AND (spr.id = (SELECT MAX(r2.id) FROM Submission s2 JOIN s2.results r2 WHERE s2.participation = sp) OR spr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") long exerciseId);
 
@@ -438,7 +442,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT COUNT (DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN p.results r
+                LEFT JOIN p.submissions s
+                LEFT JOIN s.results r
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND r.submission.submitted = TRUE

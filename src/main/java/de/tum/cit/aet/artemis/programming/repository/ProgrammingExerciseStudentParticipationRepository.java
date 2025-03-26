@@ -52,8 +52,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results pr
             WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
                         OR (pr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
@@ -68,7 +68,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE p.buildPlanId IS NOT NULL
                 AND (p.student IS NOT NULL OR p.team IS NOT NULL)
             """)

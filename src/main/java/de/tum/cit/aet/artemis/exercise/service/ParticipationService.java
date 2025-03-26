@@ -835,7 +835,7 @@ public class ParticipationService {
      */
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
         log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
-        var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
+        var participation = participationRepository.findByIdWithSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)

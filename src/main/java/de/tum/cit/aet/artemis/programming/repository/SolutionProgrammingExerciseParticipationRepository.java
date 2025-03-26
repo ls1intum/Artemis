@@ -36,7 +36,8 @@ public interface SolutionProgrammingExerciseParticipationRepository
     @Query("""
             SELECT p
             FROM SolutionProgrammingExerciseParticipation p
-                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
                 LEFT JOIN FETCH p.programmingExercise e
                 LEFT JOIN FETCH e.templateParticipation
             WHERE p.buildPlanId = :buildPlanId
