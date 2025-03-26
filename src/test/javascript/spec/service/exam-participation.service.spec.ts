@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { Exam } from 'app/entities/exam/exam.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';

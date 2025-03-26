@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
@@ -54,6 +55,10 @@ public class AnswerMessageService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     private final PostRepository postRepository;
 
     @SuppressWarnings("PMD.ExcessiveParameterList")
@@ -61,7 +66,8 @@ public class AnswerMessageService extends PostingService {
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository) {
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, FeatureToggleService featureToggleService,
+            CourseNotificationService courseNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.answerPostRepository = answerPostRepository;
@@ -70,6 +76,8 @@ public class AnswerMessageService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -113,6 +121,7 @@ public class AnswerMessageService extends PostingService {
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
         SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
+
         this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
         this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;

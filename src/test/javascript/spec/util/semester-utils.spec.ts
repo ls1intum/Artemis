@@ -1,4 +1,4 @@
-import { getSemesters } from 'app/utils/semester-utils';
+import { getSemesters } from 'app/shared/util/semester-utils';
 
 describe('SemesterUtils', () => {
     describe('getSemesters', () => {

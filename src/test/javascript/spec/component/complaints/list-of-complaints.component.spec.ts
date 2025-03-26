@@ -6,7 +6,7 @@ import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'ap
 import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complaints/list-of-complaints.component';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';

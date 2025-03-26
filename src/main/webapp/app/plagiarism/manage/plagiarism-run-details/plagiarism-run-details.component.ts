@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
-import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
+import { ModelingPlagiarismResult } from 'app/plagiarism/shared/entities/modeling/ModelingPlagiarismResult';
 import { GraphColors } from 'app/entities/statistics.model';
 import { Range, round } from 'app/shared/util/utils';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
-import { PlagiarismResultStats } from 'app/plagiarism/shared/types/PlagiarismResultDTO';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
+import { PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
@@ -22,7 +22,7 @@ interface SimilarityRangeComparisonStateDTO {
 
 @Component({
     selector: 'jhi-plagiarism-run-details',
-    styleUrls: ['./plagiarism-run-details.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./plagiarism-run-details.component.scss', '../../../shared/chart/vertical-bar-chart.scss'],
     templateUrl: './plagiarism-run-details.component.html',
     imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe],
 })

@@ -24,7 +24,7 @@ import {
     setSubmissionResultByCorrectionRound,
 } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessment-base.component';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';

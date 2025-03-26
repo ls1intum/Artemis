@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Injectable, inject } from '@angular/core';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';

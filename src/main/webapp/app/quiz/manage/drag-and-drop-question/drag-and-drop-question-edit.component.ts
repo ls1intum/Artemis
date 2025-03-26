@@ -15,12 +15,12 @@ import {
 } from '@angular/core';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
-import { DragState } from 'app/entities/quiz/drag-state.enum';
+import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/quiz-question-edit.interface';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { cloneDeep } from 'lodash-es';
@@ -66,7 +66,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,

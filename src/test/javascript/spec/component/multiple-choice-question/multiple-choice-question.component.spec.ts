@@ -4,10 +4,10 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 
 describe('MultipleChoiceQuestionComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionComponent>;

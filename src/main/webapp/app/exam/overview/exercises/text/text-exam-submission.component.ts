@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { onTextEditorTab } from 'app/utils/text.utils';
+import { onTextEditorTab } from 'app/shared/util/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',

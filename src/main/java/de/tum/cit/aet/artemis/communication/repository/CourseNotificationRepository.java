@@ -40,6 +40,7 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
             WHERE us.user.id = :userId
                 AND cn.course.id = :courseId
                 AND us.status <> 2
+            ORDER BY cn.id DESC
             """)
     Page<CourseNotificationWithStatusDTO> findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(@Param("userId") Long userId, @Param("courseId") Long courseId,
             Pageable pageable);

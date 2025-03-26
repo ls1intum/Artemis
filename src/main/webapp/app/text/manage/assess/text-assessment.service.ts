@@ -12,7 +12,7 @@ import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionR
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/text/shared/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;

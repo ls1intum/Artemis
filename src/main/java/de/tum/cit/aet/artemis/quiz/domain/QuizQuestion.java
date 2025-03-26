@@ -25,10 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 
 /**
@@ -52,40 +50,31 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 public abstract class QuizQuestion extends DomainObject {
 
     @Column(name = "title")
-    @JsonView(QuizView.Before.class)
     private String title;
 
     @Column(name = "text", length = 1000)
-    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "hint")
-    @JsonView(QuizView.Before.class)
     private String hint;
 
     @Column(name = "explanation", length = 500)
-    @JsonView(QuizView.After.class)
     private String explanation;
 
     @Column(name = "points")
-    @JsonView(QuizView.Before.class)
     private double points;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "scoring_type")
-    @JsonView(QuizView.Before.class)
     private ScoringType scoringType;
 
     @Column(name = "randomize_order")
-    @JsonView(QuizView.Before.class)
     private Boolean randomizeOrder;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @Column(name = "quiz_group_id")
-    @JsonView(QuizView.Before.class)
     private Long quizGroupId;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
@@ -103,26 +92,26 @@ public abstract class QuizQuestion extends DomainObject {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public QuizQuestion title(String title) {
         this.title = title;
         return this;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public String getText() {
         return text;
     }
 
+    public void setText(String text) {
+        this.text = text;
+    }
+
     public QuizQuestion text(String text) {
         this.text = text;
         return this;
-    }
-
-    public void setText(String text) {
-        this.text = text;
     }
 
     public String getHint() {
@@ -145,13 +134,13 @@ public abstract class QuizQuestion extends DomainObject {
         return points;
     }
 
+    public void setPoints(double score) {
+        this.points = score;
+    }
+
     public QuizQuestion score(double score) {
         this.points = score;
         return this;
-    }
-
-    public void setPoints(double score) {
-        this.points = score;
     }
 
     public ScoringType getScoringType() {
@@ -286,7 +275,7 @@ public abstract class QuizQuestion extends DomainObject {
 
     /**
      * Initialize QuizQuestionStatistic of the implementor
-     *
      */
     public abstract void initializeStatistic();
+
 }
