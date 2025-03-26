@@ -69,7 +69,7 @@ jobs:
         cache: 'gradle'
     - name: Java Tests (module-affected)
       # Not a non-draft pull-request and not the default branch
-      if: ${{ !env.RUN_ALL_TESTS }}
+      if: ${{ env.RUN_ALL_TESTS == false }}
       run: |
         set -o pipefail
 
@@ -95,7 +95,7 @@ jobs:
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
-      if: ${{ env.RUN_ALL_TESTS }}
+      if: ${{ env.RUN_ALL_TESTS == true }}
       run: |
         set -o pipefail
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
