@@ -238,7 +238,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.submission
                 LEFT JOIN FETCH r.feedbacks
-                LEFT JOIN FETCH TREAT (r.participation AS StudentParticipation ) p
+                LEFT JOIN FETCH TREAT (r.submission.participation AS StudentParticipation ) p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId

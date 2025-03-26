@@ -649,7 +649,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
-                JOIN Result r ON r.participation.id = p.id
+                JOIN Result r ON r.submission.participation.id = p.id
             WHERE p.exercise.id = :exerciseId
                 AND (p.student.firstName LIKE %:partialStudentName%
                     OR p.student.lastName LIKE %:partialStudentName%)
