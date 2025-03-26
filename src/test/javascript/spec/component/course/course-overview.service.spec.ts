@@ -12,10 +12,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;

@@ -4,7 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
 export class PlagiarismCase {

@@ -6,14 +6,14 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { Faq } from 'app/entities/faq.model';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 export enum CourseInformationSharingConfiguration {

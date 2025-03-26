@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnChanges, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/metis.service';
 import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from './metis.util';
 import { User } from 'app/core/user/user.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

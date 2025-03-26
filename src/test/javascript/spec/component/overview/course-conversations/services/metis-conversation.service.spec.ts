@@ -12,18 +12,18 @@ import { ChannelService } from 'app/communication/conversations/channel.service'
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { forkJoin, of, Subject } from 'rxjs';
-import { ConversationDTO } from '../../../../../../../main/webapp/app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from '../../../../../../../main/webapp/app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MetisPostAction } from 'app/communication/metis.util';
 import dayjs from 'dayjs/esm';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { Post } from 'app/entities/metis/post.model';
+import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('MetisConversationService', () => {

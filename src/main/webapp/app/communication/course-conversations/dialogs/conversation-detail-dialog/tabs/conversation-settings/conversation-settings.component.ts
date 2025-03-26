@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
-import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations/generic-confirmation-dialog/generic-confirmation-dialog.component';
@@ -9,7 +9,7 @@ import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faBoxArchive, faBoxOpen, faHashtag, faLock, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

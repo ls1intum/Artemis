@@ -19,7 +19,6 @@ import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, m
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ChannelIdAndNameDTO } from 'app/communication/entities/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -29,9 +28,10 @@ import { ReferenceType } from 'app/communication/metis.util';
 import { Attachment } from 'app/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
-import { Faq } from 'app/entities/faq.model';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
+import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;

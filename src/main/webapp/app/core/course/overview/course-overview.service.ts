@@ -10,13 +10,13 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { faBookmark, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';

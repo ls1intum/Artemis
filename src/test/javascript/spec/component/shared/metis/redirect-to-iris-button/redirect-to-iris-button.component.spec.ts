@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ComponentRef } from '@angular/core';
 import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { mockSettings } from '../../../iris/settings/mock-settings';
 import { of, throwError } from 'rxjs';

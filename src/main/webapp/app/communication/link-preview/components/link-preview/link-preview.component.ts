@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/communication/metis.service';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LinkPreview } from 'app/communication/link-preview/services/link-preview.service';

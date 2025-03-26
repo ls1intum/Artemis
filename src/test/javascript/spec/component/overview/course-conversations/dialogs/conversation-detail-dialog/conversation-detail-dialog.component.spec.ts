@@ -1,5 +1,5 @@
 import { Course } from 'app/core/shared/entities/course.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -7,7 +7,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { initializeDialog } from '../dialog-test-helpers';
 import { By } from '@angular/platform-browser';

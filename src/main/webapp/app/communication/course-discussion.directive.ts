@@ -3,7 +3,7 @@ import { FormGroup } from '@angular/forms';
 import { faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ButtonType } from '../shared/components/button.component';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Subscription } from 'rxjs';
 import { MetisService } from 'app/communication/metis.service';

@@ -1,9 +1,9 @@
 import { Component, Input, inject, output } from '@angular/core';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/shared/entities/course.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
@@ -14,7 +14,7 @@ import { ConversationMembersComponent } from './tabs/conversation-members/conver
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
 import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 
