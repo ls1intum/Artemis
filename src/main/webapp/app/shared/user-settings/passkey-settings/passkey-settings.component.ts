@@ -8,6 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Subject, Subscription, tap } from 'rxjs';
+import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
 
 @Component({
     selector: 'jhi-passkey-settings',
@@ -25,6 +26,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
+    private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -51,12 +53,11 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
-    deletePasskey() {
-        // TODO
-        this.alertService.addErrorAlert('Not implemented yet');
+    addNewPasskey() {
+        this.passkeySettingsApiService.getWebauthnOptions();
     }
 
-    addNewPasskey() {
+    deletePasskey() {
         // TODO
         this.alertService.addErrorAlert('Not implemented yet');
     }
