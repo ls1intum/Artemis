@@ -15,12 +15,12 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;

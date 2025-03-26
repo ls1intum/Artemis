@@ -15,12 +15,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import dayjs from 'dayjs/esm';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
@@ -37,6 +35,8 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;

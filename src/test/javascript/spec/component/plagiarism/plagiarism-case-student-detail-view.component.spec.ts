@@ -8,7 +8,6 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
@@ -16,6 +15,7 @@ import { MockNotificationService } from '../../helpers/mocks/service/mock-notifi
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;

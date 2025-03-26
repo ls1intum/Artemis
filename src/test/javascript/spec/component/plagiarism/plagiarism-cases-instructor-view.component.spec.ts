@@ -6,7 +6,6 @@ import { Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
@@ -24,6 +23,7 @@ import { MockNotificationService } from '../../helpers/mocks/service/mock-notifi
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 @Component({ template: '' })
 class DummyComponent {}

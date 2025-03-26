@@ -3,7 +3,6 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { take } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
@@ -12,6 +11,7 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClient } from '@angular/common/http';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 describe('Plagiarism Cases Service', () => {
     let service: PlagiarismCasesService;
