@@ -24,7 +24,7 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';

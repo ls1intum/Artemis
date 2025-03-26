@@ -10,7 +10,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { getOS } from 'app/shared/util/os-detector.util';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
