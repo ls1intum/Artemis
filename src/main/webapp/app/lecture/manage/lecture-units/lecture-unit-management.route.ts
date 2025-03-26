@@ -50,14 +50,6 @@ export const lectureUnitRoute: Routes = [
                 },
             },
             {
-                path: 'video-units/create',
-                loadComponent: () => import('app/lecture/manage/lecture-units/create-video-unit/create-video-unit.component').then((m) => m.CreateVideoUnitComponent),
-                data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
-                },
-            },
-            {
                 path: 'online-units/create',
                 loadComponent: () => import('app/lecture/manage/lecture-units/create-online-unit/create-online-unit.component').then((m) => m.CreateOnlineUnitComponent),
                 data: {
@@ -88,14 +80,6 @@ export const lectureUnitRoute: Routes = [
                 resolve: {
                     course: CourseManagementResolve,
                     attachmentVideoUnit: AttachmentVideoUnitResolve,
-                },
-            },
-            {
-                path: 'video-units/:videoUnitId/edit',
-                loadComponent: () => import('app/lecture/manage/lecture-units/edit-video-unit/edit-video-unit.component').then((m) => m.EditVideoUnitComponent),
-                data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
                 },
             },
             {

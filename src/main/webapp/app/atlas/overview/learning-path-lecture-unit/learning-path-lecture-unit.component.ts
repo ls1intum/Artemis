@@ -5,7 +5,6 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { lastValueFrom } from 'rxjs';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
@@ -17,7 +16,7 @@ import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exer
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [VideoUnitComponent, TextUnitComponent, AttachmentVideoUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective, ExerciseUnitComponent],
+    imports: [TextUnitComponent, AttachmentVideoUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective, ExerciseUnitComponent],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {

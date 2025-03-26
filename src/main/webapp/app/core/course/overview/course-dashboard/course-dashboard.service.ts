@@ -127,8 +127,6 @@ export class CourseDashboardService {
                 return LectureUnitType.EXERCISE;
             case 'de.tum.cit.aet.artemis.lecture.domain.TextUnit':
                 return LectureUnitType.TEXT;
-            case 'de.tum.cit.aet.artemis.lecture.domain.VideoUnit':
-                return LectureUnitType.VIDEO;
             case 'de.tum.cit.aet.artemis.lecture.domain.OnlineUnit':
                 return LectureUnitType.ONLINE;
             default:

@@ -1,12 +1,9 @@
-import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -38,14 +35,12 @@ describe('LectureUpdateUnitsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [
-                MockComponent(VideoUnitFormComponent),
                 MockComponent(UnitCreationCardComponent),
                 LectureUpdateUnitsComponent,
                 MockComponent(CreateExerciseUnitComponent),
                 MockComponent(LectureUnitManagementComponent),
             ],
             providers: [
-                MockProvider(VideoUnitService),
                 MockProvider(AlertService),
                 MockProvider(TextUnitService),
                 MockProvider(OnlineUnitService),
@@ -75,17 +70,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         expect(wizardUnitComponent).not.toBeNull();
     });
-
-    it('should open video form when clicked', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-        const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
-        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.VIDEO);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isVideoUnitFormOpen()).toBeTrue();
-        });
-    }));
 
     it('should open online form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
@@ -141,85 +125,6 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isTextUnitFormOpen()).toBeFalse();
             expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeFalse();
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeFalse();
-            expect(wizardUnitComponent.isVideoUnitFormOpen()).toBeFalse();
-        });
-    }));
-
-    it('should send POST request upon video form submission and update units', fakeAsync(() => {
-        const videoUnitService = TestBed.inject(VideoUnitService);
-
-        const formData: VideoUnitFormData = {
-            name: 'Test',
-            releaseDate: dayjs().year(2010).month(3).date(5),
-            description: 'Lorem Ipsum',
-            source: 'https://youtu.be/dQw4w9WgXcQ',
-            competencyLinks: [
-                new CompetencyLectureUnitLink(
-                    {
-                        id: 1,
-                        masteryThreshold: 0,
-                        optional: false,
-                        taxonomy: undefined,
-                        title: 'Test',
-                    },
-                    undefined,
-                    1,
-                ),
-            ],
-        };
-
-        const response: HttpResponse<VideoUnit> = new HttpResponse({
-            body: new VideoUnit(),
-            status: 201,
-        });
-
-        const createStub = jest.spyOn(videoUnitService, 'create').mockReturnValue(of(response));
-
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-
-        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
-
-        wizardUnitComponent.isVideoUnitFormOpen.set(true);
-
-        wizardUnitComponent.createEditVideoUnit(formData);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            const videoUnitCallArgument: VideoUnit = createStub.mock.calls[0][0];
-            const lectureIdCallArgument: number = createStub.mock.calls[0][1];
-
-            expect(videoUnitCallArgument.name).toEqual(formData.name);
-            expect(videoUnitCallArgument.description).toEqual(formData.description);
-            expect(videoUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-            expect(videoUnitCallArgument.source).toEqual(formData.source);
-            expect(videoUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
-            expect(lectureIdCallArgument).toBe(1);
-
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(updateSpy).toHaveBeenCalledOnce();
-
-            updateSpy.mockRestore();
-        });
-    }));
-
-    it('should not send POST request upon empty video form submission', fakeAsync(() => {
-        const videoUnitService = TestBed.inject(VideoUnitService);
-
-        const formData: VideoUnitFormData = {};
-
-        const createStub = jest.spyOn(videoUnitService, 'create');
-
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        wizardUnitComponent.isVideoUnitFormOpen.set(true);
-
-        wizardUnitComponent.createEditVideoUnit(formData);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).not.toHaveBeenCalled();
         });
     }));
 
@@ -324,33 +229,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
-        });
-    }));
-
-    it('should show alert upon unsuccessful video form submission', fakeAsync(() => {
-        const videoUnitService = TestBed.inject(VideoUnitService);
-        const alertService = TestBed.inject(AlertService);
-
-        const formData: VideoUnitFormData = {
-            name: 'Test',
-            releaseDate: dayjs().year(2010).month(3).date(5),
-            description: 'Lorem Ipsum',
-            source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
-        };
-
-        const createStub = jest.spyOn(videoUnitService, 'create').mockReturnValue(throwError(() => ({ status: 404 })));
-        const alertStub = jest.spyOn(alertService, 'error');
-
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        wizardUnitComponent.isVideoUnitFormOpen.set(true);
-
-        wizardUnitComponent.createEditVideoUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(createStub).toHaveBeenCalledOnce();
@@ -759,21 +637,10 @@ describe('LectureUpdateUnitsComponent', () => {
     it('should be in edit mode when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.startEditLectureUnit(new VideoUnit());
+        wizardUnitComponent.startEditLectureUnit(new TextUnit());
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isEditingLectureUnit).toBeTrue();
-        });
-    }));
-
-    it('should open edit video form when clicked', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        wizardUnitComponent.startEditLectureUnit(new VideoUnit());
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isVideoUnitFormOpen).toBeTrue();
         });
     }));
 

@@ -308,4 +308,40 @@ describe('AttachmentVideoUnitFormComponent', () => {
         submitFormSpy.mockRestore();
         submitFormEventSpy.mockRestore();
     });
+
+    it('should correctly transform YouTube URL into embeddable format', () => {
+        const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
+        const validYouTubeUrlInEmbeddableFormat = 'https://www.youtube.com/embed/8iU8LPEa4o0';
+
+        jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(validYouTubeUrlInEmbeddableFormat);
+        jest.spyOn(attachmentVideoUnitFormComponent, 'videoSourceUrlValidator').mockReturnValue(undefined);
+        jest.spyOn(attachmentVideoUnitFormComponent, 'videoSourceTransformUrlValidator').mockReturnValue(undefined);
+
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue(validYouTubeUrl);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
+        transformButton.click();
+
+        return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(validYouTubeUrlInEmbeddableFormat);
+        });
+    });
+
+    it('should correctly transform TUM-Live URL without video only into embeddable format', () => {
+        const tumLiveUrl = 'https://live.rbg.tum.de/w/test/26';
+        const expectedUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1';
+
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue(tumLiveUrl);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
+        transformButton.click();
+
+        return attachmentVideoUnitFormComponentFixture.whenStable().then(() => {
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toEqual(expectedUrl);
+        });
+    });
 });

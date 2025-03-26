@@ -58,9 +58,6 @@
                                 @case (LectureUnitType.EXERCISE) {
                                     <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
                                 }
-                                @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
-                                }
                                 @case (LectureUnitType.TEXT) {
                                     <jhi-text-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }

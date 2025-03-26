@@ -21,7 +21,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from './unit-creation-card/unit-creation-card.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
@@ -43,7 +42,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         CdkDrag,
         AttachmentVideoUnitComponent,
         ExerciseUnitComponent,
-        VideoUnitComponent,
         TextUnitComponent,
         OnlineUnitComponent,
         CompetenciesPopoverComponent,
@@ -102,7 +100,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
         [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-video-units',
-        [LectureUnitType.VIDEO]: 'video-units',
         [LectureUnitType.TEXT]: 'text-units',
         [LectureUnitType.ONLINE]: 'online-units',
     };
@@ -207,8 +204,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.exerciseUnit.delete.question';
             case LectureUnitType.ATTACHMENT_VIDEO:
                 return 'artemisApp.attachmentVideoUnit.delete.question';
-            case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.question';
             case LectureUnitType.ONLINE:
@@ -224,8 +219,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.exerciseUnit.delete.typeNameToConfirm';
             case LectureUnitType.ATTACHMENT_VIDEO:
                 return 'artemisApp.attachmentVideoUnit.delete.typeNameToConfirm';
-            case LectureUnitType.VIDEO:
-                return 'artemisApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.typeNameToConfirm';
             case LectureUnitType.ONLINE:
@@ -268,7 +261,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         switch (lectureUnit?.type) {
             case LectureUnitType.ATTACHMENT_VIDEO:
             case LectureUnitType.TEXT:
-            case LectureUnitType.VIDEO:
             case LectureUnitType.ONLINE:
                 return true;
             default:

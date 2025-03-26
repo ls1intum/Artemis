@@ -28,16 +28,19 @@
         </div>
     }
 
-    <div class="video-player-container">
-        <div class="ratio ratio-16x9">
-            <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
-        </div>
-    </div>
-
     @if (lectureUnit()?.description) {
         <div>
             <hr />
             {{ lectureUnit().description }}
+        </div>
+    }
+
+    @if (!!videoUrl()) {
+        <hr />
+        <div class="video-player-container">
+            <div class="ratio ratio-16x9">
+                <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+            </div>
         </div>
     }
 </jhi-lecture-unit-card>

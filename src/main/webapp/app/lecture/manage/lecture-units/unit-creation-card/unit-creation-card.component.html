@@ -9,9 +9,6 @@
                 <a type="button" id="createExerciseUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'exercise-units', 'create']">
                     <fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise"></span>
                 </a>
-                <a type="button" id="createVideoUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'video-units', 'create']">
-                    <fa-icon [icon]="faVideo" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video"></span>
-                </a>
                 <a type="button" id="createOnlineUnitButton" class="btn btn-sm btn-primary ms-1" [routerLink]="['./', 'online-units', 'create']">
                     <fa-icon [icon]="faLink" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online"></span>
                 </a>
@@ -24,9 +21,6 @@
                 </button>
                 <button type="button" id="createExerciseUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.EXERCISE)">
                     <fa-icon [icon]="faCheck" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise"></span>
-                </button>
-                <button type="button" id="createVideoUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.VIDEO)">
-                    <fa-icon [icon]="faVideo" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video"></span>
                 </button>
                 <button type="button" id="createOnlineUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ONLINE)">
                     <fa-icon [icon]="faLink" />&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online"></span>
