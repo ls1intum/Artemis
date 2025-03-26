@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 
 export const routes: Routes = [
     {
@@ -75,8 +75,17 @@ export const routes: Routes = [
                 loadComponent: () =>
                     import('app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component').then((m) => m.VcsAccessTokensSettingsComponent),
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.userSettings.categories.VCS_TOKEN_SETTINGS',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'passkeys',
+                loadComponent: () => import('app/shared/user-settings/passkey-settings/passkey-settings.component').then((m) => m.PasskeySettingsComponent),
+                data: {
+                    authorities: IS_AT_LEAST_TUTOR,
+                    pageTitle: 'artemisApp.userSettings.categories.PASSKEYS',
                 },
                 canActivate: [UserRouteAccessService],
             },

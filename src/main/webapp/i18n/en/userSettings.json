@@ -7,6 +7,7 @@
             "userSettings": "User Settings",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "passkeys": "Passkeys",
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
@@ -84,6 +85,14 @@
                 "expiryDate": "Expiry Date",
                 "actions": "Actions"
             },
+            "passkeySettingsPage": {
+                "infoText": "Passkeys are webauthn credentials that validate your identity using touch, facial recognition, a device password, or a PIN. They can be used as a password replacement or as a 2FA method.",
+                "learnMore": "Learn more about passkeys.",
+                "actions": "Actions",
+                "deletePasskeyQuestion": "Do you really want to delete your passkey {passkeyName} for passwordless authentication with Artemis?",
+                "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
+                "addNewPasskey": "Add a passkey"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
@@ -99,6 +108,7 @@
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
                 "VCS_TOKEN_SETTINGS": "VCS Token Settings",
+                "PASSKEYS": "Passkeys",
                 "IDE_PREFERENCES": "IDE Preferences"
             },
             "settingGroupNames": {

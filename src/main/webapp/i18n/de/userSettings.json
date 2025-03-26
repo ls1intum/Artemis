@@ -7,6 +7,7 @@
             "userSettings": "Benutzereinstellungen",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
@@ -84,6 +85,14 @@
                 "expiryDate": "Ablaufdatum",
                 "actions": "Aktionen"
             },
+            "passkeySettingsPage": {
+                "infoText": "Passkeys sind Webauthn-Anmeldeinformationen, die deine Identität mithilfe von Berührung, Gesichtserkennung, einem Gerätepasswort oder einer PIN überprüfen. Sie können als Passwortersatz oder als 2FA-Methode verwendet werden.",
+                "learnMore": "Erfahre mehr über Passkeys.",
+                "actions": "Aktionen",
+                "deletePasskeyQuestion": "Möchtest du deinen Passkey {passkeyName} für passwortlose Authentifikation mit Artemis wirklisch löschen?",
+                "noPasskeyRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
+                "addNewPasskey": "Neuen Passkey hinzufügen"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
@@ -99,6 +108,7 @@
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
                 "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
+                "PASSKEYS": "Passkeys",
                 "IDE_PREFERENCES": "IDE Präferenzen"
             },
             "settingGroupNames": {
