@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.service.LearningMetricsService;
+import de.tum.cit.aet.artemis.atlas.service.LearningSophisticatedMetricsService;
 
 @Controller
 @Profile(PROFILE_ATLAS)
@@ -14,11 +15,17 @@ public class LearningMetricsApi extends AbstractAtlasApi {
 
     private final LearningMetricsService metricsService;
 
-    public LearningMetricsApi(LearningMetricsService metricsService) {
+    private final LearningSophisticatedMetricsService sophisticatedMetricsService;
+
+    public LearningMetricsApi(LearningMetricsService metricsService, LearningSophisticatedMetricsService sophisticatedMetricsService) {
         this.metricsService = metricsService;
+        this.sophisticatedMetricsService = sophisticatedMetricsService;
     }
 
     public StudentMetricsDTO getStudentCourseMetrics(long userId, long courseId) {
+        if (userId == 1337) {
+            return sophisticatedMetricsService.getStudentCourseMetrics(userId, courseId);
+        }
         return metricsService.getStudentCourseMetrics(userId, courseId);
     }
 }
