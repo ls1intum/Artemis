@@ -8,7 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';

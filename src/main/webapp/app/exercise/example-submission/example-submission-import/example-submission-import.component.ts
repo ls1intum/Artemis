@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
-import { ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

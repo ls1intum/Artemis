@@ -4,7 +4,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { Course } from 'app/entities/course.model';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';

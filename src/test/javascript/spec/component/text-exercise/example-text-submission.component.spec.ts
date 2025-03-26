@@ -5,13 +5,12 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionErrorType } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
@@ -37,6 +36,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;

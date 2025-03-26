@@ -25,7 +25,7 @@ import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultBy
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/entities/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';

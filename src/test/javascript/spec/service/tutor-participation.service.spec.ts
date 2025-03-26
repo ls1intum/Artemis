@@ -2,7 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { isEmpty, take } from 'rxjs/operators';
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
