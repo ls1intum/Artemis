@@ -141,6 +141,8 @@ jobs:
           require_tests: true
           # Fails the job if no passed tests are found.
           require_passed_tests: true
+          # Disable status check creation.
+          annotate_only: true
           detailed_summary: true
           include_time_in_summary: true
           flaky_summary: true
