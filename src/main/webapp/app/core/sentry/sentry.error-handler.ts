@@ -63,30 +63,32 @@ export class SentryErrorHandler extends ErrorHandler {
         return isoString ? isoString.split('T')[0] : '';
     }
 
+    private hasBeenReportedToday() {
+        const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
+        const dateToday = this.getDatePartFromISOString(new Date().toISOString());
+        const dateLastReported = this.getDatePartFromISOString(lastReported);
+        return lastReported && dateLastReported === dateToday;
+    }
+
     /**
      * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
      *
-     * The message is only reported once per day per browser.
+     * The message is only reported once per day per browser of a user.
      */
     private reportIfPasskeyIsNotSupported() {
         const isWebAuthnUsable = window.PublicKeyCredential;
         if (!isWebAuthnUsable) {
-            const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
-            const dateToday = this.getDatePartFromISOString(new Date().toISOString());
-            const dateLastReported = this.getDatePartFromISOString(lastReported);
-
-            if (!lastReported || dateLastReported !== dateToday) {
-                localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
-                captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
-                    tags: {
-                        feature: 'Passkey Authentication',
-                        browser: navigator.userAgent,
-                    },
-                    extra: {
-                        timestamp: new Date().toISOString(),
-                    },
-                });
+            if (this.hasBeenReportedToday()) {
+                return;
             }
+
+            localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
+            captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
+                tags: {
+                    feature: 'Passkey Authentication',
+                    browser: navigator.userAgent,
+                },
+            });
         }
     }
 }
