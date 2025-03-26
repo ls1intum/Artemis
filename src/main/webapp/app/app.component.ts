@@ -10,13 +10,13 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
+import { FooterComponent } from 'app/core/layouts/footer/footer.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({
     selector: 'jhi-app',

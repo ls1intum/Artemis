@@ -5,7 +5,6 @@ import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { Subscription } from 'rxjs';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -18,6 +17,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
 const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE];

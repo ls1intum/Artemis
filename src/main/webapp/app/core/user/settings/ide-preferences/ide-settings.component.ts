@@ -5,9 +5,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
-import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';
+import { Ide, ideEquals } from 'app/core/user/settings/ide-preferences/ide.model';
 
 @Component({
     selector: 'jhi-ide-preferences',

@@ -7,7 +7,6 @@ import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.s
 import { AlertService } from 'app/shared/service/alert.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
 import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
@@ -24,6 +23,7 @@ import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export interface DetailOverviewSection {
     headline: string;

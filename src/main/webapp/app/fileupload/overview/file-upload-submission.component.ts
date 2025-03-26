@@ -14,7 +14,6 @@ import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -38,6 +37,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-file-upload-submission',

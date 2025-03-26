@@ -73,13 +73,13 @@ import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.comp
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
-import { facSidebar } from 'app/icons/icons';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
 import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { facSidebar } from 'app/shared/icons/icons';
 
 @Component({
     selector: 'jhi-course-overview',

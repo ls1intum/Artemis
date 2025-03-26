@@ -6,7 +6,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { FileService } from 'app/shared/http/file.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
@@ -24,6 +23,7 @@ import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
