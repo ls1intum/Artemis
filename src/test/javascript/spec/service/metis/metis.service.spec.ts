@@ -25,6 +25,8 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { of, Subject, throwError } from 'rxjs';
 import {
+    conversationBetweenUser1User2,
+    directMessageUser2,
     metisChannel,
     metisCourse,
     metisExam,
@@ -460,6 +462,45 @@ describe('Metis Service', () => {
         const contextInformation = metisService.getContextInformation(metisPostInChannel);
         expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'communication']);
         expect(contextInformation.displayName).not.toBeEmpty();
+    });
+
+    it('should return "Direct Message" when conversation is a one-to-one chat', () => {
+        const dmConversation = { ...conversationBetweenUser1User2, type: ConversationType.ONE_TO_ONE };
+        const directMessagePost: Post = {
+            ...directMessageUser2,
+            conversation: dmConversation,
+        };
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(directMessagePost);
+
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', course.id, 'communication']);
+        expect(contextInformation.displayName).toBe('Direct Message');
+        expect(contextInformation.queryParams).toEqual({ conversationId: dmConversation.id });
+    });
+
+    it('should return "Group Message" when conversation is a group chat', () => {
+        const groupChatConversation = {
+            id: 9999,
+            type: ConversationType.GROUP_CHAT,
+            conversationParticipants: [
+                { id: 1, user: metisUser1, unreadMessagesCount: 0 },
+                { id: 2, user: metisUser2, unreadMessagesCount: 0 },
+                { id: 3, user: { id: 3, name: 'User3' }, unreadMessagesCount: 0 },
+            ],
+        };
+
+        const groupChatPost: Post = {
+            id: 8888,
+            author: metisUser1,
+            content: 'Hello Group Chat',
+            conversation: groupChatConversation,
+        } as Post;
+
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(groupChatPost);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', course.id, 'communication']);
+        expect(contextInformation.displayName).toBe('Group Message');
+        expect(contextInformation.queryParams).toEqual({ conversationId: groupChatConversation.id });
     });
 
     describe('Handle websocket related functionality', () => {

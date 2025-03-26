@@ -35,6 +35,8 @@ import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
 import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -569,7 +571,13 @@ export class MetisService implements OnDestroy {
         let queryParams = undefined;
         let displayName = '';
         if (post.conversation) {
-            displayName = getAsChannelDTO(post.conversation)?.name ?? '';
+            if (getAsChannelDTO(post.conversation)) {
+                displayName = getAsChannelDTO(post.conversation)?.name ?? '';
+            } else if (getAsOneToOneChatDTO(post.conversation)) {
+                displayName = 'Direct Message';
+            } else if (getAsGroupChatDTO(post.conversation)) {
+                displayName = 'Group Message';
+            }
             routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }

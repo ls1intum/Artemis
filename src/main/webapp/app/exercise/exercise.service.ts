@@ -18,8 +18,8 @@ import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
+import { IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
-import { IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;

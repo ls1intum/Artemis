@@ -20,7 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
