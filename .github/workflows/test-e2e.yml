@@ -203,15 +203,13 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
 
           # Extract PR number
-          # Look for "number": followed by digits
-          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number":[0-9]*' | head -1 | sed 's/"number"://')
+          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
 
           if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
             echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           else
             echo "No PR found from branch: $BRANCH_NAME."
-            echo "pr_head_sha=" >> $GITHUB_OUTPUT
           fi
 
       # Add comment to the PR with test result summary
