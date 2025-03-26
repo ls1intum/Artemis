@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -100,19 +99,13 @@ public class LectureUnitImportService {
 
                 return lectureUnitRepository.save(textUnit);
             }
-            case VideoUnit importedVideoUnit -> {
-                VideoUnit videoUnit = new VideoUnit();
-                videoUnit.setName(importedVideoUnit.getName());
-                videoUnit.setReleaseDate(importedVideoUnit.getReleaseDate());
-                videoUnit.setDescription(importedVideoUnit.getDescription());
-                videoUnit.setSource(importedVideoUnit.getSource());
-
-                return lectureUnitRepository.save(videoUnit);
-            }
             case AttachmentVideoUnit importedAttachmentVideoUnit -> {
                 // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
                 AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
+                attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
                 attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
+                attachmentVideoUnit.setVideoSource(importedAttachmentVideoUnit.getVideoSource());
                 attachmentVideoUnit = lectureUnitRepository.save(attachmentVideoUnit);
 
                 Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());

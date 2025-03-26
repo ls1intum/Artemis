@@ -57,7 +57,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         this.lecture1 = course1.getLectures().stream().findFirst().orElseThrow();
         this.lecture1.setTitle("Lecture " + lecture1.getId()); // needed for search by title
         this.lecture1 = lectureRepository.save(this.lecture1);
-        this.lectureUnit = lectureUtilService.createVideoUnit();
+        this.lectureUnit = lectureUtilService.createTextUnit();
         this.lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(this.lectureUnit));
 
         // Add users that are not in the course

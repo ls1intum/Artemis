@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
     @JsonSubTypes.Type(value = AttachmentVideoUnit.class, name = "attachment"),
     @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
     @JsonSubTypes.Type(value = TextUnit.class, name = "text"),
-    @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
     @JsonSubTypes.Type(value = OnlineUnit.class, name = "online")
 })
 // @formatter:on

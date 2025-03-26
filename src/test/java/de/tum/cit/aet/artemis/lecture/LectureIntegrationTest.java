@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -119,12 +118,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise);
         attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
         attachmentOfAttachmentVideoUnit = attachmentVideoUnit.getAttachment();
-        VideoUnit videoUnit = lectureUtilService.createVideoUnit();
         TextUnit textUnit = lectureUtilService.createTextUnit();
         OnlineUnit onlineUnit = lectureUtilService.createOnlineUnit();
         addAttachmentToLecture();
 
-        lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentVideoUnit, videoUnit, textUnit, onlineUnit));
+        lecture1 = lectureUtilService.addLectureUnitsToLecture(this.lecture1, List.of(exerciseUnit, attachmentVideoUnit, textUnit, onlineUnit));
 
         competency = competencyUtilService.createCompetency(course1);
         competencyUtilService.linkExerciseToCompetency(competency, textExercise);

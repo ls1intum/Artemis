@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -46,7 +45,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -89,9 +87,6 @@ public class LectureUtilService {
 
     @Autowired
     private TextUnitRepository textUnitRepository;
-
-    @Autowired
-    private VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private OnlineUnitRepository onlineUnitRepository;
@@ -157,11 +152,10 @@ public class LectureUtilService {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
                 TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
-                VideoUnit videoUnit = createVideoUnit();
                 TextUnit textUnit = createTextUnit();
                 AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnit(withFiles);
                 ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentVideoUnit, exerciseUnit)));
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(textUnit, attachmentVideoUnit, exerciseUnit)));
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
@@ -321,18 +315,6 @@ public class LectureUtilService {
         textUnit.setName("Name Lorem Ipsum");
         textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
-    }
-
-    /**
-     * Creates and saves a VideoUnit.
-     *
-     * @return The created VideoUnit
-     */
-    public VideoUnit createVideoUnit() {
-        VideoUnit videoUnit = new VideoUnit();
-        videoUnit.setDescription("Lorem Ipsum");
-        videoUnit.setSource("http://video.fake");
-        return videoUnitRepository.save(videoUnit);
     }
 
     /**
