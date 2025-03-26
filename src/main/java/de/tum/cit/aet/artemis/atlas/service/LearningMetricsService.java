@@ -62,9 +62,9 @@ public class LearningMetricsService {
      * @return the metrics for the student in the course
      */
     public StudentMetricsDTO getStudentCourseMetrics(long userId, long courseId) {
-        final var exerciseMetricsDTO = getStudentExerciseMetrics(userId, courseId);
-        final var lectureUnitMetricsDTO = getStudentLectureUnitMetrics(userId, courseId);
-        final var competencyMetricsDTO = getStudentCompetencyMetrics(userId, courseId);
+        ExerciseStudentMetricsDTO exerciseMetricsDTO = getStudentExerciseMetrics(userId, courseId);
+        LectureUnitStudentMetricsDTO lectureUnitMetricsDTO = getStudentLectureUnitMetrics(userId, courseId);
+        CompetencyStudentMetricsDTO competencyMetricsDTO = getStudentCompetencyMetrics(userId, courseId);
         return new StudentMetricsDTO(exerciseMetricsDTO, lectureUnitMetricsDTO, competencyMetricsDTO);
     }
 
