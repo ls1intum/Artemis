@@ -7,7 +7,7 @@ import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-working
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -20,7 +20,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

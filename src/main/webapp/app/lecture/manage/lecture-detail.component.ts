@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
@@ -11,7 +11,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from '../../shared/language/translate.directive';
-import { DetailOverviewListComponent } from '../../detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from '../../shared/detail-overview-list/detail-overview-list.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { captureException } from '@sentry/angular';
 @Component({

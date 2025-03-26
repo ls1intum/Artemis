@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';

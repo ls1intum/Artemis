@@ -12,7 +12,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

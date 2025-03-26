@@ -13,12 +13,12 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getFirstResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.communication.domain.setting_presets.IgnoreUserCou
  */
 public abstract class CourseNotification {
 
-    public final long notificationId;
+    public Long notificationId;
 
     public final long courseId;
 

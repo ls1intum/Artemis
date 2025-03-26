@@ -4,7 +4,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { SimpleChange } from '@angular/core';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
 describe('Plagiarism Sidebar Component', () => {

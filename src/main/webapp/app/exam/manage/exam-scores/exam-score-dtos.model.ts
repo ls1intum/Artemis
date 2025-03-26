@@ -2,7 +2,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { BonusResult } from 'app/entities/bonus.model';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 
 export class ExamScoreDTO {
     public examId: number;

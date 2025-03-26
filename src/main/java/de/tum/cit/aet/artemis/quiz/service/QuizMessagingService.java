@@ -20,6 +20,9 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -50,9 +53,17 @@ public class QuizMessagingService {
     public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise, @Nullable QuizBatch quizBatch, QuizAction quizChange) {
         try {
             long start = System.currentTimeMillis();
-            Class<?> view = quizExercise.viewForStudentsInQuizExercise(quizBatch);
-            // TODO: use a proper DTO and avoid sending the whole quiz exercise based on the view
-            byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
+            Object exerciseDTO;
+            if (quizExercise.isQuizEnded()) {
+                exerciseDTO = QuizExerciseWithSolutionDTO.of(quizExercise);
+            }
+            else if (quizBatch != null && quizBatch.isStarted()) {
+                exerciseDTO = QuizExerciseWithQuestionsDTO.of(quizExercise);
+            }
+            else {
+                exerciseDTO = QuizExerciseWithoutQuestionsDTO.of(quizExercise);
+            }
+            byte[] payload = objectMapper.writeValueAsBytes(exerciseDTO);
             // For each change we send the same message. The client needs to decide how to handle the date based on the quiz status
             if (quizExercise.isVisibleToStudents() && quizExercise.isCourseExercise()) {
                 // Create a group notification if actions is 'start-now'.
@@ -73,4 +84,5 @@ public class QuizMessagingService {
             log.error("Exception occurred while serializing quiz exercise", e);
         }
     }
+
 }

@@ -10,7 +10,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import dayjs from 'dayjs/esm';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;

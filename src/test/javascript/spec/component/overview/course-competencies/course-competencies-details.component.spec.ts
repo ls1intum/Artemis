@@ -30,7 +30,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

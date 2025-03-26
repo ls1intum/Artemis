@@ -23,7 +23,7 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';

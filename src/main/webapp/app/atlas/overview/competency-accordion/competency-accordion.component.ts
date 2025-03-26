@@ -15,7 +15,7 @@ import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export interface CompetencyAccordionToggleEvent {

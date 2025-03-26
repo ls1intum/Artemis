@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';

@@ -4,7 +4,7 @@ import { MetisService } from 'app/communication/metis.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

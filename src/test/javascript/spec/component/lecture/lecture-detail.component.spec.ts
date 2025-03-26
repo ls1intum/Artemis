@@ -8,7 +8,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseTaskService } from '../programming-exercise-task.service';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
