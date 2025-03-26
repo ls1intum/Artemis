@@ -178,7 +178,7 @@ describe('CourseLectureDetailsComponent', () => {
     it('should display all three lecture units: 2 attachment units and 1 text unit', fakeAsync(() => {
         fixture.detectChanges();
 
-        const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-unit'));
+        const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-video-unit'));
         const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
         expect(attachmentVideoUnits).toHaveLength(2);
         expect(textUnits).toHaveLength(1);

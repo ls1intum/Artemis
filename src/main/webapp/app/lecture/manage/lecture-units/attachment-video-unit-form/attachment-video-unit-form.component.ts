@@ -83,7 +83,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
 }
 
 @Component({
-    selector: 'jhi-attachment-unit-form',
+    selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })

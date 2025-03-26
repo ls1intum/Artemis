@@ -32,7 +32,7 @@ export type LectureUnitInformationDTO = {
 };
 
 @Component({
-    selector: 'jhi-attachment-units',
+    selector: 'jhi-attachment-video-units',
     templateUrl: './attachment-video-units.component.html',
     imports: [LectureUnitLayoutComponent, TranslateDirective, FormsModule, FormDateTimePickerComponent, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
