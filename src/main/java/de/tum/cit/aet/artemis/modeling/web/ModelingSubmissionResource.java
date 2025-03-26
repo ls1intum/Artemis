@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -172,8 +173,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new Result object is created and
-     * assigned to the submission.
+     * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new empty result object
+     * might be created and assigned to the submission (when the user is at least a tutor).
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound is set, the first correctionRound is used.
      *
@@ -190,22 +191,33 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
-        // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
+
         var modelingSubmission = modelingSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
-        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
-        modelingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        if (!authCheckService.isAtLeastStudentForExercise(modelingExercise, user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this modeling submission.");
+        }
+
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
+            // only the owner of the participation can see the submission
+            if (!authCheckService.isOwnerOfParticipation(studentParticipation, user)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this modeling submission.");
+            }
+
             // anonymize the submission
             modelingSubmission.setParticipation(null);
             modelingSubmission.setResults(null);
             modelingSubmission.setSubmissionDate(null);
             return ResponseEntity.ok(modelingSubmission);
         }
+
+        // now we can assume the user is at least a tutor for the underlying exercise
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
+        modelingExercise.setGradingCriteria(gradingCriteria);
 
         if (!withoutResults) {
             // load submission with results either by resultId or by correctionRound

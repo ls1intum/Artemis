@@ -432,7 +432,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(value = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(value = TEST_PREFIX + "student2", roles = "USER")
     void getModelSubmissionWithResult_notInvolved_notAllowed() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
