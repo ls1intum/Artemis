@@ -229,17 +229,18 @@ public class PyrisPipelineService {
      * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
      */
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant) {
-        var course = session.getPost().getCoursePostingBelongsTo();
+        var post = session.getPost();
+        var course = post.getCoursePostingBelongsTo();
         // @formatter:off
         executePipeline(
             "tutor-suggestions",
             variant,
             eventVariant,
-            pyrisJobService.addTutorSuggestionJob(course.getId(), session.getId()),
+            pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 Optional.of(new PyrisCourseDTO(course)),
                 Optional.empty(),
-                new PyrisPostDTO(session.getPost()),
+                new PyrisPostDTO(post),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 new PyrisUserDTO(session.getUser()),
                 executionDto.settings(),

@@ -31,10 +31,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.RewritingJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -56,10 +58,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
+    private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
-            IrisConsistencyCheckService consistencyCheckService) {
+            IrisConsistencyCheckService consistencyCheckService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -68,6 +72,7 @@ public class PyrisStatusUpdateService {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.rewritingService = rewritingService;
         this.consistencyCheckService = consistencyCheckService;
+        this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
     }
 
     /**
@@ -196,6 +201,12 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(FaqIngestionWebhookJob job, PyrisFaqIngestionStatusUpdateDTO statusUpdate) {
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+    }
+
+    public void handleStatusUpdate(TutorSuggestionJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
+
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
 }
