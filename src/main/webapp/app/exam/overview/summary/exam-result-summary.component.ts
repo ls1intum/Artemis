@@ -202,7 +202,6 @@ export class ExamResultSummaryComponent implements OnInit {
         effect(() => {
             const exam = this.studentExam();
 
-            // replicate the setter logic
             if (this.studentExamGradeInfoDTO) {
                 this.studentExamGradeInfoDTO.studentExam = exam;
             }
