@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
-import { objectToJsonBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-units.component';
 
 describe('AttachmentUnitService', () => {
@@ -212,7 +212,7 @@ describe('AttachmentUnitService', () => {
             });
 
             const req = httpMock.expectOne({
-                url: `api/lecture/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
+                url: `api/core/files/courses/${courseId}/attachment-units/${attachmentUnitId}`,
                 method: 'GET',
             });
             expect(req.request.responseType).toBe('blob');

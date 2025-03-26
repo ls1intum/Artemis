@@ -26,7 +26,7 @@ import { Params } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
@@ -35,6 +35,8 @@ import { SavedPostService } from 'app/communication/saved-post.service';
 import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
 import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
+import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -569,7 +571,13 @@ export class MetisService implements OnDestroy {
         let queryParams = undefined;
         let displayName = '';
         if (post.conversation) {
-            displayName = getAsChannelDTO(post.conversation)?.name ?? '';
+            if (getAsChannelDTO(post.conversation)) {
+                displayName = getAsChannelDTO(post.conversation)?.name ?? '';
+            } else if (getAsOneToOneChatDTO(post.conversation)) {
+                displayName = 'Direct Message';
+            } else if (getAsGroupChatDTO(post.conversation)) {
+                displayName = 'Group Message';
+            }
             routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }

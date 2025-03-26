@@ -9,9 +9,9 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/programming/overview/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';
@@ -23,7 +23,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
-import { SubmissionProcessingDTO } from '../../../../main/webapp/app/entities/programming/submission-processing-dto';
+import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: WebsocketService;

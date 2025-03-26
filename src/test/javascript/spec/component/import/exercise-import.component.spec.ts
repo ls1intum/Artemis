@@ -3,8 +3,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
@@ -22,7 +22,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { FileUploadExercisePagingService } from 'app/file-upload/manage/file-upload-exercise-paging.service';
+import { FileUploadExercisePagingService } from 'app/fileupload/manage/file-upload-exercise-paging.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 

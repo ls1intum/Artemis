@@ -15,14 +15,14 @@ import {
     Notification,
 } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';

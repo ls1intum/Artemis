@@ -2,8 +2,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 
-import { FileUploadExerciseService } from 'app/file-upload/manage/file-upload-exercise.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

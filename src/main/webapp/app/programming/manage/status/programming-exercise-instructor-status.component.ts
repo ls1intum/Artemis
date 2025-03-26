@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';

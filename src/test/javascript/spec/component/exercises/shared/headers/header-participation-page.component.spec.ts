@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
@@ -11,7 +11,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 

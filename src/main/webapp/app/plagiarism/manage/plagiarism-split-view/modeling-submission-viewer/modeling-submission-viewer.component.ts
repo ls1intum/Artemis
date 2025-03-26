@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
+import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { UMLModel } from '@ls1intum/apollon';
