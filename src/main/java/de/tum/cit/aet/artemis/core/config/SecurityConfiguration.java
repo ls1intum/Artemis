@@ -55,7 +55,6 @@ import com.webauthn4j.springframework.security.challenge.ChallengeRepository;
 import com.webauthn4j.springframework.security.challenge.HttpSessionChallengeRepository;
 import com.webauthn4j.springframework.security.config.configurers.WebAuthnLoginConfigurer;
 import com.webauthn4j.springframework.security.converter.jackson.WebAuthn4JSpringSecurityJSONModule;
-import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordManager;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordService;
 import com.webauthn4j.springframework.security.options.AssertionOptionsProvider;
 import com.webauthn4j.springframework.security.options.AssertionOptionsProviderImpl;
@@ -235,6 +234,7 @@ public class SecurityConfiguration {
             // Configures authorization for various URL patterns. The patterns are considered in order.
             .authorizeHttpRequests(requests -> {
                 requests
+                    // NOTE: Always have a look at {@link de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter} to see which URLs are forwarded to the SPA
                     // Client related URLs and publicly accessible information (allowed for everyone).
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
@@ -242,12 +242,12 @@ public class SecurityConfiguration {
                     .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
                     // Information and health endpoints do not need authentication
                     .requestMatchers("/management/info", "/management/health").permitAll()
+                    // Everything related to webauthn4j should be permitted
+                    .requestMatchers("/webauthn/**").permitAll()
                     // Admin area requires specific authority.
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
-                    // TODO: can we do this?
-                    .anyRequest().access(getWebExpressionAuthorizationManager("@webAuthnSecurityExpression.isWebAuthnAuthenticated(authentication)"))
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -261,19 +261,17 @@ public class SecurityConfiguration {
                     }
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
-                   requests.requestMatchers("/**").authenticated();
+                    requests.requestMatchers("/**").authenticated();
+
+                    // TODO: add a comment what this means in terms of security
+                    requests
+                        .anyRequest().access(getWebExpressionAuthorizationManager("@webAuthnSecurityExpression.isWebAuthnAuthenticated(authentication)"));
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
-            .with(webAuthnLoginConfigurer(), configurer -> {
-                try {
-                    configurer.configure(http);
-                }
-                catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            // TODO: check if we can remove the lambda here and solve this differently, the main purpose was to extract this to a different location
+            .with(webAuthnLoginConfigurer(), configurer -> {});
 
         // As WebAuthn has its own CSRF protection mechanism (challenge), CSRF token is disabled here
         http.csrf(csrf -> {
@@ -337,13 +335,6 @@ public class SecurityConfiguration {
                 .extensionProviders();
         return webAuthnLoginConfigurer;
         // @formatter:on
-    }
-
-    @Bean
-    public WebAuthnCredentialRecordManager webAuthnAuthenticatorManager() {
-        // TODO: it might be possible to realize this differently, effectively we want to define that
-        // passKeyCredentialService is used as WebAuthnCredentialRecordManager
-        return passKeyCredentialService;
     }
 
     @Bean
