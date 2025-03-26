@@ -7,6 +7,7 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
+    IrisTutorSuggestionSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 export enum IrisSettingsType {
@@ -25,6 +26,7 @@ export abstract class IrisSettings implements BaseEntity {
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
     irisFaqIngestionSettings?: IrisFaqIngestionSubSettings;
+    irisTutorSuggestionSettings?: IrisTutorSuggestionSubSettings;
 }
 
 export class IrisGlobalSettings implements IrisSettings {
@@ -37,6 +39,7 @@ export class IrisGlobalSettings implements IrisSettings {
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
     irisFaqIngestionSettings?: IrisFaqIngestionSubSettings;
+    irisTutorSuggestionSettings?: IrisTutorSuggestionSubSettings;
 }
 
 export class IrisCourseSettings implements IrisSettings {
@@ -50,6 +53,7 @@ export class IrisCourseSettings implements IrisSettings {
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
     irisFaqIngestionSettings?: IrisFaqIngestionSubSettings;
+    irisTutorSuggestionSettings?: IrisTutorSuggestionSubSettings;
 }
 
 export class IrisExerciseSettings implements IrisSettings {

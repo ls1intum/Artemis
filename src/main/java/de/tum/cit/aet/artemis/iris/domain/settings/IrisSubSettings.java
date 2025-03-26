@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
     @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation"),
     @JsonSubTypes.Type(value = IrisLectureChatSubSettings.class, name = "lecture-chat"),
     @JsonSubTypes.Type(value = IrisFaqIngestionSubSettings.class, name = "faq-ingestion"),
+    @JsonSubTypes.Type(value = IrisTutorSuggestionSubSettings.class, name = "tutor-suggestion"),
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

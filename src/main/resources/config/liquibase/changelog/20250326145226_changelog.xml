@@ -5,11 +5,14 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.31.xsd"
         objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
-    <changeSet id="20250317105156" author="alex.joham">
+    <changeSet id="20250326145226" author="alex.joham">
         <addColumn tableName="iris_session">
             <column name="post_id" type="bigint">
                 <constraints nullable="true"/>
             </column>
+        </addColumn>
+        <addColumn tableName="iris_settings">
+            <column name="iris_tutor_suggestion_settings_id" type="BIGINT"/>
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="post_id"
                                  baseTableName="iris_session"
@@ -17,6 +20,12 @@
                                  referencedColumnNames="id"
                                  referencedTableName="post"
                                  onDelete="SET NULL"
+        />
+        <addForeignKeyConstraint baseColumnNames="iris_tutor_suggestion_settings_id"
+                                 baseTableName="iris_settings"
+                                 constraintName="FK_IRIS_SETTINGS_ON_IRIS_TUTOR_SUGGESTION_SETTINGS"
+                                 referencedColumnNames="id"
+                                 referencedTableName="iris_sub_settings"
         />
     </changeSet>
 </databaseChangeLog>

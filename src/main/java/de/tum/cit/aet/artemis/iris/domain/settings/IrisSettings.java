@@ -69,4 +69,8 @@ public abstract class IrisSettings extends DomainObject {
 
     public abstract void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings);
 
+    public abstract IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings();
+
+    public abstract void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings);
+
 }

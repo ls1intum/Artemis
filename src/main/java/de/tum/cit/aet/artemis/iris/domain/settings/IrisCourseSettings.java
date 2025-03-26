@@ -52,6 +52,10 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_tutor_suggestion_settings_id")
+    private IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings;
+
     public Course getCourse() {
         return course;
     }
@@ -128,5 +132,15 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisFaqIngestionSettings(IrisFaqIngestionSubSettings irisFaqIngestionSubSettings) {
         this.irisFaqIngestionSettings = irisFaqIngestionSubSettings;
+    }
+
+    @Override
+    public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
+        return irisTutorSuggestionSubSettings;
+    }
+
+    @Override
+    public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
+        this.irisTutorSuggestionSubSettings = irisTutorSuggestionSubSettings;
     }
 }

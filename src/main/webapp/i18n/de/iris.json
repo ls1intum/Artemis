@@ -41,6 +41,7 @@
                         "autoIngest": "FAQs automatisch an Pyris senden"
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "tutorSuggestionSettings": "Tutor Vorschlag Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
                         "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."

@@ -41,6 +41,7 @@
                         "autoIngest": "Send FAQs To Pyris Automatically"
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "tutorSuggestionSettings": "Tutor Suggestion Settings",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Monitor submission build failures",
                         "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
