@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, input, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -47,6 +48,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.post = activePost;
         this.createdAnswerPost = this.createEmptyAnswerPost();
     }
+
+    course = input<Course>();
 
     @Output()
     closePostThread = new EventEmitter<void>();

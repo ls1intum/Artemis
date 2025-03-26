@@ -87,6 +87,7 @@
                         [readOnlyMode]="!!getAsChannel(postInThread.conversation)?.isArchived"
                         [activePost]="postInThread"
                         (closePostThread)="postInThread = undefined"
+                        [course]="course"
                     />
                 }
             </div>
