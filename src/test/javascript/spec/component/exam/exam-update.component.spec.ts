@@ -24,7 +24,7 @@ import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -11,8 +11,8 @@ import { CourseStorageService } from 'app/core/course/manage/course-storage.serv
 import { Course } from 'app/core/shared/entities/course.model';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

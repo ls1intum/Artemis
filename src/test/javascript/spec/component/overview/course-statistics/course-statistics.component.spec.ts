@@ -10,7 +10,7 @@ import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseStatisticsComponent, NgxExercise } from 'app/core/course/overview/course-statistics/course-statistics.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';

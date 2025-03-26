@@ -6,7 +6,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';

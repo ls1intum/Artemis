@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/shared/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission.component';
 import { UMLDiagramType } from '@ls1intum/apollon';

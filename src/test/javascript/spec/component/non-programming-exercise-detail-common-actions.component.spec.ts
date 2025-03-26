@@ -8,7 +8,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';

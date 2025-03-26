@@ -9,7 +9,7 @@ import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedback
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 

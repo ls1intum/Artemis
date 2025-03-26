@@ -11,7 +11,7 @@ import { TextSubmissionService } from 'app/text/overview/text-submission.service
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';

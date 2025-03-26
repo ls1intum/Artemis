@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import { Course } from 'app/core/shared/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -15,7 +15,7 @@ import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 
 test.describe('Import exercises', () => {
     let course: Course;

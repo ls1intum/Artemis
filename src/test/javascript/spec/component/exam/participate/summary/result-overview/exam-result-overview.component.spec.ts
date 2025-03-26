@@ -9,7 +9,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
