@@ -101,7 +101,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
-        [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-units',
+        [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-video-units',
         [LectureUnitType.VIDEO]: 'video-units',
         [LectureUnitType.TEXT]: 'text-units',
         [LectureUnitType.ONLINE]: 'online-units',

@@ -109,7 +109,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private void testAllPreAuthorize() throws Exception {
         request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/42", HttpStatus.FORBIDDEN, AttachmentVideoUnit.class);
     }
 
     private MockHttpServletRequestBuilder buildUpdateAttachmentVideoUnit(@NotNull AttachmentVideoUnit attachmentVideoUnit, @NotNull Attachment attachment) throws Exception {
@@ -130,7 +130,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
 
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + attachmentVideoUnit.getId());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnit.getId());
         if (fileContent != null) {
             var filePart = createAttachmentVideoUnitPdf();
             builder.file(filePart);
@@ -144,7 +144,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentVideoUnitPdf();
 
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentVideoUnitPart)
+        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
                 .file(attachmentPart).file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
@@ -343,7 +343,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(this.attachmentVideoUnit.getAttachment()).isEqualTo(this.attachment);
 
         // 2. check the REST call
-        this.attachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentVideoUnit.getId(), HttpStatus.OK,
+        this.attachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + this.attachmentVideoUnit.getId(), HttpStatus.OK,
                 AttachmentVideoUnit.class);
         assertThat(this.attachmentVideoUnit.getAttachment()).isEqualTo(this.attachment);
         assertThat(this.attachmentVideoUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
@@ -358,7 +358,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(persistedAttachmentVideoUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(0);
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.OK);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.NOT_FOUND, AttachmentVideoUnit.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId(), HttpStatus.NOT_FOUND,
+                AttachmentVideoUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentVideoUnit), eq(Optional.empty()));
     }
 }

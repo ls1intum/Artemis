@@ -225,7 +225,7 @@ describe('LectureUpdateComponent', () => {
         expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
 
-        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-units', 'process'];
+        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
     }));
 

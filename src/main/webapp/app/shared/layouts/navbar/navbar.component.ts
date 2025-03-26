@@ -639,7 +639,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'ide':
             case 'text-units':
             case 'exercise-units':
-            case 'attachment-units':
+            case 'attachment-video-units':
             case 'video-units':
             case 'grading':
             case 'mc-question-statistic':

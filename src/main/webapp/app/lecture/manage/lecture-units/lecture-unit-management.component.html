@@ -110,7 +110,16 @@
                             <a
                                 type="button"
                                 class="btn btn-primary btn-sm flex-grow-1"
-                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
+                                [routerLink]="[
+                                    '/course-management',
+                                    lecture.course?.id,
+                                    'lectures',
+                                    lecture.id,
+                                    'unit-management',
+                                    'attachment-video-units',
+                                    lectureUnit.id,
+                                    'view',
+                                ]"
                                 [ngbTooltip]="'entity.action.view' | artemisTranslate"
                             >
                                 <fa-icon [icon]="faEye" />

@@ -13,7 +13,7 @@ import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
-    selector: 'jhi-create-attachment-unit',
+    selector: 'jhi-create-attachment-video-unit',
     templateUrl: './create-attachment-video-unit.component.html',
     imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
 })

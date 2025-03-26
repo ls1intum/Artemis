@@ -302,7 +302,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         if (this.processUnitMode) {
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+            this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else if (this.isEditMode()) {

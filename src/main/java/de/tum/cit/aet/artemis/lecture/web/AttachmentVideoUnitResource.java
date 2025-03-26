@@ -92,13 +92,13 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/attachment-units/:attachmentVideoUnitId : gets the attachment unit with the specified id
+     * GET lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : gets the attachment unit with the specified id
      *
      * @param attachmentVideoUnitId the id of the attachmentVideoUnit to retrieve
      * @param lectureId             the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
-    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentVideoUnitId}")
+    @GetMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentVideoUnit> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentVideoUnit : {}", attachmentVideoUnitId);
@@ -110,7 +110,7 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * PUT lectures/:lectureId/attachment-units/:attachmentVideoUnitId : Updates an existing attachment unit
+     * PUT lectures/:lectureId/attachment-video-units/:attachmentVideoUnitId : Updates an existing attachment unit
      *
      * @param lectureId             the id of the lecture to which the attachment unit belongs to update
      * @param attachmentVideoUnitId the id of the attachment unit to update
@@ -121,7 +121,7 @@ public class AttachmentVideoUnitResource {
      * @param notificationText      the text to be used for the notification. No notification will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
-    @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
@@ -147,7 +147,7 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/attachment-units : creates a new attachment unit.
+     * POST lectures/:lectureId/attachment-video-units : creates a new attachment unit.
      *
      * @param lectureId           the id of the lecture to which the attachment unit should be added
      * @param attachmentVideoUnit the attachment video unit that should be created
@@ -157,7 +157,7 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping(value = "lectures/{lectureId}/attachment-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
             @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
@@ -189,20 +189,20 @@ public class AttachmentVideoUnitResource {
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));
 
-        return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
+        return ResponseEntity.created(new URI("/api/attachment-video-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
     }
 
     /**
-     * POST lectures/:lectureId/attachment-units/upload : Temporarily uploads a file which will be processed into lecture units
+     * POST lectures/:lectureId/attachment-video-units/upload : Temporarily uploads a file which will be processed into lecture units
      *
      * @param file      the file that will be processed
      * @param lectureId the id of the lecture to which the attachment units will be added
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
-    @PostMapping("lectures/{lectureId}/attachment-units/upload")
+    @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
     @EnforceAtLeastEditor
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
-        // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
+        // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-video-units.component.ts
         int minutesUntilDeletion = 30;
         String originalFilename = file.getOriginalFilename();
         log.debug("REST request to upload file: {}", originalFilename);
@@ -221,14 +221,14 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/attachment-units/split : creates new attachment units from the given file and lecture unit information
+     * POST lectures/:lectureId/attachment-video-units/split : creates new attachment units from the given file and lecture unit information
      *
      * @param lectureId                      the id of the lecture to which the attachment units will be added
      * @param lectureUnitSplitInformationDTO the units that will be created
      * @param filename                       the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
-    @PostMapping("lectures/{lectureId}/attachment-units/split/{filename}")
+    @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<AttachmentVideoUnit>> createAttachmentVideoUnits(@PathVariable Long lectureId,
             @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, @PathVariable String filename) {
@@ -256,13 +256,13 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/attachment-units : Calculates lecture units by splitting up the given file
+     * GET lectures/:lectureId/attachment-video-units : Calculates lecture units by splitting up the given file
      *
      * @param lectureId the id of the lecture to which the file is going to be split
      * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentVideoUnitsData
      */
-    @GetMapping("lectures/{lectureId}/attachment-units/data/{filename}")
+    @GetMapping("lectures/{lectureId}/attachment-video-units/data/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
@@ -283,14 +283,14 @@ public class AttachmentVideoUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/attachment-units/slides-to-remove : gets the slides to be removed
+     * GET lectures/:lectureId/attachment-video-units/slides-to-remove : gets the slides to be removed
      *
      * @param lectureId                the id of the lecture to which the unit belongs
      * @param filename                 the name of the file to be parsed, located in the temp folder
      * @param commaSeparatedKeyPhrases the comma seperated keyphrases to be removed
      * @return the ResponseEntity with status 200 (OK) and with body the list of slides to be removed
      */
-    @GetMapping("lectures/{lectureId}/attachment-units/slides-to-remove/{filename}")
+    @GetMapping("lectures/{lectureId}/attachment-video-units/slides-to-remove/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
         log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);

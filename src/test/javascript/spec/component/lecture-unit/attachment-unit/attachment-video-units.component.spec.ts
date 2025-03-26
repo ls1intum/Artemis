@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { AttachmentVideoUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
+import { AttachmentVideoUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

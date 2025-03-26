@@ -13,7 +13,7 @@ import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 
 @Component({
-    selector: 'jhi-edit-attachment-unit',
+    selector: 'jhi-edit-attachment-video-unit',
     templateUrl: './edit-attachment-video-unit.component.html',
     imports: [LectureUnitLayoutComponent, AttachmentVideoUnitFormComponent],
 })
@@ -39,7 +39,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const attachmentVideoUnitId = Number(params.get('attachmentUnitId'));
+                    const attachmentVideoUnitId = Number(params.get('attachmentVideoUnitId'));
                     this.lectureId = Number(parentParams.get('lectureId'));
                     return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId);
                 }),

@@ -30,15 +30,16 @@ export const lectureUnitRoute: Routes = [
                 },
             },
             {
-                path: 'attachment-units/process',
-                loadComponent: () => import('app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component').then((m) => m.AttachmentVideoUnitsComponent),
+                path: 'attachment-video-units/process',
+                loadComponent: () =>
+                    import('app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component').then((m) => m.AttachmentVideoUnitsComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
                 },
             },
             {
-                path: 'attachment-units/create',
+                path: 'attachment-video-units/create',
                 loadComponent: () =>
                     import('app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component').then(
                         (m) => m.CreateAttachmentVideoUnitComponent,
@@ -73,16 +74,16 @@ export const lectureUnitRoute: Routes = [
                 },
             },
             {
-                path: 'attachment-units/:attachmentUnitId/edit',
+                path: 'attachment-video-units/:attachmentVideoUnitId/edit',
                 loadComponent: () =>
-                    import('app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-video-unit.component').then((m) => m.EditAttachmentVideoUnitComponent),
+                    import('app/lecture/manage/lecture-units/edit-attachment-video-unit/edit-attachment-video-unit.component').then((m) => m.EditAttachmentVideoUnitComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentVideoUnit.editAttachmentVideoUnit.title',
                 },
             },
             {
-                path: 'attachment-units/:attachmentUnitId/view',
+                path: 'attachment-video-units/:attachmentVideoUnitId/view',
                 loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                 resolve: {
                     course: CourseManagementResolve,

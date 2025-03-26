@@ -4,7 +4,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-units/attachment-video-units.component';
+import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 
@@ -19,7 +19,7 @@ export class AttachmentVideoUnitService {
 
     findById(attachmentVideoUnitId: number, lectureId: number) {
         return this.httpClient
-            .get<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentVideoUnitId}`, { observe: 'response' })
+            .get<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
@@ -28,7 +28,7 @@ export class AttachmentVideoUnitService {
          * See: https://issues.chromium.org/issues/374550348
          **/
         return this.httpClient
-            .post<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, {
+            .post<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units?keepFilename=true`, formData, {
                 headers: { 'ngsw-bypass': 'true' },
                 observe: 'response',
             })
@@ -41,7 +41,7 @@ export class AttachmentVideoUnitService {
          **/
         return this.httpClient
             .put<AttachmentVideoUnit>(
-                `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentVideoUnitId}?keepFilename=true` +
+                `${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}?keepFilename=true` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,
                 { headers: { 'ngsw-bypass': 'true' }, observe: 'response' },
@@ -50,22 +50,22 @@ export class AttachmentVideoUnitService {
     }
 
     getSplitUnitsData(lectureId: number, filename: string) {
-        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/data/${filename}`, { observe: 'response' });
+        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/data/${filename}`, { observe: 'response' });
     }
 
     createUnits(lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) {
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-units/split/${filename}`, lectureUnitInformation, { observe: 'response' });
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/split/${filename}`, lectureUnitInformation, { observe: 'response' });
     }
 
     uploadSlidesForProcessing(lectureId: number, file: File) {
         const formData: FormData = new FormData();
         formData.append('file', file);
-        return this.httpClient.post<string>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/upload`, formData, { observe: 'response' });
+        return this.httpClient.post<string>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/upload`, formData, { observe: 'response' });
     }
 
     getSlidesToRemove(lectureId: number, filename: string, keyPhrases: string) {
         const params = new HttpParams().set('commaSeparatedKeyPhrases', keyPhrases);
-        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/slides-to-remove/${filename}`, { params, observe: 'response' });
+        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units/slides-to-remove/${filename}`, { params, observe: 'response' });
     }
 
     /**

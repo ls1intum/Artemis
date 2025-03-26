@@ -100,12 +100,12 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
 
-        request.postWithMultipartFile("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
+        request.postWithMultipartFile("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/upload", null, "upload", createLectureFile(true), String.class,
                 HttpStatus.BAD_REQUEST);
-        request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-units/data/any-file", HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
-        request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class,
-                params);
-        request.postListWithResponseBody("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentVideoUnit.class,
+        request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/data/any-file", HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST,
+                LectureUnitSplitInformationDTO.class, params);
+        request.postListWithResponseBody("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/split/any-file", lectureUnitSplits, AttachmentVideoUnit.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -120,10 +120,10 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         String filename = manualFileUpload(invalidLecture.getId(), lectureFile);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(invalidLecture.getId(), filename);
 
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class,
-                params);
-        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentVideoUnit.class,
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/" + filename, HttpStatus.NOT_FOUND,
+                LectureUnitSplitInformationDTO.class, params);
+        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/" + filename, lectureUnitSplits, AttachmentVideoUnit.class,
                 HttpStatus.NOT_FOUND);
         assertThat(Files.exists(filePath)).isTrue();
     }
@@ -139,11 +139,12 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.readAllBytes(any())).thenThrow(IOException.class);
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, LectureUnitSplitInformationDTO.class);
-            request.getList("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, Integer.class,
+            request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.INTERNAL_SERVER_ERROR,
+                    LectureUnitSplitInformationDTO.class);
+            request.getList("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, Integer.class,
                     params);
-            request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentVideoUnit.class,
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/" + filename, lectureUnitSplits,
+                    AttachmentVideoUnit.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -152,7 +153,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     void uploadSlidesForProcessing_asInstructor_shouldGetFilename() throws Exception {
         var filePart = createLectureFile(true);
 
-        String uploadInfo = request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", filePart, String.class,
+        String uploadInfo = request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload", null, "upload", filePart, String.class,
                 HttpStatus.OK);
         assertThat(uploadInfo).contains(".pdf");
     }
@@ -161,8 +162,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void uploadSlidesForProcessing_asInstructor_shouldThrowError() throws Exception {
         var filePartWord = createLectureFile(false);
-        request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", filePartWord, LectureUnitSplitInformationDTO.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload", null, "upload", filePartWord,
+                LectureUnitSplitInformationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -171,7 +172,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.OK,
                 LectureUnitSplitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
@@ -184,7 +185,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var realFile = readFromFile();
         String filename = manualFileUpload(lecture1.getId(), realFile);
 
-        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.OK,
                 LectureUnitSplitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(4);
@@ -197,8 +198,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
     }
 
     @Test
@@ -209,8 +210,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
 
-        List<Integer> removedSlides = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.OK, Integer.class,
-                params);
+        List<Integer> removedSlides = request.getList("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/" + filename, HttpStatus.OK,
+                Integer.class, params);
 
         assertThat(removedSlides).hasSize(2);
         // index is one lower than in createLectureFile because the loop starts at 1.
@@ -225,9 +226,9 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
 
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class,
-                params);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/non-existent-file", HttpStatus.NOT_FOUND,
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/" + filename, HttpStatus.BAD_REQUEST,
+                LectureUnitSplitInformationDTO.class, params);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/non-existent-file", HttpStatus.NOT_FOUND,
                 LectureUnitSplitInformationDTO.class, params);
     }
 
@@ -237,7 +238,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.OK,
                 LectureUnitSplitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
@@ -245,7 +246,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
         lectureUnitSplitInfo = new LectureUnitSplitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
 
-        List<AttachmentVideoUnit> attachmentVideoUnits = request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename,
+        List<AttachmentVideoUnit> attachmentVideoUnits = request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/" + filename,
                 lectureUnitSplitInfo, AttachmentVideoUnit.class, HttpStatus.OK);
 
         assertThat(attachmentVideoUnits).hasSize(2);
@@ -264,7 +265,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/" + filename, HttpStatus.OK,
                 LectureUnitSplitInformationDTO.class);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
@@ -272,7 +273,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
         lectureUnitSplitInfo = new LectureUnitSplitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
 
-        List<AttachmentVideoUnit> attachmentVideoUnits = request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename,
+        List<AttachmentVideoUnit> attachmentVideoUnits = request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/" + filename,
                 lectureUnitSplitInfo, AttachmentVideoUnit.class, HttpStatus.OK);
         assertThat(attachmentVideoUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment units (1 break slide is removed and 1 solution slide is removed)
@@ -309,22 +310,22 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentVideoUnit.class,
+        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/" + filename, lectureUnitSplits, AttachmentVideoUnit.class,
                 HttpStatus.BAD_REQUEST);
-        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/non-existent-file", lectureUnitSplits, AttachmentVideoUnit.class,
-                HttpStatus.NOT_FOUND);
+        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/non-existent-file", lectureUnitSplits,
+                AttachmentVideoUnit.class, HttpStatus.NOT_FOUND);
     }
 
     private void testAllPreAuthorize() throws Exception {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "");
 
-        request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
+        request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload", null, "upload", createLectureFile(true), String.class,
                 HttpStatus.FORBIDDEN);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/data/any-file", HttpStatus.FORBIDDEN, LectureUnitSplitInformationDTO.class);
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.FORBIDDEN, LectureUnitSplitInformationDTO.class,
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/data/any-file", HttpStatus.FORBIDDEN, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/slides-to-remove/any-file", HttpStatus.FORBIDDEN, LectureUnitSplitInformationDTO.class,
                 params);
-        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentVideoUnit.class,
+        request.postListWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/split/any-file", lectureUnitSplits, AttachmentVideoUnit.class,
                 HttpStatus.FORBIDDEN);
     }
 
