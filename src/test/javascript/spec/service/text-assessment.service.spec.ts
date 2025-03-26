@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';

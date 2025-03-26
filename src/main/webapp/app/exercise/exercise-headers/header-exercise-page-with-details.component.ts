@@ -10,7 +10,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';

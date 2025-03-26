@@ -10,7 +10,7 @@ import { User } from 'app/core/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';

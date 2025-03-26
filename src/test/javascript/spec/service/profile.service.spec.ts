@@ -6,10 +6,10 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 describe('ProfileService', () => {
     let service: ProfileService;

@@ -21,10 +21,10 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Observable } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { EntityTitleService } from 'app/shared/layouts/navbar/entity-title.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;

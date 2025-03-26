@@ -4,7 +4,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';

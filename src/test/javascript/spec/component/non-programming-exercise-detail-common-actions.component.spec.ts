@@ -6,7 +6,7 @@ import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exam } from 'app/entities/exam/exam.model';

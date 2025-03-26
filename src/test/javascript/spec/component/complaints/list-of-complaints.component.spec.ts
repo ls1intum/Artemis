@@ -9,7 +9,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';

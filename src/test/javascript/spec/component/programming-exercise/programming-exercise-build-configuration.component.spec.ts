@@ -2,12 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from '../../../../../main/webapp/app/entities/course.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Course } from 'app/core/shared/entities/course.model';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;

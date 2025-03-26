@@ -7,7 +7,7 @@ import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tu
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Subject } from 'rxjs';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';

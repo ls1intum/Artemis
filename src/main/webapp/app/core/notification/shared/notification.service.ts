@@ -40,7 +40,7 @@ import {
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/core/shared/entities/notification.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MetisService } from 'app/communication/metis.service';

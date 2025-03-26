@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';

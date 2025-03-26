@@ -37,7 +37,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisLectureIngestionSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })

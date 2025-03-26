@@ -8,7 +8,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CoursesForDashboardDTO } from 'app/core/course/manage/courses-for-dashboard-dto';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/core/course/overview/course-card.component';

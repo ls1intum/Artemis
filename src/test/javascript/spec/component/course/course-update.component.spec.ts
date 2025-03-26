@@ -9,7 +9,7 @@ import { LoadImageService } from 'app/shared/image-cropper/services/load-image.s
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/core/course/manage/course-update.component';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -23,7 +23,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import dayjs from 'dayjs/esm';
@@ -47,6 +46,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {

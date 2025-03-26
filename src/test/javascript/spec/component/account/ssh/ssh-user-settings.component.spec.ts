@@ -5,8 +5,8 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { SshUserSettingsComponent } from 'app/core/user/settings/ssh-settings/ssh-user-settings.component';
+import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsComponent', () => {
     let fixture: ComponentFixture<SshUserSettingsComponent>;

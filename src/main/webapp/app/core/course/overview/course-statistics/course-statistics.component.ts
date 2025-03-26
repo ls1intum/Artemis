@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';

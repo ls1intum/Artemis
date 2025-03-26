@@ -8,7 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExamPage } from 'app/entities/exam/exam-page.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';

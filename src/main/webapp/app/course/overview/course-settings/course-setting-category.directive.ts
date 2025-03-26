@@ -1,5 +1,5 @@
 import { Directive, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';

@@ -28,7 +28,7 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Language } from 'app/entities/course.model';
+import { Language } from 'app/core/shared/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';

@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/ent
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';

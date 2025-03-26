@@ -22,7 +22,7 @@ import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/entities/course.model';
+import { Language } from 'app/core/shared/entities/course.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

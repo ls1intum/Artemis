@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/core/course/manage/courses-for-dashboard-dto';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { ProgrammingExerciseAssessmentType } from '../../../support/constants';
