@@ -165,7 +165,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             return;
         }
 
-        const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
 
         this.currentlyProcessedAttachmentVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentVideoUnit : new AttachmentVideoUnit();
@@ -193,6 +193,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
         attachmentToCreateOrEdit.attachmentType = AttachmentType.FILE;
         attachmentToCreateOrEdit.version = 1;
         attachmentToCreateOrEdit.uploadDate = dayjs();
+
+        if (videoSource) {
+            this.currentlyProcessedAttachmentVideoUnit.videoSource = videoSource;
+        }
 
         if (description) {
             this.currentlyProcessedAttachmentVideoUnit.description = description;
