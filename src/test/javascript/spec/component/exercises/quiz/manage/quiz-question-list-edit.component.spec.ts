@@ -7,8 +7,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';
 import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from 'app/quiz/manage/quiz-question-list-edit-existing.component';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizQuestionListEditComponent', () => {

@@ -2,9 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { TheiaRedirectProps } from 'app/entities/programming/theia-redirect.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { TheiaRedirectProps } from 'app/programming/shared/entities/theia-redirect.model';
 
 @Injectable({ providedIn: 'root' })
 export class TheiaService {

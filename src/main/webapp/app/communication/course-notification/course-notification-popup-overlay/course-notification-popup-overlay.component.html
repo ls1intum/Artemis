@@ -1,0 +1,28 @@
+<div
+    [ngClass]="{ 'is-expanded': isExpanded, 'd-none': notifications.length === 0 }"
+    [ngStyle]="{ height: isExpanded ? 5 + notifications.length * 7 + 'rem' : null }"
+    class="course-notification-popup-overlay"
+    (click)="overlayClicked()"
+>
+    @for (notification of notifications; track notification.notificationId) {
+        <div
+            [ngStyle]="{ bottom: isExpanded ? (notifications.length - $index - 1) * 7 + 5 + 'rem' : null }"
+            class="course-notification-popup-overlay-notification"
+            @notificationAnimation
+        >
+            <jhi-course-notification
+                [courseNotification]="notification"
+                [isShowClose]="true"
+                [isHideTime]="true"
+                [displayTimeInMilliseconds]="popupTimeInMilliseconds - 500"
+                (onCloseClicked)="closeClicked(notification)"
+            />
+        </div>
+    }
+
+    <div class="course-notification-popup-overlay-collapse">
+        <button class="btn btn-outline-primary rounded-circle btn-sm" (click)="collapseOverlayClicked()">
+            <fa-icon [icon]="faTimes" />
+        </button>
+    </div>
+</div>
