@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
