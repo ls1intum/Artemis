@@ -374,4 +374,12 @@ export class AccountService implements IAccountService {
             this.userIdentity.externalLLMUsageAccepted = dayjs();
         }
     }
+
+    /**
+     * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
+     * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
+     */
+    getToolToken(tool: string): Observable<string> {
+        return this.http.post<string>('api/core/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
+    }
 }

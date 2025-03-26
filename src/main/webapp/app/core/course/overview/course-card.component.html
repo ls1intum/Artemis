@@ -1,5 +1,12 @@
 <div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
-    <jhi-course-card-header [courseId]="course.id!" [courseTitle]="course.title!" [courseIcon]="course.courseIconPath!" [courseColor]="course.color!" [archiveMode]="false" />
+    <jhi-course-card-header
+        [courseId]="course.id!"
+        [courseTitle]="course.title!"
+        [courseIcon]="course.courseIconPath!"
+        [courseColor]="course.color!"
+        [archiveMode]="false"
+        [courseNotificationCount]="courseNotificationCount"
+    />
     <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="d-flex flex-column justify-content-between gap-1">

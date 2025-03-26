@@ -1,8 +1,8 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { QuizPoolMappingComponent } from 'app/quiz/manage/quiz-pool-mapping.component';
-import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { QuizGroup } from 'app/quiz/shared/entities/quiz-group.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

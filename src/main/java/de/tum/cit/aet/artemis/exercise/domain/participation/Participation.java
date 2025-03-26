@@ -31,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -42,7 +41,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A Participation.
@@ -69,11 +67,9 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
-    @JsonView(QuizView.Before.class)
     private InitializationState initializationState;
 
     @Column(name = "initialization_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
     @Column(name = "individual_due_date")
@@ -91,7 +87,6 @@ public abstract class Participation extends DomainObject implements Participatio
     // and the gain from fetching lazy here is minimal
     @ManyToOne
     @JsonIgnoreProperties("studentParticipations")
-    @JsonView(QuizView.Before.class)
     protected Exercise exercise;
 
     /**

@@ -7,8 +7,8 @@ import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component'
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { stringifyCircular } from 'app/shared/util/utils';

@@ -38,7 +38,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -51,7 +50,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 
@@ -66,18 +64,15 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "completion_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime completionDate;
 
     @Column(name = "jhi_successful")
-    @JsonView(QuizView.After.class)
     private Boolean successful;
 
     /**
      * Relative score in % (typically between 0 ... 100, can also be larger if bonus points are available)
      */
     @Column(name = "score")
-    @JsonView(QuizView.After.class)
     private Double score;
 
     /**
@@ -89,11 +84,9 @@ public class Result extends DomainObject implements Comparable<Result> {
      * be rated=true, then the result with the last completionDate counts towards the total score of a student - results are rated=false when students submit after the due date
      */
     @Column(name = "rated")
-    @JsonView(QuizView.Before.class)
     private Boolean rated;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonView(QuizView.Before.class)
     @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
@@ -101,7 +94,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -110,7 +102,6 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
-    @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
 
     @Column(name = "has_complaint")

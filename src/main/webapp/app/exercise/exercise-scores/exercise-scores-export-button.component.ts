@@ -6,12 +6,12 @@ import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exer
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { ResultService } from 'app/exercise/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
-import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
+import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
