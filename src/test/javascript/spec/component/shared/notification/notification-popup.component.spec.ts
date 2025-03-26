@@ -4,8 +4,6 @@ import { Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ReplaySubject, of } from 'rxjs';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -14,6 +12,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 class MockFeatureToggleService implements Partial<FeatureToggleService> {
     private featureToggles = new Map<FeatureToggle, boolean>();

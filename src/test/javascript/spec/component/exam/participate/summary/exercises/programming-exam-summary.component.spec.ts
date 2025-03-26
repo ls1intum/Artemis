@@ -3,7 +3,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { User } from 'app/core/user/user.model';
@@ -27,6 +26,7 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 const user = { id: 1, name: 'Test User' } as User;
 

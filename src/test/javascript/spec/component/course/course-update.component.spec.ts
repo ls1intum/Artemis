@@ -23,7 +23,6 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/entities/organization.model';
@@ -47,6 +46,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
