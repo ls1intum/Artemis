@@ -106,8 +106,6 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly PlagiarismVerdict = PlagiarismVerdict;
 
-    studentExam = input.required<StudentExam>();
-
     faFolderOpen = faFolderOpen;
     faInfoCircle = faInfoCircle;
     faPrint = faPrint;
@@ -127,6 +125,7 @@ export class ExamResultSummaryComponent implements OnInit {
     isBonusGradingKeyCollapsed = true;
 
     instructorView = input(false);
+    studentExam = input.required<StudentExam>();
 
     courseId: number;
 
