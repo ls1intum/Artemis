@@ -18,6 +18,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-course-wide-search',
@@ -50,6 +51,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     readonly faChevronLeft = faChevronLeft;
 
     readonly SortDirection = SortDirection;
+    readonly onNavigateToPost = output<Posting>();
     sortingOrder = SortDirection.ASCENDING;
 
     private ngUnsubscribe = new Subject<void>();
@@ -201,6 +203,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.onSearch();
+    }
+
+    protected onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
     }
 }
 
