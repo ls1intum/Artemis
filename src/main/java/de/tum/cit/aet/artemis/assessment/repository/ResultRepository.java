@@ -218,7 +218,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO(r.rated, COUNT(r))
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
                 AND p.exercise.id IN :exerciseIds
@@ -593,7 +594,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
@@ -613,7 +615,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
@@ -633,7 +636,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
                 JOIN eg.exam ex

@@ -84,7 +84,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 LEFT JOIN FETCH c.result r
                 LEFT JOIN FETCH r.assessor
-                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH r.submission s
+                LEFT JOIN FETCH s.participation p
                 LEFT JOIN FETCH p.exercise e
                 LEFT JOIN FETCH r.submission
             WHERE e.id = :exerciseId
@@ -271,7 +272,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.course.id = :courseId
@@ -296,7 +298,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.id = :exerciseId
@@ -321,7 +324,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
@@ -347,7 +351,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.course.id = :courseId
@@ -372,7 +377,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.id = :exerciseId
@@ -397,7 +403,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
@@ -424,7 +431,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
@@ -449,7 +457,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             )
             FROM Complaint c
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE
                 c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
@@ -474,7 +483,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
@@ -499,7 +509,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
                 JOIN c.complaintResponse cr
                 JOIN c.result r
-                JOIN r.participation p
+                JOIN r.submission s
+                JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.id = :exerciseId

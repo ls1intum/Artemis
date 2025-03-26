@@ -209,7 +209,8 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                 SELECT f
                 FROM Feedback f
                     LEFT JOIN f.result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE f.result.id NOT IN (

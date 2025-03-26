@@ -42,7 +42,8 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
                     CAST(CAST(SUM(ra.rating) AS double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                     SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END))
                 FROM Result r
-                    JOIN r.participation p
+                    JOIN r.submission s
+                    JOIN s.participation p
                     JOIN p.exercise e
                     LEFT JOIN FETCH Rating ra ON ra.result = r
                 WHERE r.completionDate IS NOT NULL
