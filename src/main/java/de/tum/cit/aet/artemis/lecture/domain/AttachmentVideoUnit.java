@@ -76,18 +76,6 @@ public class AttachmentVideoUnit extends LectureUnit {
         this.slides = slides;
     }
 
-    @Override
-    public String getName() {
-        String name = super.getName();
-        if (name != null) {
-            return name;
-        }
-        if (attachment != null) {
-            return attachment.getName();
-        }
-        return null;
-    }
-
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
     @Override
     public String getType() {
