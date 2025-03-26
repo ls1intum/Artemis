@@ -194,6 +194,8 @@ jobs:
         if: always()
         id: find-pr
         continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
           echo "Checking if PR exists for head ref: $BRANCH_NAME."
