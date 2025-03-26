@@ -21,8 +21,8 @@ import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/st
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';

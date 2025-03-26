@@ -8,7 +8,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';

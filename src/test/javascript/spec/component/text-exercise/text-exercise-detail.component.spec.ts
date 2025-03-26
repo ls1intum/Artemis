@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { TextExerciseDetailComponent } from 'app/text/manage/text-exercise/text-exercise-detail.component';
 import { Course } from 'app/core/shared/entities/course.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';

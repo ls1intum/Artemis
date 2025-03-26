@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';

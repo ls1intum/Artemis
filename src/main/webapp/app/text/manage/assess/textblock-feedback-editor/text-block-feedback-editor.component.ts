@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild, inject } from '@angular/core';
-import { TextBlock } from 'app/entities/text/text-block.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
 import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';

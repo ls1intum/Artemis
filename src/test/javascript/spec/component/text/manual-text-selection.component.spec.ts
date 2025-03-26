@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManualTextSelectionComponent } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
-import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
+import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextBlockRefGroup } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { AccountService } from 'app/core/auth/account.service';

@@ -16,8 +16,8 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { ExamResultSummaryComponent, ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';

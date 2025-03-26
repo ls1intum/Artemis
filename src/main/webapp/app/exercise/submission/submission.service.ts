@@ -5,7 +5,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
 import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';

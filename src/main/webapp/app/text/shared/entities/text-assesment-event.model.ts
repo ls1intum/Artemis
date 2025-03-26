@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text/text-block.model';
+import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 
 export enum TextAssessmentEventType {
     ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK = 'ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK',

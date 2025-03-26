@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

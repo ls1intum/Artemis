@@ -5,7 +5,7 @@ import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';

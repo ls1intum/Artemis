@@ -7,7 +7,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-overview/exam-result-overview.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

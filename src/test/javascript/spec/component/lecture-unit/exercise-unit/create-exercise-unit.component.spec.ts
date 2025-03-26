@@ -10,7 +10,7 @@ import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUn
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/shared/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
