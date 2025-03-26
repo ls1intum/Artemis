@@ -7,10 +7,10 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;

@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription } from 'rxjs';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';

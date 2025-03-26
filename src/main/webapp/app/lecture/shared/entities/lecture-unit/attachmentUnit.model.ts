@@ -1,5 +1,5 @@
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 
 export class AttachmentUnit extends LectureUnit {

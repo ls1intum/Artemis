@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';

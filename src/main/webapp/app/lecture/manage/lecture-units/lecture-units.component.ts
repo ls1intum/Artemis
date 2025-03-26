@@ -10,7 +10,7 @@ import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';

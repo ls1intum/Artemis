@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

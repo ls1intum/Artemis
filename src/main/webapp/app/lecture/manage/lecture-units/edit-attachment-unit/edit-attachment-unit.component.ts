@@ -7,7 +7,7 @@ import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachm
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';

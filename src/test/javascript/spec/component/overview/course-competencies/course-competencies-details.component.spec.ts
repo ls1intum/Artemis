@@ -19,7 +19,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';

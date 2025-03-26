@@ -25,7 +25,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/communication/metis.util';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/communication/shared/entities/faq.model';

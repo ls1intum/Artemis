@@ -4,7 +4,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { Exercise } from 'app/entities/exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';

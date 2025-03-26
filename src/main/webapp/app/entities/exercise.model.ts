@@ -5,7 +5,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { TutorParticipation } from 'app/entities/participation/tutor-participation.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';

@@ -1,6 +1,6 @@
 import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { AttachmentType } from 'app/entities/attachment.model';
+import { AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';

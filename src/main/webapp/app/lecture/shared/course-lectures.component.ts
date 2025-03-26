@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';

@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faDownload, faLink, faQuestion, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';

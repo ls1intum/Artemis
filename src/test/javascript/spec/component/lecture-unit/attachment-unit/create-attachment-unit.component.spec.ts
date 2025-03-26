@@ -9,7 +9,7 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { CreateAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';

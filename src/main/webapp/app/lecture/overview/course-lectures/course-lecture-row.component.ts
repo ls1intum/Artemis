@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

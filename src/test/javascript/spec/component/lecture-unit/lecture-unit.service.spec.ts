@@ -1,17 +1,17 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

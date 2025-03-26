@@ -8,7 +8,7 @@ import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/core/course/overview/course-overview-guard';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
