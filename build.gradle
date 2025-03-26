@@ -222,8 +222,12 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
 
+    // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
+    implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.19.1"
+    // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
+    implementation "commons-codec:commons-codec:1.18.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
@@ -304,7 +308,7 @@ dependencies {
 
     implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    
+
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
