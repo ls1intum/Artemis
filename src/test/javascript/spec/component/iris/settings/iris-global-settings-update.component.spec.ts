@@ -8,7 +8,7 @@ import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/i
 import { mockSettings } from './mock-settings';
 import { IrisGlobalSettingsUpdateComponent } from 'app/iris/manage/settings/iris-global-settings-update/iris-global-settings-update.component';
 import { By } from '@angular/platform-browser';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -7,7 +7,7 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
-} from 'app/entities/iris/settings/iris-sub-settings.model';
+} from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 
 export enum IrisSettingsType {
     GLOBAL = 'global',

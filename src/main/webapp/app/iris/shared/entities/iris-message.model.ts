@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { IrisMessageContent, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContent, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 
 export enum IrisSender {

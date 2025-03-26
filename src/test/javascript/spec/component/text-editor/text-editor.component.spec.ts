@@ -45,7 +45,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
