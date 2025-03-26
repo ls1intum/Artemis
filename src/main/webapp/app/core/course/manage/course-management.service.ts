@@ -18,12 +18,12 @@ import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-man
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
+import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
