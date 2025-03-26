@@ -1,6 +1,6 @@
-import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
-import { IrisMessage } from 'app/entities/iris/iris-message.model';
-import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
+import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 
 /**
  * The IrisChatWebsocketDTO is the data transfer object for messages and status updates sent over the iris chat websocket.

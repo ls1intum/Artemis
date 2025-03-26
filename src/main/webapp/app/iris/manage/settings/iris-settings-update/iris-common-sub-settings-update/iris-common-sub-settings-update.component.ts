@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
-import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
+import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faCircleExclamation, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { onError } from 'app/shared/util/global.utils';
