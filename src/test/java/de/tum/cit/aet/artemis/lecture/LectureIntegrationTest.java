@@ -280,7 +280,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
         assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
-        assertThat(lecture.getLectureUnits()).hasSize(5);
+        assertThat(lecture.getLectureUnits()).hasSize(4);
     }
 
     @Test
@@ -295,7 +295,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void getLecture_ExerciseAndAttachmentReleased_shouldGetLectureWithAllLectureUnits() throws Exception {
         Lecture receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(5);
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4);
         assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).toList().getFirst().getCompetencyLinks())
                 .hasSize(1);
         assertThat(receivedLectureWithDetails.getAttachments()).hasSize(2);
@@ -320,14 +320,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Lecture receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4);
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(3);
         assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).toList()).isEmpty();
 
         // now we test that it is included when the user is at least a teaching assistant
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(5);
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4);
         assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).toList()).isNotEmpty();
 
         testGetLecture(lecture1.getId());
@@ -345,7 +345,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Lecture receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
         assertThat(receivedLectureWithDetails.getAttachments().stream().filter(attachment -> attachment.getId().equals(lectureAttachment.getId())).findFirst()).isEmpty();
-        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4);
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(3);
         assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).toList()).isEmpty();
 
         // now we test that it is included when the user is at least a teaching assistant
@@ -353,7 +353,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
         assertThat(receivedLectureWithDetails.getAttachments()).anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()));
-        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(5).anyMatch(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit);
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4).anyMatch(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit);
         testGetLecture(lecture1.getId());
     }
 
