@@ -6,7 +6,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { faCircleExclamation, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/exercise.service';

@@ -7,7 +7,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -141,7 +141,7 @@ describe('ProfileService', () => {
             },
         },
         operatorName: 'TUM',
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
     };
 
     const expectedProfileInfo: ProfileInfo = {
@@ -251,7 +251,7 @@ describe('ProfileService', () => {
                 },
             },
         },
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
         operatorName: 'TUM',
     };
 

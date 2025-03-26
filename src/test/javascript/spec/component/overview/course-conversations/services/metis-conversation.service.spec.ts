@@ -2,7 +2,7 @@ import { TestBed, fakeAsync } from '@angular/core/testing';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';

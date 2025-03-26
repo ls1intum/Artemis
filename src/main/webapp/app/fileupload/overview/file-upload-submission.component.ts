@@ -11,11 +11,11 @@ import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { FileService } from 'app/shared/http/file.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';

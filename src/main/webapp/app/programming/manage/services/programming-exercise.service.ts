@@ -7,21 +7,22 @@ import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
-import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
+import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { PlagiarismResultDTO } from 'app/plagiarism/shared/types/PlagiarismResultDTO';
-import { ImportOptions } from 'app/types/programming-exercises';
-import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
+import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
+import { ImportOptions } from 'app/programming/manage/programming-exercises';
+import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
+import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
@@ -600,6 +601,10 @@ export class ProgrammingExerciseService {
 
     getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
         return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
+    }
+
+    getTheiaConfig(exerciseId: number): Observable<ProgrammingExerciseTheiaConfig> {
+        return this.http.get<ProgrammingExerciseTheiaConfig>(`${this.resourceUrl}/${exerciseId}/theia-config`);
     }
 
     /** Imports a programming exercise from a given zip file **/

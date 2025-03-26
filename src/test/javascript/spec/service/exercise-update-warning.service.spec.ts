@@ -5,7 +5,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { Component } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 
 describe('Exercise Update Warning Service', () => {

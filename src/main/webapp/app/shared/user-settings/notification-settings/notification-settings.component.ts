@@ -6,9 +6,9 @@ import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.mo
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
-import { HasAnyAuthorityDirective } from '../../auth/has-any-authority.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,

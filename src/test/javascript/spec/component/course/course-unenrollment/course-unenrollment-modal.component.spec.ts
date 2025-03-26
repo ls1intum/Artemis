@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal.component';
+import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal.component';
 import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.PushNotificationDataDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
@@ -67,10 +68,11 @@ public class CourseNotificationPushProxyService {
                 date = courseNotificationDTO.creationDate().toString();
                 break;
             default:
-                return new PushNotificationDataDTO(courseNotificationDTO);
+                return new PushNotificationDataDTO(new CourseNotificationSerializedDTO(courseNotificationDTO));
         }
 
-        return new PushNotificationDataDTO(replaceNullPlaceholders(notificationPlaceholders), target, type, date, version, courseNotificationDTO);
+        return new PushNotificationDataDTO(replaceNullPlaceholders(notificationPlaceholders), target, type, date, version,
+                new CourseNotificationSerializedDTO(courseNotificationDTO));
     }
 
     /**
