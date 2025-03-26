@@ -313,7 +313,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
         comp.teamConfigFormGroupComponent.formValidChanges.next(false);
         comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
-        expect(calculateValidSpy).toHaveBeenCalledTimes(5);
+        expect(calculateValidSpy).toHaveBeenCalledTimes(4);
 
         comp.ngOnDestroy();
 

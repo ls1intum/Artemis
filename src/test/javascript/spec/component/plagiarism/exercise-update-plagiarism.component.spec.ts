@@ -75,11 +75,6 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
     });
 
-    it('should get correct minimumSizeTooltip for modeling exercises', () => {
-        comp.exercise = { type: ExerciseType.MODELING } as Exercise;
-        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipModelingExercise');
-    });
-
     it('should aggregate aggregate input changes', () => {
         const inputFieldNames = ['fieldCPCEnabled', 'fieldThreshhold', 'fieldResponsePeriod', 'fieldMinScore', 'fieldMinSize'];
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormValid');

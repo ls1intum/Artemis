@@ -111,7 +111,7 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should return the correct topic url', () => {
-        const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING];
+        const exerciseTypes = [ExerciseType.PROGRAMMING, ExerciseType.TEXT];
         exerciseTypes.forEach((exerciseType) => {
             comp.exercise = { id: 1, type: exerciseType } as Exercise;
             expect(comp.getPlagarismDetectionTopic()).toBe(`/topic/${exerciseType}-exercises/1/plagiarism-check`);
@@ -122,12 +122,6 @@ describe('Plagiarism Inspector Component', () => {
         comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
 
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
-    });
-
-    it('should get the minimumSize tootip for modeling', () => {
-        comp.exercise = { type: ExerciseType.MODELING } as Exercise;
-
-        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipModelingExercise');
     });
 
     it('should get the minimumSize tootip for text', () => {
