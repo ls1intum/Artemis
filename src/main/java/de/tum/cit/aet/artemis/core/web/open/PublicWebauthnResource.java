@@ -27,8 +27,10 @@ import com.webauthn4j.springframework.security.credential.WebAuthnCredentialReco
 import com.webauthn4j.springframework.security.exception.WebAuthnAuthenticationException;
 import com.webauthn4j.util.exception.WebAuthnException;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CreatePasskeyDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 
 /**
@@ -47,9 +49,13 @@ public class PublicWebauthnResource {
 
     private final WebAuthnCredentialRecordManager webAuthnAuthenticatorManager;
 
-    public PublicWebauthnResource(WebAuthnRegistrationRequestValidator registrationRequestValidator, WebAuthnCredentialRecordManager webAuthnAuthenticatorManager) {
+    private final UserRepository userRepository;
+
+    public PublicWebauthnResource(WebAuthnRegistrationRequestValidator registrationRequestValidator, WebAuthnCredentialRecordManager webAuthnAuthenticatorManager,
+            UserRepository userRepository) {
         this.registrationRequestValidator = registrationRequestValidator;
         this.webAuthnAuthenticatorManager = webAuthnAuthenticatorManager;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -97,8 +103,10 @@ public class PublicWebauthnResource {
             throw new BadRequestAlertException("attestedCredentialData is null", ENTITY_NAME, null);
         }
 
-        // TODO exchange name and user principal
-        WebAuthnCredentialRecord authenticator = new WebAuthnCredentialRecordImpl("authenticator", "userPrincipal",
+        User user = userRepository.getUser();
+
+        // TODO exchange name
+        WebAuthnCredentialRecord authenticator = new WebAuthnCredentialRecordImpl(user.getName(), user.getLogin(),
                 registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData(),
                 registrationRequestValidationResponse.getAttestationObject().getAttestationStatement(),
                 registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getSignCount(), registrationRequestValidationResponse.getTransports(),

@@ -9,6 +9,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -262,6 +263,8 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
     public static PasskeyCredentials fromWebAuthnCredentialRecord(WebAuthnCredentialRecord record, User user) {
         PasskeyCredentials passkeyCredentials = new PasskeyCredentials();
 
+        passkeyCredentials.setName("New Passkey");
+
         // Set the credentialId
         passkeyCredentials.setCredentialId(record.getAttestedCredentialData().getCredentialId());
 
@@ -290,7 +293,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
         passkeyCredentials.setType(convertCOSEKeyType(coseKey));
 
         // Set transports from the AuthenticatorTransport set
-        passkeyCredentials.setTransports(convertTransports(record.getTransports()));
+        passkeyCredentials.setTransports(convertTransports(Objects.requireNonNull(record.getTransports())));
 
         // Set backup eligibility and state
         passkeyCredentials.setBackupEligible(Boolean.TRUE.equals(record.isBackupEligible()));

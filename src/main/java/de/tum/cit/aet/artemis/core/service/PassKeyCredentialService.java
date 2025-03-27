@@ -56,7 +56,6 @@ public class PassKeyCredentialService implements WebAuthnCredentialRecordManager
     public void createCredentialRecord(WebAuthnCredentialRecord webAuthnCredentialRecord) {
         String userPrincipal = (String) webAuthnCredentialRecord.getUserPrincipal();
         User user = userRepository.findOneByLogin(userPrincipal).orElseThrow(() -> new EntityNotFoundException("User", userPrincipal));
-        var credentialIdString = Base64UrlUtil.encodeToString(webAuthnCredentialRecord.getAttestedCredentialData().getCredentialId());
         var credentials = PasskeyCredentials.fromWebAuthnCredentialRecord(webAuthnCredentialRecord, user);
         passkeyCredentialsRepository.save(credentials);
     }
