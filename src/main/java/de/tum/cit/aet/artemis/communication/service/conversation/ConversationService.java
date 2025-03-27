@@ -17,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -140,7 +141,13 @@ public class ConversationService {
                     : authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user));
             conversationParticipant.setIsModerator(canBecomeModerator);
             lastReadDate.ifPresent(conversationParticipant::setLastRead);
-            conversationParticipantRepository.saveAndFlush(conversationParticipant);
+            try {
+                conversationParticipantRepository.saveAndFlush(conversationParticipant);
+            }
+            catch (DataIntegrityViolationException e) {
+                log.info("User {} is already a participant in conversation {}", user.getId(), conversationId);
+            }
+
         }
         else {
             throw new AccessForbiddenException("User not allowed to access this conversation!");

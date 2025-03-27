@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faExclamationCircle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
+import { QuizGroup } from 'app/quiz/shared/entities/quiz-group.model';
 import { Subject } from 'rxjs';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

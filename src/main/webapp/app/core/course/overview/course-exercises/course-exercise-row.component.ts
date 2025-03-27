@@ -3,25 +3,25 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SubmissionResultStatusComponent } from '../submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from '../exercise-details/exercise-details-student-actions.component';
 import { NgClass } from '@angular/common';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-course-exercise-row',

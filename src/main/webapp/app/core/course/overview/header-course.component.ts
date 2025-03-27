@@ -1,5 +1,5 @@
 import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Router, RouterLink } from '@angular/router';

@@ -1,10 +1,10 @@
 import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction } from 'app/assessment/manage/assessment.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Result } from 'app/entities/result.model';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { User } from 'app/core/user/user.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('Assessment Service', () => {
     const user = {} as User;

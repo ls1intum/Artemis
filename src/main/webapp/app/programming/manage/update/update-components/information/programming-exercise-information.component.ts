@@ -16,7 +16,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
-import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
@@ -28,11 +28,11 @@ import { ProgrammingExerciseInputField } from 'app/programming/manage/update/pro
 import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
-import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
+import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';

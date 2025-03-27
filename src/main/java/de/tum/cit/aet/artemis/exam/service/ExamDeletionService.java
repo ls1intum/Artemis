@@ -144,7 +144,7 @@ public class ExamDeletionService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.delete(exercise.getId(), true, true);
+                    exerciseDeletionService.delete(exercise.getId(), true);
                 }
             }
         }

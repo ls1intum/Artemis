@@ -1,10 +1,10 @@
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { SystemNotificationManagementResolve } from 'app/core/admin/system-notification-management/system-notification-management-resolve.service';
-import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 describe('SystemNotificationManagementResolveService', () => {
     let systemNotificationService: SystemNotificationService;

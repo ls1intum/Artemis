@@ -64,18 +64,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'modeling-exercises/:exerciseId/plagiarism',
-        loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
-        resolve: {
-            exercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: 'modeling-exercises/:exerciseId/exercise-statistics',
         loadComponent: () => import('app/exercise/statistics/exercise-statistics.component').then((m) => m.ExerciseStatisticsComponent),
         resolve: {

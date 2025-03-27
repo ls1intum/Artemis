@@ -9,7 +9,7 @@ import { MockProvider } from 'ng-mocks';
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { By } from '@angular/platform-browser';
 
 describe('CompetencyGraphModalComponent', () => {

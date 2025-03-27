@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-course-competency.component';

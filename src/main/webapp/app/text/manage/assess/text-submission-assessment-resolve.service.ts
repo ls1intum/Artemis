@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { of } from 'rxjs';
 
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { catchError, map } from 'rxjs/operators';

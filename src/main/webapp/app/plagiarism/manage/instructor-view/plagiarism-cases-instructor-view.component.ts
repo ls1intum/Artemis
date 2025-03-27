@@ -3,7 +3,7 @@ import { Component, ElementRef, OnInit, effect, inject, viewChildren } from '@an
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { Exercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
+import { Exercise, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GroupedPlagiarismCases } from 'app/plagiarism/shared/entities/GroupedPlagiarismCase';

@@ -3,15 +3,15 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('AssessmentInstructionsComponent', () => {
     let comp: AssessmentInstructionsComponent;
