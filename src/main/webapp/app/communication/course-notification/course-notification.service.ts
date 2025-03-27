@@ -1,14 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { faComments } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CourseNotificationInfo } from 'app/entities/course-notification/course-notification-info';
-import { CourseNotificationPage } from 'app/entities/course-notification/course-notification-page';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
+import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationPage } from 'app/communication/shared/entities/course-notification/course-notification-page';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 /**

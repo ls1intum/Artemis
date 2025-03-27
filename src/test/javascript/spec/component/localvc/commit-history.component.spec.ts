@@ -6,7 +6,7 @@ import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks
 import { CommitHistoryComponent } from 'app/programming/shared/commit-history/commit-history.component';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { of } from 'rxjs';
 import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';

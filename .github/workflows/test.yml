@@ -191,6 +191,12 @@ jobs:
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
+        - name: Upload JUnit Test Results
+          if: success() || failure()
+          uses: actions/upload-artifact@v4
+          with:
+            name: Client JUnit Test Results
+            path: junit.xml
 
   client-tests-selected:
       runs-on: ubuntu-latest

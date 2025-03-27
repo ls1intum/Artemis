@@ -6,7 +6,7 @@ import { Subject, of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/programming-exercise-instructor-submission-state.component';
 import { triggerChanges } from '../../helpers/utils/general.utils';

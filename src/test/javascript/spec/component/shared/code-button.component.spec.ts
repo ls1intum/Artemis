@@ -2,18 +2,15 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/components/code-button/code-button.component';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -25,6 +22,9 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;

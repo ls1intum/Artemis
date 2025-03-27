@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { initializeDialog } from '../dialog-test-helpers';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

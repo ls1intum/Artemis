@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 

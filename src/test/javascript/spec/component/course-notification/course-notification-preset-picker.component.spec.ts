@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { CourseNotificationSettingPreset } from 'app/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationSettingPreset } from 'app/communication/shared/entities/course-notification/course-notification-setting-preset';
 import { By } from '@angular/platform-browser';
 import { MockDirective, MockComponent } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
-import { CourseNotificationSettingsMap } from 'app/entities/course-notification/course-notification-settings-map';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
+import { CourseNotificationSettingsMap } from 'app/communication/shared/entities/course-notification/course-notification-settings-map';
 
 describe('CourseNotificationPresetPickerComponent', () => {
     let component: CourseNotificationPresetPickerComponent;

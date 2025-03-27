@@ -4,13 +4,13 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

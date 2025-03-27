@@ -7,7 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
-import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/entities/competency.model';
+import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

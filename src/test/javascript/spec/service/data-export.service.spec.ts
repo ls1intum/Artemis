@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
-import { DataExport } from 'app/entities/data-export.model';
+import { DataExport } from 'app/core/shared/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';

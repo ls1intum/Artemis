@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, 
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import * as _ from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { dayOfWeekZeroSundayToZeroMonday } from 'app/shared/util/date.utils';
