@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
 import { PostComponent } from '../post/post.component';
@@ -13,16 +13,16 @@ import { Posting } from 'app/entities/metis/posting.model';
     imports: [PostComponent],
 })
 export class PostingThreadComponent {
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() readOnlyMode = false;
-    @Input() post: Post;
-    @Input() showAnswers: boolean;
-    @Input() isCommunicationPage: boolean;
-    @Input() showChannelReference?: boolean;
-    @Input() hasChannelModerationRights = false;
-    @Output() openThread = new EventEmitter<Post>();
-    @Input() isConsecutive: boolean | undefined = false;
-    @Input() searchQuery?: string = undefined;
+    lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
+    readOnlyMode = input<boolean>(false);
+    post = input.required<Post>();
+    showAnswers = input.required<boolean>();
+    isCommunicationPage = input.required<boolean>();
+    showChannelReference = input<boolean | undefined>(undefined);
+    hasChannelModerationRights = input<boolean>(false);
+    readonly openThread = output<Post>();
+    isConsecutive = input<boolean | undefined>(false);
+    searchQuery = input<string | undefined>(undefined);
     forwardedPosts = input<Post[]>([]);
     forwardedAnswerPosts = input<AnswerPost[]>([]);
     readonly onNavigateToPost = output<Posting>();
