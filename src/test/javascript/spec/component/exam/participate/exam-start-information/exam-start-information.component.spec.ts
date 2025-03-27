@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamStartInformationComponent } from 'app/exam/overview/exam-start-information/exam-start-information.component';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';

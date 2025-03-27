@@ -8,10 +8,10 @@ import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
-import * as CourseModel from 'app/entities/course.model';
+import * as CourseModel from 'app/core/shared/entities/course.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
@@ -38,8 +38,8 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import monaco from 'monaco-editor';
-import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
+import { FileService } from 'app/shared/service/file.service';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;

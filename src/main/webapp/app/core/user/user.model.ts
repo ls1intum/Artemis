@@ -1,6 +1,6 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 
 export class User extends Account {
     public id?: number;

@@ -6,7 +6,7 @@ import {
     CourseCompetency,
     CourseCompetencyImportOptionsDTO,
     UpdateCourseCompetencyRelationDTO,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseCompetencyApiService extends BaseApiHttpService {

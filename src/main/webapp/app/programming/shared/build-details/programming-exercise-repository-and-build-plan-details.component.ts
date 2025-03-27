@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
