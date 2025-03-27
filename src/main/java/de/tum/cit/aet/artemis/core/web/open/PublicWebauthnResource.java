@@ -99,19 +99,7 @@ public class PublicWebauthnResource {
             throw new BadRequestAlertException("WebAuthn registration request validation failed. Please try again.", ENTITY_NAME, "TODO");
         }
 
-        if (registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData() == null) {
-            throw new BadRequestAlertException("attestedCredentialData is null", ENTITY_NAME, null);
-        }
-
-        User user = userRepository.getUser();
-
-        // TODO exchange name
-        WebAuthnCredentialRecord authenticator = new WebAuthnCredentialRecordImpl(user.getName(), user.getLogin(),
-                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData(),
-                registrationRequestValidationResponse.getAttestationObject().getAttestationStatement(),
-                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getSignCount(), registrationRequestValidationResponse.getTransports(),
-                registrationRequestValidationResponse.getRegistrationExtensionsClientOutputs(),
-                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getExtensions());
+        WebAuthnCredentialRecord authenticator = getWebAuthnCredentialRecord(registrationRequestValidationResponse);
 
         try {
             webAuthnAuthenticatorManager.createCredentialRecord(authenticator);
@@ -123,5 +111,21 @@ public class PublicWebauthnResource {
         // TODO would need to define a URI for created, does that make sense here? Which URI would it be?
         // return ResponseEntity.created().build();
         return ResponseEntity.ok().build();
+    }
+
+    private WebAuthnCredentialRecord getWebAuthnCredentialRecord(WebAuthnRegistrationRequestValidationResponse registrationRequestValidationResponse) {
+        if (registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData() == null) {
+            throw new BadRequestAlertException("attestedCredentialData is null", ENTITY_NAME, null);
+        }
+
+        User user = userRepository.getUser();
+
+        // TODO exchange name with passkey name
+        return new WebAuthnCredentialRecordImpl(user.getName(), user.getLogin(),
+                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData(),
+                registrationRequestValidationResponse.getAttestationObject().getAttestationStatement(),
+                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getSignCount(), registrationRequestValidationResponse.getTransports(),
+                registrationRequestValidationResponse.getRegistrationExtensionsClientOutputs(),
+                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getExtensions());
     }
 }
