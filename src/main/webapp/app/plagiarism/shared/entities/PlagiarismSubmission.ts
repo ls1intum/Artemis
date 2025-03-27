@@ -29,7 +29,6 @@ export class PlagiarismSubmission<E extends PlagiarismSubmissionElement> {
     /**
      * Size of the related submission.
      *
-     * For modeling submissions, this is the number of modeling elements.
      * For text and programming submissions, this is the number of words or tokens.
      */
     size: number;

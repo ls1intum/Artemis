@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { captureException } from '@sentry/angular';
 

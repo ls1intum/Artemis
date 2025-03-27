@@ -1,8 +1,8 @@
 import { Component, Input, inject } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

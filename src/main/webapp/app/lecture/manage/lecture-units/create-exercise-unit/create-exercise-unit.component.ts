@@ -1,12 +1,12 @@
 import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';

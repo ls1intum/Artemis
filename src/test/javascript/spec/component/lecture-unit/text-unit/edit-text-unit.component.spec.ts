@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { EditTextUnitComponent } from 'app/lecture/manage/lecture-units/edit-text-unit/edit-text-unit.component';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Alert, AlertService } from 'app/shared/service/alert.service';
@@ -20,7 +20,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('EditTextUnitComponent', () => {

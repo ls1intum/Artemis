@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 
