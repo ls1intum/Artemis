@@ -22,9 +22,10 @@ const coverageFilters = {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const coverageParallelDir = path.join(__dirname, 'test-reports/monocart-report-parallel');
-const coverageSequentialDir = path.join(__dirname, 'test-reports/monocart-report-sequential');
-const coverageDir = path.join(__dirname, 'test-reports/client-coverage');
+const testReportsDir = path.join(__dirname, 'test-reports');
+const coverageParallelDir = testReportsDir.join('monocart-report-parallel');
+const coverageSequentialDir = testReportsDir.join('monocart-report-sequential');
+const coverageDir = testReportsDir.join('client-coverage')
 const lcovDir = path.join(coverageDir, 'lcov-report');
 
 console.log(`Merging coverage reports`);
@@ -60,7 +61,7 @@ await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
 // That's why we archive the lcov coverage directory on CI to prepare it as an artifact
 if (process.env.CI === 'true') {
     try {
-        await createArchive(path.join(coverageDir, 'e2e-client-coverage.zip'), lcovDir);
+        await createArchive(path.join(testReportsDir, 'e2e-client-coverage.zip'), lcovDir);
     } catch (err) {
         console.error('Error while creating archives:', err);
     }
