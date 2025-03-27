@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { NgClass, NgStyle } from '@angular/common';

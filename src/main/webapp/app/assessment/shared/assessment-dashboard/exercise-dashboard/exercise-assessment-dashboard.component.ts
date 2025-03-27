@@ -15,7 +15,13 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Submission, SubmissionExerciseType, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, setLatestSubmissionResult } from 'app/entities/submission.model';
+import {
+    Submission,
+    SubmissionExerciseType,
+    getLatestSubmissionResult,
+    getSubmissionResultByCorrectionRound,
+    setLatestSubmissionResult,
+} from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
@@ -28,8 +34,8 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -44,7 +50,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';

@@ -9,11 +9,11 @@ import { MockTeamService, mockTeam } from '../../helpers/mocks/service/mock-team
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { TeamParticipationTableComponent } from 'app/exercise/team/team-participation-table/team-participation-table.component';
-import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';

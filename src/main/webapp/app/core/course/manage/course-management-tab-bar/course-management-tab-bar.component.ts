@@ -33,7 +33,7 @@ import { CourseAdminService } from 'app/core/course/manage/course-admin.service'
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HeaderCourseComponent } from 'app/core/course/overview/header-course.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

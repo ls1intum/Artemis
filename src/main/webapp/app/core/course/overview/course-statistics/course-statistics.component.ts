@@ -6,12 +6,12 @@ import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-
 import { ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { GraphColors } from 'app/entities/statistics.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';

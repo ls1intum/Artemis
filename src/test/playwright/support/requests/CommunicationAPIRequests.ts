@@ -5,7 +5,7 @@ import { GroupChat } from 'app/communication/shared/entities/conversation/group-
 import { UserCredentials } from '../users';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 /**

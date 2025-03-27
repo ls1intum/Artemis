@@ -1,6 +1,6 @@
 import { User } from 'app/core/user/user.model';
-import { Team } from 'app/entities/team.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 export class StudentParticipation extends Participation {
     public student?: User;

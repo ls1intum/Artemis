@@ -4,10 +4,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
@@ -22,10 +22,10 @@ import {
     getSubmissionResultById,
     setLatestSubmissionResult,
     setSubmissionResultByCorrectionRound,
-} from 'app/entities/submission.model';
+} from 'app/exercise/shared/entities/submission/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessment-base.component';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
-import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
 import { Course } from 'app/core/shared/entities/course.model';

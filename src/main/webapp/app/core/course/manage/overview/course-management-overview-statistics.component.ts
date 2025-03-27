@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { GraphColors, Graphs } from 'app/entities/statistics.model';
+import { GraphColors, Graphs } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';

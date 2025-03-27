@@ -1,4 +1,4 @@
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 export class TemplateProgrammingExerciseParticipation extends Participation {

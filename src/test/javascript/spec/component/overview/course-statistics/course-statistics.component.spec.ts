@@ -7,8 +7,8 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { Course } from 'app/core/shared/entities/course.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

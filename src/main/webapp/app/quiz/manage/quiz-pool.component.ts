@@ -9,7 +9,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-import { ValidationReason } from 'app/entities/exercise.model';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';
 import { onError } from 'app/shared/util/global.utils';

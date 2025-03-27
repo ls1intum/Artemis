@@ -49,7 +49,7 @@ import {
 
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';

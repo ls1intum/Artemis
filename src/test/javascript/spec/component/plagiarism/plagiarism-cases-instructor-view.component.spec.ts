@@ -12,7 +12,7 @@ import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

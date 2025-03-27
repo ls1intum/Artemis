@@ -1,4 +1,4 @@
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export class ExerciseGroupVariantColumn {
     indexExerciseGroup: number;

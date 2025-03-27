@@ -5,11 +5,11 @@ import { ComplaintResponseService } from 'app/assessment/manage/complaint-respon
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { finalize } from 'rxjs/operators';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
 import { assessmentNavigateBack } from 'app/exercise/navigate-back.util';
 import { Location } from '@angular/common';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/assessment.service';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';

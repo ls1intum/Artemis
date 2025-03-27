@@ -10,7 +10,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';

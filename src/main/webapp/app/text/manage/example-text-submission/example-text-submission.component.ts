@@ -11,14 +11,14 @@ import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { Result } from 'app/entities/result.model';
-import { setLatestSubmissionResult } from 'app/entities/submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessment-base.component';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';

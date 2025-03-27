@@ -1,6 +1,6 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';

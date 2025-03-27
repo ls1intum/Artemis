@@ -14,7 +14,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';

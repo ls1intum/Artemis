@@ -3,9 +3,9 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';

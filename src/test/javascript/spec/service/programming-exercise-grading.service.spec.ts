@@ -6,7 +6,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { HttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseGradingService', () => {

@@ -1,9 +1,9 @@
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('Exercise Filter Test', () => {
     const category1 = new ExerciseCategory('Easy', undefined);

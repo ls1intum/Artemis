@@ -1,6 +1,6 @@
 import { User } from 'app/core/user/user.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
 

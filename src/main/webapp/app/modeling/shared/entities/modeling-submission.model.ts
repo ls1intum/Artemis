@@ -1,4 +1,4 @@
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 
 export class ModelElementCount {
     elementId: string;

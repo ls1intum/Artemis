@@ -2,14 +2,14 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { DebugElement, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/shared/entities/course.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { Result } from 'app/entities/result.model';
-import { SubmissionType } from 'app/entities/submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { BuildLogService } from 'app/programming/service/build-log.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';

@@ -1,7 +1,7 @@
 import { Component, OnInit, input } from '@angular/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

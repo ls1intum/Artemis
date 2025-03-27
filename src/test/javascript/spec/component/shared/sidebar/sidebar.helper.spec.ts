@@ -4,10 +4,10 @@ import {
     getExerciseDifficultyFilterOptions,
     getExerciseTypeFilterOptions,
 } from 'app/shared/sidebar/sidebar.helper';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 const EXERCISE_1 = { categories: [new ExerciseCategory('category1', '#691b0b'), new ExerciseCategory('category2', '#1b97ca')], maxPoints: 10 } as Exercise;

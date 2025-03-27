@@ -23,7 +23,7 @@ import * as dateUtils from 'app/shared/util/date.utils';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';

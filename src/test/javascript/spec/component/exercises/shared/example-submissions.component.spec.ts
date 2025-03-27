@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';

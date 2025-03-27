@@ -8,7 +8,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Course } from 'app/core/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('StandaloneFeedbackComponent', () => {
     let component: StandaloneFeedbackComponent;

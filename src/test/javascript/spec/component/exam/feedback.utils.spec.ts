@@ -1,7 +1,7 @@
 import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';

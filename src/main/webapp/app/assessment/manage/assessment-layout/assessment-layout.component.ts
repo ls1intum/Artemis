@@ -1,8 +1,8 @@
 import { Component, EventEmitter, HostBinding, Input, Output } from '@angular/core';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { AssessmentHeaderComponent } from '../assessment-header/assessment-header.component';

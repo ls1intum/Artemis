@@ -8,7 +8,7 @@ import { Range } from 'app/shared/util/utils';
 import { ModelingPlagiarismResult } from 'app/plagiarism/shared/entities/modeling/ModelingPlagiarismResult';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';

@@ -16,9 +16,9 @@ import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mo
 import { getElement } from '../../helpers/utils/general.utils';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container.component';

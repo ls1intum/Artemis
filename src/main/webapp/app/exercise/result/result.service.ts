@@ -2,12 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/entities/result.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
@@ -17,7 +17,7 @@ import { isResultPreliminary } from 'app/programming/shared/utils/programming-ex
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { captureException } from '@sentry/angular';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import {
     isAIResultAndFailed,

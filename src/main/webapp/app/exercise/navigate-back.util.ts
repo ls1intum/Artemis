@@ -1,8 +1,8 @@
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Navigate from Assessment Editor to Dashboard:

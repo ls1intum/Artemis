@@ -8,7 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseDashboardService } from 'app/core/course/overview/course-dashboard/course-dashboard.service';
-import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/core/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/core/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';

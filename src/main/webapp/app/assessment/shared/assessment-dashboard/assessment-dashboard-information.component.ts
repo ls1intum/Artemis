@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/core/shared/entities/course.model';

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

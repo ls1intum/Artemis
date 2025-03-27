@@ -7,7 +7,7 @@ import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeli
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { Exercise, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';

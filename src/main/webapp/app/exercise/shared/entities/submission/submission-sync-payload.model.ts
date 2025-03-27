@@ -1,5 +1,5 @@
 import { User } from 'app/core/user/user.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 export class SubmissionSyncPayload {
     public submission: Submission;

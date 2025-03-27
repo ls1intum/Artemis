@@ -1,4 +1,4 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 

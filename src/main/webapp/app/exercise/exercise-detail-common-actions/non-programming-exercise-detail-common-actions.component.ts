@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';

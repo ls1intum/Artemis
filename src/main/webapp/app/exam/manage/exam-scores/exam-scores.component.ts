@@ -24,7 +24,7 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { declareExerciseType } from 'app/entities/exercise.model';
+import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';

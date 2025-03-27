@@ -3,7 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { StudentDTO } from 'app/entities/student-dto.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { provideHttpClient } from '@angular/common/http';
 

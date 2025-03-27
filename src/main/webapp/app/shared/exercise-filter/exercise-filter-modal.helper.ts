@@ -1,5 +1,5 @@
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FilterDetails, RangeFilter } from 'app/shared/types/exercise-filter';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { SidebarCardElement } from 'app/shared/types/sidebar';

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, computed, input } from '@angular/core';
-import { ValidationReason } from 'app/entities/exercise.model';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faExclamationCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

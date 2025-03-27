@@ -20,7 +20,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import dayjs from 'dayjs/esm';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
@@ -28,7 +28,7 @@ import { signal } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

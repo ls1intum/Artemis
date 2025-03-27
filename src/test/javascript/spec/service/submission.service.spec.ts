@@ -7,10 +7,10 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { Submission, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import dayjs from 'dayjs/esm';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 

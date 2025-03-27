@@ -1,4 +1,4 @@
-import { SubmissionPatch } from 'app/entities/submission-patch.model';
+import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 
 /**
  * A payload for a submission patch. It contains the patch and the sender of the patch.

@@ -8,7 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';

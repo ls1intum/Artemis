@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-exercise-overview-tour';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';

@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
-import { Exercise, ExerciseType, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';

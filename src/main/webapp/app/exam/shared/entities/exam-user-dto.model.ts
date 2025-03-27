@@ -1,4 +1,4 @@
-import { StudentDTO } from 'app/entities/student-dto.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 
 export class ExamUserDTO extends StudentDTO {
     room?: string;

@@ -4,7 +4,7 @@ import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Course } from 'app/core/shared/entities/course.model';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ComplaintRequestDTO } from 'app/assessment/shared/entities/complaint-request-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

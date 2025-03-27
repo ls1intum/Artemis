@@ -1,14 +1,14 @@
 import { Component, OnChanges, OnInit, inject, input, viewChild } from '@angular/core';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
