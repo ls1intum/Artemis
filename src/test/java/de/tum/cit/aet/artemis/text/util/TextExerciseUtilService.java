@@ -342,7 +342,6 @@ public class TextExerciseUtilService {
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -381,7 +380,6 @@ public class TextExerciseUtilService {
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = textSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
