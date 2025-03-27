@@ -92,8 +92,11 @@ public class MessageSpecs {
      * @param courseId id of course the posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getCourseWideChannelsSpecification(Long courseId) {
+    public static Specification<Post> getCourseWideChannelsSpecification(boolean filterToCourseWide, Long courseId) {
         return (root, query, criteriaBuilder) -> {
+            if (!filterToCourseWide) {
+                return null;
+            }
             final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
             final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
             final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
@@ -121,6 +124,27 @@ public class MessageSpecs {
                 Predicate searchInAnswerContent = criteriaBuilder.equal(answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
                 Predicate isPostOwner = criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
                 return criteriaBuilder.or(isPostOwner, searchInAnswerContent);
+            }
+        });
+    }
+
+    /**
+     * Specification to fetch Posts that were created by given authors for the calling user
+     *
+     * @param authorIds ids of the post authors
+     * @return specification used to chain DB operations
+     */
+    public static Specification<Post> getAuthorSpecification(long[] authorIds) {
+        return ((root, query, criteriaBuilder) -> {
+            if (authorIds == null || authorIds.length == 0) {
+                return null;
+            }
+            else {
+                List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
+                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
+                Predicate answerPostPredicate = answersJoin.get(Post_.AUTHOR).in(authorIdList);
+                Predicate postPredicate = root.get(Post_.AUTHOR).in(authorIdList);
+                return criteriaBuilder.or(answerPostPredicate, postPredicate);
             }
         });
     }

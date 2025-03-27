@@ -96,7 +96,7 @@ public class ConversationMessageResource {
         sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
 
         log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/cpmmunication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
     /**
@@ -112,33 +112,31 @@ public class ConversationMessageResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
-        Page<Post> coursePosts;
+        Page<Post> posts;
 
         final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        if (postContextFilter.conversationId() != null) {
-            coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
-        }
-        else if (postContextFilter.courseWideChannelIds() != null) {
-            coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser, course.getId());
+        if (postContextFilter.conversationIds() != null && postContextFilter.conversationIds().length > 0) {
+            posts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
         }
         else {
-            throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
+            throw new BadRequestAlertException("Messages must be associated with at least one conversion", conversationMessagingService.getEntityName(), "conversationMissing");
         }
+
         // keep the data as small as possible and avoid unnecessary information sent to the client
         // TODO: in the future we should use a DTO and send only the necessary information
-        coursePosts.getContent().forEach(post -> {
+        posts.getContent().forEach(post -> {
             if (post.getConversation() != null) {
                 post.getConversation().hideDetails();
             }
 
             conversationMessagingService.preparePostForBroadcast(post);
         });
-        final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
-        logDuration(coursePosts.getContent(), principal, timeNanoStart);
-        return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);
+        final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), posts);
+        logDuration(posts.getContent(), principal, timeNanoStart);
+        return new ResponseEntity<>(posts.getContent(), headers, HttpStatus.OK);
     }
 
     private void logDuration(List<Post> posts, Principal principal, long timeNanoStart) {

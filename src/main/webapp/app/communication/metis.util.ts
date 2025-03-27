@@ -41,10 +41,11 @@ export enum MetisPostAction {
 
 export interface PostContextFilter {
     courseId?: number;
-    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
-    conversationId?: number;
+    conversationIds?: number[];
+    authorIds?: number[];
+    filterToCourseWide?: boolean;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;
