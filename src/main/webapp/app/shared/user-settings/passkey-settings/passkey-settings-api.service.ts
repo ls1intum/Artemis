@@ -9,4 +9,8 @@ export class PasskeySettingsApiService extends BaseApiHttpService {
     async getWebauthnOptions(): Promise<PasskeyOptions> {
         return await this.get<PasskeyOptions>(`${this.basePath}/attestation/options`);
     }
+
+    async createNewPasskey(credential: Credential): Promise<void> {
+        return await this.post<void>(`${this.basePath}/attestation/result`, credential);
+    }
 }

@@ -56,13 +56,19 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     }
 
     async addNewPasskey() {
+        // TODO add error handling
         const options = await this.passkeySettingsApiService.getWebauthnOptions();
         const credentialOptions = this.createCredentialOptions(options);
         const credential = await navigator.credentials.create({
             publicKey: credentialOptions,
         });
 
-        return credential;
+        if (!credential) {
+            alert('Credential is undefined');
+            return;
+        }
+
+        await this.passkeySettingsApiService.createNewPasskey(credential);
     }
 
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
