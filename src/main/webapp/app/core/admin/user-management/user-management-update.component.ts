@@ -5,7 +5,7 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +14,7 @@ import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, 
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
 import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';

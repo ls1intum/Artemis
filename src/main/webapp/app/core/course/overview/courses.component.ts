@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/core/course/manage/courses-for-dashboard-dto';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
 import { TeamService } from 'app/exercise/team/team.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Router, RouterLink } from '@angular/router';
 import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';

@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { PagingService } from 'app/exercise/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';

@@ -12,7 +12,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { LearningPathDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('LearningPathStudentPageComponent', () => {

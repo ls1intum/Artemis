@@ -15,7 +15,7 @@ import { of, Subject } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CourseDescriptionFormStubComponent } from './course-description-form-stub.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';

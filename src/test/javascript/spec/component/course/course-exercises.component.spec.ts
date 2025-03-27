@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,8 +13,8 @@ import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exer
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
@@ -30,7 +30,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseExercisesComponent', () => {

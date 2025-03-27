@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/programming-exercise-edit-selected.component';
 import { MockProvider } from 'ng-mocks';

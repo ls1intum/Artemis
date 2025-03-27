@@ -4,7 +4,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { captureException } from '@sentry/angular';
-import { ValidationReason } from 'app/entities/exercise.model';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
     MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD,

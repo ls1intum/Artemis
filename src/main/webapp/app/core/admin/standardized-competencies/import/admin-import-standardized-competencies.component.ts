@@ -7,7 +7,7 @@ import {
     StandardizedCompetencyForTree,
     convertToKnowledgeAreaForTree,
     sourceToString,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
@@ -17,15 +17,14 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/button.compon
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';
-import { getIcon } from 'app/entities/competency.model';
+import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-
-import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
-import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { NgbCollapse, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 interface ImportCount {
     knowledgeAreas: number;

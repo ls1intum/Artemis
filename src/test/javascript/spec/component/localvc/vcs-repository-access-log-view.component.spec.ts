@@ -13,7 +13,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;

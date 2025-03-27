@@ -3,7 +3,7 @@ import { IconDefinition, faExternalLinkAlt, faSquare, faSquareCheck } from '@for
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

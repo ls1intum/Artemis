@@ -14,7 +14,7 @@ import { QuizExercisePopupService } from 'app/quiz/manage/quiz-exercise-popup.se
 import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';

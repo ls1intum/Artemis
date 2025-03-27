@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SystemNotificationManagementComponent } from 'app/core/admin/system-notification-management/system-notification-management.component';
-import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

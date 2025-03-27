@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
-import { LearningObjectType, LearningPathDTO } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LearningPathNavComponent } from 'app/atlas/overview/learning-path-student-nav/learning-path-student-nav.component';

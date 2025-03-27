@@ -10,7 +10,7 @@ import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { Subject } from 'rxjs';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { provideHttpClient } from '@angular/common/http';

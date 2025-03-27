@@ -2,7 +2,7 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { TestBed } from '@angular/core/testing';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { Component } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
