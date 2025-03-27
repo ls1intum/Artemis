@@ -23,9 +23,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const testReportsDir = path.join(__dirname, 'test-reports');
-const coverageParallelDir = testReportsDir.join('monocart-report-parallel');
-const coverageSequentialDir = testReportsDir.join('monocart-report-sequential');
-const coverageDir = testReportsDir.join('client-coverage')
+const coverageParallelDir = path.join(testReportsDir, 'monocart-report-parallel');
+const coverageSequentialDir = path.join(testReportsDir,'monocart-report-sequential');
+const coverageDir = path.join(testReportsDir, 'client-coverage')
 const lcovDir = path.join(coverageDir, 'lcov-report');
 
 console.log(`Merging coverage reports`);
