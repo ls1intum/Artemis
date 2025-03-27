@@ -1,21 +1,20 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PlagiarismCasesInstructorViewComponent } from 'app/plagiarism/manage/instructor-view/plagiarism-cases-instructor-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { ActivatedRoute, ActivatedRouteSnapshot, RouterModule, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, RouterModule } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { TranslateService } from '@ngx-translate/core';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { PlagiarismSubmission } from 'app/plagiarism/shared/types/PlagiarismSubmission';
-import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
+import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -24,6 +23,7 @@ import { MockNotificationService } from '../../helpers/mocks/service/mock-notifi
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Component({ template: '' })
 class DummyComponent {}

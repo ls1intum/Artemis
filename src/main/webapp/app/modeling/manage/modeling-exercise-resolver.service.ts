@@ -1,9 +1,9 @@
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Course } from 'app/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
@@ -19,7 +19,7 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
 
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.modelingExerciseService.find(route.params['exerciseId'], true).pipe(
+            return this.modelingExerciseService.find(route.params['exerciseId']).pipe(
                 filter((res) => !!res.body),
                 map((modelingExercise: HttpResponse<ModelingExercise>) => modelingExercise.body!),
             );

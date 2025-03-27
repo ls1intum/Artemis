@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramImportDialogComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-import-dialog.component';
 import { MockNgbActiveModalService } from '../../helpers/mocks/service/mock-ngb-active-modal.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 
 describe('ApollonDiagramImportDialog Component', () => {
     let fixture: ComponentFixture<ApollonDiagramImportDialogComponent>;

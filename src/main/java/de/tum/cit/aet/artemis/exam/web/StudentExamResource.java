@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -113,8 +112,6 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
@@ -135,9 +132,8 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
-            AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
-            ExamLiveEventRepository examLiveEventRepository) {
+            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -152,7 +148,6 @@ public class StudentExamResource {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.websocketMessagingService = websocketMessagingService;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventsService = examLiveEventsService;
@@ -248,10 +243,6 @@ public class StudentExamResource {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
-            }
-            if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-                // potentially re-schedule clustering of modeling submissions (in case Compass is active)
-                examService.scheduleModelingExercises(exam);
             }
         }
 
@@ -696,9 +687,8 @@ public class StudentExamResource {
         AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
         auditEventRepository.add(auditEvent);
 
-        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> {
-            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-        });
+        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
+                numberOfGeneratedParticipations, formatDurationFrom(start), examId));
         return ResponseEntity.ok().build();
     }
 

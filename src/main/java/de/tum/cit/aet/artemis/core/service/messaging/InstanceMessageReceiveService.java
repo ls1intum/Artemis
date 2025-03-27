@@ -23,9 +23,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.UserScheduleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
@@ -43,8 +40,6 @@ public class InstanceMessageReceiveService {
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    private final ModelingExerciseScheduleService modelingExerciseScheduleService;
-
     private final NotificationScheduleService notificationScheduleService;
 
     private final ParticipantScoreScheduleService participantScoreScheduleService;
@@ -57,8 +52,6 @@ public class InstanceMessageReceiveService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
     private final UserRepository userRepository;
 
     private final HazelcastInstance hazelcastInstance;
@@ -66,15 +59,12 @@ public class InstanceMessageReceiveService {
     private final QuizScheduleService quizScheduleService;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
-            Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
-            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
-            QuizScheduleService quizScheduleService) {
+            ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
+            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
-        this.modelingExerciseRepository = modelingExerciseRepository;
-        this.modelingExerciseScheduleService = modelingExerciseScheduleService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
@@ -98,18 +88,6 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleProgrammingExerciseCancel(message.getMessageObject());
             processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleModelingExercise((message.getMessageObject()));
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleModelingExerciseCancel(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processModelingExerciseInstantClustering((message.getMessageObject()));
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -160,25 +138,6 @@ public class InstanceMessageReceiveService {
         // The exercise might already be deleted, so we can not get it from the database.
         // Use the ID directly instead.
         programmingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
-    }
-
-    public void processScheduleModelingExercise(Long exerciseId) {
-        log.info("Received schedule update for modeling exercise {}", exerciseId);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        modelingExerciseScheduleService.updateScheduling(modelingExercise);
-    }
-
-    public void processScheduleModelingExerciseCancel(Long exerciseId) {
-        log.info("Received schedule cancel for modeling exercise {}", exerciseId);
-        // The exercise might already be deleted, so we can not get it from the database.
-        // Use the ID directly instead.
-        modelingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
-    }
-
-    public void processModelingExerciseInstantClustering(Long exerciseId) {
-        log.info("Received schedule instant clustering for modeling exercise {}", exerciseId);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        modelingExerciseScheduleService.scheduleExerciseForInstant(modelingExercise);
     }
 
     public void processSchedulePotentialAthenaExercise(Long exerciseId) {

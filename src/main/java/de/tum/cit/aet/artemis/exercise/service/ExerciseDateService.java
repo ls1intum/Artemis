@@ -173,11 +173,9 @@ public class ExerciseDateService {
     /**
      * Checks if the current time is after the assessment due date
      * and manual results can be published to the student.
-     * <p>
-     * Returns true if the assessment due date is null.
      *
      * @param exercise to check the assessment due date
-     * @return true if the assessment due date is in the past
+     * @return true if the assessment due date is in the past or if the exercise has no assessment due date.
      */
     public static boolean isAfterAssessmentDueDate(Exercise exercise) {
         if (exercise.isExamExercise()) {

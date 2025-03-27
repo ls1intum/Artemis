@@ -9,6 +9,7 @@ services:
             service: mysql
 
     artemis-app:
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG}
         extends:
             file: ./artemis.yml
             service: artemis-app

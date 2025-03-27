@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
 import { filter, map } from 'rxjs/operators';

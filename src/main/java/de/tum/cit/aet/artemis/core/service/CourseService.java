@@ -322,7 +322,7 @@ public class CourseService {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exerciseService.filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
+                exerciseService.filterExerciseForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -604,7 +604,7 @@ public class CourseService {
 
     private void deleteExercisesOfCourse(Course course) {
         for (Exercise exercise : course.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), true, true);
+            exerciseDeletionService.delete(exercise.getId(), true);
         }
     }
 

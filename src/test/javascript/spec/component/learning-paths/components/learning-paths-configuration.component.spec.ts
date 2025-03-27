@@ -7,7 +7,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { LearningPathsConfigurationDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathsConfigurationDTO } from 'app/atlas/shared/entities/learning-path.model';
 
 describe('LearningPathsConfigurationComponent', () => {
     let component: LearningPathsConfigurationComponent;

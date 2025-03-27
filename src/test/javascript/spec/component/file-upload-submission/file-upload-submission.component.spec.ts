@@ -13,14 +13,14 @@ import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission.component';
 import { createFileUploadSubmission, fileUploadParticipation, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -33,14 +33,14 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { FileService } from 'app/shared/http/file.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { FileService } from 'app/shared/service/file.service';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
