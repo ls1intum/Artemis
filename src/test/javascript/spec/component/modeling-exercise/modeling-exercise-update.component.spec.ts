@@ -28,7 +28,6 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -304,7 +303,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
         comp.modelingExercise = { startDate: dayjs(), dueDate: dayjs(), assessmentDueDate: dayjs(), releaseDate: dayjs() } as ModelingExercise;
         comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
-        comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
         comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
         comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
@@ -314,14 +312,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         (comp.points.valueChanges as Subject<boolean>).next(false);
         (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
         comp.teamConfigFormGroupComponent.formValidChanges.next(false);
-        comp.exerciseUpdatePlagiarismComponent.formValidChanges.next(false);
         comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
-        expect(calculateValidSpy).toHaveBeenCalledTimes(5);
+        expect(calculateValidSpy).toHaveBeenCalledTimes(4);
 
         comp.ngOnDestroy();
 
         expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
-        expect(comp.plagiarismSubscription?.closed).toBeTrue();
         expect(comp.bonusPointsSubscription?.closed).toBeTrue();
         expect(comp.pointsSubscription?.closed).toBeTrue();
     });

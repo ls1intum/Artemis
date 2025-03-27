@@ -1,5 +1,4 @@
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
@@ -11,7 +10,7 @@ export class PlagiarismCase {
     public id: number;
     public exercise?: Exercise;
     public post?: Post;
-    public plagiarismSubmissions?: PlagiarismSubmission<TextSubmissionElement | ModelingSubmissionElement>[];
+    public plagiarismSubmissions?: PlagiarismSubmission<TextSubmissionElement>[];
     public student?: User;
     public verdict?: PlagiarismVerdict;
     public verdictDate?: dayjs.Dayjs;

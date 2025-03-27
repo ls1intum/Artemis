@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { ModelingExerciseDetailComponent } from 'app/modeling/manage/modeling-exercise-detail.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
@@ -28,7 +28,6 @@ describe('ModelingExercise Management Detail Component', () => {
     let modelingExerciseService: ModelingExerciseService;
     let eventManager: EventManager;
     let statisticsService: StatisticsService;
-    let alertService: AlertService;
 
     const model = { element: { id: '33' } };
     const modelingExercise = { id: 123, exampleSolutionModel: JSON.stringify(model) } as ModelingExercise;
@@ -69,7 +68,6 @@ describe('ModelingExercise Management Detail Component', () => {
         modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
         statisticsService = fixture.debugElement.injector.get(StatisticsService);
         eventManager = fixture.debugElement.injector.get(EventManager);
-        alertService = fixture.debugElement.injector.get(AlertService);
         fixture.detectChanges();
     });
 
@@ -106,45 +104,5 @@ describe('ModelingExercise Management Detail Component', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
-    });
-
-    it('should build cluster', async () => {
-        const buildClusterSpy = jest.spyOn(modelingExerciseService, 'buildClusters').mockReturnValue(of(new HttpResponse({ body: null })));
-        const successSpy = jest.spyOn(alertService, 'success');
-        comp.modelingExercise = modelingExercise;
-        comp.buildModelClusters();
-        expect(buildClusterSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-        expect(successSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should error on build cluster', async () => {
-        const buildClusterSpy = jest.spyOn(modelingExerciseService, 'buildClusters').mockReturnValue(throwError(null));
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.modelingExercise = modelingExercise;
-        comp.buildModelClusters();
-        expect(buildClusterSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-        expect(errorSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should delete cluster', async () => {
-        const buildClusterSpy = jest.spyOn(modelingExerciseService, 'deleteClusters').mockReturnValue(of(new HttpResponse({ body: null })));
-        const successSpy = jest.spyOn(alertService, 'success');
-        comp.modelingExercise = modelingExercise;
-        comp.deleteModelClusters();
-        expect(buildClusterSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-        expect(successSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should error on elete cluster', async () => {
-        const buildClusterSpy = jest.spyOn(modelingExerciseService, 'deleteClusters').mockReturnValue(throwError(null));
-        const errorSpy = jest.spyOn(alertService, 'error');
-        comp.modelingExercise = modelingExercise;
-        comp.deleteModelClusters();
-        expect(buildClusterSpy).toHaveBeenCalledOnce();
-        await Promise.resolve();
-        expect(errorSpy).toHaveBeenCalledOnce();
     });
 });

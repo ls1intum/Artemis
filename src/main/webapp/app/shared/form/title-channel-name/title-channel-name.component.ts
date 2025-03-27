@@ -111,7 +111,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     formatChannelName(newName: string, allowDuplicateHyphens = true, removeTrailingHyphens = false) {
-        const specialCharacters = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
+        const specialCharacters: RegExp = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
         const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
         this.channelName = newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30);
         this.channelNameChange.emit(this.channelName);

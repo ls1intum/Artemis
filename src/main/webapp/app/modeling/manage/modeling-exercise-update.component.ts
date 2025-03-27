@@ -41,7 +41,6 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
@@ -68,7 +67,6 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
         CustomMinDirective,
         CustomMaxDirective,
         ExerciseFeedbackSuggestionOptionsComponent,
-        ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
@@ -89,7 +87,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private changeDetectorRef = inject(ChangeDetectorRef);
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
-    @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor?: ModelingEditorComponent;
     @ViewChild('bonusPoints') bonusPoints?: NgModel;
@@ -126,7 +123,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
-    plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
 
     get editType(): EditType {
@@ -143,7 +139,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -227,7 +222,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
-        this.plagiarismSubscription?.unsubscribe();
     }
 
     async calculateFormSectionStatus() {
@@ -253,8 +247,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     this.points?.valid &&
                         this.bonusPoints?.valid &&
                         (this.isExamMode ||
-                            (this.exerciseUpdatePlagiarismComponent?.formValid &&
-                                !this.modelingExercise.startDateError &&
+                            (!this.modelingExercise.startDateError &&
                                 !this.modelingExercise.dueDateError &&
                                 !this.modelingExercise.assessmentDueDateError &&
                                 this.releaseDateField?.dateInput.valid &&

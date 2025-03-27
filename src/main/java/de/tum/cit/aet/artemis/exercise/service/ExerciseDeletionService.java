@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -141,13 +140,11 @@ public class ExerciseDeletionService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exerciseId                   the exercise to be deleted
-     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other
-     *                                         exercise types)
-     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
-     *                                         all other exercise types)
+     * @param exerciseId                the exercise to be deleted
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
+     *                                      all other exercise types)
      */
-    public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+    public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
@@ -156,13 +153,6 @@ public class ExerciseDeletionService {
         Channel exerciseChannel = channelRepository.findChannelByExerciseId(exerciseId);
         channelService.deleteChannel(exerciseChannel);
         log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
-
-        if (exercise instanceof ModelingExercise modelingExercise) {
-            log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
-
-            modelingExerciseService.deleteClustersAndElements(modelingExercise);
-            modelingExerciseService.cancelScheduledOperations(exerciseId);
-        }
 
         if (exercise instanceof TextExercise) {
             log.info("Cancel scheduled operations of exercise {}", exercise.getId());
