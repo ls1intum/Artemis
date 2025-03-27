@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
 import { Subscription } from 'rxjs';

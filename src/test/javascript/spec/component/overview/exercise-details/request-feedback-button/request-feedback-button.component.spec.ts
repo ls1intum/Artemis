@@ -1,9 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement, TemplateRef } from '@angular/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, of } from 'rxjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -11,12 +11,12 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;

@@ -2,21 +2,21 @@ import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angula
 import { Injectable, inject } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { SidebarCardElement } from 'app/types/sidebar';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
+import { SidebarCardElement } from 'app/shared/types/sidebar';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 

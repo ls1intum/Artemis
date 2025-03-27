@@ -7,7 +7,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

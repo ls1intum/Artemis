@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {

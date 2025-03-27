@@ -1,14 +1,15 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Column, ImportTableComponent } from 'app/shared/import-list/import-table.component';
 import { PagingService } from 'app/exercise/manage/paging.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
+import { Column } from 'app/shared/import/import.component';
 
 describe('ImportTableComponent', () => {
     let component: ImportTableComponent<Course>;

@@ -3,10 +3,10 @@ import { Subscription, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
-import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -14,7 +14,7 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -41,7 +41,7 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

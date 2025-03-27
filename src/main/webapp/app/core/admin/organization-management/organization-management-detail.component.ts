@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';

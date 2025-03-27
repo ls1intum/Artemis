@@ -9,7 +9,7 @@ import { PasswordResetFinishService } from 'app/core/account/password-reset/fini
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { provideHttpClient } from '@angular/common/http';
 

@@ -7,7 +7,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
 
 describe('LearningPathsAnalyticsComponent', () => {
     let component: LearningPathsAnalyticsComponent;

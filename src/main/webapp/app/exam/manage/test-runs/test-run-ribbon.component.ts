@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             </div>
         </div>
     `,
-    styleUrls: ['../../../shared/layouts/profiles/page-ribbon.scss'],
+    styleUrls: ['../../../core/layouts/profiles/page-ribbon.scss'],
     imports: [TranslateDirective],
 })
 export class TestRunRibbonComponent {}

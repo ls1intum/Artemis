@@ -5,7 +5,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

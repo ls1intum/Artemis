@@ -1,10 +1,10 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MetisService } from 'app/communication/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
-import { Reaction } from 'app/entities/metis/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReactionService } from 'app/communication/reaction.service';
 import { MockReactionService } from '../../../../helpers/mocks/service/mock-reaction.service';
@@ -33,20 +33,20 @@ import {
 } from '../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
-import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Posting } from 'app/entities/metis/posting.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { MockMetisConversationService } from '../../../../helpers/mocks/service/mock-metis-conversation.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { of } from 'rxjs';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;

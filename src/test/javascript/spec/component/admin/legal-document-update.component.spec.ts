@@ -11,12 +11,12 @@ import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.s
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { PrivacyStatement } from 'app/entities/privacy-statement.model';
+import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

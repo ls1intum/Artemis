@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { onError } from 'app/shared/util/global.utils';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';

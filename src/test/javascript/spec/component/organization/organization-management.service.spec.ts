@@ -1,5 +1,5 @@
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

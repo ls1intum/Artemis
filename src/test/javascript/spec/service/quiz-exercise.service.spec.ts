@@ -1,11 +1,11 @@
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
-import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import * as downloadUtil from 'app/shared/util/download.util';
@@ -16,7 +16,6 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
-import 'jest-extended';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object

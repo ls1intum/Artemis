@@ -3,7 +3,7 @@ import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.s
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

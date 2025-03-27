@@ -15,10 +15,10 @@ import {
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -27,9 +27,9 @@ import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/util
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';

@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { DifficultyLevel } from 'app/entities/exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('DifficultyBadge', () => {
     let component: DifficultyBadgeComponent;
