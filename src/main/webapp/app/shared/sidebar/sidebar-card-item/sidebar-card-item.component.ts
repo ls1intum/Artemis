@@ -1,9 +1,8 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
-import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { NgClass } from '@angular/common';
 import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
@@ -11,6 +10,7 @@ import { SubmissionResultStatusComponent } from 'app/core/course/overview/submis
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
 
 @Component({
     selector: 'jhi-sidebar-card-item',

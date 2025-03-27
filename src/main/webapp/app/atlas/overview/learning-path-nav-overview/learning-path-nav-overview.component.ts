@@ -4,7 +4,7 @@ import { NgbAccordionDirective, NgbAccordionModule, NgbDropdownModule, NgbModal 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';

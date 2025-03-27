@@ -10,7 +10,7 @@ import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
+import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 

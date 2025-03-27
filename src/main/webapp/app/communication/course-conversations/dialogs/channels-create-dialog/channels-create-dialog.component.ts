@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { Course } from 'app/entities/course.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChannelFormComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';

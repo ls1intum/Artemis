@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { convertDateFromServer } from 'app/shared/util/date.utils';

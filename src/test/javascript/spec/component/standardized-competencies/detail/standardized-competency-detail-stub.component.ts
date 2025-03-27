@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Component({
     selector: 'jhi-standardized-competency-detail',

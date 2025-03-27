@@ -9,7 +9,7 @@ import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.s
 import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { AccountService } from 'app/core/auth/account.service';

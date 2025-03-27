@@ -6,9 +6,9 @@ import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -35,11 +35,11 @@ import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;

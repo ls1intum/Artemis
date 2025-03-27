@@ -1,11 +1,11 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { BuildAgentInformation, BuildAgentStatus } from 'app/programming/shared/entities/build-agent-information.model';
+import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { Router, RouterModule } from '@angular/router';
-import { BuildAgent } from 'app/programming/shared/entities/build-agent.model';
+import { BuildAgent } from 'app/buildagent/shared/entities/build-agent.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';

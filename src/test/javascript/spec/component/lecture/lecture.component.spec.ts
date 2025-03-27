@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
@@ -11,7 +11,7 @@ import { LectureComponent, LectureDateFilter } from 'app/lecture/manage/lecture.
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -21,11 +21,11 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { Course } from 'app/entities/course.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;

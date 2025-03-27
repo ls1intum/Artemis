@@ -3,10 +3,10 @@ import { FeedbackTextComponent } from 'app/exercise/feedback/text/feedback-text.
 import { LongFeedbackTextService } from 'app/exercise/feedback/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('FeedbackTextComponent', () => {
     let fixture: ComponentFixture<FeedbackTextComponent>;

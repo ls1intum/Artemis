@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';

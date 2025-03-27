@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
@@ -24,7 +24,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseExamsComponent', () => {
