@@ -473,12 +473,6 @@ public class CourseUtilService {
             programmingSubmission1.setParticipation(participation4);
             programmingSubmission2.setParticipation(participation5);
 
-            result1.setParticipation(participation1);
-            result2.setParticipation(participation3);
-            result3.setParticipation(participation2);
-            result4.setParticipation(participation4);
-            result5.setParticipation(participation5);
-
             result1 = resultRepo.save(result1);
             result2 = resultRepo.save(result2);
             result3 = resultRepo.save(result3);
@@ -584,17 +578,18 @@ public class CourseUtilService {
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
         // Connect participations to results and vice versa
-        resultModeling.setParticipation(participationModeling);
-        resultText.setParticipation(participationText);
-        resultFileUpload.setParticipation(participationFileUpload);
-        resultQuiz.setParticipation(participationQuiz);
-        resultProgramming.setParticipation(participationProgramming);
-
-        participationModeling.addResult(resultModeling);
-        participationText.addResult(resultText);
-        participationFileUpload.addResult(resultFileUpload);
-        participationQuiz.addResult(resultQuiz);
-        participationProgramming.addResult(resultProgramming);
+        // TODO Michal Kawka I don't know if I can simply remove that or need to connect them via submissions
+        // resultModeling.setParticipation(participationModeling);
+        // resultText.setParticipation(participationText);
+        // resultFileUpload.setParticipation(participationFileUpload);
+        // resultQuiz.setParticipation(participationQuiz);
+        // resultProgramming.setParticipation(participationProgramming);
+        //
+        // participationModeling.addResult(resultModeling);
+        // participationText.addResult(resultText);
+        // participationFileUpload.addResult(resultFileUpload);
+        // participationQuiz.addResult(resultQuiz);
+        // participationProgramming.addResult(resultProgramming);
 
         // Save results and participations
         resultModeling = resultRepo.save(resultModeling);
@@ -755,17 +750,12 @@ public class CourseUtilService {
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
         // Connect participations to results and vice versa
-        resultModeling.setParticipation(participationModeling);
-        resultText.setParticipation(participationText);
-        resultFileUpload.setParticipation(participationFileUpload);
-        resultQuiz.setParticipation(participationQuiz);
-        resultProgramming.setParticipation(participationProgramming);
-
-        participationModeling.addResult(resultModeling);
-        participationText.addResult(resultText);
-        participationFileUpload.addResult(resultFileUpload);
-        participationQuiz.addResult(resultQuiz);
-        participationProgramming.addResult(resultProgramming);
+        // TODO Michal Kawka I don't know if I can simply remove that or need to connect them via submissions
+        // resultModeling.setParticipation(participationModeling);
+        // resultText.setParticipation(participationText);
+        // resultFileUpload.setParticipation(participationFileUpload);
+        // resultQuiz.setParticipation(participationQuiz);
+        // resultProgramming.setParticipation(participationProgramming);
 
         // Save results and participations
         resultModeling = resultRepo.save(resultModeling);
@@ -1086,7 +1076,6 @@ public class CourseUtilService {
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);
                         submission.addResult(result);
-                        participation.addResult(result);
                         studentParticipationRepo.save(participation);
                         modelingSubmissionRepo.save(submission);
                         complaintUtilService.generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
