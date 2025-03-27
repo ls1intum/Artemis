@@ -31,20 +31,26 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results pr
                 LEFT JOIN FETCH pr.feedbacks f
                 LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH pr.submission
             WHERE p.id = :participationId
-                AND (pr.id = (
-                    SELECT MAX(prr.id)
-                    FROM p.results prr
-                    WHERE (prr.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                        OR (prr.completionDate IS NOT NULL
-                            AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
-                        )
+                AND (
+                    pr.id = (
+                        SELECT MAX(r2.id)
+                        FROM Submission s2 JOIN s2.results r2
+                        WHERE s2.participation = p
+                          AND (
+                              r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                              OR (r2.completionDate IS NOT NULL
+                                  AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
+                              )
+                          )
                     )
-                ) OR pr.id IS NULL)
+                    OR pr.id IS NULL
+                )
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
