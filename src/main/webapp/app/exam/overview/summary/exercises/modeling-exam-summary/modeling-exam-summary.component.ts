@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission.component';
 
 @Component({

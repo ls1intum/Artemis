@@ -8,14 +8,14 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { BuildJob, BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
+import { BuildJob, BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
-import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
-import { JobTimingInfo } from 'app/entities/job-timing-info.model';
-import { BuildConfig } from 'app/entities/programming/build-config.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
+import { JobTimingInfo } from 'app/buildagent/shared/entities/job-timing-info.model';
+import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { provideHttpClient } from '@angular/common/http';
-import { BuildLogEntry } from 'app/entities/programming/build-log.model';
+import { BuildLogEntry } from 'app/buildagent/shared/entities/build-log.model';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;

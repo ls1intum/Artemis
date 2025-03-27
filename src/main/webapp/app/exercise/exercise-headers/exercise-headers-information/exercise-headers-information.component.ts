@@ -1,25 +1,25 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
-import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
+import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { CommonModule } from '@angular/common';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
+import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',

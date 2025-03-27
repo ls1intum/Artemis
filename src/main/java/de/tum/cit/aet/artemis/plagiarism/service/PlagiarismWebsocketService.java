@@ -69,14 +69,4 @@ public class PlagiarismWebsocketService {
     public String getTextExercisePlagiarismCheckTopic(Long textExerciseId) {
         return "/topic/text-exercises/" + textExerciseId + "/plagiarism-check";
     }
-
-    /**
-     * Return the topic of the plagiarism check for the modeling exercise
-     *
-     * @param modelingExerciseId the id of the exercise
-     * @return the topic
-     */
-    public String getModelingExercisePlagiarismCheckTopic(Long modelingExerciseId) {
-        return "/topic/modeling-exercises/" + modelingExerciseId + "/plagiarism-check";
-    }
 }

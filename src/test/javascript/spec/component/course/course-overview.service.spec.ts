@@ -1,21 +1,21 @@
 import { TestBed } from '@angular/core/testing';
-import { CourseOverviewService } from 'app/course/overview/course-overview.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { Course } from 'app/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 
 describe('CourseOverviewService', () => {
     let service: CourseOverviewService;

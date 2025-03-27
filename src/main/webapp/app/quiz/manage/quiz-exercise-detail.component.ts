@@ -3,22 +3,22 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
 import dayjs from 'dayjs/esm';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { getExerciseGeneralDetailsSection, getExerciseGradingDefaultDetails, getExerciseModeDetailSection } from 'app/exercise/utils';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { isQuizEditable } from 'app/quiz/shared/quiz-manage-util.service';
 import { firstValueFrom } from 'rxjs';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
 import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',

@@ -1,6 +1,6 @@
 import { UserCredentials } from './users';
 import { Locator, Page, expect } from '@playwright/test';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 
 /**

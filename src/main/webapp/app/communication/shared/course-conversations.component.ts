@@ -21,31 +21,30 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Post } from 'app/entities/metis/post.model';
-import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { Course, isMessagingEnabled } from 'app/core/shared/entities/course.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations/course-wide-search/course-wide-search.component';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
-import { CourseOverviewService } from 'app/course/overview/course-overview.service';
-import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MetisService } from 'app/communication/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -54,10 +53,11 @@ import { ConversationMessagesComponent } from 'app/communication/course-conversa
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { SavedPostsComponent } from 'app/communication/course-conversations/saved-posts/saved-posts.component';
 import { captureException } from '@sentry/angular';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -116,7 +116,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../core/course/overview/course-overview.scss', './course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService, LinkifyService, LinkPreviewService],
     imports: [

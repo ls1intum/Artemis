@@ -7,37 +7,37 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { TextEditorService } from 'app/text/overview/text-editor.service';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, merge } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
-import { Result } from 'app/entities/result.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -50,7 +50,7 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-c
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { onTextEditorTab } from 'app/utils/text.utils';
+import { onTextEditorTab } from 'app/shared/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -194,7 +194,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     }
                 }
                 this.updateParticipation(this.participation);
+                this.loadIrisSettings();
             });
+    }
+
+    /**
+     * Loads Iris settings for the current exercise if Iris is available and the exercise is not in exam mode.
+     *
+     * This method retrieves the application profile settings and checks if `PROFILE_IRIS` is active.
+     * If active and the exercise is not in exam mode, it fetches the Iris settings for the given exercise ID.
+     */
+    private loadIrisSettings(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // only load the settings if Iris is available and this is not an exam exercise
             if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS) && !this.examMode) {

@@ -4,7 +4,7 @@ import { MetisService } from 'app/communication/metis.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -19,19 +19,19 @@ import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, m
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/communication/metis.util';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
-import { Faq } from 'app/entities/faq.model';
-import { FileService } from 'app/shared/http/file.service';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
+import { FileService } from 'app/shared/service/file.service';
+import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;

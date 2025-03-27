@@ -1,0 +1,61 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Course } from 'app/core/shared/entities/course.model';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseDeletionSummaryDTO } from 'app/core/shared/entities/course-deletion-summary.model';
+
+export type EntityResponseType = HttpResponse<Course>;
+export type EntityArrayResponseType = HttpResponse<Course[]>;
+
+@Injectable({ providedIn: 'root' })
+export class CourseAdminService {
+    private http = inject(HttpClient);
+    private courseManagementService = inject(CourseManagementService);
+
+    private resourceUrl = 'api/core/admin/courses';
+
+    /**
+     * finds all groups for all courses using a GET request
+     */
+    getAllGroupsForAllCourses(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(this.resourceUrl + '/groups', { observe: 'response' });
+    }
+
+    /**
+     * creates a course using a POST request
+     * @param course - the course to be created on the server
+     * @param courseImage - the course icon file
+     */
+    create(course: Course, courseImage?: Blob): Observable<EntityResponseType> {
+        const copy = CourseManagementService.convertCourseDatesFromClient(course);
+        const formData = new FormData();
+        formData.append('course', objectToJsonBlob(copy));
+        if (courseImage) {
+            // The image was cropped by us and is a blob, so we need to set a placeholder name for the server check
+            formData.append('file', courseImage, 'placeholderName.png');
+        }
+
+        return this.http
+            .post<Course>(this.resourceUrl, formData, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.courseManagementService.processCourseEntityResponseType(res)));
+    }
+
+    /**
+     * deletes the course corresponding to the given unique identifier using a DELETE request
+     * @param courseId - the id of the course to be deleted
+     */
+    delete(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
+    }
+
+    /**
+     * Returns a summary for the course providing information potentially relevant for the deletion.
+     * @param courseId - the id of the course to get the deletion summary for
+     */
+    getDeletionSummary(courseId: number): Observable<HttpResponse<CourseDeletionSummaryDTO>> {
+        return this.http.get<CourseDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/deletion-summary`, { observe: 'response' });
+    }
+}

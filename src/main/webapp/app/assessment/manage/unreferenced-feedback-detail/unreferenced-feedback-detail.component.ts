@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, InputSignal, OnInit, Output, inject, input } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
