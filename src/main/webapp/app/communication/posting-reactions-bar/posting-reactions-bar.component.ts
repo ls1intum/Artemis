@@ -125,6 +125,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
     showAnswers = input<boolean>();
+    showSearchResultInAnswersHint = input<boolean>(false);
     sortedAnswerPosts = input<AnswerPost[]>();
     isCommunicationPage = input<boolean>();
     lastReadDate = input<dayjs.Dayjs>();

@@ -107,6 +107,7 @@
                                     [id]="'item-' + post.id"
                                     [post]="post"
                                     [showAnswers]="false"
+                                    [searchQuery]="courseWideSearchConfig().searchTerm"
                                     [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
                                     [isCommunicationPage]="true"
                                     [showChannelReference]="true"

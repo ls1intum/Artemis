@@ -42,6 +42,12 @@
         }
     }
 
+    @if (showSearchResultInAnswersHint()) {
+        <div class="info-text">
+            <span>Search Result in replies</span>
+        </div>
+    }
+
     @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
         @if (isEmojiCount()) {
             <div>

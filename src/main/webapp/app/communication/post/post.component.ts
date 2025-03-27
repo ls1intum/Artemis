@@ -85,6 +85,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
+    searchQuery = input<string | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
     openThread = output<void>();
@@ -99,6 +100,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     routerLink: RouteComponents;
     queryParams = {};
     showAnnouncementIcon = false;
+    showSearchResultInAnswersHint = false;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
@@ -217,9 +219,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.pageType = this.metisService.getPageType();
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
         this.fetchForwardedMessages();
+    }
+
+    updateShowSearchResultInAnswersHint() {
+        this.showSearchResultInAnswersHint = !!this.searchQuery() && !this.posting.content?.toLowerCase().includes((this.searchQuery() ?? '').toLowerCase());
     }
 
     fetchForwardedMessages(): void {
@@ -253,6 +260,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
+        this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
     }
