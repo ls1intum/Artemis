@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * Contains useful methods for testing the conversations futures
  */
 abstract class AbstractConversationTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractConversationTest.class);
 
     @Autowired
     CourseTestRepository courseRepository;
@@ -94,7 +98,8 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     }
 
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, null, conversationId, null, false, false, false, null, null);
+        long[] conversationIds = new long[] { conversationId };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, conversationIds, null, null, false, false, false, false, null, null);
         var requestingUser = userRepository.getUser();
 
         var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();

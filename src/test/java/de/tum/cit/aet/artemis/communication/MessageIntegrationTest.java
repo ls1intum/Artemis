@@ -145,7 +145,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdPost.getConversation().getId()).isNotNull();
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, createdPost.getConversation().getId(), null, false, false, false, null, null);
+        long[] conversationIds = new long[] { createdPost.getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, false, null, null);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
@@ -315,8 +316,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, null, posts.getFirst().getConversation().getId(), null, false, false, false, null,
-                null);
+        long[] conversationIds = new long[] { posts.getFirst().getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, null, false, false, false, false, null, null);
         if (pageSize == LOWER_PAGE_SIZE) {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(LOWER_PAGE_SIZE);
         }
@@ -336,7 +337,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
+        long[] conversationIds = new long[] { postToSave.getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.BAD_REQUEST);
@@ -362,7 +364,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(existingConversationMessages.getFirst().getConversation());
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
+        long[] conversationIds = new long[] { postToSave.getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
@@ -764,11 +767,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, new long[] {}, null, "SearchTest", true, false, false, false, PostSortCriterion.ANSWER_COUNT,
                 SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        Page<Post> searchResults = conversationMessageRepository.findCourseWideMessages(filter, Pageable.unpaged(), student1.getId());
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
         List<Post> resultPosts = searchResults.getContent();
 
         assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
@@ -803,11 +806,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         groupPost.setContent("SearchTestGroup");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", groupPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, new long[] {}, null, "SearchTest", true, false, false, false, PostSortCriterion.ANSWER_COUNT,
                 SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        Page<Post> searchResults = conversationMessageRepository.findCourseWideMessages(filter, Pageable.unpaged(), student1.getId());
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
         List<Post> resultPosts = searchResults.getContent();
 
         assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestGroup");
