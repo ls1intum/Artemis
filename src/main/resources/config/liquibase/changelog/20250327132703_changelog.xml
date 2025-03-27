@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20240315000000" author="ahmetsenturk">
+        <createTable tableName="feedback_learner_profile">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="learner_profile_id" type="BIGINT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="practical_vs_theoretical" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creative_vs_focused" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="follow_up_vs_summary" type="INTEGER" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="brief_vs_detailed" type="INTEGER" defaultValue="2">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseColumnNames="learner_profile_id"
+                                baseTableName="feedback_learner_profile"
+                                constraintName="fk_feedback_learner_profile_learner_profile"
+                                referencedColumnNames="id"
+                                referencedTableName="learner_profile"/>
+
+        <createIndex tableName="feedback_learner_profile" indexName="idx_feedback_learner_profile_learner_profile">
+            <column name="learner_profile_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog> 

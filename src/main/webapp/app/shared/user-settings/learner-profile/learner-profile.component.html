@@ -1,81 +1,76 @@
-<div class="container-fluid">
-    <div class="card">
-        <div class="card-header">
-            <h3 jhiTranslate="artemisApp.learnerProfile.title">Learner Profile Settings</h3>
-        </div>
-        <div class="card-body">
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h4 jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.title">Practical vs. Theoretical</h4>
-                    <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.description">
-                        Adjust how you prefer to receive feedback - from concrete examples and applications to theoretical concepts and explanations.
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title" jhiTranslate="artemisApp.learnerProfile.title">Learner Profile</h1>
+                    <p class="card-text" jhiTranslate="artemisApp.learnerProfile.description">
+                        Customize your learning experience by adjusting your preferences for feedback style.
                     </p>
-                    <mat-slider min="0" max="2" step="1">
-                        <input matSliderThumb [(ngModel)]="practicalVsTheoretical" (valueChange)="onSliderChange()" />
-                    </mat-slider>
-                    <div class="d-flex justify-content-between">
-                        <span>Practical</span>
-                        <span>Balanced</span>
-                        <span>Theoretical</span>
-                    </div>
-                </div>
-            </div>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h4 jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.title">Creative Exploration vs. Focused Guidance</h4>
-                    <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.description">
-                        Choose between receiving prompts that encourage exploring multiple approaches or focused guidance along a clear path.
-                    </p>
-                    <mat-slider min="0" max="2" step="1">
-                        <input matSliderThumb [(ngModel)]="creativeVsFocused" (valueChange)="onSliderChange()" />
-                    </mat-slider>
-                    <div class="d-flex justify-content-between">
-                        <span>Creative Exploration</span>
-                        <span>Balanced</span>
-                        <span>Focused Guidance</span>
+                    <div class="preference-section">
+                        <h6 jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.title">Practical vs. Theoretical</h6>
+                        <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.description">
+                            Adjust how you prefer to receive feedback - from concrete examples and applications to theoretical concepts and explanations.
+                        </p>
+                        <mat-slider min="0" max="2" step="1" [discrete]="true">
+                            <input matSliderThumb [value]="profile.practicalVsTheoretical" (valueChange)="profile.practicalVsTheoretical = $event" />
+                        </mat-slider>
+                        <div class="labels">
+                            <span jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.practical">Practical</span>
+                            <span jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.theoretical">Theoretical</span>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h4 jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.title">Follow-up Questions vs. Summary</h4>
-                    <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.description">
-                        Select whether you prefer feedback that prompts further thinking or clear conclusions that wrap up the topic.
-                    </p>
-                    <mat-slider min="0" max="2" step="1">
-                        <input matSliderThumb [(ngModel)]="followUpVsSummary" (valueChange)="onSliderChange()" />
-                    </mat-slider>
-                    <div class="d-flex justify-content-between">
-                        <span>Follow-up Questions</span>
-                        <span>Balanced</span>
-                        <span>Summary</span>
+                    <div class="preference-section">
+                        <h6 jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.title">Creative Exploration vs. Focused Guidance</h6>
+                        <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.description">
+                            Choose between receiving prompts that encourage exploring multiple approaches or focused guidance along a clear path.
+                        </p>
+                        <mat-slider min="0" max="2" step="1" [discrete]="true">
+                            <input matSliderThumb [value]="profile.creativeVsFocused" (valueChange)="profile.creativeVsFocused = $event" />
+                        </mat-slider>
+                        <div class="labels">
+                            <span jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.creative">Creative</span>
+                            <span jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.focused">Focused</span>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h4 jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.title">Brief vs. Detailed</h4>
-                    <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.description">
-                        Choose between concise feedback or detailed explanations with more context and background information.
-                    </p>
-                    <mat-slider min="0" max="2" step="1">
-                        <input matSliderThumb [(ngModel)]="briefVsDetailed" (valueChange)="onSliderChange()" />
-                    </mat-slider>
-                    <div class="d-flex justify-content-between">
-                        <span>Brief</span>
-                        <span>Balanced</span>
-                        <span>Detailed</span>
+                    <div class="preference-section">
+                        <h6 jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.title">Follow-up Questions vs. Summary</h6>
+                        <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.description">
+                            Select whether you prefer feedback that prompts further thinking or clear conclusions that wrap up the topic.
+                        </p>
+                        <mat-slider min="0" max="2" step="1" [discrete]="true">
+                            <input matSliderThumb [value]="profile.followUpVsSummary" (valueChange)="profile.followUpVsSummary = $event" />
+                        </mat-slider>
+                        <div class="labels">
+                            <span jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.followUp">Follow-up</span>
+                            <span jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.summary">Summary</span>
+                        </div>
+                    </div>
+
+                    <div class="preference-section">
+                        <h6 jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.title">Brief vs. Detailed</h6>
+                        <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.description">
+                            Choose between concise feedback or detailed explanations with more context and background information.
+                        </p>
+                        <mat-slider min="0" max="2" step="1" [discrete]="true">
+                            <input matSliderThumb [value]="profile.briefVsDetailed" (valueChange)="profile.briefVsDetailed = $event" />
+                        </mat-slider>
+                        <div class="labels">
+                            <span jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.brief">Brief</span>
+                            <span jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.detailed">Detailed</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button class="btn btn-primary" (click)="save()">
+                            <span jhiTranslate="entity.action.save">Save</span>
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="card-footer">
-            <button class="btn btn-primary" (click)="save()" [disabled]="!settingsChanged">
-                <span jhiTranslate="entity.action.save">Save</span>
-            </button>
         </div>
     </div>
 </div>

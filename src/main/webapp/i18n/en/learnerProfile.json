@@ -2,21 +2,30 @@
     "artemisApp": {
         "learnerProfile": {
             "title": "Learner Profile Settings",
+            "description": "Customize your learning experience by adjusting your preferences for feedback style.",
             "practicalVsTheoretical": {
                 "title": "Practical vs. Theoretical",
-                "description": "Adjust how you prefer to receive feedback - from concrete examples and applications to theoretical concepts and explanations."
+                "description": "Adjust how you prefer to receive feedback - from concrete examples and applications to theoretical concepts and explanations.",
+                "practical": "Practical",
+                "theoretical": "Theoretical"
             },
             "creativeVsFocused": {
                 "title": "Creative Exploration vs. Focused Guidance",
-                "description": "Choose between receiving prompts that encourage exploring multiple approaches or focused guidance along a clear path."
+                "description": "Choose between receiving prompts that encourage exploring multiple approaches or focused guidance along a clear path.",
+                "creative": "Creative",
+                "focused": "Focused"
             },
             "followUpVsSummary": {
                 "title": "Follow-up Questions vs. Summary",
-                "description": "Select whether you prefer feedback that prompts further thinking or clear conclusions that wrap up the topic."
+                "description": "Select whether you prefer feedback that prompts further thinking or clear conclusions that wrap up the topic.",
+                "followUp": "Follow-up",
+                "summary": "Summary"
             },
             "briefVsDetailed": {
                 "title": "Brief vs. Detailed",
-                "description": "Choose between concise feedback or detailed explanations with more context and background information."
+                "description": "Choose between concise feedback or detailed explanations with more context and background information.",
+                "brief": "Brief",
+                "detailed": "Detailed"
             }
         }
     }
