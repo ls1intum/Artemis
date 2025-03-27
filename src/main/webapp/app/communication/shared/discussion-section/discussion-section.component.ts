@@ -273,7 +273,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {
             courseId: undefined,
-            conversationId: this.channel?.id,
+            conversationIds: this.channel?.id ? [this.channel?.id] : undefined,
             searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,

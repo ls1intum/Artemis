@@ -149,6 +149,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             courseId: this.course?.id,
             searchText: searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
+            filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
             filterToOwn: searchConfig.filterToOwn,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
@@ -158,7 +159,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             pageSize: 50,
         };
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.currentPostContextFilter!.courseWideChannelIds = conversations
+            this.currentPostContextFilter!.conversationIds = conversations
                 .filter((conversation) => !(this.currentPostContextFilter?.filterToUnresolved && this.conversationIsAnnouncement(conversation)))
                 .map((conversation) => conversation.id!);
         });
@@ -212,6 +213,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
 export class CourseWideSearchConfig {
     searchTerm: string;
+    filterToCourseWide: boolean;
     filterToUnresolved: boolean;
     filterToOwn: boolean;
     filterToAnsweredOrReacted: boolean;
