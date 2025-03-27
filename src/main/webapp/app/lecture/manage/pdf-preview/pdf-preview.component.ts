@@ -158,21 +158,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
-                this.attachmentSub = this.attachmentService
-                    .getAttachmentFile(this.course()!.id!, this.attachment()!.id!)
-                    .pipe(finalize(() => this.isPdfLoading.set(false)))
-                    .subscribe({
-                        next: (blob: Blob) => {
-                            const url = URL.createObjectURL(blob);
-                            this.currentPdfUrl.set(url);
-                            blob.arrayBuffer().then((arrayBuffer) => {
-                                this.loadPdf(url, arrayBuffer, 'original');
-                            });
-                        },
-                        error: (error: HttpErrorResponse) => {
-                            onError(this.alertService, error);
-                        },
-                    });
+                this.fetchPdfFile('attachment');
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
                 const { slides } = data.attachmentUnit;
@@ -191,25 +177,63 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
                 this.hiddenPages.set({ ...hiddenPagesMap });
-                this.attachmentUnitSub = this.attachmentUnitService
-                    .getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!)
-                    .pipe(finalize(() => this.isPdfLoading.set(false)))
-                    .subscribe({
-                        next: (blob: Blob) => {
-                            const url = URL.createObjectURL(blob);
-                            this.currentPdfUrl.set(url);
-                            blob.arrayBuffer().then((arrayBuffer) => {
-                                this.loadPdf(url, arrayBuffer, 'original', slides);
-                            });
-                        },
-                        error: (error: HttpErrorResponse) => {
-                            onError(this.alertService, error);
-                        },
-                    });
+
+                this.fetchPdfFile('attachmentUnit', slides);
             } else {
                 this.isPdfLoading.set(false);
             }
         });
+    }
+
+    /**
+     * Fetches a PDF file based on the specified file type (attachment or attachmentUnit).
+     * @param fileType The type of file to fetch ('attachment' or 'attachmentUnit')
+     * @param slides Optional array of slides (only used for attachmentUnit)
+     */
+    private fetchPdfFile(fileType: 'attachment' | 'attachmentUnit', slides?: Slide[]): void {
+        const courseId = this.course()!.id!;
+        let subscription: Subscription;
+
+        if (fileType === 'attachment') {
+            subscription = this.attachmentService
+                .getAttachmentFile(courseId, this.attachment()!.id!)
+                .pipe(finalize(() => this.isPdfLoading.set(false)))
+                .subscribe({
+                    next: (blob: Blob) => this.processPdfBlob(blob, slides),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+
+            this.attachmentSub = subscription;
+        } else {
+            subscription = this.attachmentUnitService
+                .getAttachmentFile(courseId, this.attachmentUnit()!.id!)
+                .pipe(finalize(() => this.isPdfLoading.set(false)))
+                .subscribe({
+                    next: (blob: Blob) => this.processPdfBlob(blob, slides),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+
+            this.attachmentUnitSub = subscription;
+        }
+    }
+
+    /**
+     * Processes a PDF blob by creating a URL object and loading the PDF.
+     * @param blob The PDF file as a Blob
+     * @param existingSlides Optional array of existing slides
+     */
+    private processPdfBlob(blob: Blob, existingSlides?: Slide[]): void {
+        const url = URL.createObjectURL(blob);
+        this.currentPdfUrl.set(url);
+
+        blob.arrayBuffer()
+            .then((arrayBuffer) => {
+                this.loadPdf(url, arrayBuffer, 'original', existingSlides);
+            })
+            .catch((error) => {
+                onError(this.alertService, error);
+                this.isPdfLoading.set(false);
+            });
     }
 
     /**
@@ -362,11 +386,183 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Applies the operations directly to the original PDF document
-     * Operations are applied sequentially: deletions, merges, and reordering
-     * Hidden slides are only removed in the student version
-     * @param studentVersion Whether to create a student version
-     * @returns A Promise that resolves to an object with instructor and student PDFs
+     * Creates a PDF document based on the source PDF and operations
+     *
+     * @param sourcePdfDoc The source PDF document
+     * @param operations The operations to apply
+     * @param pageOrder The current page order
+     * @param hiddenSlideIds Optional array of slide IDs to exclude from the PDF
+     * @returns Promise<PDFDocument> The created PDF document
+     */
+    private async createPdfDocument(sourcePdfDoc: PDFDocument, operations: PdfOperation[], pageOrder: OrderedPage[], hiddenSlideIds: string[] = []): Promise<PDFDocument> {
+        const pdfDoc = await PDFDocument.load(await sourcePdfDoc.save());
+
+        const slideToPageMap = new Map<string, number>();
+        pageOrder
+            .filter((page) => page.sourcePdfId === 'original')
+            .forEach((page) => {
+                slideToPageMap.set(page.slideId, page.sourceIndex);
+            });
+
+        const sortedOperations = [...operations].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
+
+        for (const operation of sortedOperations) {
+            await this.applyOperation(pdfDoc, operation, slideToPageMap);
+        }
+
+        if (hiddenSlideIds.length > 0) {
+            await this.removeHiddenPages(pdfDoc, hiddenSlideIds, pageOrder);
+        }
+
+        return pdfDoc;
+    }
+
+    /**
+     * Applies a single operation to the PDF document
+     *
+     * @param pdfDoc The PDF document to modify
+     * @param operation The operation to apply
+     * @param slideToPageMap The mapping from slide ID to page index
+     */
+    private async applyOperation(pdfDoc: PDFDocument, operation: PdfOperation, slideToPageMap: Map<string, number>): Promise<void> {
+        switch (operation.type) {
+            case 'DELETE': {
+                await this.applyDeleteOperation(pdfDoc, operation.data.slideIds, slideToPageMap);
+                break;
+            }
+            case 'MERGE': {
+                await this.applyMergeOperation(pdfDoc, operation.data.sourceId, slideToPageMap);
+                break;
+            }
+            case 'REORDER': {
+                await this.applyReorderOperation(pdfDoc, operation.data.pageOrder, slideToPageMap);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Applies a DELETE operation to the PDF document
+     */
+    private async applyDeleteOperation(pdfDoc: PDFDocument, slideIds: string[], slideToPageMap: Map<string, number>): Promise<void> {
+        const pageIndicesToDelete = [];
+
+        for (const slideId of slideIds) {
+            const originalIndex = slideToPageMap.get(slideId);
+            if (originalIndex !== undefined) {
+                pageIndicesToDelete.push(originalIndex);
+            }
+        }
+
+        pageIndicesToDelete.sort((a, b) => b - a);
+
+        for (const pageIndex of pageIndicesToDelete) {
+            pdfDoc.removePage(pageIndex);
+        }
+
+        for (const slideId of slideIds) {
+            slideToPageMap.delete(slideId);
+        }
+
+        const remainingSlides = Array.from(slideToPageMap.entries());
+        for (const [slideId, pageIndex] of remainingSlides) {
+            const newIndex = pageIndex - pageIndicesToDelete.filter((delIndex) => delIndex < pageIndex).length;
+            slideToPageMap.set(slideId, newIndex);
+        }
+    }
+
+    /**
+     * Applies a MERGE operation to the PDF document
+     */
+    private async applyMergeOperation(pdfDoc: PDFDocument, sourceId: string, slideToPageMap: Map<string, number>): Promise<void> {
+        const sourcePdf = this.sourcePDFs().get(sourceId);
+        if (sourcePdf) {
+            const pageIndices = Array.from({ length: sourcePdf.pdfDocument.getPageCount() }, (_, i) => i);
+            const copiedPages = await pdfDoc.copyPages(sourcePdf.pdfDocument, pageIndices);
+            for (const page of copiedPages) {
+                pdfDoc.addPage(page);
+            }
+        }
+
+        const mergePages = this.pageOrder().filter((page) => page.sourcePdfId === sourceId);
+        const baseIndex = pdfDoc.getPageCount() - mergePages.length;
+
+        mergePages.forEach((page, index) => {
+            slideToPageMap.set(page.slideId, baseIndex + index);
+        });
+    }
+
+    /**
+     * Applies a REORDER operation to the PDF document
+     */
+    private async applyReorderOperation(pdfDoc: PDFDocument, pageOrder: { slideId: string; order: number }[], slideToPageMap: Map<string, number>): Promise<void> {
+        const totalPages = pdfDoc.getPageCount();
+        const pageObjects = Array.from({ length: totalPages }, (_, i) => pdfDoc.getPage(i));
+
+        for (let i = totalPages - 1; i >= 0; i--) {
+            pdfDoc.removePage(i);
+        }
+
+        const slideToOrderMap = new Map<string, number>();
+        pageOrder.forEach((item) => {
+            slideToOrderMap.set(item.slideId, item.order);
+        });
+
+        const reorderEntries = Array.from(slideToPageMap.entries()).map(([slideId, originalIndex]) => ({
+            slideId: slideId,
+            originalIndex: originalIndex,
+            targetOrder: slideToOrderMap.get(slideId) || Number.MAX_SAFE_INTEGER,
+        }));
+
+        reorderEntries.sort((a, b) => a.targetOrder - b.targetOrder);
+
+        const newSlideToPageMap = new Map<string, number>();
+
+        for (let i = 0; i < reorderEntries.length; i++) {
+            const { slideId, originalIndex } = reorderEntries[i];
+            if (originalIndex !== undefined && originalIndex < pageObjects.length) {
+                pdfDoc.addPage(pageObjects[originalIndex]);
+                newSlideToPageMap.set(slideId, i);
+            }
+        }
+
+        slideToPageMap.clear();
+        for (const [slideId, newIndex] of newSlideToPageMap.entries()) {
+            slideToPageMap.set(slideId, newIndex);
+        }
+    }
+
+    /**
+     * Removes hidden pages from the PDF document
+     */
+    private async removeHiddenPages(pdfDoc: PDFDocument, hiddenSlideIds: string[], pageOrder: OrderedPage[]): Promise<void> {
+        const slideToFinalPositionMap = new Map<string, number>();
+        pageOrder.forEach((page, index) => {
+            slideToFinalPositionMap.set(page.slideId, index);
+        });
+
+        const hiddenPageIndices = hiddenSlideIds
+            .map((slideId) => slideToFinalPositionMap.get(slideId))
+            .filter((index): index is number => index !== undefined)
+            .sort((a, b) => b - a);
+
+        for (const pageIndex of hiddenPageIndices) {
+            pdfDoc.removePage(pageIndex);
+        }
+    }
+
+    /**
+     * Creates a File object from a PDF document
+     */
+    private async createPdfFile(pdfDoc: PDFDocument, fileName: string, isStudentVersion: boolean = false): Promise<File> {
+        const pdfBytes = await pdfDoc.save();
+        const suffix = isStudentVersion ? '_student' : '';
+        return new File([pdfBytes], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
+    }
+
+    /**
+     * Applies operations to create instructor and student PDF documents
+     * Refactored version of the original applyOperations method
      */
     async applyOperations(studentVersion: boolean = false): Promise<{
         instructorPdf: PDFDocument;
@@ -377,141 +573,153 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             throw new Error('Original PDF source not found');
         }
 
-        const instructorPdf = await PDFDocument.load(await originalSource.pdfDocument.save());
+        const instructorPdf = await this.createPdfDocument(originalSource.pdfDocument, this.operations, this.pageOrder());
 
-        const slideToPageMap = new Map();
-        this.pageOrder()
-            .filter((page) => page.sourcePdfId === 'original')
-            .forEach((page) => {
-                slideToPageMap.set(page.slideId, page.sourceIndex);
-            });
-
-        const sortedOperations = [...this.operations].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
-
-        for (const operation of sortedOperations) {
-            switch (operation.type) {
-                case 'DELETE': {
-                    const { slideIds } = operation.data;
-
-                    const pageIndicesToDelete = [];
-
-                    for (const slideId of slideIds) {
-                        const originalIndex = slideToPageMap.get(slideId);
-                        if (originalIndex !== undefined) {
-                            pageIndicesToDelete.push(originalIndex);
-                        }
-                    }
-
-                    pageIndicesToDelete.sort((a, b) => b - a);
-
-                    for (const pageIndex of pageIndicesToDelete) {
-                        instructorPdf.removePage(pageIndex);
-                    }
-
-                    for (const slideId of slideIds) {
-                        slideToPageMap.delete(slideId);
-                    }
-
-                    const remainingSlides = Array.from(slideToPageMap.entries());
-                    for (const [slideId, pageIndex] of remainingSlides) {
-                        const newIndex = pageIndex - pageIndicesToDelete.filter((delIndex) => delIndex < pageIndex).length;
-                        slideToPageMap.set(slideId, newIndex);
-                    }
-                    break;
-                }
-
-                case 'MERGE': {
-                    const { sourceId } = operation.data;
-                    const sourcePdf = this.sourcePDFs().get(sourceId);
-                    if (sourcePdf) {
-                        const pageIndices = Array.from({ length: sourcePdf.pdfDocument.getPageCount() }, (_, i) => i);
-                        const copiedPages = await instructorPdf.copyPages(sourcePdf.pdfDocument, pageIndices);
-                        for (const page of copiedPages) {
-                            instructorPdf.addPage(page);
-                        }
-                    }
-
-                    const mergePages = this.pageOrder().filter((page) => page.sourcePdfId === sourceId);
-
-                    const baseIndex = instructorPdf.getPageCount() - mergePages.length;
-
-                    mergePages.forEach((page, index) => {
-                        slideToPageMap.set(page.slideId, baseIndex + index);
-                    });
-                    break;
-                }
-
-                case 'REORDER': {
-                    const { pageOrder } = operation.data;
-
-                    const totalPages = instructorPdf.getPageCount();
-                    const pageObjects = Array.from({ length: totalPages }, (_, i) => instructorPdf.getPage(i));
-
-                    for (let i = totalPages - 1; i >= 0; i--) {
-                        instructorPdf.removePage(i);
-                    }
-
-                    const slideToOrderMap = new Map();
-                    pageOrder.forEach((item: { slideId: string; order: number }) => {
-                        slideToOrderMap.set(item.slideId, item.order);
-                    });
-
-                    const reorderEntries = Array.from(slideToPageMap.entries()).map(([slideId, originalIndex]) => [
-                        slideId,
-                        originalIndex,
-                        slideToOrderMap.get(slideId) || Number.MAX_SAFE_INTEGER,
-                    ]);
-
-                    reorderEntries.sort((a, b) => (a[2] as number) - (b[2] as number));
-
-                    const newSlideToPageMap = new Map();
-
-                    for (let i = 0; i < reorderEntries.length; i++) {
-                        const [slideId, originalIndex] = reorderEntries[i];
-                        if (originalIndex !== undefined && originalIndex < pageObjects.length) {
-                            instructorPdf.addPage(pageObjects[originalIndex as number]);
-                            newSlideToPageMap.set(slideId, i); // Set the new index
-                        }
-                    }
-
-                    slideToPageMap.clear();
-                    for (const [slideId, newIndex] of newSlideToPageMap.entries()) {
-                        slideToPageMap.set(slideId, newIndex);
-                    }
-                    break;
-                }
-            }
-        }
-
-        // Create student version if requested
         let studentPdf = null;
         if (studentVersion) {
             const hiddenSlideIds = Object.keys(this.hiddenPages());
-
             if (hiddenSlideIds.length > 0) {
                 studentPdf = await PDFDocument.load(await instructorPdf.save());
-
-                const finalPageOrder = await this.getFinalPageOrder();
-
-                const slideToFinalPositionMap = new Map();
-                finalPageOrder.forEach((page, index) => {
-                    slideToFinalPositionMap.set(page.slideId, index);
-                });
-
-                const hiddenPageIndices = hiddenSlideIds
-                    .map((slideId) => slideToFinalPositionMap.get(slideId))
-                    .filter((index) => index !== undefined)
-                    .sort((a, b) => (b as number) - (a as number));
-
-                for (const pageIndex of hiddenPageIndices) {
-                    if (pageIndex !== undefined) {
-                        studentPdf.removePage(pageIndex);
-                    }
-                }
+                await this.removeHiddenPages(studentPdf, hiddenSlideIds, await this.getFinalPageOrder());
             }
         }
 
         return { instructorPdf, studentPdf };
+    }
+
+    /**
+     * Updates the attachment with both instructor and student versions
+     * Refactored version combining updateAttachmentWithFile and updateAttachmentUnitStudentVersion
+     */
+    async updateAttachmentWithFile(): Promise<void> {
+        this.isSaving.set(true);
+
+        try {
+            const pdfName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
+            const { instructorPdf, studentPdf } = await this.applyOperations(true);
+
+            const instructorPdfFile = await this.createPdfFile(instructorPdf, pdfName);
+
+            if (instructorPdfFile.size > MAX_FILE_SIZE) {
+                this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
+                this.isSaving.set(false);
+                return;
+            }
+
+            if (this.attachment()) {
+                await this.updateAttachment(instructorPdfFile);
+            } else if (this.attachmentUnit()) {
+                const hiddenPages = this.getHiddenPages();
+                await this.updateAttachmentUnit(instructorPdfFile, hiddenPages);
+
+                if (studentPdf && hiddenPages.length > 0) {
+                    const studentPdfFile = await this.createPdfFile(studentPdf, pdfName, true);
+                    await this.updateStudentVersion(studentPdfFile);
+                } else {
+                    this.finishSaving();
+                }
+            }
+        } catch (error) {
+            this.isSaving.set(false);
+            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+        }
+    }
+
+    /**
+     * Updates a regular attachment
+     */
+    private updateAttachment(instructorPdfFile: File): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.attachmentToBeEdited.set(this.attachment());
+            this.attachmentToBeEdited()!.version!++;
+            this.attachmentToBeEdited()!.uploadDate = dayjs();
+
+            this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, instructorPdfFile).subscribe({
+                next: () => {
+                    this.finishSaving();
+                    resolve();
+                },
+                error: (error) => {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                    reject(error);
+                },
+            });
+        });
+    }
+
+    /**
+     * Updates an attachment unit
+     */
+    private async updateAttachmentUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
+            this.attachmentToBeEdited()!.uploadDate = dayjs();
+
+            const formData = new FormData();
+            formData.append('file', instructorPdfFile);
+            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
+            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
+
+            this.getFinalPageOrder().then((finalPageOrder) => {
+                formData.append(
+                    'pageOrder',
+                    JSON.stringify(
+                        finalPageOrder.map((page) => ({
+                            slideId: page.slideId,
+                            order: page.order,
+                        })),
+                    ),
+                );
+
+                if (hiddenPages.length > 0) {
+                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
+                }
+
+                this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+                    next: () => resolve(),
+                    error: (error) => {
+                        this.isSaving.set(false);
+                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                        reject(error);
+                    },
+                });
+            });
+        });
+    }
+
+    /**
+     * Updates only the student version of the attachment unit
+     */
+    private updateStudentVersion(studentPdfFile: File): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const formData = new FormData();
+            formData.append('studentVersion', studentPdfFile);
+
+            this.attachmentUnitService.updateStudentVersion(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+                next: () => {
+                    this.finishSaving();
+                    resolve();
+                },
+                error: (error) => {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: error.message });
+                    reject(error);
+                },
+            });
+        });
+    }
+
+    /**
+     * Finishes the saving process and resets state
+     */
+    private finishSaving(): void {
+        this.isSaving.set(false);
+        this.operations = [];
+        this.hasOperations.set(false);
+        this.isFileChanged.set(false);
+        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+        this.navigateToCourseManagement();
     }
 
     /**
@@ -548,125 +756,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             ...page,
             order: index + 1,
         }));
-    }
-
-    /**
-     * Updates the existing attachment file or creates a student version of the attachment with hidden files.
-     */
-    async updateAttachmentWithFile(): Promise<void> {
-        this.isSaving.set(true);
-
-        try {
-            const pdfName = this.attachment()?.name ?? this.attachmentUnit()?.name ?? '';
-            const { instructorPdf, studentPdf } = await this.applyOperations(true);
-
-            const instructorBytes = await instructorPdf.save();
-            const instructorPdfFile = new File([instructorBytes], `${pdfName}.pdf`, { type: 'application/pdf' });
-
-            if (instructorPdfFile.size > MAX_FILE_SIZE) {
-                this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
-                this.isSaving.set(false);
-                return;
-            }
-
-            if (this.attachment()) {
-                this.attachmentToBeEdited.set(this.attachment());
-                this.attachmentToBeEdited()!.version!++;
-                this.attachmentToBeEdited()!.uploadDate = dayjs();
-
-                this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, instructorPdfFile).subscribe({
-                    next: () => {
-                        this.finishSaving();
-                    },
-                    error: (error) => {
-                        this.isSaving.set(false);
-                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                    },
-                });
-            } else if (this.attachmentUnit()) {
-                this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
-                this.attachmentToBeEdited()!.uploadDate = dayjs();
-
-                const formData = new FormData();
-                formData.append('file', instructorPdfFile);
-                formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-                formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
-
-                const finalPageOrder = await this.getFinalPageOrder();
-
-                formData.append(
-                    'pageOrder',
-                    JSON.stringify(
-                        finalPageOrder.map((page) => ({
-                            slideId: page.slideId,
-                            order: page.order,
-                        })),
-                    ),
-                );
-
-                const hiddenPages = this.getHiddenPages();
-                if (hiddenPages.length > 0) {
-                    formData.append('hiddenPages', JSON.stringify(hiddenPages));
-                }
-
-                this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
-                    next: () => {
-                        if (studentPdf && hiddenPages.length > 0) {
-                            this.updateAttachmentUnitStudentVersion(studentPdf, pdfName);
-                        } else {
-                            this.finishSaving();
-                        }
-                    },
-                    error: (error) => {
-                        this.isSaving.set(false);
-                        this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                    },
-                });
-            }
-        } catch (error) {
-            this.isSaving.set(false);
-            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-        }
-    }
-
-    /**
-     * Updates only the student version of the attachment unit's attachment
-     * @param studentPdf The student PDF document
-     * @param pdfName The base name for the PDF file
-     */
-    private updateAttachmentUnitStudentVersion(studentPdf: PDFDocument, pdfName: string): void {
-        studentPdf
-            .save()
-            .then((studentBytes) => {
-                const studentPdfFile = new File([studentBytes], `${pdfName}_student.pdf`, { type: 'application/pdf' });
-
-                const formData = new FormData();
-                formData.append('studentVersion', studentPdfFile);
-
-                this.attachmentUnitService.updateStudentVersion(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
-                    next: () => this.finishSaving(),
-                    error: (error) => {
-                        this.isSaving.set(false);
-                        this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: error.message });
-                    },
-                });
-            })
-            .catch((error) => {
-                this.isSaving.set(false);
-                this.alertService.error('artemisApp.attachment.pdfPreview.studentVersionCreateError', { error: error.message });
-            });
-    }
-
-    /**
-     * Finishes the saving process and resets state
-     */
-    private finishSaving(): void {
-        this.isSaving.set(false);
-        this.operations = [];
-        this.hasOperations.set(false);
-        this.isFileChanged.set(false);
-        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-        this.navigateToCourseManagement();
     }
 
     /**
