@@ -43,13 +43,11 @@
     }
 
     @if (showSearchResultInAnswersHint()) {
-        <div>
-            <button class="reaction-button info reaction-button--not-hoverable">
-                <fa-icon class="fa-xs align-self-center" [icon]="faInfoCircle" />
-                <span class="emoji-count px-2">
-                    {{ 'artemisApp.metis.overview.searchResultInAnswersHint' | artemisTranslate }}
-                </span>
-            </button>
+        <div class="search-result-in-answers-info">
+            <fa-icon class="fa-xs align-self-center" [icon]="faInfoCircle" />
+            <span class="emoji-count px-2">
+                {{ 'artemisApp.metis.overview.searchResultInAnswersHint' | artemisTranslate }}
+            </span>
         </div>
     }
 
