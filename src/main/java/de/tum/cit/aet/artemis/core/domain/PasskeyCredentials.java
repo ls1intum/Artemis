@@ -42,6 +42,7 @@ import com.webauthn4j.springframework.security.credential.WebAuthnCredentialReco
 @Entity
 @Table(name = "passkey_credentials")
 public class PasskeyCredentials extends AbstractAuditingEntity {
+    // TODO add implements WebAuthnCredentialRecord ?
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -85,6 +86,14 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
     private boolean backupState = false;
 
     // Getters and Setters
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public User getUser() {
         return user;

@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -22,10 +21,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidationResponse;
 import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidator;
+import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecord;
+import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordImpl;
+import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordManager;
 import com.webauthn4j.springframework.security.exception.WebAuthnAuthenticationException;
 import com.webauthn4j.util.exception.WebAuthnException;
 
-import de.tum.cit.aet.artemis.core.dto.WebAuthnCredential;
+import de.tum.cit.aet.artemis.core.dto.CreatePasskeyDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 
@@ -43,9 +45,11 @@ public class PublicWebauthnResource {
 
     private final WebAuthnRegistrationRequestValidator registrationRequestValidator;
 
-    @Autowired
-    public PublicWebauthnResource(WebAuthnRegistrationRequestValidator registrationRequestValidator) {
+    private final WebAuthnCredentialRecordManager webAuthnAuthenticatorManager;
+
+    public PublicWebauthnResource(WebAuthnRegistrationRequestValidator registrationRequestValidator, WebAuthnCredentialRecordManager webAuthnAuthenticatorManager) {
         this.registrationRequestValidator = registrationRequestValidator;
+        this.webAuthnAuthenticatorManager = webAuthnAuthenticatorManager;
     }
 
     /**
@@ -55,7 +59,7 @@ public class PublicWebauthnResource {
      */
     @PostMapping("signup")
     @EnforceNothing
-    public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody WebAuthnCredential webAuthnCredential, BindingResult result)
+    public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result)
             throws URISyntaxException {
 
         if (result.hasErrors()) {
@@ -69,7 +73,8 @@ public class PublicWebauthnResource {
 
         String clientExtensionResultsJson = null;
         try {
-            clientExtensionResultsJson = objectMapper.writeValueAsString(webAuthnCredential.clientExtensionResults());
+            // TODO do this in the class directly
+            clientExtensionResultsJson = objectMapper.writeValueAsString(createPasskeyDTO.webAuthnCredential().clientExtensionResults());
             log.debug(clientExtensionResultsJson);
         }
         catch (JsonProcessingException e) {
@@ -80,11 +85,31 @@ public class PublicWebauthnResource {
         WebAuthnRegistrationRequestValidationResponse registrationRequestValidationResponse;
         try {
             // TODO check data from the demo and diff to what we sent from the client right now
-            registrationRequestValidationResponse = registrationRequestValidator.validate(request, webAuthnCredential.response().clientDataJSON(),
-                    webAuthnCredential.response().attestationObject(), webAuthnCredential.response().transports(), clientExtensionResultsJson);
+            registrationRequestValidationResponse = registrationRequestValidator.validate(request, createPasskeyDTO.webAuthnCredential().response().clientDataJSON(),
+                    createPasskeyDTO.webAuthnCredential().response().attestationObject(), createPasskeyDTO.webAuthnCredential().response().transports(),
+                    clientExtensionResultsJson);
         }
         catch (WebAuthnException | WebAuthnAuthenticationException ignored) {
             throw new BadRequestAlertException("WebAuthn registration request validation failed. Please try again.", ENTITY_NAME, "TODO");
+        }
+
+        if (registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData() == null) {
+            throw new BadRequestAlertException("attestedCredentialData is null", ENTITY_NAME, null);
+        }
+
+        // TODO exchange name and user principal
+        WebAuthnCredentialRecord authenticator = new WebAuthnCredentialRecordImpl("authenticator", "userPrincipal",
+                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData(),
+                registrationRequestValidationResponse.getAttestationObject().getAttestationStatement(),
+                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getSignCount(), registrationRequestValidationResponse.getTransports(),
+                registrationRequestValidationResponse.getRegistrationExtensionsClientOutputs(),
+                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getExtensions());
+
+        try {
+            webAuthnAuthenticatorManager.createCredentialRecord(authenticator);
+        }
+        catch (IllegalArgumentException ex) {
+            throw new BadRequestAlertException("Passkey registration failed", ENTITY_NAME, null);
         }
 
         return ResponseEntity.ok().build();

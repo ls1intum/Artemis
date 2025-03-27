@@ -59,6 +59,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         // TODO add error handling
         const options = await this.passkeySettingsApiService.getWebauthnOptions();
         const credentialOptions = this.createCredentialOptions(options);
+
         const credential = await navigator.credentials.create({
             publicKey: credentialOptions,
         });
@@ -68,17 +69,21 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        await this.passkeySettingsApiService.createNewPasskey(credential);
+        // const userId = '' + this.currentUser!.id!.toString(); // TODO adjust properly
+        await this.passkeySettingsApiService.createNewPasskey({
+            userHandle: 'test',
+            username: 'test',
+            webAuthnCredential: credential,
+        });
     }
 
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
-        const username = this.currentUser?.login ?? 'Should be defined';
-
         const userId = this.currentUser?.id;
 
         if (!userId) {
             throw new Error('User ID is undefined');
         }
+        const username = '' + userId; // TODO adjust properly
 
         // TODO verify values are set properly
         return {
