@@ -1,7 +1,7 @@
 import { TextEditorService } from 'app/text/overview/text-editor.service';
 
 import { provideHttpClient } from '@angular/common/http';
-import { Language } from 'app/entities/course.model';
+import { Language } from 'app/core/shared/entities/course.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 

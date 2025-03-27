@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 describe('LinkifyService', () => {
     let service: LinkifyService;

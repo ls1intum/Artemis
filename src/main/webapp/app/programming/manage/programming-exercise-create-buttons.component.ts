@@ -1,9 +1,9 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faFileImport, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router, RouterLink } from '@angular/router';

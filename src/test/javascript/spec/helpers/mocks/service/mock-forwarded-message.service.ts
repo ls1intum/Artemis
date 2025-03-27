@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 
 export class MockForwardedMessageService {
     private forwardedMessages: Map<number, ForwardedMessage[]> = new Map();

@@ -5,7 +5,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SettingsComponent } from 'app/core/account/settings/settings.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

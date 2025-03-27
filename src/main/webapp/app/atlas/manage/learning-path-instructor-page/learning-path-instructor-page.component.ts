@@ -5,7 +5,7 @@ import { lastValueFrom, map } from 'rxjs';
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-state/learning-paths-state.component';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';

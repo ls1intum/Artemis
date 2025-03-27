@@ -1,7 +1,7 @@
 import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/metis.service';
 import { PostingEditType } from 'app/communication/metis.util';
 

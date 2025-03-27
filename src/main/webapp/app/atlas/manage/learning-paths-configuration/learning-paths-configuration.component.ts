@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, si
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathApiService } from '../../shared/learning-path-api.service';
-import { LearningPathsConfigurationDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathsConfigurationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 

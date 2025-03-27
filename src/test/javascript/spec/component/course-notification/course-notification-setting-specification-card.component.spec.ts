@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationSettingSpecificationCardComponent } from 'app/communication/course-notification/course-notification-setting-specification-card/course-notification-setting-specification-card.component';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseNotificationChannelSetting } from 'app/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
 
 describe('CourseNotificationSettingSpecificationCardComponent', () => {
     let component: CourseNotificationSettingSpecificationCardComponent;

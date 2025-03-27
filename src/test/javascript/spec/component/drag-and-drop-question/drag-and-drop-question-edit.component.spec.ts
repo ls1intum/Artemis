@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DragState } from 'app/entities/quiz/drag-state.enum';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { MockProvider } from 'ng-mocks';

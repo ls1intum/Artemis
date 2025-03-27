@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';

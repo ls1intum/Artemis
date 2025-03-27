@@ -30,9 +30,9 @@ import {
 } from '../../../helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('IrisBaseChatbotComponent', () => {

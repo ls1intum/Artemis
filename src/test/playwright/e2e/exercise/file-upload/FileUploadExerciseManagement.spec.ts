@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 import { admin } from '../../../support/users';

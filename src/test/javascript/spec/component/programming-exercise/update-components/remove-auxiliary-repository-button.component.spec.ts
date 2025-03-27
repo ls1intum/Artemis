@@ -4,7 +4,7 @@ import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/programming/manage
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 
