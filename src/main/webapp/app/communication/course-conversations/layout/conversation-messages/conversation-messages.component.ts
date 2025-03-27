@@ -532,7 +532,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
         const messageArray = this.messages.toArray();
-        const element = messageArray.find((message) => message.post.id === lastScrollPosition); // Suchen nach dem Post
+        const element = messageArray.find((message) => message.post().id === lastScrollPosition); // Suchen nach dem Post
 
         if (!element) {
             this.fetchNextPage();
@@ -541,7 +541,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.content.nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
             this.canStartSaving = true;
             if (isOpenThread) {
-                this.openThread.emit(element.post);
+                this.openThread.emit(element.post());
             }
             this.focusOnPostId = undefined;
             this.isOpenThreadOnFocus = false;
@@ -553,7 +553,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const containerRect = this.content.nativeElement.getBoundingClientRect();
         const visibleMessages = [];
         for (const message of messageArray) {
-            if (!message.elementRef?.nativeElement || !message.post?.id) continue;
+            if (!message.elementRef?.nativeElement || !message.post()?.id) continue;
             const rect = message.elementRef.nativeElement.getBoundingClientRect();
             if (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom) {
                 visibleMessages.push(message);
@@ -562,7 +562,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         this.elementsAtScrollPosition = visibleMessages;
         if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
-            this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
+            this.saveScrollPosition(this.elementsAtScrollPosition[0].post().id!);
         }
     }
 
