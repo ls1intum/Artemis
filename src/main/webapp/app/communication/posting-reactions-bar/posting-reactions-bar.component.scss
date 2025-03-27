@@ -48,4 +48,13 @@
         box-shadow: inset 0 0 0 1px var(--reaction-button-reacted-accent-color);
         background: var(--reaction-button-reacted-color);
     }
+
+    &.info {
+        color: var(--artemis-alert-info-color);
+        background: var(--artemis-alert-info-background);
+
+        .ng-fa-icon {
+            color: var(--artemis-alert-info-border);
+        }
+    }
 }

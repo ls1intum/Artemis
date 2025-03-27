@@ -43,8 +43,11 @@
     }
 
     @if (showSearchResultInAnswersHint()) {
-        <div class="info-text">
-            <span>Search Result in replies</span>
+        <div>
+            <button class="reaction-button info">
+                <fa-icon class="fa-xs align-self-center" [icon]="faInfoCircle" />
+                <span class="emoji-count px-2"> Search Result in replies </span>
+            </button>
         </div>
     }
 
