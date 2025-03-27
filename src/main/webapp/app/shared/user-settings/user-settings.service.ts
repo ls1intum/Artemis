@@ -34,6 +34,13 @@ export class UserSettingsService {
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return this.http.get<ScienceSetting[]>(this.scienceSettingsResourceUrl, { observe: 'response' });
             }
+            case UserSettingsCategory.LEARNER_PROFILE: {
+                // TODO: Implement learner profile API endpoint
+                return this.http.get<Setting[]>('api/learner-profile-settings', { observe: 'response' });
+            }
+            default: {
+                throw new Error(`Unsupported settings category: ${category}`);
+            }
         }
     }
 
@@ -78,6 +85,13 @@ export class UserSettingsService {
             }
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return this.http.put<Setting[]>(this.scienceSettingsResourceUrl, settings, { observe: 'response' });
+            }
+            case UserSettingsCategory.LEARNER_PROFILE: {
+                // TODO: Implement learner profile API endpoint
+                return this.http.put<Setting[]>('api/learner-profile-settings', settings, { observe: 'response' });
+            }
+            default: {
+                throw new Error(`Unsupported settings category: ${category}`);
             }
         }
     }
@@ -142,6 +156,16 @@ export class UserSettingsService {
             }
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return scienceSettingsStructure;
+            }
+            case UserSettingsCategory.LEARNER_PROFILE: {
+                // TODO: Create proper learner profile settings structure
+                return {
+                    category: UserSettingsCategory.LEARNER_PROFILE,
+                    groups: [],
+                };
+            }
+            default: {
+                throw new Error(`Unsupported settings category: ${category}`);
             }
         }
     }

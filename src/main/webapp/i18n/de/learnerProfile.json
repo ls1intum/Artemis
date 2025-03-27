@@ -1,0 +1,23 @@
+{
+    "artemisApp": {
+        "learnerProfile": {
+            "title": "Einstellungen des Lernerprofils",
+            "practicalVsTheoretical": {
+                "title": "Praktisch vs. Theoretisch",
+                "description": "Stellen Sie ein, wie Sie lieber Feedback erhalten möchten - von konkreten Beispielen und Anwendungen bis hin zu theoretischen Konzepten und Erklärungen."
+            },
+            "creativeVsFocused": {
+                "title": "Kreative Erkundung vs. fokussierte Anleitung",
+                "description": "Wählen Sie zwischen Aufforderungen, die zum Erforschen verschiedener Ansätze ermutigen, und gezielter Anleitung entlang eines klaren Pfades."
+            },
+            "followUpVsSummary": {
+                "title": "Follow-up-Fragen vs. Zusammenfassung",
+                "description": "Wählen Sie aus, ob Sie ein Feedback bevorzugen, das zum Weiterdenken anregt, oder klare Schlussfolgerungen, die das Thema abschließen."
+            },
+            "briefVsDetailed": {
+                "title": "Kurz vs. Ausführlich",
+                "description": "Wählen Sie zwischen einem knappen Feedback oder ausführlichen Erklärungen mit mehr Kontext und Hintergrundinformationen."
+            }
+        }
+    }
+}

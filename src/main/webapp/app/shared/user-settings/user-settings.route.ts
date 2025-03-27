@@ -87,6 +87,13 @@ export const routes: Routes = [
                     pageTitle: 'artemisApp.userSettings.categories.IDE_PREFERENCES',
                 },
             },
+            {
+                path: 'learner-profile',
+                loadComponent: () => import('app/shared/user-settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.LEARNER_PROFILE',
+                },
+            },
         ],
     },
 ];

@@ -99,7 +99,8 @@
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
                 "VCS_TOKEN_SETTINGS": "VCS Token Settings",
-                "IDE_PREFERENCES": "IDE Preferences"
+                "IDE_PREFERENCES": "IDE Preferences",
+                "LEARNER_PROFILE": "Learner Profile"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
