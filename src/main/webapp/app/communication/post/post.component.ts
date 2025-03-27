@@ -226,7 +226,17 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     updateShowSearchResultInAnswersHint() {
-        this.showSearchResultInAnswersHint = !!this.searchQuery() && !this.posting.content?.toLowerCase().includes((this.searchQuery() ?? '').toLowerCase());
+        const searchQuery = this.searchQuery()?.toLowerCase();
+        if (searchQuery === undefined || searchQuery === '') {
+            this.showSearchResultInAnswersHint = false;
+            return;
+        }
+
+        this.showSearchResultInAnswersHint =
+            this.posting.answers?.some((answer) => {
+                const answerContent = answer.content?.toLowerCase();
+                return answerContent?.includes(searchQuery);
+            }) ?? false;
     }
 
     fetchForwardedMessages(): void {
