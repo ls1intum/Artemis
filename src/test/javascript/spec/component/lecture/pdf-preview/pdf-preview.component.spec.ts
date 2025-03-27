@@ -15,7 +15,7 @@ import { PDFDocument } from 'pdf-lib';
 import dayjs from 'dayjs/esm';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import PDFJS from 'pdfjs-dist';
-import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 
 jest.mock('pdf-lib', () => {
     const originalModule = jest.requireActual('pdf-lib');
