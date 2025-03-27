@@ -19,8 +19,8 @@ import { MockProfileService } from '../../../../../helpers/mocks/service/mock-pr
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('ModelingExamSummaryComponent', () => {
     let fixture: ComponentFixture<ModelingExamSummaryComponent>;

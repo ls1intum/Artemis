@@ -15,7 +15,7 @@ import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('FileUploadExamSummaryComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSummaryComponent>;
