@@ -84,9 +84,6 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
             }
-            case ExerciseType.MODELING: {
-                return 'artemisApp.plagiarism.minimumSizeTooltipModelingExercise';
-            }
         }
     }
 }

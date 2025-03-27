@@ -15,12 +15,9 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.ExitException;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.ModelingPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingPlagiarismDetectionService;
@@ -40,12 +37,10 @@ class PlagiarismDetectionServiceTest {
 
     private final ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService = mock();
 
-    private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService = mock();
-
     private final PlagiarismResultRepository plagiarismResultRepository = mock();
 
     private final PlagiarismDetectionService service = new PlagiarismDetectionService(textPlagiarismDetectionService, Optional.of(programmingLanguageFeatureService),
-            programmingPlagiarismDetectionService, modelingPlagiarismDetectionService, plagiarismResultRepository);
+            programmingPlagiarismDetectionService, plagiarismResultRepository);
 
     @Test
     void shouldExecuteChecksForTextExercise() throws ExitException {
@@ -62,23 +57,6 @@ class PlagiarismDetectionServiceTest {
 
         // then
         assertThat(result).isEqualTo(textPlagiarismResult);
-    }
-
-    @Test
-    void shouldExecuteChecksForModelingExercise() {
-        // given
-        var modelingExercise = new ModelingExercise();
-        modelingExercise.setPlagiarismDetectionConfig(config);
-        var modelingPlagiarismResult = new ModelingPlagiarismResult();
-        modelingPlagiarismResult.setComparisons(emptySet());
-        when(modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, config.getSimilarityThreshold(), config.getMinimumSize(), config.getMinimumScore()))
-                .thenReturn(modelingPlagiarismResult);
-
-        // when
-        var result = service.checkModelingExercise(modelingExercise);
-
-        // then
-        assertThat(result).isEqualTo(modelingPlagiarismResult);
     }
 
     @Test

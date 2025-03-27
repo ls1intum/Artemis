@@ -325,7 +325,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Sets the feedback type of a new feedback element. The type is set to MANUAL if it was not set before. It is set to AUTOMATIC_ADAPTED if Compass created the feedback
+     * Sets the feedback type of a new feedback element. The type is set to MANUAL if it was not set before. It is set to AUTOMATIC_ADAPTED if it was created
      * automatically and the tutor has overridden the feedback in the manual assessment. This is done to differentiate between automatic feedback that was overridden manually and
      * pure manual feedback to analyze the quality of automatic assessments. In all other cases the type stays the same.
      *
