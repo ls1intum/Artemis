@@ -1,5 +1,5 @@
 import { Component, OnDestroy, inject } from '@angular/core';
-import { CourseSettingCategoryDirective } from 'app/course/overview/course-settings/course-setting-category.directive';
+import { CourseSettingCategoryDirective } from 'app/core/course/overview/course-settings/course-setting-category.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBell, faSpinner } from '@fortawesome/free-solid-svg-icons';

@@ -54,7 +54,7 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/service/aeolus.service';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';

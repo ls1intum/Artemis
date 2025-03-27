@@ -6,7 +6,7 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/participat
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/programming/shared/entities/build-log.model';
+import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { CourseSettingCategoryDirective } from 'app/course/overview/course-settings/course-setting-category.directive';
+import { CourseSettingCategoryDirective } from 'app/core/course/overview/course-settings/course-setting-category.directive';
 import { Course } from 'app/core/shared/entities/course.model';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { SubjectObservablePair } from 'app/shared/util/rxjs.utils';

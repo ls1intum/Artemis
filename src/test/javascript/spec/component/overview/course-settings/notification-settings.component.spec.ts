@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { NotificationSettingsComponent } from 'app/course/overview/course-settings/notification-settings/notification-settings.component';
+import { NotificationSettingsComponent } from 'app/core/course/overview/course-settings/notification-settings/notification-settings.component';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { ActivatedRoute } from '@angular/router';

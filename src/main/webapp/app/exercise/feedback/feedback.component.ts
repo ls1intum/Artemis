@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
-import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/programming/shared/entities/build-log.model';
+import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/buildagent/shared/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';

@@ -5,7 +5,7 @@ import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/enti
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';

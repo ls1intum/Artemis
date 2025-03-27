@@ -12,7 +12,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 
 export type Detail = NotShownDetail | ShownDetail;
 

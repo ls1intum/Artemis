@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NotificationSettingsComponent } from 'app/course/overview/course-settings/notification-settings/notification-settings.component';
+import { NotificationSettingsComponent } from 'app/core/course/overview/course-settings/notification-settings/notification-settings.component';
 
 @Component({
     selector: 'jhi-course-settings',

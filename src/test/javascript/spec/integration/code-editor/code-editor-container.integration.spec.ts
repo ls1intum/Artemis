@@ -25,7 +25,7 @@ import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/programming/shared/entities/build-log.model';
+import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';

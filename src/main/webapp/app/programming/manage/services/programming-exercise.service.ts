@@ -15,7 +15,7 @@ import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOpti
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
