@@ -273,7 +273,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
 
         // Convert the public key from COSEKey to a base64-encoded string
         COSEKey coseKey = record.getAttestedCredentialData().getCOSEKey();
-        String publicKeyBase64 = Base64.getEncoder().encodeToString(coseKey.getPublicKey().getEncoded());
+        String publicKeyBase64 = Base64.getEncoder().encodeToString(Objects.requireNonNull(coseKey.getPublicKey()).getEncoded());
         passkeyCredentials.setPublicKey(publicKeyBase64);
 
         // Set the attestationType based on the AttestationStatement
