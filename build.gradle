@@ -213,6 +213,7 @@ dependencies {
         }
     }
 
+    implementation 'de.codecentric:chaos-monkey-spring-boot:3.1.4'
     implementation "com.thoughtworks.qdox:qdox:2.2.0"
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"

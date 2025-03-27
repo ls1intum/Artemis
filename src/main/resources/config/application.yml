@@ -129,8 +129,10 @@ artemis:
         recommended: "1.6.1"
 
 
-
 management:
+    endpoint:
+      chaosmonkey:
+        access: unrestricted
     endpoints:
         web:
             base-path: /management
@@ -145,6 +147,7 @@ management:
                   - loggers
                   - prometheus
                   - threaddump
+                  - chaosmonkey
     info:
         git:
             mode: full
