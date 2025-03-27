@@ -277,6 +277,7 @@ public class SecurityConfiguration {
         http.csrf(csrf -> {
             csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
             csrf.ignoringRequestMatchers("/webauthn/**");
+            csrf.ignoringRequestMatchers("/api/core/public/webauthn/signup");
         });
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API

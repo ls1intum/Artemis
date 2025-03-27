@@ -25,7 +25,7 @@ import com.webauthn4j.util.exception.WebAuthnException;
 
 import de.tum.cit.aet.artemis.core.dto.CreatePasskeyDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
@@ -52,7 +52,7 @@ public class PublicWebauthnResource {
      * @return ResponseEntity with status 201 (Created) if the passkey was successfully registered.
      */
     @PostMapping("signup")
-    @EnforceAtLeastTutor
+    @EnforceNothing
     public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result)
             throws URISyntaxException {
 
