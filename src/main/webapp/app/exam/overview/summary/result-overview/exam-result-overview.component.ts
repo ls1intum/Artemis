@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, OnChanges, OnInit, inject, input } from '@angular/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { BonusStrategy } from 'app/entities/bonus.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';

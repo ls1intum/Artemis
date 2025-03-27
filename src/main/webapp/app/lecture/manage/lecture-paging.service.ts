@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { PagingService } from 'app/exercise/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';

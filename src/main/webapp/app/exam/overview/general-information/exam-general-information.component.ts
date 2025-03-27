@@ -1,6 +1,6 @@
-import { Component, OnChanges, input } from '@angular/core';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Component, input, OnChanges } from '@angular/core';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { endTime, examWorkingTime, getAdditionalWorkingTime, isExamOverMultipleDays } from 'app/exam/overview/exam.utils';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';

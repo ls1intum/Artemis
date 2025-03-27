@@ -6,10 +6,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;

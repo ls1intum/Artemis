@@ -1,7 +1,7 @@
 import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';

@@ -4,7 +4,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -13,15 +13,15 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { provideHttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
+import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {

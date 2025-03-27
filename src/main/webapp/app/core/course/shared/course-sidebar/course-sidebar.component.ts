@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit, ViewChild, input, output, signal } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';

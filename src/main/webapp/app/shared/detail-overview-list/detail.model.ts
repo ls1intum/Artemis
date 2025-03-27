@@ -1,18 +1,18 @@
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { Course } from 'app/entities/course.model';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 
 export type Detail = NotShownDetail | ShownDetail;
 

@@ -5,19 +5,19 @@ import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 
 import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
@@ -25,10 +25,9 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-c
 import { NgModel } from '@angular/forms';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -304,7 +303,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
         comp.modelingExercise = { startDate: dayjs(), dueDate: dayjs(), assessmentDueDate: dayjs(), releaseDate: dayjs() } as ModelingExercise;
         comp.exerciseTitleChannelNameComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
-        comp.exerciseUpdatePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
         comp.teamConfigFormGroupComponent = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
         comp.bonusPoints = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.points = { valueChanges: new Subject(), valid: true } as any as NgModel;
@@ -314,14 +312,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         (comp.points.valueChanges as Subject<boolean>).next(false);
         (comp.bonusPoints.valueChanges as Subject<boolean>).next(false);
         comp.teamConfigFormGroupComponent.formValidChanges.next(false);
-        comp.exerciseUpdatePlagiarismComponent.formValidChanges.next(false);
         comp.exerciseTitleChannelNameComponent.titleChannelNameComponent.formValidChanges.next(false);
-        expect(calculateValidSpy).toHaveBeenCalledTimes(5);
+        expect(calculateValidSpy).toHaveBeenCalledTimes(4);
 
         comp.ngOnDestroy();
 
         expect(comp.titleChannelNameComponentSubscription?.closed).toBeTrue();
-        expect(comp.plagiarismSubscription?.closed).toBeTrue();
         expect(comp.bonusPointsSubscription?.closed).toBeTrue();
         expect(comp.pointsSubscription?.closed).toBeTrue();
     });

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit, inject, input, model, output } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
@@ -12,10 +12,9 @@ import { CommitState, DomainChange, DomainType } from 'app/programming/shared/co
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { ExamSession } from 'app/entities/exam/exam-session.model';
+import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
@@ -24,6 +23,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamTimerComponent } from '../timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',

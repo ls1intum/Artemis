@@ -1,8 +1,8 @@
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Notification } from 'app/entities/notification.model';
-import { GroupNotification } from 'app/entities/group-notification.model';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { Notification } from 'app/core/shared/entities/notification.model';
+import { GroupNotification } from 'app/core/shared/entities/group-notification.model';
+import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 
 export class MockNotificationService {
     queryNotificationsFilteredBySettings = (req?: any): Observable<HttpResponse<Notification[]>> => of();

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
 import { onError } from 'app/shared/util/global.utils';

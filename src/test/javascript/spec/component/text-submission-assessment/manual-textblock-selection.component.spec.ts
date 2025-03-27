@@ -3,11 +3,11 @@ import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/assess/manual-text-selection/manual-text-selection.component';
-import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextBlock } from 'app/entities/text/text-block.model';
+import { SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextSelectDirective } from 'app/text/manage/assess/text-select.directive';
 
 describe('ManualTextblockSelectionComponent', () => {

@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
-import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { provideHttpClient } from '@angular/common/http';

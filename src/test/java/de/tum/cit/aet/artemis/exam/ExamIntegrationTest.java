@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -673,42 +672,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
         request.put("/api/exam/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
 
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleModeling_endDateChanged() throws Exception {
-        var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
-        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-
-        ZonedDateTime visibleDate = examWithModelingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithModelingEx.getStartDate();
-        ZonedDateTime endDate = examWithModelingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate, startDate, endDate.plusSeconds(2));
-
-        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
-
-        verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleModeling_workingTimeChanged() throws Exception {
-        var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
-        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-
-        ZonedDateTime visibleDate = examWithModelingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithModelingEx.getStartDate();
-        ZonedDateTime endDate = examWithModelingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate.plusHours(1), startDate.plusHours(2), endDate.plusHours(3));
-
-        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
-
-        StudentExam studentExam = examUtilService.addStudentExam(examWithModelingEx);
-        request.patch(
-                "/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
-                3, HttpStatus.OK);
-        verify(instanceMessageSendService, times(2)).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
     @Test

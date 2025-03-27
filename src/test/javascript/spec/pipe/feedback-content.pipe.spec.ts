@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('FeedbackContentPipe', () => {

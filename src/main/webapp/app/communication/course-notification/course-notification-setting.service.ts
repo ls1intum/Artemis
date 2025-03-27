@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationChannelSetting } from 'app/entities/course-notification/course-notification-channel-setting';
-import { CourseNotificationSettingInfo } from 'app/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { Observable } from 'rxjs';
 
 /**

@@ -3,7 +3,7 @@ import { ImportCompetenciesComponent } from 'app/atlas/manage/import/import-comp
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
+import { CompetencyWithTailRelationDTO } from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ImportPrerequisitesComponent } from 'app/atlas/manage/import/import-prerequisites.component';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';

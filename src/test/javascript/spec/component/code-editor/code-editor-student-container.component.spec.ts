@@ -10,9 +10,9 @@ import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
