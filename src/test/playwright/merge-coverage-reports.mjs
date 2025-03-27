@@ -58,31 +58,31 @@ await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
 
 // Bamboo can upload only files as an artifact, not directories
 // That's why we archive the lcov coverage directory on CI to prepare it as an artifact
-// if (process.env.CI === 'true') {
-//     try {
-//         await createArchive(path.join(coverageDir, 'e2e-client-coverage.zip'), lcovDir);
-//     } catch (err) {
-//         console.error('Error while creating archives:', err);
-//     }
-// }
+if (process.env.CI === 'true') {
+    try {
+        await createArchive(path.join(coverageDir, 'e2e-client-coverage.zip'), lcovDir);
+    } catch (err) {
+        console.error('Error while creating archives:', err);
+    }
+}
 
 // Archives the directory
-// async function createArchive(outputPath, inputDirectory) {
-//     const output = await fs.createWriteStream(outputPath);
-//     const archive = archiver('zip', { zlib: { level: 9 } });
-//
-//     output.on('close', () => {
-//         console.log(`Coverage report archived on: ${outputPath}`);
-//     });
-//
-//     archive.on('error', (err) => {
-//         throw err;
-//     });
-//
-//     archive.pipe(output);
-//     archive.directory(inputDirectory, '', (entry) => entry);
-//     await archive.finalize();
-// }
+async function createArchive(outputPath, inputDirectory) {
+    const output = await fs.createWriteStream(outputPath);
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    output.on('close', () => {
+        console.log(`Coverage report archived on: ${outputPath}`);
+    });
+
+    archive.on('error', (err) => {
+        throw err;
+    });
+
+    archive.pipe(output);
+    archive.directory(inputDirectory, '', (entry) => entry);
+    await archive.finalize();
+}
 
 /**
  * Filter coverage data based on include and exclude path filters
