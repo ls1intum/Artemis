@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidationResponse;
 import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidator;
 import com.webauthn4j.springframework.security.exception.WebAuthnAuthenticationException;
 import com.webauthn4j.util.exception.WebAuthnException;
 
-import de.tum.cit.aet.artemis.core.dto.CreatePasskeyDTO;
+import de.tum.cit.aet.artemis.core.dto.WebAuthnCredential;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 
@@ -53,7 +55,7 @@ public class PublicWebauthnResource {
      */
     @PostMapping("signup")
     @EnforceNothing
-    public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result)
+    public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody WebAuthnCredential webAuthnCredential, BindingResult result)
             throws URISyntaxException {
 
         if (result.hasErrors()) {
@@ -61,10 +63,25 @@ public class PublicWebauthnResource {
             throw new BadRequestAlertException("User input validation failed. Please try again.", ENTITY_NAME, "TODO");
         }
 
+        // TODO verify https://chromium.googlesource.com/chromium/src/+/master/content/browser/webauth/client_data_json.md is checked
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String clientExtensionResultsJson = null;
+        try {
+            clientExtensionResultsJson = objectMapper.writeValueAsString(webAuthnCredential.clientExtensionResults());
+            log.debug(clientExtensionResultsJson);
+        }
+        catch (JsonProcessingException e) {
+            log.error("Error converting clientExtensionResults to JSON", e);
+            throw new BadRequestAlertException("clientExtensionResults could not be converted to JSON. Please try again.", ENTITY_NAME, "TODO");
+        }
+
         WebAuthnRegistrationRequestValidationResponse registrationRequestValidationResponse;
         try {
-            registrationRequestValidationResponse = registrationRequestValidator.validate(request, createPasskeyDTO.clientDataJSON(), createPasskeyDTO.attestationObject(),
-                    createPasskeyDTO.transports(), createPasskeyDTO.clientExtensions());
+            // TODO check data from the demo and diff to what we sent from the client right now
+            registrationRequestValidationResponse = registrationRequestValidator.validate(request, webAuthnCredential.response().clientDataJSON(),
+                    webAuthnCredential.response().attestationObject(), webAuthnCredential.response().transports(), clientExtensionResultsJson);
         }
         catch (WebAuthnException | WebAuthnAuthenticationException ignored) {
             throw new BadRequestAlertException("WebAuthn registration request validation failed. Please try again.", ENTITY_NAME, "TODO");
