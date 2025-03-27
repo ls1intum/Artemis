@@ -6,7 +6,7 @@ import { UserSettingsCategory } from 'app/shared/constants/user-settings.constan
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { User } from 'app/core/user/user.model';
-
+import { LearnerProfileSetting, learnerProfileStructure } from './learner-profile/learner-profile-structure';
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     private http = inject(HttpClient);
@@ -14,6 +14,7 @@ export class UserSettingsService {
     public notificationSettingsResourceUrl = 'api/communication/notification-settings';
     public scienceSettingsResourceUrl = 'api/atlas/science-settings';
     public profilePictureResourceUrl = 'api/core/account/profile-picture';
+    public learnerProfileResourceUrl = 'api/feedback-learner-profile';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -35,8 +36,7 @@ export class UserSettingsService {
                 return this.http.get<ScienceSetting[]>(this.scienceSettingsResourceUrl, { observe: 'response' });
             }
             case UserSettingsCategory.LEARNER_PROFILE: {
-                // TODO: Implement learner profile API endpoint
-                return this.http.get<Setting[]>('api/learner-profile-settings', { observe: 'response' });
+                return this.http.get<LearnerProfileSetting[]>(this.learnerProfileResourceUrl, { observe: 'response' });
             }
             default: {
                 throw new Error(`Unsupported settings category: ${category}`);
@@ -87,8 +87,7 @@ export class UserSettingsService {
                 return this.http.put<Setting[]>(this.scienceSettingsResourceUrl, settings, { observe: 'response' });
             }
             case UserSettingsCategory.LEARNER_PROFILE: {
-                // TODO: Implement learner profile API endpoint
-                return this.http.put<Setting[]>('api/learner-profile-settings', settings, { observe: 'response' });
+                return this.http.put<Setting[]>(this.learnerProfileResourceUrl, settings, { observe: 'response' });
             }
             default: {
                 throw new Error(`Unsupported settings category: ${category}`);
@@ -158,11 +157,7 @@ export class UserSettingsService {
                 return scienceSettingsStructure;
             }
             case UserSettingsCategory.LEARNER_PROFILE: {
-                // TODO: Create proper learner profile settings structure
-                return {
-                    category: UserSettingsCategory.LEARNER_PROFILE,
-                    groups: [],
-                };
+                return learnerProfileStructure;
             }
             default: {
                 throw new Error(`Unsupported settings category: ${category}`);

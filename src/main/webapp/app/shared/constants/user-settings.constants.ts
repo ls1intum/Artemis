@@ -58,4 +58,10 @@ export enum SettingId {
 
     // science
     SCIENCE__GENERAL__ACTIVITY_TRACKING = 'science.general.activity-tracking',
+
+    // learner profile settingIds
+    LEARNER_PROFILE__LEARNING_STYLE__PRACTICAL_VS_THEORETICAL = 'learner-profile.learning-style.practical-vs-theoretical',
+    LEARNER_PROFILE__LEARNING_STYLE__CREATIVE_VS_FOCUSED = 'learner-profile.learning-style.creative-vs-focused',
+    LEARNER_PROFILE__LEARNING_STYLE__FOLLOW_UP_VS_SUMMARY = 'learner-profile.learning-style.follow-up-vs-summary',
+    LEARNER_PROFILE__LEARNING_STYLE__BRIEF_VS_DETAILED = 'learner-profile.learning-style.brief-vs-detailed',
 }

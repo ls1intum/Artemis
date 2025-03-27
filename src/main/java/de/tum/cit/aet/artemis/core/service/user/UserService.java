@@ -842,4 +842,13 @@ public class UserService {
     public ParticipationVCSAccessToken createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, Long participationId) {
         return participationVCSAccessTokenService.createVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId);
     }
+
+    /**
+     * Get the current user with groups and authorities
+     *
+     * @return the current user with groups and authorities
+     */
+    public User getUserWithGroupsAndAuthorities() {
+        return userRepository.getUserWithGroupsAndAuthorities();
+    }
 }

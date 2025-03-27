@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.domain.profile.FeedbackLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.service.profile.FeedbackLearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.UserService;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 
 @RestController
 @RequestMapping("/api")
@@ -53,11 +53,17 @@ public class FeedbackLearnerProfileResource {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<FeedbackLearnerProfile> updateFeedbackLearnerProfile(@RequestBody FeedbackLearnerProfile profile) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        // Ensure the profile belongs to the current user
-        if (!profile.getLearnerProfile().getUser().getLogin().equals(user.getLogin())) {
-            return ResponseEntity.badRequest().build();
-        }
-        FeedbackLearnerProfile updatedProfile = feedbackLearnerProfileService.updateFeedbackProfile(profile);
+        // Get the existing profile for the current user
+        FeedbackLearnerProfile existingProfile = feedbackLearnerProfileService.getFeedbackProfile(user);
+
+        // Update the values from the request
+        existingProfile.setPracticalVsTheoretical(profile.getPracticalVsTheoretical());
+        existingProfile.setCreativeVsFocused(profile.getCreativeVsFocused());
+        existingProfile.setFollowUpVsSummary(profile.getFollowUpVsSummary());
+        existingProfile.setBriefVsDetailed(profile.getBriefVsDetailed());
+
+        // Save the updated profile
+        FeedbackLearnerProfile updatedProfile = feedbackLearnerProfileService.updateFeedbackProfile(existingProfile);
         return ResponseEntity.ok(updatedProfile);
     }
 }
