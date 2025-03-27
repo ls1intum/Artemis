@@ -12,8 +12,8 @@ import {
     ViewEncapsulation,
     inject,
 } from '@angular/core';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

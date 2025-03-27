@@ -78,6 +78,8 @@ public class CourseNotificationService {
 
         var courseNotificationEntityId = createCourseNotification(courseNotification);
 
+        courseNotification.notificationId = courseNotificationEntityId;
+
         for (var supportedChannel : supportedChannels) {
             var service = serviceMap.get(supportedChannel);
             if (service == null) {
@@ -197,7 +199,12 @@ public class CourseNotificationService {
                 continue;
             }
 
-            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key).toString()));
+            String paramValue = parameters.get(key).toString();
+            if (paramValue.length() > 500) {
+                paramValue = paramValue.substring(0, 500);
+            }
+
+            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, paramValue));
         }
 
         if (!parameterEntities.isEmpty()) {

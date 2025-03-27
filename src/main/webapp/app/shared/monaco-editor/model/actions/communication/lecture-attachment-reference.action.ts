@@ -3,15 +3,15 @@ import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { Attachment } from 'app/entities/attachment.model';
-import { Slide } from 'app/entities/lecture-unit/slide.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
-import { FileService } from 'app/shared/http/file.service';
 import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 interface LectureWithDetails {
     id: number;

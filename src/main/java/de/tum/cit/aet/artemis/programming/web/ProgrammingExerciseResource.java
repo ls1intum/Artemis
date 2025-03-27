@@ -574,24 +574,21 @@ public class ProgrammingExerciseResource {
     /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
-     * @param exerciseId                   the id of the programmingExercise to delete
-     * @param deleteStudentReposBuildPlans boolean which states whether the student repos and build plans should be deleted as well, this is true by default because for LocalVC
-     *                                         and LocalCI, it does not make sense to keep these artifacts
-     * @param deleteBaseReposBuildPlans    boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
-     *                                         LocalCI, it does not make sense to keep these artifacts
+     * @param exerciseId                the id of the programmingExercise to delete
+     * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
+     *                                      LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans,
-            @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+        exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
 

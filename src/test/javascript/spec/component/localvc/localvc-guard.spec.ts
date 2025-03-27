@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { LocalVCGuard } from 'app/programming/shared/localvc-guard.service';
 

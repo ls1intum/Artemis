@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from '../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 export class MockProgrammingExerciseService {

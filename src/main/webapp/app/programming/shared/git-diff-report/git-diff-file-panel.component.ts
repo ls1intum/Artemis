@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, input, output } from '@angular/core';
-import { ProgrammingExerciseGitDiffEntry } from 'app/entities/programming-exercise-git-diff-entry.model';
+import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';

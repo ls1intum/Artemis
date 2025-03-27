@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { Range } from 'app/shared/util/utils';
 
 @Injectable({ providedIn: 'root' })

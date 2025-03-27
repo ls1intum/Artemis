@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collections;
-import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -13,13 +12,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
-import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 
 @Profile(PROFILE_CORE)
@@ -28,20 +23,10 @@ public class ModelingExerciseService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
-    private final ModelClusterRepository modelClusterRepository;
-
-    private final ModelElementRepository modelElementRepository;
-
     private final ExerciseSpecificationService exerciseSpecificationService;
 
-    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, InstanceMessageSendService instanceMessageSendService,
-            ModelClusterRepository modelClusterRepository, ModelElementRepository modelElementRepository, ExerciseSpecificationService exerciseSpecificationService) {
+    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, ExerciseSpecificationService exerciseSpecificationService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
-        this.modelClusterRepository = modelClusterRepository;
-        this.modelElementRepository = modelElementRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
@@ -66,27 +51,5 @@ public class ModelingExerciseService {
         Specification<ModelingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<ModelingExercise> exercisePage = modelingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
-    }
-
-    public void scheduleOperations(Long modelingExerciseId) {
-        instanceMessageSendService.sendModelingExerciseSchedule(modelingExerciseId);
-    }
-
-    public void cancelScheduledOperations(Long modelingExerciseId) {
-        instanceMessageSendService.sendModelingExerciseScheduleCancel(modelingExerciseId);
-    }
-
-    /**
-     * Delete clusters and elements of a modeling exercise
-     *
-     * @param modelingExercise modeling exercise clusters and elements belong to
-     */
-    public void deleteClustersAndElements(ModelingExercise modelingExercise) {
-        List<ModelCluster> clustersToDelete = modelClusterRepository.findAllByExerciseIdWithEagerElements(modelingExercise.getId());
-
-        for (ModelCluster cluster : clustersToDelete) {
-            modelElementRepository.deleteAll(cluster.getModelElements());
-            modelClusterRepository.deleteById(cluster.getId());
-        }
     }
 }

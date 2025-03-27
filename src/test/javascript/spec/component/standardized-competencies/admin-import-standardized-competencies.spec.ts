@@ -11,14 +11,14 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
-import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;

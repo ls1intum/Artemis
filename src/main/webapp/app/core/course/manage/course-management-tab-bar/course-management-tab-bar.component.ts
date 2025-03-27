@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } fr
 import { HttpErrorResponse } from '@angular/common/http';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, Subject, Subscription, map, of } from 'rxjs';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
@@ -30,10 +30,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HeaderCourseComponent } from 'app/core/course/overview/header-course.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

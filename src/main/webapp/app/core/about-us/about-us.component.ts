@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';

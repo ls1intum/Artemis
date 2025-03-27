@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, ViewChild, inject } from '@angula
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

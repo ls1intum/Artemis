@@ -3,26 +3,25 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -31,6 +30,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;

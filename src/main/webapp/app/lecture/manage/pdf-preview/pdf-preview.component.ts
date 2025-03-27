@@ -1,13 +1,13 @@
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
-import { Attachment } from 'app/entities/attachment.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';

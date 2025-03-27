@@ -8,10 +8,9 @@ import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.serv
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
-import 'jest-extended';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;

@@ -1,15 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
 const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${exerciseId}/newResults`;

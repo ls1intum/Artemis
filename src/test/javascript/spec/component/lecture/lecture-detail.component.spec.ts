@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { of, throwError } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/manage/lecture-detail.component';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -17,10 +17,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
 const mockLecture = {
     title: 'Test Lecture',

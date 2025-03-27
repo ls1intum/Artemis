@@ -4,13 +4,13 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -16,7 +16,7 @@ import { post } from '../../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { signal } from '@angular/core';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 describe('PostingThreadComponent', () => {
     let component: PostingThreadComponent;
