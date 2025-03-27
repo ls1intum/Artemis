@@ -33,21 +33,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendModelingExerciseSchedule(Long exerciseId) {
-        instanceMessageReceiveService.processScheduleModelingExercise(exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseScheduleCancel(Long exerciseId) {
-        instanceMessageReceiveService.processScheduleModelingExerciseCancel(exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseInstantClustering(Long exerciseId) {
-        instanceMessageReceiveService.processModelingExerciseInstantClustering(exerciseId);
-    }
-
-    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         instanceMessageReceiveService.processSchedulePotentialAthenaExercise(exerciseId);
     }

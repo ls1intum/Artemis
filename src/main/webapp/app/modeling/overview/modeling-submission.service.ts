@@ -19,8 +19,8 @@ export class ModelingSubmissionService {
 
     /**
      * Create a new modeling submission
-     * @param {ModelingSubmission} modelingSubmission - New submission to be created
-     * @param {number} exerciseId - Id of the exercise, for which the submission is made
+     * @param modelingSubmission - New submission to be created
+     * @param exerciseId - Id of the exercise, for which the submission is made
      */
     create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(modelingSubmission);
@@ -34,8 +34,8 @@ export class ModelingSubmissionService {
 
     /**
      * Update an existing modeling submission
-     * @param {ModelingSubmission} modelingSubmission - Updated submission
-     * @param {number} exerciseId - Id of the exercise, for which the submission is made
+     * @param modelingSubmission - Updated submission
+     * @param exerciseId - Id of the exercise, for which the submission is made
      */
     update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(modelingSubmission);
@@ -49,8 +49,8 @@ export class ModelingSubmissionService {
 
     /**
      * Get all submissions for an exercise
-     * @param {number} exerciseId - Id of the exercise
-     * @param {any?} req - Request option
+     * @param exerciseId - Id of the exercise
+     * @param req - Request option
      * @param correctionRound correctionRound for which to get the Submissions
      */
     getSubmissions(exerciseId: number, req?: any, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
@@ -69,7 +69,7 @@ export class ModelingSubmissionService {
 
     /**
      * Get an unassessed modeling exercise for an exercise
-     * @param {number} exerciseId - Id of the exercise
+     * @param exerciseId - Id of the exercise
      * @param {boolean?} lock - True if assessment is locked
      * @param correctionRound correctionRound for which to get the Submissions
      */
@@ -94,7 +94,7 @@ export class ModelingSubmissionService {
 
     /**
      * Get a submission with given Id
-     * @param {number} submissionId - Id of the submission
+     * @param submissionId - Id of the submission
      * @param correctionRound
      * @param resultId
      */
@@ -111,8 +111,8 @@ export class ModelingSubmissionService {
     }
 
     /**
-     * Get a submission with given Id without locking it on artemis so plagiarism detection doesn't disrupt assessment
-     * @param {number} submissionId - Id of the submission
+     * Get a submission with given Id without locking it on artemis
+     * @param submissionId - Id of the submission
      */
     getSubmissionWithoutLock(submissionId: number): Observable<ModelingSubmission> {
         const url = `${this.resourceUrl}/modeling-submissions/${submissionId}`;
@@ -123,7 +123,7 @@ export class ModelingSubmissionService {
 
     /**
      * Get the latest submission for a given participation
-     * @param {number} participationId - Id of the participation
+     * @param participationId - Id of the participation
      */
     getLatestSubmissionForModelingEditor(participationId: number): Observable<ModelingSubmission> {
         return this.http
@@ -133,7 +133,7 @@ export class ModelingSubmissionService {
 
     /**
      * Get all submissions with results for a participation
-     * @param {number} participationId - Id of the participation
+     * @param participationId - Id of the participation
      */
     getSubmissionsWithResultsForParticipation(participationId: number): Observable<ModelingSubmission[]> {
         const url = `${this.resourceUrl}/participations/${participationId}/submissions-with-results`;

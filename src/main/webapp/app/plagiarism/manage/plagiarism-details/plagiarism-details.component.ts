@@ -3,7 +3,6 @@ import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/entities/modeling/ModelingSubmissionElement';
 import { PlagiarismHeaderComponent } from '../plagiarism-header/plagiarism-header.component';
 import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiarism-split-view.component';
 
@@ -14,7 +13,7 @@ import { PlagiarismSplitViewComponent } from '../plagiarism-split-view/plagiaris
     imports: [PlagiarismHeaderComponent, PlagiarismSplitViewComponent],
 })
 export class PlagiarismDetailsComponent {
-    @Input() comparison?: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() comparison?: PlagiarismComparison<TextSubmissionElement>;
     @Input() exercise: Exercise;
 
     /**

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.modeling.service.compass.strategy;
+package de.tum.cit.aet.artemis.core.util;
 
 import java.util.Objects;
 
@@ -21,18 +21,6 @@ public class NameSimilarity {
             return 0;
         }
 
-        // TODO longterm: think about an even more sophisticated approach that takes e.g. thesaurus and specific uml conventions into account
         return FuzzySearch.ratio(string1, string2) / 100.0;
-    }
-
-    /**
-     * Checks for equality of the two given strings.
-     *
-     * @param string1 the first of the two strings that should be compared
-     * @param string2 the second of the two strings that should be compared
-     * @return 1 if the strings are equal, 0 otherwise
-     */
-    public static double nameEqualsSimilarity(String string1, String string2) {
-        return Objects.equals(string1, string2) ? 1 : 0;
     }
 }

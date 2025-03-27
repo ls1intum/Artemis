@@ -5,10 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
-import { ModelingPlagiarismResult } from 'app/plagiarism/shared/entities/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { downloadStream } from 'app/shared/util/download.util';
-import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -20,12 +17,6 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     public resourceUrl = 'api/modeling/modeling-exercises';
     public adminResourceUrl = 'api/modeling/admin/modeling-exercises';
-
-    constructor() {
-        const exerciseService = this.exerciseService;
-
-        this.exerciseService = exerciseService;
-    }
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
         let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
@@ -46,9 +37,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    find(modelingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
+    find(modelingExerciseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
+            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -72,61 +63,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    /**
-     * Check for plagiarism
-     * @param exerciseId of the programming exercise
-     * @param options
-     */
-    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO<ModelingPlagiarismResult>> {
-        return this.http
-            .get<PlagiarismResultDTO<ModelingPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response', params: { ...options?.toParams() } })
-            .pipe(map((response: HttpResponse<PlagiarismResultDTO<ModelingPlagiarismResult>>) => response.body!));
-    }
-
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
             .post('api/modeling/apollon/convert-to-pdf', { model }, { observe: 'response', responseType: 'blob' })
             .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
-    }
-
-    /**
-     * Get the latest plagiarism result for the exercise with the given ID.
-     *
-     * @param exerciseId
-     */
-    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO<ModelingPlagiarismResult>> {
-        return this.http
-            .get<PlagiarismResultDTO<ModelingPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
-                observe: 'response',
-            })
-            .pipe(map((response: HttpResponse<PlagiarismResultDTO<ModelingPlagiarismResult>>) => response.body!));
-    }
-
-    /**
-     * Get the number of clusters for the exercise with the given ID.
-     *
-     * @param exerciseId
-     */
-    getNumberOfClusters(exerciseId: number): Observable<HttpResponse<number>> {
-        return this.http.get<number>(`${this.adminResourceUrl}/${exerciseId}/check-clusters`, {
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Build the clusters to use in Compass
-     * @param modelingExerciseId id of the exercise to build the clusters for
-     */
-    buildClusters(modelingExerciseId: number): Observable<any> {
-        return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
-    }
-
-    /**
-     * Delete the clusters used in Compass
-     * @param modelingExerciseId id of the exercise to delete the clusters of
-     */
-    deleteClusters(modelingExerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 
     /**
