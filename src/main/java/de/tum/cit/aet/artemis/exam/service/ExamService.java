@@ -1195,7 +1195,7 @@ public class ExamService {
                 exam.getNumberOfCorrectionRoundsInExam());
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         final long numberOfComplaintResponses = complaintResponseRepository

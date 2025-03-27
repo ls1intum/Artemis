@@ -171,11 +171,11 @@ public class ComplaintService {
     }
 
     public long countComplaintsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
+        return complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
     }
 
     public long countMoreFeedbackRequestsByCourseId(long courseId) {
-        return complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
+        return complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
     }
 
     /**
@@ -252,19 +252,19 @@ public class ComplaintService {
     }
 
     public List<Complaint> getAllComplaintsByCourseId(Long courseId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_Course_Id(courseId);
+        return complaintRepository.getAllByResult_Submission_Participation_Exercise_Course_Id(courseId);
     }
 
     public List<Complaint> getAllComplaintsByExamId(Long examId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_ExerciseGroup_Exam_Id(examId);
+        return complaintRepository.getAllByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_Id(examId);
     }
 
     public List<Complaint> getAllComplaintsByCourseIdAndTutorId(Long courseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(tutorId, courseId);
+        return complaintRepository.getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Course_Id(tutorId, courseId);
     }
 
     public List<Complaint> getAllComplaintsByExerciseId(Long exerciseId) {
-        return complaintRepository.getAllByResult_Participation_Exercise_Id(exerciseId);
+        return complaintRepository.getAllByResult_Submission_Participation_Exercise_Id(exerciseId);
     }
 
     /**
@@ -279,7 +279,7 @@ public class ComplaintService {
     }
 
     public List<Complaint> getAllComplaintsByExerciseIdAndTutorId(Long exerciseId, Long tutorId) {
-        return complaintRepository.getAllByResult_Assessor_IdAndResult_Participation_Exercise_Id(tutorId, exerciseId);
+        return complaintRepository.getAllByResult_Assessor_IdAndResult_Submission_Participation_Exercise_Id(tutorId, exerciseId);
     }
 
     /**
