@@ -108,7 +108,7 @@
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
                 "VCS_TOKEN_SETTINGS": "VCS Token Settings",
-                "PASSKEYS": "Passkeys",
+                "PASSKEYS": "Passkey Settings",
                 "IDE_PREFERENCES": "IDE Preferences"
             },
             "settingGroupNames": {
