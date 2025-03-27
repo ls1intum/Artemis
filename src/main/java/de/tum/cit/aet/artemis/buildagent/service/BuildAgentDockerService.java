@@ -21,7 +21,6 @@ import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -91,7 +90,7 @@ public class BuildAgentDockerService {
     private String imageArchitecture;
 
     public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, RedissonClient redissonClient, BuildJobContainerService buildJobContainerService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+            TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.redissonClient = redissonClient;
         this.buildJobContainerService = buildJobContainerService;
