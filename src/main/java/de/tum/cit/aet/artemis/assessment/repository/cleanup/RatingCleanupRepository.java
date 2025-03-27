@@ -21,7 +21,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Long> {
 
     /**
-     * Deletes {@link Rating} entries where the associated {@link Result} has no submission and no participation.
+     * Deletes {@link Rating} entries where the associated {@link Result} has no submission
+     * or its submission has no participation.
      *
      * @return the number of deleted entities
      */
@@ -34,13 +35,14 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
                 SELECT r
                 FROM Result r
                 WHERE r.submission IS NULL
-                    AND r.participation IS NULL
+                    OR r.submission.participation IS NULL
                 )
             """)
     int deleteOrphanRating();
 
     /**
-     * Counts {@link Rating} entries where the associated {@link Result} has no submission and no participation.
+     * Counts {@link Rating} entries where the associated {@link Result} has no submission
+     * or its submission has no participation.
      *
      * @return the number of entities that would be deleted
      */
@@ -51,7 +53,7 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
                 SELECT r
                 FROM Result r
                 WHERE r.submission IS NULL
-                    AND r.participation IS NULL
+                    OR r.submission.participation IS NULL
                 )
             """)
     int countOrphanRating();

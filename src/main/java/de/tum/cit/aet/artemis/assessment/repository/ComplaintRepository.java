@@ -106,7 +106,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND c.student.id = :studentId
-                AND c.result.participation.exercise.course.id = :courseId
+                AND c.result.submission.participation.exercise.course.id = :courseId
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
     long countUnacceptedComplaintsByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
@@ -124,7 +124,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             FROM Complaint c
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND c.team.shortName = :teamShortName
-                AND c.result.participation.exercise.course.id = :courseId
+                AND c.result.submission.participation.exercise.course.id = :courseId
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
             """)
     long countUnacceptedComplaintsByComplaintTypeTeamShortNameAndCourseId(@Param("teamShortName") String teamShortName, @Param("courseId") Long courseId);
@@ -139,7 +139,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Query("""
             SELECT COUNT(c)
             FROM Complaint c
-            WHERE c.result.participation.exercise.id = :exerciseId
+            WHERE c.result.submission.participation.exercise.id = :exerciseId
                 AND c.complaintType = :complaintType
             """)
     long countComplaintsByExerciseIdAndComplaintType(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
@@ -153,13 +153,13 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
-                c.result.participation.exercise.id,
+                c.result.submission.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
             FROM Complaint c
-            WHERE c.result.participation.exercise.id IN :exerciseIds
+            WHERE c.result.submission.participation.exercise.id IN :exerciseIds
                 AND c.complaintType = :complaintType
-            GROUP BY c.result.participation.exercise.id
+            GROUP BY c.result.submission.participation.exercise.id
             """)
     List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
@@ -172,14 +172,14 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
-                c.result.participation.exercise.id,
+                c.result.submission.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
             FROM Complaint c
-            WHERE c.result.participation.exercise.id IN :exerciseIds
+            WHERE c.result.submission.participation.exercise.id IN :exerciseIds
                 AND c.complaintType = :complaintType
-                AND c.result.participation.testRun = FALSE
-            GROUP BY c.result.participation.exercise.id
+                AND c.result.submission.participation.testRun = FALSE
+            GROUP BY c.result.submission.participation.exercise.id
             """)
     List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
@@ -196,8 +196,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT COUNT(c)
             FROM Complaint c
             WHERE c.complaintType = :complaintType
-                AND c.result.participation.testRun = FALSE
-                AND c.result.participation.exercise.id = :exerciseId
+                AND c.result.submission.participation.testRun = FALSE
+                AND c.result.submission.participation.exercise.id = :exerciseId
             """)
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 

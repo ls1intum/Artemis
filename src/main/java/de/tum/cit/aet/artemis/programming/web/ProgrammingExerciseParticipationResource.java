@@ -193,7 +193,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations/{participationId}/has-result")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> checkIfParticipationHashResult(@PathVariable Long participationId) {
-        boolean hasResult = resultRepository.existsByParticipationId(participationId);
+        boolean hasResult = resultRepository.existsBySubmissionParticipationId(participationId);
         return ResponseEntity.ok(hasResult);
     }
 

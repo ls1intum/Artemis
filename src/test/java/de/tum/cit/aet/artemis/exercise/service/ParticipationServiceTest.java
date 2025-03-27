@@ -137,7 +137,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
         assertThat(resultBuildJobMap).hasSize(0);

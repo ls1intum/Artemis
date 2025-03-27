@@ -232,7 +232,7 @@ class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends Abstra
         var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.BAD_REQUEST);
 
-        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
         assertThat(results).isEmpty();
     }
 
@@ -298,7 +298,7 @@ class ProgrammingSubmissionAndResultLocalVcJenkinsIntegrationTest extends Abstra
     private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
         // Assert that result is linked to the participation
-        var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+        var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.isSuccessful()).isFalse();

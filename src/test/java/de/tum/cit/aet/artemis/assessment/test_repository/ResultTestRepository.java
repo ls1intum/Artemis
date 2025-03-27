@@ -39,7 +39,7 @@ public interface ResultTestRepository extends ResultRepository {
      *         or an empty {@code Optional} if no result is found
      */
     default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        var resultOptional = findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
         if (resultOptional.isEmpty()) {
             return Optional.empty();
         }

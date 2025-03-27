@@ -424,7 +424,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participationRepo.existsById(participationId)).isTrue();
         // There should be a submission and result assigned to the participation.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(2);
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
@@ -432,7 +432,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation).isEmpty();
         // Make sure that also the submission and result were deleted.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
     }
 
     @Test
@@ -447,7 +447,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         // There should be a submission and no result assigned to the participation.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
 
         request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
@@ -469,14 +469,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         // There should be a submission and no result assigned to the participation.
         assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
         Optional<StudentParticipation> participation = participationRepo.findById(participationId);
         // Participation should now be gone.
         assertThat(participation).isEmpty();
         // Make sure that the result is deleted.
-        assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
+        assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
     }
 
     @Test

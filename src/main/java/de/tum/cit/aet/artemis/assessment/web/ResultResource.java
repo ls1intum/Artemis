@@ -194,7 +194,7 @@ public class ResultResource {
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
         log.debug("REST request to get build job ids for results of participation : {}", participationId);
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
+        List<Result> results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId);
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
 

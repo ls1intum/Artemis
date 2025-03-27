@@ -185,7 +185,7 @@ public class ComplaintService {
      * @return the number of responses
      */
     public long countComplaintResponsesByCourseId(long courseId) {
-        return complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
+        return complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
                 ComplaintType.COMPLAINT);
     }
 
@@ -196,7 +196,7 @@ public class ComplaintService {
      * @return the number of responses
      */
     public long countMoreFeedbackRequestResponsesByCourseId(long courseId) {
-        return complaintResponseRepository.countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
+        return complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId,
                 ComplaintType.MORE_FEEDBACK);
     }
 
