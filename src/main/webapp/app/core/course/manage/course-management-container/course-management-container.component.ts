@@ -52,39 +52,39 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { facSidebar } from 'app/icons/icons';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { LtiService } from 'app/shared/service/lti.service';
 import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
+import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
-import { CourseManagementStatisticsComponent } from 'app/course/manage/course-management-statistics.component';
-import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementStatisticsComponent } from 'app/core/course/manage/course-management-statistics.component';
+import { CourseManagementExercisesComponent } from 'app/core/course/manage/course-management-exercises.component';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
-import { CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
+import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
+import { CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { LectureComponent } from 'app/lecture/manage/lecture.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
-import { CourseSidebarService } from 'app/course/overview/course-sidebar.service';
+import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
-import { CourseScoresComponent } from 'app/course/manage/course-scores/course-scores.component';
+import { CourseScoresComponent } from 'app/core/course/manage/course-scores/course-scores.component';
 import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
+import { facSidebar } from 'app/shared/icons/icons';
 
 @Component({
     selector: 'jhi-course-management-container',

@@ -33,7 +33,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
-import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { CourseAccessStorageService } from 'app/core/course/course-access-storage.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
