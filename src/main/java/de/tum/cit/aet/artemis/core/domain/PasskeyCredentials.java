@@ -188,7 +188,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
     public WebAuthnCredentialRecord toWebAuthnCredentialRecord() {
 
         // Assuming `userPrincipal` is represented by the `user` entity, which could be a user identifier or object
-        String userPrincipal = this.user.getLogin(); // or another appropriate user identifier
+        Long userPrincipal = this.user.getId(); // or another appropriate user identifier
 
         // Assuming `attestationStatement` is derived from the `attestationType` field
         // TODO: map enum to class
