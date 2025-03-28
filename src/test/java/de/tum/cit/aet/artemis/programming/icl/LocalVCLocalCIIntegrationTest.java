@@ -31,7 +31,6 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -167,7 +166,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     // ---- Tests for the base repositories ----
-    @Disabled
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_testsRepository() throws Exception {
@@ -219,7 +218,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_solutionRepository() throws Exception {
@@ -251,7 +249,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         });
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_templateRepository() throws Exception {
@@ -283,7 +280,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         });
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_auxiliaryRepository() throws Exception {
@@ -340,7 +336,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     // ---- Tests for the student assignment repository ----
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_studentAssignmentRepository_beforeAfterStartDate() throws Exception {
@@ -395,7 +390,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_studentAssignmentRepository_afterDueDate() throws Exception {
@@ -420,7 +414,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPush_studentAssignmentRepository_tooManySubmissions() throws Exception {
@@ -451,7 +444,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     // ---- Team Mode ----
-    @Disabled
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetch_studentAssignmentRepository_teamMode_beforeAfterStartDate() throws Exception {
@@ -505,7 +498,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         teamLocalRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetch_studentAssignmentRepository_teamMode_afterDueDate() throws Exception {
@@ -550,7 +542,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     // ---- Tests for the teaching assistant assignment repository ----
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFetchPush_teachingAssistantAssignmentRepository() throws GitAPIException, IOException, URISyntaxException {
@@ -599,7 +590,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     // ---- Tests for the instructor assignment repository ----
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorAssignmentRepository() throws GitAPIException, IOException, URISyntaxException {
@@ -644,7 +634,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     // ---- Tests for the exam mode ----
-    @Disabled // TODO re-enable after remove gitlab test configuration issues are resolved
+    // TODO re-enable after remove gitlab test configuration issues are resolved
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_assignmentRepository_examMode() throws Exception {
@@ -746,7 +736,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorExamTestRun() throws Exception {
@@ -827,7 +816,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     // ---- Tests for practice repositories ----
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_studentPracticeRepository() throws Exception {
@@ -880,7 +868,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         practiceRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFetchPush_teachingAssistantPracticeRepository() throws Exception {
@@ -922,7 +909,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         practiceRepository.resetLocalRepo();
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorPracticeRepository() throws Exception {
@@ -982,14 +968,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             log.info("Cleanup queue processing service done");
         }
 
-        @Disabled
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testBuildPriorityBeforeDueDate() throws Exception {
             testPriority(student1Login, PRIORITY_NORMAL);
         }
 
-        @Disabled
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testBuildPriorityAfterDueDate() throws Exception {
@@ -1000,7 +984,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
         }
 
-        @Disabled
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPriorityRunningExam() throws Exception {
