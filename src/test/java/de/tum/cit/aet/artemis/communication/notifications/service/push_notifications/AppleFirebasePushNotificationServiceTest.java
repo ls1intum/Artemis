@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyS
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 class AppleFirebasePushNotificationServiceTest {
 
@@ -46,6 +47,9 @@ class AppleFirebasePushNotificationServiceTest {
 
     @Mock
     private RestTemplate firebaseRestTemplateMock;
+
+    @Mock
+    private FeatureToggleService featureToggleService;
 
     private ApplePushNotificationService applePushNotificationService;
 
@@ -81,8 +85,8 @@ class AppleFirebasePushNotificationServiceTest {
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
 
-        applePushNotificationService = new ApplePushNotificationService(courseNotificationPushProxyService, repositoryMock, appleRestTemplateMock);
-        firebasePushNotificationService = new FirebasePushNotificationService(courseNotificationPushProxyService, repositoryMock, firebaseRestTemplateMock);
+        applePushNotificationService = new ApplePushNotificationService(courseNotificationPushProxyService, repositoryMock, appleRestTemplateMock, featureToggleService);
+        firebasePushNotificationService = new FirebasePushNotificationService(courseNotificationPushProxyService, repositoryMock, firebaseRestTemplateMock, featureToggleService);
 
         ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", "test");
         ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", "test");

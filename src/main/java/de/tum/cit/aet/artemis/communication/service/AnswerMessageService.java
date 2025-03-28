@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -35,6 +38,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -121,6 +125,37 @@ public class AnswerMessageService extends PostingService {
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
         SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
+
+        if (this.featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var newAnswerNotification = new NewAnswerNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
+                    post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(), answerMessage.getCreationDate().toString(),
+                    answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(), answerMessage.getId(),
+                    conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversationId);
+
+            var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+            usersInvolved.add(post.getAuthor());
+
+            var notificationRecipientsList = getNotificationRecipients(conversation).toList();
+
+            var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
+                    .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), answerMessage.getAuthor().getId())).toList();
+
+            // We only send notifications to users that are part of the conversation, did not mute or hide it and if they were not mentioned (since they get a separate notification
+            // for that)
+            var filteredUsersInvolved = usersInvolved.stream().filter(user -> notificationRecipientsList.stream()
+                    .anyMatch(recipient -> recipient.userId() == user.getId() && recipient.userId() != answerMessage.getAuthor().getId() && !recipient.isConversationHidden()
+                            && !recipient.isConversationMuted() && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> recipient.userId() == mentionedUser.getId())))
+                    .collect(Collectors.toList());
+
+            this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
+
+            var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
+                    answerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(),
+                    answerMessage.getCreationDate().toString(), answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(),
+                    answerMessage.getId(), conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversationId);
+
+            this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+        }
 
         this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
         this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);

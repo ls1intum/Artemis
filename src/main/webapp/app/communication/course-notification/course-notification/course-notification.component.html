@@ -6,6 +6,10 @@
             </div>
         }
 
+        @if (isRedirectToUrl()) {
+            <a class="course-notification-redirect-link" [routerLink]="notificationUrl.link" [queryParams]="notificationUrl.queryParams"></a>
+        }
+
         <div class="course-notification-background"></div>
 
         <div class="course-notification-icon-wrap">

@@ -9,21 +9,16 @@ import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 
 /**
- * Notification that tells the user there was a new post in a channel of any type. Announcement posts and thread answers
- * are sent via different notifications.
+ * Notification that tells the user there was a new announcement. These get distributed via push, websocket an e-mail.
  */
-@CourseNotificationType(1)
-public class NewPostNotification extends CourseNotification {
+@CourseNotificationType(4)
+public class NewAnnouncementNotification extends CourseNotification {
 
     protected Long postId;
 
+    protected String postTitle;
+
     protected String postMarkdownContent;
-
-    protected Long channelId;
-
-    protected String channelName;
-
-    protected String channelType;
 
     protected String authorName;
 
@@ -31,16 +26,17 @@ public class NewPostNotification extends CourseNotification {
 
     protected Long authorId;
 
+    protected Long channelId;
+
     /**
      * Default constructor used when creating a new post notification.
      */
-    public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
-            String channelType, String authorName, String authorImageUrl, Long authorId) {
+    public NewAnnouncementNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postTitle, String postMarkdownContent, String authorName,
+            String authorImageUrl, Long authorId, Long channelId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.postId = postId;
+        this.postTitle = postTitle;
         this.postMarkdownContent = postMarkdownContent;
-        this.channelName = channelName;
-        this.channelType = channelType;
         this.authorName = authorName;
         this.authorImageUrl = authorImageUrl;
         this.authorId = authorId;
@@ -50,7 +46,7 @@ public class NewPostNotification extends CourseNotification {
     /**
      * Constructor used when loading the existing notification from the database.
      */
-    public NewPostNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+    public NewAnnouncementNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         super(notificationId, courseId, creationDate, parameters);
     }
 
@@ -61,12 +57,12 @@ public class NewPostNotification extends CourseNotification {
 
     @Override
     public Duration getCleanupDuration() {
-        return Duration.ofDays(7);
+        return Duration.ofDays(30);
     }
 
     @Override
     public List<NotificationChannelOption> getSupportedChannels() {
-        return List.of(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
+        return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
     }
 
     @Override

@@ -189,9 +189,59 @@
         },
         "courseNotification": {
             "newPostNotification": {
-                "title": "New Message",
+                "title": "New message",
                 "content": "{{postMarkdownContent}}",
-                "settingsTitle": "New Message"
+                "settingsTitle": "New message"
+            },
+            "newAnswerNotification": {
+                "title": "New thread answer",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "New thread answer"
+            },
+            "newMentionNotification": {
+                "title": "You were mentioned",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "You were mentioned"
+            },
+            "newAnnouncementNotification": {
+                "title": "New announcement",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New announcement"
+            },
+            "newExerciseNotification": {
+                "title": "New exercise",
+                "content": "{{exerciseTitle}} has been released.",
+                "settingsTitle": "New exercise"
+            },
+            "exerciseOpenForPracticeNotification": {
+                "title": "Exercise open for practice",
+                "content": "{{exerciseTitle}} is now open for practice.",
+                "settingsTitle": "Exercise open for practice"
+            },
+            "exerciseAssessedNotification": {
+                "title": "Exercise assessed",
+                "content": "{{exerciseTitle}} has been assessed.",
+                "settingsTitle": "Exercise assessed"
+            },
+            "exerciseUpdatedNotification": {
+                "title": "Exercise updated",
+                "content": "{{exerciseTitle}} was updated.",
+                "settingsTitle": "Exercise updated"
+            },
+            "quizExerciseStartedNotification": {
+                "title": "Quiz exercise started",
+                "content": "{{exerciseTitle}} just started.",
+                "settingsTitle": "Quiz exercise started"
+            },
+            "attachmentChangedNotification": {
+                "title": "Attachment changed",
+                "content": "An attachment in {{exerciseOrLectureName}} changed.",
+                "settingsTitle": "Attachment changed"
+            },
+            "newManualFeedbackRequestNotification": {
+                "title": "Feedback requested",
+                "content": "Feedback was requested in {{exerciseTitle}}.",
+                "settingsTitle": "Feedback requested"
             },
             "temporal": {
                 "now": "Now",
@@ -215,7 +265,7 @@
                 "title": "Notifications",
                 "emptyTitle": "All done!",
                 "settingsTooltip": "Go to settings",
-                "archiveAllTooltip": "Archive all notifications",
+                "archiveAllTooltip": "Clear all notifications",
                 "emptyMessage": "Currently there are no notifications for this category."
             },
             "category": {

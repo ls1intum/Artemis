@@ -38,6 +38,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 class CourseNotificationEmailServiceTest {
@@ -53,6 +55,12 @@ class CourseNotificationEmailServiceTest {
     @Mock
     private MailSendingService mailSendingService;
 
+    @Mock
+    MarkdownCustomLinkRendererService markdownCustomLinkRendererService;
+
+    @Mock
+    MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService;
+
     @Captor
     private ArgumentCaptor<Context> contextCaptor;
 
@@ -61,7 +69,8 @@ class CourseNotificationEmailServiceTest {
     @BeforeEach
     void setUp() throws MalformedURLException {
         MockitoAnnotations.openMocks(this);
-        courseNotificationEmailService = new CourseNotificationEmailService(messageSource, templateEngine, mailSendingService);
+        courseNotificationEmailService = new CourseNotificationEmailService(messageSource, templateEngine, mailSendingService, markdownCustomLinkRendererService,
+                markdownCustomReferenceRendererService);
         serverUrl = new URL("https://example.org");
         ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
     }
@@ -186,7 +195,7 @@ class CourseNotificationEmailServiceTest {
         var creationDate = ZonedDateTime.now();
         var category = CourseNotificationCategory.COMMUNICATION;
 
-        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, parameters);
+        CourseNotificationDTO notification = new CourseNotificationDTO("DETAILED_NOTIFICATION", 1L, 123L, creationDate, category, parameters, "/");
 
         when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
         when(templateEngine.process(anyString(), any(Context.class))).thenReturn("Test Content");
@@ -236,6 +245,6 @@ class CourseNotificationEmailServiceTest {
     }
 
     private CourseNotificationDTO createNotification(String notificationType, Long courseId) {
-        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"));
+        return new CourseNotificationDTO(notificationType, 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.COMMUNICATION, Map.of("testParam", "testValue"), "/");
     }
 }

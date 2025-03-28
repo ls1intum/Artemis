@@ -51,7 +51,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected courseCategories: string[];
 
     protected isShown = false;
-    protected selectedCategory = CourseNotificationCategory.COMMUNICATION;
+    protected selectedCategory = CourseNotificationCategory.GENERAL;
     protected notifications: CourseNotification[];
     protected notificationsForSelectedCategory: CourseNotification[] = [];
     protected courseNotificationCount: number = 0;
