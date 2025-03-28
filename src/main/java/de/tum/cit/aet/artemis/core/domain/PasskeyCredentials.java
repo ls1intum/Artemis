@@ -265,7 +265,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
             case USB -> Set.of(AuthenticatorTransport.USB);
             case NFC -> Set.of(AuthenticatorTransport.NFC);
             case BLE -> Set.of(AuthenticatorTransport.BLE);
-            case INTERNAL, internal -> // TODO find proper fix for this
+            case INTERNAL -> // TODO find proper fix for this
                 Set.of(AuthenticatorTransport.INTERNAL);
             case HYBRID -> Set.of(AuthenticatorTransport.HYBRID);
             default -> throw new IllegalArgumentException("Unknown transport type: " + transports);
@@ -362,8 +362,4 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
 
 enum AttestationType {
     DIRECT, INDIRECT, NONE
-}
-
-enum Transports {
-    USB, NFC, BLE, INTERNAL, HYBRID, internal
 }
