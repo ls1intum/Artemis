@@ -1,10 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UserSettingsDirective } from '../user-settings.directive';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MatSliderModule } from '@angular/material/slider';
 import { FeedbackLearnerProfile, LearnerProfileService } from './learner-profile.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-learner-profile',
@@ -13,8 +12,9 @@ import { FeedbackLearnerProfile, LearnerProfileService } from './learner-profile
     standalone: true,
     imports: [FormsModule, TranslateDirective, MatSliderModule],
 })
-export class LearnerProfileComponent extends UserSettingsDirective implements OnInit {
+export class LearnerProfileComponent implements OnInit {
     private readonly learnerProfileService = inject(LearnerProfileService);
+    private readonly alertService = inject(AlertService);
 
     profile: FeedbackLearnerProfile = {
         practicalVsTheoretical: 0,
@@ -23,9 +23,10 @@ export class LearnerProfileComponent extends UserSettingsDirective implements On
         briefVsDetailed: 2,
     };
 
+    settingsChanged = false;
+    isSaving = false;
+
     ngOnInit(): void {
-        this.userSettingsCategory = UserSettingsCategory.LEARNER_PROFILE;
-        super.ngOnInit();
         this.loadSettings();
     }
 
@@ -35,24 +36,31 @@ export class LearnerProfileComponent extends UserSettingsDirective implements On
                 this.profile = profile;
             },
             error: () => {
-                this.onError({ error: { message: 'Error loading learner profile' } } as any);
+                this.alertService.error('Error loading learner profile');
             },
         });
     }
 
     onSliderChange(): void {
-        // Here we would typically save the changes to the backend
         this.settingsChanged = true;
     }
 
     save(): void {
+        if (this.isSaving) {
+            return;
+        }
+
+        this.isSaving = true;
         this.learnerProfileService.updateProfile(this.profile).subscribe({
             next: (updatedProfile: FeedbackLearnerProfile) => {
                 this.profile = updatedProfile;
-                this.finishSaving();
+                this.settingsChanged = false;
+                this.isSaving = false;
+                this.alertService.success('Learner profile saved successfully');
             },
             error: () => {
-                this.onError({ error: { message: 'Error saving learner profile' } } as any);
+                this.alertService.error('Error saving learner profile');
+                this.isSaving = false;
             },
         });
     }

@@ -6,7 +6,6 @@ import { UserSettingsCategory } from 'app/shared/constants/user-settings.constan
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { User } from 'app/core/user/user.model';
-import { LearnerProfileSetting, learnerProfileStructure } from './learner-profile/learner-profile-structure';
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     private http = inject(HttpClient);
@@ -14,7 +13,6 @@ export class UserSettingsService {
     public notificationSettingsResourceUrl = 'api/communication/notification-settings';
     public scienceSettingsResourceUrl = 'api/atlas/science-settings';
     public profilePictureResourceUrl = 'api/core/account/profile-picture';
-    public learnerProfileResourceUrl = 'api/feedback-learner-profile';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -34,9 +32,6 @@ export class UserSettingsService {
             }
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return this.http.get<ScienceSetting[]>(this.scienceSettingsResourceUrl, { observe: 'response' });
-            }
-            case UserSettingsCategory.LEARNER_PROFILE: {
-                return this.http.get<LearnerProfileSetting[]>(this.learnerProfileResourceUrl, { observe: 'response' });
             }
             default: {
                 throw new Error(`Unsupported settings category: ${category}`);
@@ -85,9 +80,6 @@ export class UserSettingsService {
             }
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return this.http.put<Setting[]>(this.scienceSettingsResourceUrl, settings, { observe: 'response' });
-            }
-            case UserSettingsCategory.LEARNER_PROFILE: {
-                return this.http.put<Setting[]>(this.learnerProfileResourceUrl, settings, { observe: 'response' });
             }
             default: {
                 throw new Error(`Unsupported settings category: ${category}`);
@@ -155,9 +147,6 @@ export class UserSettingsService {
             }
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return scienceSettingsStructure;
-            }
-            case UserSettingsCategory.LEARNER_PROFILE: {
-                return learnerProfileStructure;
             }
             default: {
                 throw new Error(`Unsupported settings category: ${category}`);
