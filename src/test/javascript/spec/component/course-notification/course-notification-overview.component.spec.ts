@@ -33,7 +33,7 @@ describe('CourseNotificationOverviewComponent', () => {
         category: CourseNotificationCategory,
         status: CourseNotificationViewingStatus = CourseNotificationViewingStatus.UNSEEN,
     ): CourseNotification => {
-        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' });
+        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, '/');
     };
 
     beforeEach(async () => {
