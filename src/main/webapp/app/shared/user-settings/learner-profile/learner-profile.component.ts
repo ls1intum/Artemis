@@ -4,17 +4,23 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MatSliderModule } from '@angular/material/slider';
 import { FeedbackLearnerProfile, LearnerProfileService } from './learner-profile.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learner-profile',
     templateUrl: './learner-profile.component.html',
-    styleUrls: ['./learner-profile.component.scss'],
+    styleUrls: ['./learner-profile.component.scss', '../user-settings.scss'],
     standalone: true,
-    imports: [FormsModule, TranslateDirective, MatSliderModule],
+    imports: [FormsModule, TranslateDirective, MatSliderModule, FontAwesomeModule],
 })
 export class LearnerProfileComponent implements OnInit {
     private readonly learnerProfileService = inject(LearnerProfileService);
     private readonly alertService = inject(AlertService);
+
+    // Icons
+    faInfoCircle = faInfoCircle;
+    faSave = faSave;
 
     profile: FeedbackLearnerProfile = {
         practicalVsTheoretical: 0,
