@@ -16,7 +16,7 @@ public class AttachmentChangedNotification extends CourseNotification {
 
     protected String attachmentName;
 
-    protected String exerciseOrLectureName;
+    protected String unitName;
 
     protected Long exerciseId;
 
@@ -25,11 +25,10 @@ public class AttachmentChangedNotification extends CourseNotification {
     /**
      * Default constructor used when creating a new post notification.
      */
-    public AttachmentChangedNotification(Long courseId, String courseTitle, String courseImageUrl, String attachmentName, String exerciseOrLectureName, Long exerciseId,
-            Long lectureId) {
+    public AttachmentChangedNotification(Long courseId, String courseTitle, String courseImageUrl, String attachmentName, String unitName, Long exerciseId, Long lectureId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.attachmentName = attachmentName;
-        this.exerciseOrLectureName = exerciseOrLectureName;
+        this.unitName = unitName;
         this.exerciseId = exerciseId;
         this.lectureId = lectureId;
     }

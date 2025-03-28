@@ -135,7 +135,7 @@ public class CourseNotificationPushProxyService {
                 type = EXERCISE_SUBMISSION_ASSESSED.toString();
                 break;
             case "attachmentChangedNotification":
-                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("attachmentName"), parameters.get("exerciseOrLectureName"), };
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("attachmentName"), parameters.get("unitName"), };
 
                 notificationTarget = new NotificationTarget(NotificationTargetFactory.ATTACHMENT_UPDATED_TEXT,
                         parameters.get("exerciseId") != null ? Long.parseLong(parameters.get("exerciseId")) : Long.parseLong(parameters.get("lectureId")),

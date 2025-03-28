@@ -54,7 +54,7 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     courseIconUrl: undefined,
                     channelName: 'tech-support',
                     exerciseTitle: 'Modeling 123',
-                    exerciseOrLectureName: 'Modeling 123',
+                    unitName: 'Modeling 123',
                 },
                 '/',
             );

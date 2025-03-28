@@ -235,7 +235,7 @@
             },
             "attachmentChangedNotification": {
                 "title": "Attachment changed",
-                "content": "An attachment in {{exerciseOrLectureName}} changed.",
+                "content": "An attachment in {{unitName}} changed.",
                 "settingsTitle": "Attachment changed"
             },
             "newManualFeedbackRequestNotification": {

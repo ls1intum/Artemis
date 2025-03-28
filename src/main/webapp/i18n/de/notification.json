@@ -235,7 +235,7 @@
             },
             "attachmentChangedNotification": {
                 "title": "Anhang verändert",
-                "content": "Ein Anhang wurde in {{exerciseOrLectureName}} verändert.",
+                "content": "Ein Anhang wurde in {{unitName}} verändert.",
                 "settingsTitle": "Anhang verändert"
             },
             "newManualFeedbackRequestNotification": {
