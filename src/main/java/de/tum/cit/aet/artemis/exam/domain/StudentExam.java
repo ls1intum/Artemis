@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.domain;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +19,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -32,7 +30,6 @@ import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 @Entity
 @Table(name = "student_exam")
@@ -80,10 +77,6 @@ public class StudentExam extends AbstractAuditingEntity {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
-
-    @ManyToMany
-    @JoinTable(name = "student_exam_quiz_question", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "quiz_question_id", referencedColumnName = "id"))
-    private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(name = "student_exam_participation", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "participation_id", referencedColumnName = "id"))
@@ -186,24 +179,6 @@ public class StudentExam extends AbstractAuditingEntity {
 
     public void setExamSessions(Set<ExamSession> examSessions) {
         this.examSessions = examSessions;
-    }
-
-    /**
-     * Returns a list of quiz questions associated with the student exam.
-     * If the quizQuestions list is not null and has been initialized, it returns the list of quiz questions.
-     * Otherwise, it returns an empty list.
-     *
-     * @return the list of quiz questions associated with the student exam
-     */
-    public List<QuizQuestion> getQuizQuestions() {
-        if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return quizQuestions;
-        }
-        return Collections.emptyList();
-    }
-
-    public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
-        this.quizQuestions = quizQuestions;
     }
 
     public List<StudentParticipation> getStudentParticipations() {
