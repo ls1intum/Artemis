@@ -220,7 +220,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param programmingExercise A new programming exercise.
      * @throws GitAPIException Thrown in case creating a repository fails.
      */
-    void createRepositoriesForNewExercise(final ProgrammingExercise programmingExercise) throws GitAPIException {
+    public void createRepositoriesForNewExercise(final ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         versionControlService.orElseThrow().createProjectForExercise(programmingExercise); // Create project
         versionControlService.orElseThrow().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE)); // Create template repository
