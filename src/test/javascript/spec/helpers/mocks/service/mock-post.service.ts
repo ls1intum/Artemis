@@ -2,7 +2,7 @@ import { Observable, of } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
-import { metisCoursePosts, metisPostExerciseUser1, metisPostInChannel, metisTags } from '../../sample/metis-sample-data';
+import { messagesBetweenUser1User2, metisCoursePosts, metisPostExerciseUser1, metisTags } from '../../sample/metis-sample-data';
 
 export class MockPostService {
     create(courseId: number, post: Post): Observable<HttpResponse<Post>> {
@@ -24,9 +24,9 @@ export class MockPostService {
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<HttpResponse<Post[]>> {
         if (postContextFilter.conversationIds) {
             return of({
-                body: [metisPostInChannel],
+                body: messagesBetweenUser1User2,
                 headers: new HttpHeaders({
-                    'X-Total-Count': 1,
+                    'X-Total-Count': messagesBetweenUser1User2.length.toString(),
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         } else {

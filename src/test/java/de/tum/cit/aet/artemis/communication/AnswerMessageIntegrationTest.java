@@ -70,8 +70,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private List<Long> existingCourseWideChannelIds;
 
-    private List<Long> existingConversationIds;
-
     private Long courseId;
 
     private User student1;
@@ -97,10 +95,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // filters course wide channels
         existingCourseWideChannelIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
                 .map(post -> post.getConversation().getId()).distinct().toList();
-
-        // filters conversation ids
-        existingConversationIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).map(post -> post.getConversation().getId()).distinct()
-                .toList();
 
         // get all existing posts with answers in exercise context
         List<Post> existingPostsWithAnswersInExercise = existingConversationPostsWithAnswers.stream()

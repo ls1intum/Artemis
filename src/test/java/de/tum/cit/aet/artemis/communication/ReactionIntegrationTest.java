@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
@@ -59,6 +61,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<AnswerPost> existingAnswerPosts;
 
+    private List<Long> existingCourseWideChannelIds;
+
+    private List<Long> existingConversationIds;
+
     private Long courseId;
 
     private Course course;
@@ -88,6 +94,13 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
+
+        // filters course wide channels
+        existingCourseWideChannelIds = existingPostsWithAnswers.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
+                .map(post -> post.getConversation().getId()).distinct().toList();
+
+        // filters conversation ids
+        existingConversationIds = existingPostsWithAnswers.stream().filter(post -> post.getConversation() != null).map(post -> post.getConversation().getId()).distinct().toList();
 
         course = existingPostsWithAnswers.stream().filter(post -> post.getPlagiarismCase() != null).findFirst().orElseThrow().getPlagiarismCase().getExercise()
                 .getCourseViaExerciseGroupOrCourseMember();
@@ -330,7 +343,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         params.add("postSortCriterion", sortCriterion.toString());
         params.add("sortingOrder", sortingOrder.toString());
-        params.add("courseWideChannelIds", "");
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
@@ -367,7 +381,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         params.add("postSortCriterion", sortCriterion.toString());
         params.add("sortingOrder", sortingOrder.toString());
-        params.add("courseWideChannelIds", "");
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
