@@ -103,6 +103,14 @@
                                 }
                                 <span jhiTranslate="login.form.button"></span>
                             </button>
+                            <jhi-button
+                                class="d-flex"
+                                id="passkey-login-button"
+                                [btnType]="ButtonType.PRIMARY"
+                                [btnSize]="ButtonSize.SMALL"
+                                title="Login with passkey"
+                                (onClick)="loginWithPublicKeyCredential()"
+                            />
                         </div>
                     </form>
                     <div class="text-center">

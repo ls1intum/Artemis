@@ -18,12 +18,15 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
+import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
 
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent],
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly faCircleNotch = faCircleNotch;
@@ -38,6 +41,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
+    private webauthnService = inject(WebauthnService);
+    private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -95,6 +100,19 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (prefilledUsername) {
             this.username = prefilledUsername;
         }
+    }
+
+    async loginWithPublicKeyCredential() {
+        const credential = await this.webauthnService.getCredential({
+            userVerification: 'preferred',
+        });
+
+        if (!credential || credential.type != 'public-key') {
+            alert("Credential is undefined or type is not 'public-key'");
+            return;
+        }
+
+        await this.passkeySettingsApiService.loginWithPasskey(credential);
     }
 
     /**
@@ -227,4 +245,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.password.length >= this.PASSWORD_MIN_LENGTH &&
             this.password.length <= this.PASSWORD_MAX_LENGTH;
     }
+
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
 }
