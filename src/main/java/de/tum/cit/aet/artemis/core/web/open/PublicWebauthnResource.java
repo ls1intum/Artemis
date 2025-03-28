@@ -75,7 +75,7 @@ public class PublicWebauthnResource {
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        String clientExtensionResultsJson = null;
+        String clientExtensionResultsJson;
         try {
             // TODO do this in the class directly
             clientExtensionResultsJson = objectMapper.writeValueAsString(createPasskeyDTO.webAuthnCredential().clientExtensionResults());
@@ -119,7 +119,6 @@ public class PublicWebauthnResource {
     @PostMapping("authenticate")
     @EnforceNothing
     public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result) throws URISyntaxException {
-
         // TODO
         return ResponseEntity.ok().build();
     }

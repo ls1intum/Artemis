@@ -253,10 +253,23 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
         AuthenticationExtensionsClientOutputs<RegistrationExtensionClientOutput> clientExtensions = null; // TODO: Replace with actual data
 
         // Convert `Transports` enum to `Set<AuthenticatorTransport>`
-        Set<AuthenticatorTransport> transports = Set.of(AuthenticatorTransport.create(this.transports.name())); // Replace with actual mapping logic
+        // Set<AuthenticatorTransport> transports = Set.of(AuthenticatorTransport.create(this.transports.name())); // Replace with actual mapping logic
+        Set<AuthenticatorTransport> transports = mapTransports(this.transports);
 
         return new WebAuthnCredentialRecordImpl(name, userPrincipal, attestationStatement, uvInitialized, backupEligible, backupState, counter, attestedCredentialData,
                 authenticatorExtensions, clientData, clientExtensions, transports);
+    }
+
+    private static Set<AuthenticatorTransport> mapTransports(Transports transports) {
+        return switch (transports) {
+            case USB -> Set.of(AuthenticatorTransport.USB);
+            case NFC -> Set.of(AuthenticatorTransport.NFC);
+            case BLE -> Set.of(AuthenticatorTransport.BLE);
+            case INTERNAL, internal -> // TODO find proper fix for this
+                Set.of(AuthenticatorTransport.INTERNAL);
+            case HYBRID -> Set.of(AuthenticatorTransport.HYBRID);
+            default -> throw new IllegalArgumentException("Unknown transport type: " + transports);
+        };
     }
 
     // TODO: WORK IN PROGRESS, double check if the webauthn4j framework offers and easier conversion
@@ -352,5 +365,5 @@ enum AttestationType {
 }
 
 enum Transports {
-    USB, NFC, BLE, INTERNAL, HYBRID
+    USB, NFC, BLE, INTERNAL, HYBRID, internal
 }
