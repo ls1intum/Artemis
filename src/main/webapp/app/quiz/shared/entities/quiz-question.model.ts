@@ -3,7 +3,6 @@ import { SafeHtml } from '@angular/platform-browser';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
-import { QuizGroup } from 'app/quiz/shared/entities/quiz-group.model';
 
 export enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
@@ -45,7 +44,6 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Exer
     public exercise?: QuizExercise;
     public exportQuiz = false; // default value
     public type?: QuizQuestionType;
-    public quizGroup?: QuizGroup;
 
     protected constructor(type: QuizQuestionType) {
         this.type = type;

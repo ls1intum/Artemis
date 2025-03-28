@@ -27,10 +27,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.service.ExamQuizQuestionsGenerator;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 /**
  * Spring Data JPA repository for the StudentExam entity.
@@ -293,8 +291,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(@Param("examId") Long examId);
 
-    List<StudentExam> findAllByExamId(Long examId);
-
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);
 
     @Query("""
@@ -394,12 +390,11 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     /**
      * Generates random exams for each user in the given users set and saves them.
      *
-     * @param exam                       exam for which the individual student exams will be generated
-     * @param users                      users for which the individual exams will be generated
-     * @param examQuizQuestionsGenerator generator to generate quiz questions for the exam
+     * @param exam  exam for which the individual student exams will be generated
+     * @param users users for which the individual exams will be generated
      * @return List of StudentExams generated for the given users
      */
-    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
+    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
 
@@ -445,8 +440,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             if (Boolean.TRUE.equals(exam.getRandomizeExerciseOrder())) {
                 Collections.shuffle(studentExam.getExercises());
             }
-            List<QuizQuestion> quizQuestions = examQuizQuestionsGenerator.generateQuizQuestionsForExam(exam.getId());
-            studentExam.setQuizQuestions(quizQuestions);
 
             studentExams.add(studentExam);
         }
