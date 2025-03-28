@@ -65,9 +65,7 @@ public class PublicWebauthnResource {
      */
     @PostMapping("signup")
     @EnforceNothing
-    public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result)
-            throws URISyntaxException {
-
+    public ResponseEntity<Void> registerNewPasskey(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result) {
         if (result.hasErrors()) {
             log.error("Validation errors: {}", result.getAllErrors());
             throw new BadRequestAlertException("User input validation failed. Please try again.", ENTITY_NAME, "TODO");
@@ -110,6 +108,19 @@ public class PublicWebauthnResource {
 
         // TODO would need to define a URI for created, does that make sense here? Which URI would it be?
         // return ResponseEntity.created().build();
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST /authenticate} : authenticate as a user with a passkey.
+     *
+     * @return ResponseEntity with status 201 (Created) if successfully authenticated.
+     */
+    @PostMapping("authenticate")
+    @EnforceNothing
+    public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result) throws URISyntaxException {
+
+        // TODO
         return ResponseEntity.ok().build();
     }
 
