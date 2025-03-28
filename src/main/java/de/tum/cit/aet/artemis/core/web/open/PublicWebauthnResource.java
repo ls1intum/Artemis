@@ -11,6 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationTrustResolver;
+import org.springframework.security.authentication.AuthenticationTrustResolverImpl;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +32,7 @@ import com.webauthn4j.springframework.security.exception.WebAuthnAuthenticationE
 import com.webauthn4j.util.exception.WebAuthnException;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AuthenticateDTO;
 import de.tum.cit.aet.artemis.core.dto.CreatePasskeyDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -50,6 +55,8 @@ public class PublicWebauthnResource {
     private final WebAuthnCredentialRecordManager webAuthnAuthenticatorManager;
 
     private final UserRepository userRepository;
+
+    private final AuthenticationTrustResolver authenticationTrustResolver = new AuthenticationTrustResolverImpl();
 
     public PublicWebauthnResource(WebAuthnRegistrationRequestValidator registrationRequestValidator, WebAuthnCredentialRecordManager webAuthnAuthenticatorManager,
             UserRepository userRepository) {
@@ -106,7 +113,7 @@ public class PublicWebauthnResource {
             throw new BadRequestAlertException("Passkey registration failed", ENTITY_NAME, null);
         }
 
-        // TODO would need to define a URI for created, does that make sense here? Which URI would it be?
+        // TODO return a proper URI and status 201 instead of 200
         // return ResponseEntity.created().build();
         return ResponseEntity.ok().build();
     }
@@ -118,8 +125,16 @@ public class PublicWebauthnResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody CreatePasskeyDTO createPasskeyDTO, BindingResult result) throws URISyntaxException {
-        // TODO
+    public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody AuthenticateDTO authenticateDTO, BindingResult result) throws URISyntaxException {
+        // TODO how to validate the authenticateDTO ?
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authenticationTrustResolver.isAnonymous(authentication)) {
+            throw new BadRequestAlertException("User is not authenticated", ENTITY_NAME, null);
+        }
+        else {
+            log.info("User is authenticated");
+        }
+
         return ResponseEntity.ok().build();
     }
 

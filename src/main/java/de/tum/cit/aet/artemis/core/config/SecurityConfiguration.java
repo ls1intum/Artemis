@@ -277,7 +277,9 @@ public class SecurityConfiguration {
         http.csrf(csrf -> {
             csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
             csrf.ignoringRequestMatchers("/webauthn/**");
+            // TODO demo appears not to disable csrf for signup and authenticate, but we do: see https://github.com/webauthn4j/webauthn4j-spring-security
             csrf.ignoringRequestMatchers("/api/core/public/webauthn/signup");
+            csrf.ignoringRequestMatchers("/api/core/public/webauthn/authenticate");
         });
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
