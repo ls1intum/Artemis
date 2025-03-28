@@ -524,8 +524,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
-        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
         submission.addResult(result);
@@ -583,8 +582,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
-        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
         submission.addResult(result);
@@ -607,8 +605,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
+        // TODO Michal Kawka we might need to set up a submission here
         var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation);
+                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation,
                 "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -647,8 +646,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var newResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
-        programmingExerciseStudentParticipation.addResult(newResult);
+        // TODO Michal Kawka we might need to set up a submission here
+        var newResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2),
+                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation,
                 "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
 

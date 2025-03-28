@@ -1025,7 +1025,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result result = new Result();
         result.setAssessmentType(assessmentType);
         result.setCompletionDate(ZonedDateTime.now());
-        result.setParticipation(participation);
+        // TODO Michal Kawka we might need to set up a submission here
         result.setSubmission(submission);
         if (assessor != null) {
             result.setAssessor(assessor);

@@ -421,7 +421,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(finishedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", feedbacks);
         Participation participation = fileUploadSubmission.getParticipation();
-        participation.setResults(null);
         FileUploadSubmission submission = request.get("/api/fileupload/participations/" + participation.getId() + "/file-upload-editor", HttpStatus.OK, FileUploadSubmission.class);
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNull();

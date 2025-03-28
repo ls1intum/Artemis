@@ -16,10 +16,10 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 @Primary
 public interface ResultTestRepository extends ResultRepository {
 
-    Set<Result> findAllByParticipationExerciseId(long exerciseId);
+    Set<Result> findAllBySubmissionParticipationExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
+    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndSubmission_Participation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
 
     Optional<Result> findDistinctBySubmissionId(long submissionId);
 

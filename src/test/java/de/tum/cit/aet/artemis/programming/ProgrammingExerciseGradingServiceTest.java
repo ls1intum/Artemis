@@ -1283,7 +1283,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
-        var allResults = resultRepository.findAllByParticipationExerciseId(programmingExerciseSCAEnabled.getId());
+        var allResults = resultRepository.findAllBySubmissionParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);
     }
