@@ -435,7 +435,7 @@ public final class Constants {
     /**
      * sharing configuration resource path for rest request, iff sharing profile is enabled
      */
-    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
+    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/isEnabled";
 
     /**
      * The directory in the docker container in which the build script is executed

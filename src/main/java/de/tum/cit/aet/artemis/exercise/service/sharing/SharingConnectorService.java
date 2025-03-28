@@ -76,6 +76,10 @@ public class SharingConnectorService {
             this.lastConnect = Instant.now();
         }
 
+        public void resetLastConnect() {
+            this.lastConnect = null;
+        }
+
     }
 
     private static final int HEALTH_HISTORY_LIMIT = 10;
@@ -229,6 +233,16 @@ public class SharingConnectorService {
         // we have to trigger sharing plattform reinitialization asynchronously,
         // because otherwise the main thread is blocked!
         Executors.newFixedThreadPool(1).execute(this::triggerReinit);
+    }
+
+    /**
+     * shuts down the service.
+     * currently just for test purposes
+     */
+    public void shutDown() {
+        sharingApiBaseUrl = null;
+        this.lastHealthStati.add(new HealthStatus("shutdown requested"));
+        this.lastHealthStati.resetLastConnect();
     }
 
     /**
