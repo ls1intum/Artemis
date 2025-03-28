@@ -144,8 +144,13 @@ public class ProgrammingExerciseFactory {
         String packageName = generatePackageName(programmingLanguage);
         programmingExercise.setPackageName(packageName);
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-        String testRepoUri = String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
+        String testRepoUri = String.format("%s/git/%s/%s-test.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
+        // String templateRepuUri = String.format("%s/git/%s/%s-exercise.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
+        // var templateParticipation = new TemplateProgrammingExerciseParticipation();
+        // templateParticipation.setRepositoryUri(templateRepuUri);
+        // templateParticipation.setExercise(programmingExercise);
+        // programmingExercise.setTemplateParticipation(templateParticipation);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 
