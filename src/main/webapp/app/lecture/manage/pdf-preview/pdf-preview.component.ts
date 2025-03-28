@@ -946,7 +946,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     navigateToCourseManagement(): void {
         if (this.attachment()) {
-            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+            this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
             this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
         }

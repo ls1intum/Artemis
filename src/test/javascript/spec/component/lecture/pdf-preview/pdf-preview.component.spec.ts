@@ -342,7 +342,8 @@ describe('PdfPreviewComponent', () => {
 
     describe('Attachment Update', () => {
         it('should update an attachment successfully', async () => {
-            component.attachment.set({ id: 1, name: 'Test PDF', version: 1 });
+            component.course.set({ id: 456 });
+            component.attachment.set({ id: 1, name: 'Test PDF', version: 1, lecture: { id: 123 } });
             component.attachmentToBeEdited.set(undefined);
 
             jest.spyOn(component, 'applyOperations').mockResolvedValue({
