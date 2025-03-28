@@ -1,10 +1,10 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { round } from 'app/shared/util/utils';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { TranslateDirective } from '../language/translate.directive';
 
 @Component({

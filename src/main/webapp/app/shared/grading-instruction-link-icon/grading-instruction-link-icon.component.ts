@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

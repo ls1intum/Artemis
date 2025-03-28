@@ -8,7 +8,7 @@ import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-so
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

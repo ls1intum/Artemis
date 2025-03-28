@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTaskComponent } from 'app/programming/manage/grading/tasks/programming-exercise-task/programming-exercise-task.component';
-import { Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
 import { Subject } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

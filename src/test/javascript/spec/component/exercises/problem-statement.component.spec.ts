@@ -4,13 +4,12 @@ import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { MockProvider } from 'ng-mocks';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -18,6 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;

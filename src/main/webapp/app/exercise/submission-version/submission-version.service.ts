@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { map } from 'rxjs/operators';
-import { convertDateFromServer } from 'app/utils/date.utils';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;

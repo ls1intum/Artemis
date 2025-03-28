@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faChalkboardUser, faChartColumn, faGraduationCap, faListAlt } from '@fortawesome/free-solid-svg-icons';
-import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/overview/course-sidebar/course-sidebar.component';
+import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';

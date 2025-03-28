@@ -7,15 +7,15 @@ import {
     getUnreferencedFeedback,
     isOnlyCompilationTested,
 } from 'app/exercise/result/result.utils';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 
 describe('ResultUtils', () => {

@@ -1,7 +1,7 @@
 import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { LearningObjectType } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 

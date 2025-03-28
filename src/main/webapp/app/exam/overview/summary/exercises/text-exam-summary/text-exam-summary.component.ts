@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 
 @Component({

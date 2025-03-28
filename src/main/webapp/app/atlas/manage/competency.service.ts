@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Competency, CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyImportResponseDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetency,
+    CourseCompetencyImportOptionsDTO,
+} from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 

@@ -11,13 +11,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Team } from 'app/entities/team.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
-import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 
 describe('AccountService', () => {
     let accountService: AccountService;

@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

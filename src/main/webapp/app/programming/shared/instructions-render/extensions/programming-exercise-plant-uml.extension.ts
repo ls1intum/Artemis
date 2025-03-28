@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/service/programming-exercise-plant-uml.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import DOMPurify from 'dompurify';
 
 // This regex is the same as in the server: ProgrammingExerciseTaskService.java

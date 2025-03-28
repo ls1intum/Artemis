@@ -1,7 +1,7 @@
 import { Component, effect, input, output } from '@angular/core';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

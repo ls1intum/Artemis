@@ -4,16 +4,16 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { ActivatedRoute } from '@angular/router';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { CommitHistoryComponent } from 'app/programming/shared/commit-history/commit-history.component';
-import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { of } from 'rxjs';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 
 describe('CommitHistoryComponent', () => {

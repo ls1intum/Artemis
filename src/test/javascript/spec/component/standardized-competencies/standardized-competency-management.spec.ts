@@ -9,13 +9,12 @@ import {
     Source,
     StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { StandardizedCompetencyEditComponent } from 'app/core/admin/standardized-competencies/standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from 'app/core/admin/standardized-competencies/knowledge-area-edit.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -24,6 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 
 describe('StandardizedCompetencyManagementComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyManagementComponent>;

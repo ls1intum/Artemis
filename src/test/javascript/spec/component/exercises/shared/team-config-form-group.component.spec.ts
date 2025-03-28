@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { Subject } from 'rxjs';
 import { NgModel } from '@angular/forms';

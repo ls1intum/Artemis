@@ -6,7 +6,7 @@ import {
     blobToBinaryString,
     createBlob,
     objectToJsonBlob,
-} from 'app/utils/blob-util';
+} from 'app/shared/util/blob-util';
 
 describe('BlobUtil', () => {
     describe('createBlob', () => {

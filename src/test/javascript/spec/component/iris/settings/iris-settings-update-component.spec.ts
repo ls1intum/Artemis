@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
-import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSettings, IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { mockSettings, mockVariants } from './mock-settings';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
@@ -20,7 +20,7 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
-} from 'app/entities/iris/settings/iris-sub-settings.model';
+} from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
