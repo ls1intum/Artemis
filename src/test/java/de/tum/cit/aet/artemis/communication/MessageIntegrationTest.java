@@ -138,8 +138,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @ParameterizedTest
@@ -170,6 +168,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
+        // Since we are testing old notifications
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
         ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -193,11 +194,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         else {
             verify(mailService, never()).sendNotification(any(Notification.class), any(User.class), any(Post.class));
         }
+
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
+        // Since we are testing old notifications
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
         ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -217,6 +223,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
         verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
+
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
