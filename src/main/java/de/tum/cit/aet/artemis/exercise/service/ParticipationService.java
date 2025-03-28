@@ -257,7 +257,7 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository)
         participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
 
-        return startProgrammingParticipation(exercise, participation);
+        return startProgrammingParticipation(participation);
     }
 
     /**
@@ -284,12 +284,12 @@ public class ParticipationService {
         // For practice mode 1 is always set. For more information see Participation.class
         participation.setAttempt(1);
 
-        return startProgrammingParticipation(exercise, participation);
+        return startProgrammingParticipation(participation);
     }
 
-    private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+    private StudentParticipation startProgrammingParticipation(ProgrammingExerciseStudentParticipation participation) {
         // Step 1c) configure the student repository (e.g. access right, etc.)
-        participation = configureRepository(exercise, participation);
+        participation = configureRepository(participation);
         // Step 2a) create the build plan (based on the BASE build plan)
         participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
@@ -387,7 +387,7 @@ public class ParticipationService {
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case he wants to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUri(), programmingParticipation);
-            programmingParticipation = configureRepository(programmingExercise, programmingParticipation);
+            programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
 
@@ -466,7 +466,7 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+    private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
             if (participation.getParticipant() instanceof Team team && !Hibernate.isInitialized(team.getStudents())) {
