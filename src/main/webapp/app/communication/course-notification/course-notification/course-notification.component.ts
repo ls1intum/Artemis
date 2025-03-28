@@ -40,6 +40,7 @@ export class CourseNotificationComponent {
     protected faIcon: IconDefinition;
     protected notificationParameters: { [key: string]: unknown };
     protected notificationType: string;
+    protected notificationInitialized: boolean = false;
     protected notificationUrl: { link: string[]; queryParams: Record<string, string> };
     protected notificationTimeTranslationKey: string;
     protected notificationTimeTranslationParameters: { [key: string]: unknown };
@@ -90,6 +91,7 @@ export class CourseNotificationComponent {
             } else {
                 this.isShowProfilePicture = false;
             }
+            this.notificationInitialized = true;
         });
     }
 

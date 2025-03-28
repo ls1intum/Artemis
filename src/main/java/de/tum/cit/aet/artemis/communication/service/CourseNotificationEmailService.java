@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
@@ -96,6 +97,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
      * @param courseNotification The notification data to be sent
      * @param recipients         The list of users who should receive the notification
      */
+    @Async
     @Override
     protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         recipients.forEach(recipient -> {
@@ -140,7 +142,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 return;
             }
 
-            mailSendingService.sendEmail(recipient, subject, content, false, true);
+            mailSendingService.sendEmailSync(recipient, subject, content, false, true);
         });
     }
 
