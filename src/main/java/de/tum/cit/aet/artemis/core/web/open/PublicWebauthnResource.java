@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationTrustResolver;
 import org.springframework.security.authentication.AuthenticationTrustResolverImpl;
 import org.springframework.security.core.Authentication;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webauthn4j.springframework.security.WebAuthnAuthenticationRequest;
+import com.webauthn4j.springframework.security.WebAuthnAuthenticationToken;
 import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidationResponse;
 import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidator;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecord;
@@ -58,11 +61,14 @@ public class PublicWebauthnResource {
 
     private final AuthenticationTrustResolver authenticationTrustResolver = new AuthenticationTrustResolverImpl();
 
+    private final AuthenticationManager authenticationManager;
+
     public PublicWebauthnResource(WebAuthnRegistrationRequestValidator registrationRequestValidator, WebAuthnCredentialRecordManager webAuthnAuthenticatorManager,
-            UserRepository userRepository) {
+            UserRepository userRepository, AuthenticationManager authenticationManager) {
         this.registrationRequestValidator = registrationRequestValidator;
         this.webAuthnAuthenticatorManager = webAuthnAuthenticatorManager;
         this.userRepository = userRepository;
+        this.authenticationManager = authenticationManager;
     }
 
     /**
@@ -127,15 +133,30 @@ public class PublicWebauthnResource {
     @EnforceNothing
     public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody AuthenticateDTO authenticateDTO, BindingResult result) throws URISyntaxException {
         // TODO how to validate the authenticateDTO ?
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authenticationTrustResolver.isAnonymous(authentication)) {
-            throw new BadRequestAlertException("User is not authenticated", ENTITY_NAME, null);
-        }
-        else {
+        try {
+            WebAuthnAuthenticationToken authenticationToken = getWebAuthnAuthenticationToken(authenticateDTO);
+
+            Authentication authResult = authenticationManager.authenticate(authenticationToken);
+            SecurityContextHolder.getContext().setAuthentication(authResult);
             log.info("User is authenticated");
+
+        }
+        catch (WebAuthnAuthenticationException e) {
+            log.error("Authentication failed", e);
+            throw new BadRequestAlertException("Authentication failed. Please try again.", ENTITY_NAME, null);
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    private static WebAuthnAuthenticationToken getWebAuthnAuthenticationToken(AuthenticateDTO authenticateDTO) {
+        WebAuthnAuthenticationRequest authenticationRequest = new WebAuthnAuthenticationRequest(authenticateDTO.rawId().getBytes(),
+                authenticateDTO.response().clientDataJSON().getBytes(), authenticateDTO.response().authenticatorData().getBytes(),
+                authenticateDTO.response().signature().getBytes(), authenticateDTO.clientExtensionResults().toString());
+
+        // or provide a collection of authorities if needed
+        return new WebAuthnAuthenticationToken(authenticateDTO.id(), authenticationRequest, null // or provide a collection of authorities if needed
+        );
     }
 
     private WebAuthnCredentialRecord getWebAuthnCredentialRecord(WebAuthnRegistrationRequestValidationResponse registrationRequestValidationResponse) {
