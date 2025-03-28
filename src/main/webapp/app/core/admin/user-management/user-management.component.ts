@@ -15,7 +15,7 @@ import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbHighlight, NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';

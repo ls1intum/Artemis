@@ -1,13 +1,13 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import dayjs from 'dayjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { UserCredentials } from '../users';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 /**
  * A class which encapsulates all API requests related to exams.

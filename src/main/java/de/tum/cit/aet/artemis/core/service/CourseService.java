@@ -604,7 +604,7 @@ public class CourseService {
 
     private void deleteExercisesOfCourse(Course course) {
         for (Exercise exercise : course.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), true, true);
+            exerciseDeletionService.delete(exercise.getId(), true);
         }
     }
 

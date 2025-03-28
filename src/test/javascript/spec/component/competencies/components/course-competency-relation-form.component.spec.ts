@@ -5,7 +5,7 @@ import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.serv
 import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
 
 describe('CourseCompetencyRelationFormComponent', () => {
     let component: CourseCompetencyRelationFormComponent;

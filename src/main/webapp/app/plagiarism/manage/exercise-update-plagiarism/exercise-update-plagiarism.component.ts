@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
@@ -83,9 +83,6 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy, Aft
             }
             case ExerciseType.TEXT: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipTextExercise';
-            }
-            case ExerciseType.MODELING: {
-                return 'artemisApp.plagiarism.minimumSizeTooltipModelingExercise';
             }
         }
     }

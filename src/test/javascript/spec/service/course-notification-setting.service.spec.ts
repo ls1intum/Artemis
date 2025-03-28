@@ -3,10 +3,10 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
-import { CourseNotificationSettingInfo } from 'app/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
-import { CourseNotificationChannelSetting } from 'app/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
+import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
 
 describe('CourseNotificationSettingService', () => {
     let service: CourseNotificationSettingService;

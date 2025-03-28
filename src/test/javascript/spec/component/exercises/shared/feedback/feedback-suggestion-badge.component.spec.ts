@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { Feedback, FeedbackSuggestionType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
