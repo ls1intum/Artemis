@@ -61,6 +61,9 @@ public class SecurityConfiguration {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
+    @Value("${artemis.localIp:127.0.0.1}")
+    private String localIpAddress;
+
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
             Optional<CustomLti13Configurer> customLti13Configurer) {
         this.tokenProvider = tokenProvider;
@@ -211,8 +214,9 @@ public class SecurityConfiguration {
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     // Chaos monkey actuator requires admin
-                    .requestMatchers("/management/chaosmonkey/**").hasAuthority(Role.ADMIN.getAuthority());
-
+                    // .requestMatchers("/management/chaosmonkey/**").hasAuthority(Role.ADMIN.getAuthority())
+                    // Allow chaos monkey from local host
+                    .requestMatchers("management/chaosmonkey/**").access((authentication, context) -> new AuthorizationDecision(localIpAddress.equals(context.getRequest().getRemoteAddr())));
                 // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVcsActive()) {
                         requests.requestMatchers("/git/**").permitAll();
