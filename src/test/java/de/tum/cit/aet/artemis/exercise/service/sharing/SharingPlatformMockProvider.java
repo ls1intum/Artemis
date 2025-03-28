@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service.sharing;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,6 +23,12 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 @Profile(PROFILE_SHARING)
 public class SharingPlatformMockProvider {
 
+    protected static final String TEST_INSTALLATION_NAME = "ArtemisTestInstance";
+
+    public static final String SHARING_BASEURL = "http://localhost:9001/api";
+
+    public static final String SHARING_BASEURL_PLUGIN = SHARING_BASEURL + "/pluginIF/v0.1";
+
     /**
      * the shared secret api key
      */
@@ -43,9 +48,9 @@ public class SharingPlatformMockProvider {
 
     public SharingPluginConfig connectRequestFromSharingPlattform() throws Exception {
         MvcResult result = restMockMvc
-                .perform(get("/api/sharing/config").queryParam("apiBaseUrl", "http://mocked").queryParam("installationName", "ArtemisTestInstance")
+                .perform(get("/api/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
                         .header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
-                .andDo(print()).andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
         SharingPluginConfig sharingPluginConfig = objectMapper.readerFor(SharingPluginConfig.class).readValue(content);
         assertThat(sharingPluginConfig.pluginName).isEqualTo("Artemis Sharing Connector");
@@ -56,6 +61,7 @@ public class SharingPlatformMockProvider {
      * Resets the mock servers
      */
     public void reset() throws Exception {
+        sharingConnectorService.shutDown();
     }
 
     /**
@@ -68,7 +74,7 @@ public class SharingPlatformMockProvider {
             connectRequestFromSharingPlattform();
         }
         else {
-            sharingConnectorService.shutDown();
+            reset();
         }
     }
 

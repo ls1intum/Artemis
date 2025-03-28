@@ -19,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -29,29 +30,27 @@ import java.util.zip.ZipInputStream;
 
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.ResponseProcessingException;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
-import org.glassfish.jersey.client.ClientConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -93,6 +92,10 @@ public class ExerciseSharingService {
      */
     protected ProfileService profileService;
 
+    @Autowired
+    @Qualifier("sharingRestTemplate")
+    protected RestTemplate restTemplate;
+
     /**
      * the programming Exercise Export Service
      */
@@ -128,32 +131,23 @@ public class ExerciseSharingService {
      * loads the basket info from the sharing platform
      *
      * @param basketToken the basket token
-     * @param apiBaseUrl  the url
+     * @param apiBaseUrl  the api base url to request the basket content from
      * @return an optional shopping basket
      */
     public Optional<ShoppingBasket> getBasketInfo(String basketToken, String apiBaseUrl) {
-        ClientConfig restClientConfig = new ClientConfig();
-        restClientConfig.register(ShoppingBasket.class);
-        try (Client client = ClientBuilder.newClient(restClientConfig)) {
-            WebTarget target = client.target(correctLocalHostInDocker(apiBaseUrl).concat("/basket/").concat(basketToken));
-            String response = target.request().accept(MediaType.APPLICATION_JSON).get(String.class);
-
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            objectMapper.registerModule(new JavaTimeModule());
-
-            ShoppingBasket shoppingBasket = objectMapper.readValue(response, ShoppingBasket.class);
+        String basketRequestURL = correctLocalHostInDocker(apiBaseUrl).concat("/basket/").concat(basketToken);
+        try {
+            ShoppingBasket shoppingBasket = restTemplate.getForObject(basketRequestURL, ShoppingBasket.class);
             return Optional.ofNullable(shoppingBasket);
-
         }
-        catch (ResponseProcessingException rpe) {
+        catch (HttpClientErrorException.NotFound nf) {
+            log.warn("Basket {} not found", basketToken, nf);
+            return Optional.empty();
+        }
+        catch (RestClientException rpe) {
             log.warn("Unrecognized property when importing exercise from Sharing", rpe);
             return Optional.empty();
         }
-        catch (JsonProcessingException e) {
-            log.error("Cannot parse properties: ", e);
-        }
-        return Optional.empty();
     }
 
     /**
@@ -165,14 +159,10 @@ public class ExerciseSharingService {
      * @throws SharingException if exercise cannot be loaded
      */
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
-        ClientConfig restClientConfig = new ClientConfig();
-        restClientConfig.register(ShoppingBasket.class);
-
-        try (Client client = ClientBuilder.newClient(restClientConfig)) {
-            WebTarget target = client.target(correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/" + sharingInfo.getBasketToken() + "/repository/" + itemPosition)
-                    .queryParam("format", "artemis");
-            InputStream zipInput = target.request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
-
+        try {
+            String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
+            Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class, Map.of("basketToken", sharingInfo.getBasketToken(), "format", "artemis"));
+            InputStream zipInput = zipInputResource.getInputStream();
             if (zipInput == null) {
                 throw new SharingException("Could not retrieve basket item");
             }
@@ -180,7 +170,8 @@ public class ExerciseSharingService {
             SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), zipInput);
             return Optional.of(zipFileItem);
         }
-        catch (WebApplicationException wae) {
+        catch (WebApplicationException | IOException wae) {
+            log.warn("Exception during shared exercise retrieval", wae);
             throw new SharingException("Could not retrieve basket item");
         }
     }

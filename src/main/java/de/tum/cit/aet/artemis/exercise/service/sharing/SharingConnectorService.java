@@ -1,10 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.service.sharing;
 
+import static java.util.concurrent.Executors.newFixedThreadPool;
+
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,7 +83,7 @@ public class SharingConnectorService {
 
     }
 
-    private static final int HEALTH_HISTORY_LIMIT = 10;
+    protected static final int HEALTH_HISTORY_LIMIT = 10;
 
     private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
 
@@ -232,7 +233,7 @@ public class SharingConnectorService {
     public void triggerSharingReinitAfterApplicationStart() {
         // we have to trigger sharing plattform reinitialization asynchronously,
         // because otherwise the main thread is blocked!
-        Executors.newFixedThreadPool(1).execute(this::triggerReinit);
+        newFixedThreadPool(1).execute(this::triggerReinit);
     }
 
     /**

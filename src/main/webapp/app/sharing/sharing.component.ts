@@ -16,14 +16,13 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
-import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterModule, SharingComponent, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle, ButtonComponent],
+    imports: [RouterModule, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
     standalone: true,
 })
 export class SharingComponent implements OnInit {
@@ -108,6 +107,24 @@ export class SharingComponent implements OnInit {
 
     sortRows() {
         this.sortService.sortByProperty(this.courses, this.predicate, this.reverse);
+    }
+
+    navigateToImportFromSharing() {
+        const importBaseRoute = ['/course-management', this.courseId(), 'programming-exercises'];
+        importBaseRoute.push('import-from-sharing');
+        this.router.navigate(importBaseRoute, {
+            queryParams: {
+                basketToken: this.sharingInfo.basketToken,
+                apiBaseUrl: this.sharingInfo.apiBaseURL,
+                returnUrl: this.sharingInfo.returnURL,
+                selectedExercise: this.sharingInfo.selectedExercise,
+                checksum: this.sharingInfo.checksum,
+                },
+        }).then(nav => {
+            console.log(nav); // true if navigation is successful
+          }, err => {
+            console.log(err) // when there's an error
+          });
     }
 
     /**

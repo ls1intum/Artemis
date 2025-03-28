@@ -69,6 +69,9 @@ public class ProgrammingExerciseImportFromSharingService {
             throw new SharingException("Exercise is null?");
         }
         SharingMultipartZipFile zipFile = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
+        if (zipFile == null) {
+            throw new SharingException("Failed to retrieve exercise zip file from sharing platform");
+        }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (sharingSetupInfo.getExercise().getCourseViaExerciseGroupOrCourseMember() == null) {

@@ -39,6 +39,19 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
     }
 
     @Test
+    void testMaxStatusInfo() throws Exception {
+        sharingPlatformMockProvider.mockStatus(true);
+
+        SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingHealthIndicator.sharingConnectorService.getLastHealthStati();
+
+        for (int i = 0; i < SharingConnectorService.HEALTH_HISTORY_LIMIT * 2; i++) {
+            lastHealthStati.add(new SharingConnectorService.HealthStatus("Just Testing"));
+            assertThat(lastHealthStati).size().isLessThanOrEqualTo(SharingConnectorService.HEALTH_HISTORY_LIMIT);
+        }
+        assertThat(lastHealthStati).size().isEqualTo(SharingConnectorService.HEALTH_HISTORY_LIMIT);
+    }
+
+    @Test
     void healthDown() throws Exception {
         sharingPlatformMockProvider.mockStatus(false);
 

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 
 import java.util.ArrayList;
 
@@ -56,6 +57,12 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
+        return createRestTemplate();
+    }
+
+    @Bean
+    @Profile(PROFILE_SHARING)
+    public RestTemplate sharingRestTemplate() {
         return createRestTemplate();
     }
 

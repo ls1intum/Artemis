@@ -2,7 +2,7 @@
     "artemisApp": {
         "sharing": {
             "title": "Import from Sharing Plattform",
-            "expiresAt": "Connection expires at <strong>{{expirationDate}}</strong>",
+            "expiresAt": "Connection to Sharing Plattform expires at <strong>{{expirationDate}}</strong>",
             "importedExercise": "Imported Exercise",
             "courseToImport": "Course to import Exercise into",
             "noExercisesFound": "No imported exercises found?",
