@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -145,7 +146,7 @@ public class AnswerMessageService extends PostingService {
             var filteredUsersInvolved = usersInvolved.stream().filter(user -> notificationRecipientsList.stream()
                     .anyMatch(recipient -> recipient.userId() == user.getId() && recipient.userId() != answerMessage.getAuthor().getId() && !recipient.isConversationHidden()
                             && !recipient.isConversationMuted() && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> recipient.userId() == mentionedUser.getId())))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
 
             this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
 

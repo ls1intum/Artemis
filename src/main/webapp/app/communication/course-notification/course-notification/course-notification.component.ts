@@ -102,6 +102,10 @@ export class CourseNotificationComponent {
     }
 
     private parseUrlToRouterObject(url: string): { link: string[]; queryParams: Record<string, string> } {
+        if (url === undefined) {
+            return { link: [''], queryParams: {} };
+        }
+
         const [path, queryString] = url.split('?');
         const queryParams: Record<string, string> = {};
 
