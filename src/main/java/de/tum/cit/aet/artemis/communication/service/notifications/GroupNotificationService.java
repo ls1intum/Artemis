@@ -183,7 +183,7 @@ public class GroupNotificationService {
         }
 
         if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var course = attachment.getExercise().getCourseViaExerciseGroupOrCourseMember();
+            var course = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember() : attachment.getLecture().getCourse();
             var recipients = userRepository.getStudents(course);
 
             var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(),
