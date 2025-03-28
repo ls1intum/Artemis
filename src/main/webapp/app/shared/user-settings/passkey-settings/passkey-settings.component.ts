@@ -12,6 +12,8 @@ import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-sett
 import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
 import { base64UrlDecode } from 'app/shared/util/utils';
 import { WebAuthnPublicKeyCredentialDescriptor } from 'app/shared/user-settings/passkey-settings/dto/assertion-server-options.dto';
+import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
+import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
 
 export interface WebAuthn4NgCredentialRequestOptions {
     challenge?: BufferSource;
@@ -48,6 +50,8 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
+    private webauthnApiService = inject(WebauthnApiService);
+    private webauthnService = inject(WebauthnService);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -75,7 +79,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     }
 
     async loginWithPublicKeyCredential() {
-        const credential = await this.getCredential({
+        const credential = await this.webauthnService.getCredential({
             userVerification: 'preferred',
         });
 
@@ -87,37 +91,9 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         await this.passkeySettingsApiService.loginWithPasskey(credential);
     }
 
-    private async getCredential(publicKeyCredentialRequestOptions: WebAuthn4NgCredentialRequestOptions): Promise<Credential | undefined> {
-        const serverAssertionOptions = await this.passkeySettingsApiService.getAssertionOptions();
-
-        const assertionOptions: PublicKeyCredentialRequestOptions = {
-            challenge: base64UrlDecode(serverAssertionOptions.challenge),
-            timeout: serverAssertionOptions.timeout,
-            rpId: serverAssertionOptions.rpId,
-            allowCredentials: serverAssertionOptions.allowCredentials
-                ? serverAssertionOptions.allowCredentials.map((credential) => {
-                      return {
-                          type: credential.type,
-                          id: base64UrlDecode(credential.id),
-                          transports: credential.transports,
-                      };
-                  })
-                : undefined,
-            userVerification: serverAssertionOptions.userVerification,
-            extensions: serverAssertionOptions.extensions,
-        };
-
-        const mergedOptions = { ...assertionOptions, ...publicKeyCredentialRequestOptions };
-        const credentialRequestOptions: CredentialRequestOptions = {
-            publicKey: mergedOptions,
-        };
-
-        return (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
-    }
-
     async addNewPasskey() {
         // TODO add error handling
-        const options = await this.passkeySettingsApiService.getWebauthnOptions();
+        const options = await this.webauthnApiService.getWebauthnOptions();
         const credentialOptions = this.createCredentialOptions(options);
 
         const credential = await navigator.credentials.create({
