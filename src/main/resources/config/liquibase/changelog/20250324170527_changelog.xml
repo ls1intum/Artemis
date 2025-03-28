@@ -35,7 +35,7 @@
             <column name="last_modified_by" type="varchar(45)"/>
 
             <column name="type" type="varchar(25)"/>
-            <column name="transports" type="enum('usb', 'nfc', 'ble', 'internal', 'hybrid')"/>
+            <column name="transports" type="varchar(25)"/>
             <column name="backup_eligible" type="boolean" defaultValue="false"/>
             <column name="backup_state" type="boolean" defaultValue="false"/>
         </createTable>
