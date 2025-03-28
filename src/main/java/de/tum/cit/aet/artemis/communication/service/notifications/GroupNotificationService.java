@@ -351,6 +351,11 @@ public class GroupNotificationService {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { INSTRUCTOR }, ILLEGAL_SUBMISSION, exercise, notificationText, null);
     }
 
+    /**
+     * Notifies a tutor that their feedback was requested.
+     *
+     * @param exercise that has been affected
+     */
     public void notifyTutorGroupAboutNewFeedbackRequest(Exercise exercise) {
         if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
