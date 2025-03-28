@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -86,6 +87,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<Post> existingConversationMessages;
 
+    private List<Long> existingConversationIds;
+
     private List<Long> existingCourseWideChannelIds;
 
     private Course course;
@@ -118,8 +121,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .toList();
 
         // filters course wide channels
-        existingCourseWideChannelIds = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
+        existingCourseWideChannelIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
                 .map(post -> post.getConversation().getId()).distinct().toList();
+
+        // filters conversation ids
+        existingConversationIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).map(post -> post.getConversation().getId()).distinct()
+                .toList();
 
         // filter existing posts with exercise context
         List<Post> existingExercisePosts = existingPostsAndConversationPosts.stream()
@@ -427,7 +434,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetCourseWideMessages() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("conversationIds", existingConversationIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         params.add("filterToCourseWide", "true");
         params.add("size", "50");
 
@@ -462,13 +469,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
+
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
         params.add("pagingEnabled", "true");
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
         params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
         params.add("sortingOrder", SortingOrder.DESCENDING.toString());
-        params.add("courseWideChannelIds", "");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -486,13 +495,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
         params.add("pagingEnabled", "true");
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
         params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
         params.add("sortingOrder", SortingOrder.ASCENDING.toString());
-        params.add("courseWideChannelIds", "");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -510,8 +520,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
-        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        Long courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
@@ -527,7 +538,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
         params.add("filterToOwn", "true");
         params.add("size", "50");
         params.add("searchText", "Content");
@@ -552,7 +564,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
         courseWidePosts.getFirst().getAnswers().forEach(answer -> answer.setContent("AnswerPost"));
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
         params.add("filterToOwn", "true");
         params.add("size", "50");
         params.add("searchText", "Answer");
@@ -689,7 +702,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationId", createdPost1.getConversation().getId().toString());
+        params.add("conversationIds", createdPost1.getConversation().getId().toString());
         params.add("pagingEnabled", "true");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -752,7 +765,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(updatedPinnedPost.getDisplayPriority()).isEqualTo(DisplayPriority.PINNED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("courseWideChannelIds", channel.getId().toString());
+        params.add("conversationIds", channel.getId().toString());
+        params.add("filterToCourseWide", "true");
         params.add("pinnedOnly", "true");
         params.add("size", "10");
 
@@ -769,14 +783,36 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetCourseWideMessagesWithAuthorIds() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        var authorId = courseWidePosts.getFirst().getAuthor().getId();
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
+        params.add("authorIds", authorId.toString());
+        params.add("size", "50");
+
+        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream()
+                .filter(post -> post.getConversation().getId().equals(courseWideChannelId) && post.getAuthor().getId().equals(authorId)).toList().size());
+        assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldIncludeDirectMessagesWhenFindingCourseWideMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, new long[] {}, null, "SearchTest", true, false, false, false, PostSortCriterion.ANSWER_COUNT,
-                SortingOrder.DESCENDING);
+        // include the newly created conversation into all course-wide conversations
+        long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).mapToLong(Long::longValue).toArray();
+
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, "SearchTest", false, false, false, false,
+                PostSortCriterion.ANSWER_COUNT, SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
@@ -792,9 +828,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
+        // include the newly created conversation into all conversations
+        String conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).map(String::valueOf)
+                .collect(Collectors.joining(","));
+
         var params = new LinkedMultiValueMap<String, String>();
         params.add("searchText", "SearchTest");
-        params.add("courseWideChannelIds", "");
+        params.add("conversationIds", conversationIds);
 
         List<Post> resultPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
@@ -814,8 +854,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         groupPost.setContent("SearchTestGroup");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", groupPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, new long[] {}, null, "SearchTest", true, false, false, false, PostSortCriterion.ANSWER_COUNT,
-                SortingOrder.DESCENDING);
+        // include the newly created conversation into all course-wide conversations
+        long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(nonCourseWideChannel.getId())).mapToLong(Long::longValue).toArray();
+
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, "SearchTest", false, false, false, false,
+                PostSortCriterion.ANSWER_COUNT, SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());

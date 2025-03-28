@@ -55,7 +55,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         return specification
         // @formatter:off
             .and(getSearchTextSpecification(postContextFilter.searchText()))
-            .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), userId))
+            .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), postContextFilter.courseId()))
             .and(getAuthorSpecification(postContextFilter.authorIds()))
             .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))

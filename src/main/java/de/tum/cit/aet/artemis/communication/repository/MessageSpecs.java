@@ -140,9 +140,12 @@ public class MessageSpecs {
                 return null;
             }
             else {
+                for (int i = 0; i < authorIds.length; i++) {
+                    System.out.println(authorIds[i]);
+                }
                 List<Long> authorIdList = Arrays.stream(authorIds).boxed().toList();
                 Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-                Predicate isAnswerPostAuthorPredicate = answersJoin.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
+                Predicate isAnswerPostAuthorPredicate = answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID).in(authorIdList);
                 Predicate isPostAuthorPredicate = root.get(Post_.AUTHOR).get(User_.ID).in(authorIdList);
                 return criteriaBuilder.or(isAnswerPostAuthorPredicate, isPostAuthorPredicate);
             }
