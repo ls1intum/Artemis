@@ -105,7 +105,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         var result = addStudentParticipationWithResult(assessmentType, completionDate);
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var expectedStatus = expectLastCreatedResult ? HttpStatus.OK : HttpStatus.NOT_FOUND;
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", expectedStatus,
                 ProgrammingExerciseStudentParticipation.class);
@@ -129,8 +129,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        var secondResult = participationUtilService.addResultToSubmission(assessmentType, completionDate, programmingExerciseParticipation);
-        StudentParticipation participation = (StudentParticipation) secondResult.getParticipation();
+        // TODO Michal Kawka we might need to set up a submission here
+        Result secondResult = participationUtilService.addResultToSubmission(assessmentType, completionDate, programmingExerciseParticipation.findLatestSubmission().orElseThrow());
+        StudentParticipation participation = (StudentParticipation) secondResult.getSubmission().getParticipation();
 
         // Expect the request to always be ok because it should at least return the first automatic result
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
@@ -144,8 +145,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         // Depending on the parameters we expect to get the first or the second created result from the server
         if (expectLastCreatedResult) {
-            secondResult.filterSensitiveInformation();
-            secondResult.filterSensitiveFeedbacks(true);
             assertThat(requestedResult).isEqualTo(secondResult);
         }
         else {
@@ -159,7 +158,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetParticipationWithLatestResultAsAnInstructor_noCompletionDate_notFound() throws Exception {
         var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
                 ProgrammingExerciseStudentParticipation.class);
     }
@@ -202,7 +201,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_showsResultsDuringExam() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(1);
@@ -212,7 +211,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).isEmpty();
@@ -222,7 +221,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationWithLatestResult_showsResultsAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(1);
@@ -244,8 +243,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized third result
-        var thirdResult = participationUtilService.addResultToSubmission(assessmentType, completionDate, programmingExerciseParticipation);
-        StudentParticipation participation = (StudentParticipation) thirdResult.getParticipation();
+        // TODO Michal Kawka we might need to set up a submission here
+        Result thirdResult = participationUtilService.addResultToSubmission(assessmentType, completionDate, programmingExerciseParticipation.findLatestSubmission().orElseThrow());
+        StudentParticipation participation = (StudentParticipation) thirdResult.getSubmission().getParticipation();
 
         // Expect the request to always be ok because it should at least return the first automatic result
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
@@ -270,8 +270,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         // Depending on the parameters we expect to get the third result too
         if (expectLastCreatedResult) {
-            thirdResult.filterSensitiveInformation();
-            thirdResult.filterSensitiveFeedbacks(true);
             assertThat(requestedParticipation.getResults()).contains(thirdResult);
         }
     }
@@ -280,7 +278,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetParticipationWithAllResultsAsAnInstructor_noCompletionDate_notFound() throws Exception {
         var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.NOT_FOUND, ProgrammingExerciseStudentParticipation.class);
     }
 
@@ -289,7 +287,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetParticipationWithAllResults_cannotAccessParticipation1() throws Exception {
         // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.FORBIDDEN, ProgrammingExerciseStudentParticipation.class);
     }
 
@@ -307,7 +305,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetAllResultsAsTutor() throws Exception {
         // tutor should have access
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK, Result.class);
     }
 
@@ -348,8 +346,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsDuringExam() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), participation);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        // TODO Michal Kawka we might need to set up a submission here
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(2);
@@ -359,8 +358,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), participation);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        // TODO Michal Kawka we might need to set up a submission here
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).isEmpty();
@@ -370,8 +370,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), participation);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+        // TODO Michal Kawka we might need to set up a submission here
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(2);
@@ -381,7 +382,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent() throws Exception {
         var result = addStudentParticipationWithResult(null, null);
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
@@ -391,7 +392,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent_showsResultDuringExam() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult).isNotNull();
@@ -401,7 +402,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent_afterExam_hidesResultBeforeExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult).isNull();
@@ -411,7 +412,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksAsStudent_showsResultAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
-        StudentParticipation participation = (StudentParticipation) result.getParticipation();
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
 
         assertThat(requestedResult).isNotNull();
@@ -632,8 +633,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkIfParticipationHasResult_withResult_returnsTrue() throws Exception {
-        addStudentParticipationWithResult(null, null);
-        participationUtilService.addResultToSubmission(null, null, programmingExerciseParticipation);
+        var result = addStudentParticipationWithResult(null, null);
+        // TODO Michal Kawka we might need to set up a submission here
+        participationUtilService.addResultToSubmission(null, null, result.getSubmission());
 
         final var response = request.get("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK,
                 Boolean.class);
@@ -889,20 +891,23 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result r = participationUtilService.addResultToSubmission(assessmentType, completionDate, programmingExerciseParticipation);
+        // TODO Michal Kawka we might need to set up a submission here
+        Result r = participationUtilService.addResultToSubmission(assessmentType, completionDate, programmingExerciseParticipation.findLatestSubmission().orElseThrow());
         return participationUtilService.addVariousVisibilityFeedbackToResult(r);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        Result r = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        // TODO Michal Kawka we might need to set up a submission here
+        Result r = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation.findLatestSubmission().orElseThrow());
         participationUtilService.addVariousVisibilityFeedbackToResult(r);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        // TODO Michal Kawka we might need to set up a submission here
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation.findLatestSubmission().orElseThrow());
         participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
