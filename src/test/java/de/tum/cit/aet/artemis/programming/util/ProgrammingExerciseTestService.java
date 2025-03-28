@@ -22,6 +22,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.reset;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
@@ -137,6 +138,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepo
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
@@ -320,6 +322,9 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    @Autowired
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
@@ -372,6 +377,7 @@ public class ProgrammingExerciseTestService {
         sourceAuxRepo.resetLocalRepo();
         studentRepo.resetLocalRepo();
         studentTeamRepo.resetLocalRepo();
+        reset(versionControlService);
     }
 
     public void setupRepositoryMocks(ProgrammingExercise exercise) throws Exception {
@@ -470,6 +476,7 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -511,6 +518,7 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, true, customBuildPlanWorks);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -519,6 +527,7 @@ public class ProgrammingExerciseTestService {
         exercise.setMode(mode);
         exercise.setChannelName("testchannel-pe");
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -531,6 +540,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
         assertThat(programmingLanguageFeature.packageNameRequired()).isEqualTo(exercise.getPackageName() != null);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
@@ -539,6 +549,7 @@ public class ProgrammingExerciseTestService {
         exercise.setBonusPoints(null);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).orElseThrow();
         assertThat(generatedExercise.getBonusPoints()).isZero();
@@ -698,6 +709,7 @@ public class ProgrammingExerciseTestService {
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         exercise.setId(generatedExercise.getId());
@@ -727,6 +739,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         final var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", examExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         examExercise.setId(generatedExercise.getId());
@@ -737,7 +750,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     public void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
-        setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        // setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false, false, false);
 
         request.postWithResponseBody("/api/programming/programming-exercises/setup", dates.applyTo(examExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
@@ -921,7 +934,7 @@ public class ProgrammingExerciseTestService {
     public void importExercise_enablePlanFails() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        // programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                 courseUtilService.addEmptyCourse());
@@ -1054,14 +1067,16 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        // setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        // setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
+        doReturn(new VcsRepositoryUri(), new VcsRepositoryUri(), new VcsRepositoryUri()).when(versionControlService).copyRepository(any(), any(), any(), any(), any(), any());
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "true");
         params.add("updateTemplate", "true");
+
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
@@ -1086,6 +1101,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
+        doReturn(new VcsRepositoryUri(), new VcsRepositoryUri(), new VcsRepositoryUri()).when(versionControlService).copyRepository(any(), any(), any(), any(), any(), any());
 
         // Create request
         var params = new LinkedMultiValueMap<String, String>();
@@ -1122,6 +1138,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
+        doReturn(new VcsRepositoryUri(), new VcsRepositoryUri(), new VcsRepositoryUri()).when(versionControlService).copyRepository(any(), any(), any(), any(), any(), any());
 
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
@@ -1143,7 +1160,6 @@ public class ProgrammingExerciseTestService {
         submissionPolicy.setActive(true);
         programmingExerciseUtilService.addSubmissionPolicyToExercise(submissionPolicy, sourceExercise);
         sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise,
                 courseUtilService.addEmptyCourse());
         exerciseToBeImported.setSubmissionPolicy(null);
@@ -1153,6 +1169,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
+        doReturn(new VcsRepositoryUri(), new VcsRepositoryUri(), new VcsRepositoryUri()).when(versionControlService).copyRepository(any(), any(), any(), any(), any(), any());
 
         exerciseToBeImported = request.postWithResponseBody("/api/programming/programming-exercises/import/" + sourceExercise.getId(), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
@@ -1255,6 +1272,7 @@ public class ProgrammingExerciseTestService {
         courseRepository.save(course);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false, false, false);
         exercise.setChannelName("testchannel-pe");
+        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         final var generatedExercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         validateProgrammingExercise(generatedExercise);
     }
@@ -1755,6 +1773,7 @@ public class ProgrammingExerciseTestService {
     private void generateProgrammingExerciseWithProblemStatementNullForExport() {
         exercise.setProblemStatement(null);
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
+        // templateProgrammingExerciseParticipationRepository.save(exercise.getTemplateParticipation());
         exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
@@ -2620,17 +2639,10 @@ public class ProgrammingExerciseTestService {
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(sourceExercise.getId()).orElseThrow();
 
-        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTemplateRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri()), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsSolutionRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsSolutionRepositoryUri()), true);
-        mockDelegate.mockRepositoryUriIsValid(programmingExercise.getVcsTestRepositoryUri(),
-                uriService.getProjectKeyFromRepositoryUri(programmingExercise.getVcsTestRepositoryUri()), true);
+        doReturn(true, false).when(versionControlService).checkIfProjectExists(any(), any());
+
         for (var auxiliaryRepository : programmingExercise.getAuxiliaryRepositories()) {
             mockDelegate.mockGetRepositorySlugFromRepositoryUri(sourceExercise.generateRepositoryName("auxrepo"), auxiliaryRepository.getVcsRepositoryUri());
-            mockDelegate.mockRepositoryUriIsValid(auxiliaryRepository.getVcsRepositoryUri(), uriService.getProjectKeyFromRepositoryUri(auxiliaryRepository.getVcsRepositoryUri()),
-                    true);
         }
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);

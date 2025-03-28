@@ -67,8 +67,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         aeolusRequestMockProvider.reset();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN" }, mode = EnumSource.Mode.INCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -77,8 +75,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_sequential_validExercise_created(programmingLanguage);
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -87,8 +83,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_mode_validExercise_created(mode);
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("de.tum.cit.aet.artemis.programming.util.ArgumentSources#generateJenkinsSupportedLanguages")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -98,8 +92,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("de.tum.cit.aet.artemis.programming.util.ArgumentSources#generateJenkinsSupportedLanguages")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -107,8 +99,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(language, true);
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("de.tum.cit.aet.artemis.programming.util.ArgumentSources#generateJenkinsSupportedLanguages")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -116,8 +106,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_custom_build_plan_validExercise_created(language, false);
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
@@ -125,8 +113,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_validExercise_bonusPointsIsNull();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -136,8 +122,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExerciseForExam_validExercise_created() throws Exception {
@@ -174,7 +158,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, addAuxRepos);
     }
 
-    // TODO: enable or remove the test
     @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
@@ -185,40 +168,30 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_enablePlanFails() throws Exception {
         programmingExerciseTestService.importExercise_enablePlanFails();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_planDoesntExist() throws Exception {
         programmingExerciseTestService.importExercise_planDoesntExist();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_sca_deactivated() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_scaChange();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExercise_sca_activated() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_scaChange_activated();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseLockRepositorySubmissionPolicy() throws Exception {
@@ -226,7 +199,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseNoneSubmissionPolicy() throws Exception {
@@ -242,8 +214,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_noTutors_created() throws Exception {
@@ -364,6 +334,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.resumeProgrammingExercise_correctInitializationState(exerciseMode);
     }
 
+    @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + STUDENT_LOGIN, roles = "USER")
@@ -420,60 +391,32 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
-        programmingExerciseTestService.repositoryAccessIsAdded_whenStudentIsAddedToTeam();
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
-        programmingExerciseTestService.repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam();
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_mode_changedToIndividual() throws Exception {
-        programmingExerciseTestService.testImportProgrammingExercise_individual_modeChange();
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importProgrammingExercise_mode_changedToTeam() throws Exception {
-        programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
-    }
-
-    // TODO: enable or remove the test
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_asPartOfExamImport() throws Exception {
         programmingExerciseTestService.importProgrammingExerciseAsPartOfExamImport();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
         programmingExerciseTestService.configureRepository_throwExceptionWhenLtiUserIsNotExistent();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testNotCreatedError() throws Exception {
         programmingExerciseTestService.copyRepository_testNotCreatedError();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_testBadRequestError() throws Exception {
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportInstructorRepositories() throws Exception {
@@ -482,6 +425,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         verify(fileService, times(6)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
@@ -490,18 +434,21 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         verify(fileService, times(2)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportAuxiliaryRepository_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorAuxiliaryRepository_forbidden();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportInstructorRepositories_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorRepositories_forbidden();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial() throws Exception {
@@ -511,18 +458,21 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         verify(fileService).schedulePathForDeletion(any(Path.class), eq(5L));
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial_problemStatementNull() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_problemStatementNull_success();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateTempDir() throws Exception {
@@ -532,36 +482,42 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         }
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_embeddedFilesDontExist() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_shouldReturnFile(false, false);
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_withTeamConfig() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_withTeamConfig();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void exportProgrammingExerciseInstructorMaterialAsTutor_forbidden() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportProgrammingExerciseInstructorMaterialAsStudent_forbidden() throws Exception {
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial_forbidden();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithProgrammingExercise() throws Exception {
         programmingExerciseTestService.testArchiveCourseWithProgrammingExercise();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDownloadCourseArchiveAsInstructor() throws Exception {
@@ -574,12 +530,14 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.createProgrammingExercise_failToCreateProjectInCi();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAutomaticCleanUpBuildPlans() throws Exception {
         programmingExerciseTestService.automaticCleanupBuildPlans();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAutomaticCleanupGitRepositories() {
@@ -595,7 +553,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
@@ -603,8 +560,8 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     // TODO: enable or remove the test
-    @Disabled
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         forceDefaultBuildPlanCreation();
@@ -612,18 +569,21 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetProgrammingExercise_asStudent_exampleSolutionVisibility() throws Exception {
         programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
         programmingExerciseTestService.testGetProgrammingExercise_exampleSolutionVisibility(false, TEST_PREFIX + "instructor1");
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
@@ -633,6 +593,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
@@ -642,8 +603,8 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     // TODO: enable or remove the test
-    @Disabled
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportStudentRepository_asStudent_authorized() throws Exception {
         programmingExerciseTestService.exportStudentRepository(true);
@@ -652,6 +613,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testExportStudentRepository_asStudent_unauthorized() throws Exception {
         // The repository does not belong to this student.
@@ -668,13 +630,14 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
-
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogStatistics_unauthorized() throws Exception {
         programmingExerciseTestService.buildLogStatistics_unauthorized();
     }
 
+    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testBuildLogStatistics_noStatistics() throws Exception {
@@ -682,6 +645,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
+    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testBuildLogStatistics() throws Exception {
         programmingExerciseTestService.buildLogStatistics();

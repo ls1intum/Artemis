@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -157,6 +158,9 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private GitService gitService;
+
+    @Autowired
+    protected RequestUtilService request;
 
     public ProgrammingExercise createSampleProgrammingExercise() {
         return createSampleProgrammingExercise("Title", "Shortname");
