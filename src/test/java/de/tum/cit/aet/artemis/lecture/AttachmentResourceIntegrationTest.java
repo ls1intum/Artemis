@@ -21,6 +21,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -43,6 +45,9 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private Attachment attachment;
 
     private Lecture lecture;
@@ -64,6 +69,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
         attachment.setLecture(lecture);
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
