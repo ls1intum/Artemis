@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

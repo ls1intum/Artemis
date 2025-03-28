@@ -1,4 +1,4 @@
-import { getIcon } from 'app/entities/competency.model';
+import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import {
     KnowledgeAreaDTO,
@@ -7,7 +7,7 @@ import {
     StandardizedCompetencyDTO,
     StandardizedCompetencyForTree,
     sourceToString,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
@@ -15,14 +15,14 @@ import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
-import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
+import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 
 interface StandardizedCompetencyForImport extends StandardizedCompetencyForTree {
     selected?: boolean;

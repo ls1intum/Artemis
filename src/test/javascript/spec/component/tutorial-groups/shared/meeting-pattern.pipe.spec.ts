@@ -1,4 +1,4 @@
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MeetingPatternPipe } from 'app/tutorialgroup/shared/meeting-pattern.pipe';
 

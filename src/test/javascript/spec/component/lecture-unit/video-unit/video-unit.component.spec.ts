@@ -3,7 +3,7 @@ import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-u
 import { MockScienceService } from '../../../helpers/mocks/service/mock-science-service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';

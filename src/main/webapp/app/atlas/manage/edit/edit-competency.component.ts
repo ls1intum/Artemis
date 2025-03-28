@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { Competency } from 'app/entities/competency.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';

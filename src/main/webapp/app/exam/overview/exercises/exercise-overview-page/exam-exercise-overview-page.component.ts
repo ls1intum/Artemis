@@ -1,18 +1,18 @@
 import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamExerciseOverviewItem } from 'app/entities/exam/exam-exercise-overview-item.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamExerciseOverviewItem } from 'app/exam/shared/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseButtonStatus } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { facSaveSuccess, facSaveWarning } from 'app/icons/icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',

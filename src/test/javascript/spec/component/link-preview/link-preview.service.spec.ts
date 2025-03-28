@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 
 describe('LinkPreviewService', () => {
     let service: LinkPreviewService;

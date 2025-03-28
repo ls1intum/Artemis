@@ -1,8 +1,8 @@
 import { Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
-import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

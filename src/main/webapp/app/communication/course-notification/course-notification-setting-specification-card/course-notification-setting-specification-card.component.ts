@@ -3,12 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import dayjs from 'dayjs/esm';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
-import { CourseNotificationChannelSetting } from 'app/entities/course-notification/course-notification-channel-setting';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
+import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 
 /**

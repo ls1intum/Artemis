@@ -1,8 +1,8 @@
 import { test } from '../../support/fixtures';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateUUID } from '../../support/utils';
 import { Exercise, ExerciseType } from '../../support/constants';
@@ -13,7 +13,7 @@ import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programmi
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/ExamResultsPage';
 import { Page } from '@playwright/test';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 test.describe('Exam Results', () => {
     let course: Course;

@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Observable, of, throwError } from 'rxjs';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';

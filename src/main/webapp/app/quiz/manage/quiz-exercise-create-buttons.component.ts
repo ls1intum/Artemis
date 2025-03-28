@@ -1,8 +1,8 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { faCheckDouble, faFileExport, faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router, RouterLink } from '@angular/router';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';

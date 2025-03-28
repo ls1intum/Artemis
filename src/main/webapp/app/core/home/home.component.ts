@@ -5,9 +5,8 @@ import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -18,6 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-home',

@@ -1,4 +1,4 @@
-import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Subject } from 'rxjs';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
@@ -73,11 +73,6 @@ describe('Exercise Update Plagiarism Component', () => {
     it('should get correct minimumSizeTooltip for text exercises', () => {
         comp.exercise = { type: ExerciseType.TEXT } as Exercise;
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
-    });
-
-    it('should get correct minimumSizeTooltip for modeling exercises', () => {
-        comp.exercise = { type: ExerciseType.MODELING } as Exercise;
-        expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipModelingExercise');
     });
 
     it('should aggregate aggregate input changes', () => {

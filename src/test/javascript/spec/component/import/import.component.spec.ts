@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { BaseEntity } from 'app/shared/model/base-entity';

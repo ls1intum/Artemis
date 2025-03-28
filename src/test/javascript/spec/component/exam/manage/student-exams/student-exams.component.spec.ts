@@ -8,11 +8,11 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { TranslateService } from '@ngx-translate/core';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -25,7 +25,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('StudentExamsComponent', () => {

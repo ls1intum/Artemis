@@ -1,6 +1,6 @@
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLElementType, UMLModelCompat, UMLRelationshipType, findElement, findRelationship } from '@ls1intum/apollon';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 export type AssessmentNamesForModelId = { [modelId: string]: { type: string; name: string } | undefined };
 
