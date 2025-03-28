@@ -118,11 +118,11 @@ export const courseManagementState: Routes = [
                 loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
             },
             {
-                path: ':courseId/exams/:examId/plagiarism-cases',
+                path: 'exams/:examId/plagiarism-cases',
                 loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
             },
             {
-                path: ':courseId/exams',
+                path: 'exams',
                 loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoute),
             },
             {
