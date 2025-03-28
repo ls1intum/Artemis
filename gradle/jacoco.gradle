@@ -18,7 +18,7 @@ ext {
         "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.903, "CLASS":  0],
         "programming"   :          ["INSTRUCTION": 0.764, "CLASS": 15],
-        "quiz"          :          ["INSTRUCTION": 0.896, "CLASS":  7],
+        "quiz"          :          ["INSTRUCTION": 0.892, "CLASS":  7],
         "text"          :          ["INSTRUCTION": 0.955, "CLASS":  0],
         "tutorialgroup" :          ["INSTRUCTION": 0.924, "CLASS":  0],
     ]

@@ -582,7 +582,6 @@ public class ExamResource {
             if (channel != null) {
                 exam.setChannelName(channel.getName());
             }
-            examService.setQuizExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
 
@@ -595,14 +594,12 @@ public class ExamResource {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
             }
             examService.setExamProperties(exam);
-            examService.setQuizExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
 
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
 
-        examService.setQuizExamProperties(exam);
         return ResponseEntity.ok(exam);
     }
 
