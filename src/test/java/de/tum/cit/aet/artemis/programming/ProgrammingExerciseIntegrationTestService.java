@@ -347,7 +347,8 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToSubmission(null, null, participation);
+        // TODO Michal Kawka we might need to set up a submission here
+        participationUtilService.addResultToSubmission(null, null, participation.findLatestSubmission().orElseThrow());
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
