@@ -80,24 +80,6 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         return findPostsWithSpecification(pageable, specification);
     }
 
-    // /**
-    // * Generates SQL Query via specifications to find and sort messages from course-wide
-    // *
-    // * @param postContextFilter filtering and sorting properties for post objects
-    // * @param pageable paging object which contains the page number and number of records to fetch
-    // * @param userId the id of the user for which the messages should be returned
-    // * @return returns a Page of Messages
-    // */
-    // default Page<Post> findCourseWideMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-    // Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
-    // .and(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
-    // if (postContextFilter.searchText() != null && !postContextFilter.searchText().isEmpty()) {
-    // specification = Specification.where(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
-    // }
-    // specification = configureSearchSpecification(specification, postContextFilter, userId);
-    // return findPostsWithSpecification(pageable, specification);
-    // }
-
     private PageImpl<Post> findPostsWithSpecification(Pageable pageable, Specification<Post> specification) {
         // Only fetch the postIds without any left joins to avoid that Hibernate loads all objects and creates the page in Java
         long start = System.nanoTime();

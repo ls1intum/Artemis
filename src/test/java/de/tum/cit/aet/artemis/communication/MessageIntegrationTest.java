@@ -86,6 +86,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<Post> existingConversationMessages;
 
+    private List<Long> existingCourseWideChannelIds;
+
     private Course course;
 
     private Long courseId;
@@ -114,6 +116,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         existingConversationMessages = existingPostsAndConversationPosts.stream().filter(
                 post -> post.getConversation() != null && !(post.getConversation() instanceof Channel channel && (channel.getExercise() != null || channel.getLecture() != null)))
                 .toList();
+
+        // filters course wide channels
+        existingCourseWideChannelIds = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
+                .map(post -> post.getConversation().getId()).distinct().toList();
 
         // filter existing posts with exercise context
         List<Post> existingExercisePosts = existingPostsAndConversationPosts.stream()
@@ -396,7 +402,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "course-wide");
         conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationId", channel.getId().toString());
+        params.add("conversationIds", channel.getId().toString());
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
@@ -409,7 +415,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         Long conversationId = existingConversationMessages.getFirst().getConversation().getId();
-        params.add("conversationId", conversationId.toString());
+        params.add("conversationIds", conversationId.toString());
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
@@ -421,7 +427,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetCourseWideMessages() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseWideChannelIds", "");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
         params.add("size", "50");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -437,7 +444,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
         params.add("filterToOwn", "true");
         params.add("size", "50");
 
