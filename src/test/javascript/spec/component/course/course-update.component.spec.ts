@@ -7,9 +7,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseUpdateComponent } from 'app/core/course/manage/course-update.component';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -23,13 +23,10 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
@@ -38,7 +35,7 @@ import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { PROFILE_ATLAS, PROFILE_LTI } from '../../../../../main/webapp/app/app.constants';
@@ -47,6 +44,9 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {

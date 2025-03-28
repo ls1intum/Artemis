@@ -10,7 +10,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { of, throwError } from 'rxjs';
-import { DataExport } from 'app/entities/data-export.model';
+import { DataExport } from 'app/core/shared/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';

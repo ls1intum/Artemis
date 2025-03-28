@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -23,7 +22,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -32,16 +30,12 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
@@ -54,40 +48,27 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExercise extends Exercise implements QuizConfiguration {
 
-    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
-    @JsonView(QuizView.Before.class)
-    @Override
-    public String getType() {
-        return "quiz";
-    }
-
     @Column(name = "randomize_question_order")
-    @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
 
     // not used at the moment
     @Column(name = "allowed_number_of_attempts")
-    @JsonView(QuizView.Before.class)
     private Integer allowedNumberOfAttempts;
 
     @Transient
-    @JsonView(QuizView.Before.class)
     private transient Integer remainingNumberOfAttempts;
 
     @Column(name = "is_open_for_practice")
-    @JsonView(QuizView.Before.class)
     private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
-    @JsonView(QuizView.Before.class)
     private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
 
     /**
      * The duration of the quiz exercise in seconds
      */
     @Column(name = "duration")
-    @JsonView(QuizView.Before.class)
     private Integer duration;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -99,13 +80,17 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @OrderColumn
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.During.class)
     private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
     @OneToMany(mappedBy = "quizExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private Set<QuizBatch> quizBatches = new HashSet<>();
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @Override
+    public String getType() {
+        return "quiz";
+    }
 
     public Boolean isRandomizeQuestionOrder() {
         return randomizeQuestionOrder;
@@ -144,13 +129,13 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         return duration;
     }
 
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
+
     public QuizExercise duration(Integer duration) {
         this.duration = duration;
         return this;
-    }
-
-    public void setDuration(Integer duration) {
-        this.duration = duration;
     }
 
     public QuizPointStatistic getQuizPointStatistic() {
@@ -182,7 +167,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      *
      * @return true if quiz has started, false otherwise
      */
-    @JsonView(QuizView.Before.class)
     public boolean isQuizStarted() {
         return isVisibleToStudents();
     }
@@ -192,7 +176,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      *
      * @return true if quiz has ended, false otherwise
      */
-    @JsonView(QuizView.Before.class)
     public boolean isQuizEnded() {
         return getDueDate() != null && ZonedDateTime.now().isAfter(getDueDate());
     }
@@ -245,13 +228,13 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         return quizQuestions;
     }
 
+    public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
+        this.quizQuestions = quizQuestions;
+    }
+
     public void addQuestions(QuizQuestion quizQuestion) {
         this.quizQuestions.add(quizQuestion);
         quizQuestion.setExercise(this);
-    }
-
-    public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
-        this.quizQuestions = quizQuestions;
     }
 
     /**
@@ -338,53 +321,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             }
         }
         return null;
-    }
-
-    @Override
-    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
-        for (StudentParticipation participation : participations) {
-            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
-                // in quiz exercises we don't care about the InitializationState
-                // => return the first participation we find
-                return Set.of(participation);
-            }
-        }
-        return Collections.emptySet();
-    }
-
-    @Override
-    @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
-        // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
-        // In exams, all results should be seen as relevant as they will only be created once the exam is over
-        if (shouldFilterForStudents() && !isExamExercise()) {
-            // results are never relevant before quiz has ended => return null
-            return null;
-        }
-        else {
-            // only rated results are considered relevant
-            Submission latestSubmission = null;
-            if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
-                return null;
-            }
-            // we get the results over the submissions
-            for (var submission : participation.getSubmissions()) {
-                var result = submission.getLatestResult();
-                if (result == null) {
-                    continue;
-                }
-                if (Boolean.TRUE.equals(result.isRated()) && result.getCompletionDate() != null) {
-                    // take the first found result that fulfills the above requirements
-                    // or
-                    // take newer results and thus disregard older ones
-                    // this should actually not be the case for quiz exercises, because they only should have one rated result
-                    if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                        latestSubmission = submission;
-                    }
-                }
-            }
-            return latestSubmission;
-        }
     }
 
     @Override
@@ -580,26 +516,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
                     quizQuestion.getQuizQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
                 }
             }
-        }
-    }
-
-    /**
-     * get the view for students in the given quiz
-     *
-     * @param batch The batch that the student that the view is for is currently a part of
-     * @return the view depending on the current state of the quiz
-     */
-    @JsonIgnore
-    @NotNull
-    public Class<?> viewForStudentsInQuizExercise(@Nullable QuizBatch batch) {
-        if (isQuizEnded()) {
-            return QuizView.After.class;
-        }
-        else if (batch != null && batch.isStarted()) {
-            return QuizView.During.class;
-        }
-        else {
-            return QuizView.Before.class;
         }
     }
 

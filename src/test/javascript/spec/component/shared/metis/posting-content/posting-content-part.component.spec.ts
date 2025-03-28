@@ -6,13 +6,13 @@ import { PostingContentPart, ReferenceType } from 'app/communication/metis.util'
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from '../../../../helpers/mocks/activated-route/mock-activated-route';
+import { FileService } from 'app/shared/service/file.service';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;

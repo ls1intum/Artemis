@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { CourseManagementTabBarComponent } from 'app/core/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HeaderCourseComponent } from 'app/course/overview/header-course.component';
+import { HeaderCourseComponent } from 'app/core/course/overview/header-course.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -18,9 +18,9 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { CourseAccessStorageService } from 'app/course/shared/course-access-storage.service';
+import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;

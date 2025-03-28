@@ -1,7 +1,7 @@
 import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { cloneDeep } from 'lodash-es';
-import { Exercise, ExerciseMode } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { FormsModule, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';

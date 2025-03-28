@@ -2,19 +2,18 @@ import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { FileService } from 'app/shared/http/file.service';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { ButtonType } from 'app/shared/components/button.component';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
@@ -24,6 +23,7 @@ import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',

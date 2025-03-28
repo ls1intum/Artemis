@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import isMobile from 'ismobilejs-es5';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-drop';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';

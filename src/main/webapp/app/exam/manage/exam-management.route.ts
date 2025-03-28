@@ -3,26 +3,23 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { ExerciseScoresComponent } from 'app/exercise/exercise-scores/exercise-scores.component';
 
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
-import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
-import { isOrion } from 'app/shared/orion/orion';
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -599,18 +596,6 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/plagiarism',
-        loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
-        resolve: {
-            exercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/plagiarism',
         loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
         resolve: {
@@ -742,7 +727,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard/:exerciseId',
-        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -751,7 +736,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-assessment-dashboard/:exerciseId',
-        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
@@ -858,7 +843,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -867,7 +852,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
