@@ -61,7 +61,7 @@ export class CourseNotificationComponent {
             this.notificationParameters = {
                 ...Object.entries(this.courseNotification().parameters!).reduce(
                     (acc, [key, value]) => {
-                        if (!CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                        if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                             acc[key] = value;
                         } else {
                             acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString()))?.replace(/<[^>]*>/g, '') || '';
