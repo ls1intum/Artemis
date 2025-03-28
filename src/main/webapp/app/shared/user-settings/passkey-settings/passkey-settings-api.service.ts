@@ -7,8 +7,18 @@ import { CreatePasskeyDTO } from 'app/shared/user-settings/passkey-settings/dto/
 export class PasskeySettingsApiService extends BaseApiHttpService {
     private readonly basePath = `core/public/webauthn`;
 
+    /**
+     * Note: WebAuthn4j exposes the `/webauthn/attestation/options` endpoint, the endpoint is not explicitly defined in a resource
+     */
     async getWebauthnOptions(): Promise<PasskeyOptions> {
         return await this.get<PasskeyOptions>(`webauthn/attestation/options`);
+    }
+
+    /**
+     * Note: WebAuthn4j exposes the `/webauthn/assertion/options` endpoint, the endpoint is not explicitly defined in a resource
+     */
+    async getAssertionOptions(): Promise<PublicKeyCredentialRequestOptionsJSON> {
+        return await this.get<PublicKeyCredentialRequestOptionsJSON>(`webauthn/assertion/options`);
     }
 
     // async createNewPasskey(createPasskeyDTO: CreatePasskeyDTO): Promise<void> {

@@ -55,6 +55,10 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
+    async loginWithPasskey() {
+        await this.passkeySettingsApiService.getAssertionOptions();
+    }
+
     async addNewPasskey() {
         // TODO add error handling
         const options = await this.passkeySettingsApiService.getWebauthnOptions();

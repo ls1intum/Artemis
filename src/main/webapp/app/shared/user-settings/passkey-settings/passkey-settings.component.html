@@ -57,6 +57,16 @@
                             [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
                             (onClick)="addNewPasskey()"
                         />
+
+                        <jhi-button
+                            class="d-flex"
+                            id="login-button"
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faEdit"
+                            title="Login with passkey"
+                            (onClick)="loginWithPasskey()"
+                        />
                     </div>
                 </dt>
             </div>
