@@ -89,7 +89,8 @@ public class MessageSpecs {
     /**
      * Creates a specification to fetch messages belonging to a course-wide channels in the course
      *
-     * @param courseId id of course the posts belong to
+     * @param filterToCourseWide whether only the Posts in course-wide channels should be fetched or not
+     * @param courseId           id of course the posts belong to
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getCourseWideChannelsSpecification(boolean filterToCourseWide, Long courseId) {
