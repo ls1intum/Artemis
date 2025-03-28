@@ -138,6 +138,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @ParameterizedTest

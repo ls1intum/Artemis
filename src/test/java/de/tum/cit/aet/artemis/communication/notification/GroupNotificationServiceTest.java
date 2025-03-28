@@ -52,6 +52,8 @@ import de.tum.cit.aet.artemis.communication.repository.NotificationSettingReposi
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -98,6 +100,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     private Exercise exercise;
 
@@ -232,6 +237,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
         // store the current notification count to let tests work even if notifications are created in other tests
         notificationCountBeforeTest = notificationTestRepository.findAll().size();
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @AfterEach
