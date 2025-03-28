@@ -169,7 +169,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max complaints
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 2, ComplaintType.COMPLAINT);
 
         request.post("/api/assessment/complaints", complaintRequest, HttpStatus.CREATED);
 
@@ -181,7 +181,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/assessment/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
 
@@ -196,7 +196,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 3, ComplaintType.MORE_FEEDBACK);
 
         request.post("/api/assessment/complaints", complaintRequest, HttpStatus.CREATED);
 
@@ -277,7 +277,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         Result receivedResult = request.putWithResponseBody("/api/modeling/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
                 Result.class, HttpStatus.OK);
 
-        assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
+        assertThat(((StudentParticipation) receivedResult.getSubmission().getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).orElseThrow();
         assertThat(storedComplaint.isAccepted()).as("complaint is accepted").isTrue();
         Result result = storedComplaint.getResult();
@@ -402,7 +402,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         final var received = request.get("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
 
-        assertThat(received.getResult().getParticipation()).as("Complaint should not contain participation").isNull();
+        assertThat(received.getResult().getSubmission().getParticipation()).as("Complaint should not contain participation").isNull();
     }
 
     @Test
@@ -514,7 +514,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
                 SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {
-            final var participation = (StudentParticipation) dto.complaint().getResult().getParticipation();
+            final var participation = (StudentParticipation) dto.complaint().getResult().getSubmission().getParticipation();
             assertThat(participation.getStudent()).as("No student information").isEmpty();
             assertThat(dto.complaint().getParticipant()).as("No student information").isNull();
             assertThat(participation.getExercise()).as("No additional exercise information").isNull();
@@ -577,8 +577,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmittedComplaints_byComplaintType() throws Exception {
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
-        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 1, ComplaintType.COMPLAINT);
+        complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 2, ComplaintType.MORE_FEEDBACK);
 
         String complaintsUrl = "/api/assessment/complaints";
         LinkedMultiValueMap<String, String> paramsExercise = new LinkedMultiValueMap<>();
@@ -689,7 +689,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private void checkIfNoSensitiveExerciseDataPresent(Complaint receivedComplaint) {
-        final var participation = receivedComplaint.getResult().getParticipation();
+        final var participation = receivedComplaint.getResult().getSubmission().getParticipation();
         if (participation != null && participation.getExercise() != null) {
             final var exercise = participation.getExercise();
             assertThat(exercise.getGradingInstructions()).as("Exercise only contains title and ID").isNull();
@@ -722,9 +722,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     private void checkIfNoStudentInformationPresent(Complaint receivedComplaint) {
         assertThat(receivedComplaint.getParticipant()).as("Student should not be contained").isNull();
 
-        if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
-            assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
-                    .isEmpty();
+        if (complaint.getResult() != null && complaint.getResult().getSubmission().getParticipation() != null) {
+            assertThat(((StudentParticipation) receivedComplaint.getResult().getSubmission().getParticipation()).getStudent())
+                    .as("Result in complaint shouldn't contain student participation").isEmpty();
         }
     }
 
@@ -738,7 +738,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         courseRepository.save(course);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        params.add("exerciseId", complaint.getResult().getParticipation().getExercise().getId().toString());
+        params.add("exerciseId", complaint.getResult().getSubmission().getParticipation().getExercise().getId().toString());
         request.getList("/api/assessment/complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
     }
 
@@ -749,7 +749,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaintRepo.save(complaint);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        var exercise = complaint.getResult().getParticipation().getExercise();
+        var exercise = complaint.getResult().getSubmission().getParticipation().getExercise();
         params.add("exerciseId", exercise.getId().toString());
 
         var complaints = request.getList("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);

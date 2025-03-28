@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -461,7 +462,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteResultWithoutSubmission() throws Exception {
         StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        participationUtilService.addResultToParticipation(null, null, studentParticipation);
+        participationUtilService.addSubmission(studentParticipation, new ModelingSubmission());
+        participationUtilService.addResultToSubmission(null, null, studentParticipation.findLatestSubmission().orElseThrow());
         Long participationId = studentParticipation.getId();
 
         // Participation should now exist.
@@ -560,7 +562,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
-        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result2.setSuccessful(null);
         resultRepository.save(result2);
@@ -605,7 +607,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
-        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result2);
@@ -647,7 +649,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         TextSubmission submission = (TextSubmission) resultText1.getSubmission();
         submission.setText("some random text");
         submission.setSubmitted(true);
-        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, submission);
+        Result resultText2 = participationUtilService.addResultToSubmission(textParticipation, submission);
         resultText2.setSuccessful(true);
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
@@ -687,7 +689,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         ModelingSubmission submission = (ModelingSubmission) resultModeling1.getSubmission();
         submission.setModel("some random model");
         submission.setSubmitted(true);
-        Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
+        Result resultModeling2 = participationUtilService.addResultToSubmission(modelingParticipation, resultModeling1.getSubmission());
         resultModeling2.setAssessmentType(AssessmentType.MANUAL);
         resultModeling2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(resultModeling2);
@@ -727,7 +729,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
-        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC);
         result2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result2);
@@ -770,7 +772,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         TextSubmission submission = (TextSubmission) resultText1.getSubmission();
         submission.setText("some random text");
         submission.setSubmitted(true);
-        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        Result resultText2 = participationUtilService.addResultToSubmission(textParticipation, resultText1.getSubmission());
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(resultText2);
@@ -807,7 +809,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         ModelingSubmission submission = (ModelingSubmission) resultModeling1.getSubmission();
         submission.setModel("some random model");
         submission.setSubmitted(true);
-        Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
+        Result resultModeling2 = participationUtilService.addResultToSubmission(modelingParticipation, resultModeling1.getSubmission());
         resultModeling2.setAssessmentType(AssessmentType.MANUAL);
         resultModeling2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(resultModeling2);
@@ -884,10 +886,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
-        Result result2 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.save(result2);
-        Result result3 = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        Result result3 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
 
         Submission onlySubmission = textExerciseUtilService.createSubmissionForTextExercise(textExercise, students.get(2), "asdf");
 
@@ -932,7 +934,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         final var login = TEST_PREFIX + "student1";
         var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
         var result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
-        var notGradedResult = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
+        var notGradedResult = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         notGradedResult.setRated(false);
         resultRepository.save(notGradedResult);
 
@@ -952,12 +954,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var participation2 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         var participation3 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
-        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
-        participationUtilService.addResultToParticipation(AssessmentType.MANUAL, null, participation1);
-        participationUtilService.addResultToParticipation(AssessmentType.MANUAL, null, participation2);
-        participationUtilService.addResultToParticipation(AssessmentType.MANUAL, null, participation2);
-        participationUtilService.addResultToParticipation(AssessmentType.MANUAL, null, participation3);
-        participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation3);
+        var submission1 = participationUtilService.addSubmission(participation1, new TextSubmission());
+        var submission2 = participationUtilService.addSubmission(participation2, new TextSubmission());
+        var submission3 = participationUtilService.addSubmission(participation3, new TextSubmission());
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, participation1.findLatestSubmission().orElseThrow());
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation1.findLatestSubmission().orElseThrow());
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation2.findLatestSubmission().orElseThrow());
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation2.findLatestSubmission().orElseThrow());
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation3.findLatestSubmission().orElseThrow());
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, participation3.findLatestSubmission().orElseThrow());
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
@@ -1317,9 +1322,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationWithLatestResult() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        participationUtilService.addResultToSubmission(null, null, participation.findLatestSubmission().orElseThrow());
         var result = ParticipationFactory.generateResult(true, 70D);
-        result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
+        result.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
@@ -1534,7 +1540,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         quizEx = exerciseRepository.save(quizEx);
         var participation = participationUtilService.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student1");
         var submission = participationUtilService.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
-        participationUtilService.addResultToParticipation(participation, submission);
+        participationUtilService.addResultToSubmission(participation, submission);
         var actualParticipation = request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
@@ -1618,9 +1624,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
 
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
-        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
@@ -1644,10 +1652,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
-        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
@@ -1671,16 +1680,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setRepositoryUri(ParticipationFactory.getMockFileRepositoryUri(localRepo).getURI().toString());
         participationRepo.save(participation);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
         gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
 
-        var result = ParticipationFactory.generateResult(true, 100).participation(participation);
+        var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
         // generate 5 athena results
         for (int i = 0; i < 20; i++) {
-            var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
+            var athenaResult = ParticipationFactory.generateResult(false, 100).submission(submission);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
             resultRepository.save(athenaResult);

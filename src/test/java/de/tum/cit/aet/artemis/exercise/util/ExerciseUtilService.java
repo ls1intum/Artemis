@@ -296,7 +296,6 @@ public class ExerciseUtilService {
             Result result = participationUtilService.generateResult(submission, null);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             submission.addResult(result);
-            participation.addResult(result);
             studentParticipationRepo.save(participation);
             submissionRepository.save(submission);
         });
@@ -316,7 +315,6 @@ public class ExerciseUtilService {
             participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
             Result result = participationUtilService.generateResult(submission, assessor);
             submission.addResult(result);
-            participation.addResult(result);
             studentParticipationRepo.save(participation);
             submissionRepository.save(submission);
         });

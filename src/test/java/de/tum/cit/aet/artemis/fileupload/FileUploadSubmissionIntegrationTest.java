@@ -637,7 +637,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
         Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(studentParticipation, fileUploadSubmission);
+        Result result = participationUtilService.addResultToSubmission(studentParticipation, fileUploadSubmission);
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmission receivedSubmission = request.get("/api/fileupload/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
@@ -652,7 +652,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
         Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(studentParticipation, fileUploadSubmission);
+        Result result = participationUtilService.addResultToSubmission(studentParticipation, fileUploadSubmission);
 
         long submissionID = fileUploadSubmission.getId();
         var params = new LinkedMultiValueMap<String, String>();

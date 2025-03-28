@@ -334,7 +334,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        participationUtilService.addResultToSubmission(null, null, participation.findLatestSubmission().orElseThrow());
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);
@@ -347,7 +347,7 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        participationUtilService.addResultToParticipation(null, null, participation);
+        participationUtilService.addResultToSubmission(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/test-case-state",
                 HttpStatus.OK, ProgrammingExerciseTestCaseStateDTO.class);

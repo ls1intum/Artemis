@@ -138,7 +138,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         resultRepository.deleteAll(results);
 
         // Test with empty result set.
-        studentParticipations.get(2).setResults(Collections.emptySet());
         resultRepository.saveAll(studentParticipations.get(2).getResults());
 
         // Test with null score in result.

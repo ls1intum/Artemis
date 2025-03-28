@@ -727,14 +727,13 @@ public class ProgrammingExerciseUtilService {
     public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
-        Result result = resultRepo.save(new Result().participation(participation));
+        Result result = resultRepo.save(new Result());
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = programmingSubmissionRepo.save(submission);
         result.setSubmission(submission);
         result = resultRepo.save(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         return result;
     }
@@ -750,14 +749,13 @@ public class ProgrammingExerciseUtilService {
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
-        Result result = resultRepo.save(new Result().participation(templateParticipation));
+        Result result = resultRepo.save(new Result());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
         result = resultRepo.save(result);
-        templateParticipation.addResult(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
         return result;
     }
@@ -788,7 +786,6 @@ public class ProgrammingExerciseUtilService {
         programmingSubmissionRepo.save(submission);
 
         submission.setParticipation(participation);
-        result.setParticipation(participation);
 
         result = resultRepo.save(result);
         result.setSubmission(submission);

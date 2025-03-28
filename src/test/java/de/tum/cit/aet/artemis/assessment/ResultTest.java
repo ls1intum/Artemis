@@ -19,12 +19,10 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -61,7 +59,6 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         course = courseUtilService.addEmptyCourse();
         course.setAccuracyOfScores(1);
-        result.setParticipation(new StudentParticipation().exercise(new TextExercise().course(course)));
     }
 
     @Test
@@ -136,7 +133,6 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setExercise(exercise);
-        result.setParticipation(participation);
         result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
@@ -152,7 +148,6 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setExercise(exercise);
-        result.setParticipation(participation);
 
         Feedback tst1 = new Feedback().positive(true).type(FeedbackType.AUTOMATIC).testCase(tests.getFirst());
         Feedback tst2 = new Feedback().positive(false).type(FeedbackType.AUTOMATIC).testCase(tests.get(1)).detailText("This is wrong.");

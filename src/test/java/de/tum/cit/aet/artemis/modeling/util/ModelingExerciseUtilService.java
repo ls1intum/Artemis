@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -95,6 +96,9 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     /**
      * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
@@ -252,7 +256,6 @@ public class ModelingExerciseUtilService {
         result = resultRepo.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
-        participation.addResult(result);
         studentParticipationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
         resultRepo.save(result);
@@ -321,7 +324,6 @@ public class ModelingExerciseUtilService {
         result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
         submission = modelingSubmissionRepo.save(submission);
         studentParticipationRepo.save(participation);
         return submission;
@@ -398,8 +400,9 @@ public class ModelingExerciseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, null, null, submit);
-        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
+        result.setSubmission(submission);
+        submission.addResult(result);
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
     }
@@ -421,8 +424,10 @@ public class ModelingExerciseUtilService {
         feedbacks.add(feedback2);
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
-        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
+        result.setSubmission(submission);
+        submission.addResult(result);
+        submissionRepository.save(submission);
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
     }

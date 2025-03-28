@@ -89,8 +89,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
         automaticFeedbacks.add(automaticFeedback);
-        var newManualResult = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation,
-                TEST_PREFIX + "tutor1", automaticFeedbacks);
+        var newManualResult = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, TEST_PREFIX + "tutor1",
+                automaticFeedbacks);
         programmingExerciseStudentParticipation.addResult(newManualResult);
         // Set submission of newResult
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
