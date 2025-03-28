@@ -1,15 +1,15 @@
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { PostService } from 'app/communication/post.service';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/communication/answer-post.service';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Reaction } from 'app/entities/metis/reaction.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { ReactionService } from 'app/communication/reaction.service';
 import {
     ContextInformation,
@@ -24,19 +24,19 @@ import {
 } from 'app/communication/metis.util';
 import { Params } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { SavedPostService } from 'app/communication/saved-post.service';
 import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
-import { ForwardedMessage, ForwardedMessageDTO } from 'app/entities/metis/forwarded-message.model';
-import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ForwardedMessage, ForwardedMessageDTO } from 'app/communication/shared/entities/forwarded-message.model';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {

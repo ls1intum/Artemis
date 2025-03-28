@@ -1,5 +1,5 @@
 import { Component, Injector, Input, OnInit, inject } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/file-upload-exercise-paging.service';
 import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';

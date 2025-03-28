@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Post } from 'app/entities/metis/post.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingService } from 'app/communication/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
 import { convertDateFromServer } from 'app/shared/util/date.utils';

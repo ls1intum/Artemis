@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { QuizReEvaluateWarningComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate-warning.component';

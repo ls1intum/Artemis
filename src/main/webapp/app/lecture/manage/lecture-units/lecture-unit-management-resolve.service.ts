@@ -4,7 +4,7 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 
 @Injectable({ providedIn: 'root' })

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Range, round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';

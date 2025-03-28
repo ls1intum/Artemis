@@ -14,19 +14,19 @@ import { TextResultComponent } from 'app/text/overview/text-result/text-result.c
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/entities/course.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
+import { Language } from 'app/core/shared/entities/course.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -39,7 +39,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -47,9 +47,9 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;

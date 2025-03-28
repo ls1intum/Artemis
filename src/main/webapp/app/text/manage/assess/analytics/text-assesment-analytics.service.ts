@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
+import { TextAssessmentEvent, TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text/text-block.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Location } from '@angular/common';
 import { captureException } from '@sentry/angular';
 

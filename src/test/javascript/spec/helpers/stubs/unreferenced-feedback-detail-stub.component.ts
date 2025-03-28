@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, InputSignal, Output, input } from '@angular/core';
-import { Feedback } from '../../../../../main/webapp/app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',

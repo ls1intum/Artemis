@@ -1,7 +1,7 @@
 import { Component, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation-modal.component';
 import { AlertService } from 'app/shared/service/alert.service';

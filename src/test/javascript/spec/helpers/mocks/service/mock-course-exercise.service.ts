@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 export class MockCourseExerciseService {

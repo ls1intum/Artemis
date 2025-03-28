@@ -24,14 +24,14 @@ import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mo
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/programming/shared/entities/build-log.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
@@ -52,7 +52,7 @@ import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/mo
 import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export const routes: Routes = [
     ...exerciseTypes.map((exerciseType) => {

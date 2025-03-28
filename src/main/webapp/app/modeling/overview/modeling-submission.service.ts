@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';

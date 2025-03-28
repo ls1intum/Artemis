@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
+import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 
 describe('Fireworks', () => {
     let fixture: ComponentFixture<FireworksComponent>;

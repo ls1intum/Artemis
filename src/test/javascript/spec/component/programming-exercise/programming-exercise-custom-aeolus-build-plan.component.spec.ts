@@ -5,7 +5,7 @@ import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
