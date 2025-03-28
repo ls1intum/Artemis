@@ -18,57 +18,49 @@
 
 <div class="list-group d-block">
     <div class="list-group-item">
+        <h3 jhiTranslate="artemisApp.learnerProfile.feedback.title"></h3>
         <div class="preference-section">
-            <h3 jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.title"></h3>
-            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.description"></p>
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.practicalVsTheoretical.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.practicalVsTheoretical.description"></p>
             <mat-slider min="0" max="2" step="1" [discrete]="true">
                 <input matSliderThumb [value]="profile.practicalVsTheoretical" (valueChange)="profile.practicalVsTheoretical = $event" (change)="onSliderChange()" />
             </mat-slider>
             <div class="labels">
-                <span jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.practical"></span>
-                <span jhiTranslate="artemisApp.learnerProfile.practicalVsTheoretical.theoretical"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.practicalVsTheoretical.practical"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.practicalVsTheoretical.theoretical"></span>
             </div>
         </div>
-    </div>
-
-    <div class="list-group-item">
         <div class="preference-section">
-            <h3 jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.title"></h3>
-            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.description"></p>
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.creativeVsFocused.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.creativeVsFocused.description"></p>
             <mat-slider min="0" max="2" step="1" [discrete]="true">
                 <input matSliderThumb [value]="profile.creativeVsFocused" (valueChange)="profile.creativeVsFocused = $event" (change)="onSliderChange()" />
             </mat-slider>
             <div class="labels">
-                <span jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.creative"></span>
-                <span jhiTranslate="artemisApp.learnerProfile.creativeVsFocused.focused"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.creativeVsFocused.creative"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.creativeVsFocused.focused"></span>
             </div>
         </div>
-    </div>
-
-    <div class="list-group-item">
         <div class="preference-section">
-            <h3 jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.title"></h3>
-            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.description"></p>
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.followUpVsSummary.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.followUpVsSummary.description"></p>
             <mat-slider min="0" max="2" step="1" [discrete]="true">
                 <input matSliderThumb [value]="profile.followUpVsSummary" (valueChange)="profile.followUpVsSummary = $event" (change)="onSliderChange()" />
             </mat-slider>
             <div class="labels">
-                <span jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.followUp"></span>
-                <span jhiTranslate="artemisApp.learnerProfile.followUpVsSummary.summary"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.followUpVsSummary.followUp"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.followUpVsSummary.summary"></span>
             </div>
         </div>
-    </div>
-
-    <div class="list-group-item">
         <div class="preference-section">
-            <h3 jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.title"></h3>
-            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.description"></p>
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.briefVsDetailed.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.briefVsDetailed.description"></p>
             <mat-slider min="0" max="2" step="1" [discrete]="true">
                 <input matSliderThumb [value]="profile.briefVsDetailed" (valueChange)="profile.briefVsDetailed = $event" (change)="onSliderChange()" />
             </mat-slider>
             <div class="labels">
-                <span jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.brief"></span>
-                <span jhiTranslate="artemisApp.learnerProfile.briefVsDetailed.detailed"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.briefVsDetailed.brief"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.briefVsDetailed.detailed"></span>
             </div>
         </div>
     </div>
