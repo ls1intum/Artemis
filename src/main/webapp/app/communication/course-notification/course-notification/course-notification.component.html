@@ -6,7 +6,7 @@
             </div>
         }
 
-        @if (isRedirectToUrl()) {
+        @if (isRedirectToUrl() && notificationUrl) {
             <a class="course-notification-redirect-link" [routerLink]="notificationUrl.link" [queryParams]="notificationUrl.queryParams"></a>
         }
 

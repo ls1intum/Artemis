@@ -101,6 +101,11 @@ export class CourseNotificationComponent {
         this.onCloseClicked.emit();
     }
 
+    /**
+     * Parses an url to an object that can be interpreted by a routerLink
+     * @param url The url to parse as a string
+     * @return An object that can be interpreted by a routerLink
+     */
     private parseUrlToRouterObject(url: string): { link: string[]; queryParams: Record<string, string> } {
         if (url === undefined) {
             return { link: [''], queryParams: {} };
