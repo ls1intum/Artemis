@@ -316,6 +316,7 @@ public class SecurityConfiguration {
         // @formatter:off
         WebAuthnLoginConfigurer<HttpSecurity> webAuthnLoginConfigurer = new WebAuthnLoginConfigurer<>();
         webAuthnLoginConfigurer
+            .loginProcessingUrl("/api/core/public/webauthn/authenticate")
             .defaultSuccessUrl("/", true)
             .failureHandler((request, response, exception) -> {
                 log.error("Login error", exception);
