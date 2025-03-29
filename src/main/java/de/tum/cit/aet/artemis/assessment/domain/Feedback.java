@@ -352,7 +352,6 @@ public class Feedback extends DomainObject {
     public void setResult(Result result) {
         this.result = result;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public GradingInstruction getGradingInstruction() {
         return gradingInstruction;

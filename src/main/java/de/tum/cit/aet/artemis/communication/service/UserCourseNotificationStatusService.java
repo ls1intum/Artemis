@@ -83,4 +83,15 @@ public class UserCourseNotificationStatusService {
 
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(new User(userId)), courseId);
     }
+
+    /**
+     * Deletes all user notification status for a given user id.
+     *
+     * @param userId the user to delete for.
+     */
+    public void deleteAllForUser(long userId) {
+        var status = userCourseNotificationStatusRepository.findAllByUserId(userId);
+
+        userCourseNotificationStatusRepository.deleteAll(status);
+    }
 }
