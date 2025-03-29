@@ -281,6 +281,7 @@ public class SecurityConfiguration {
             csrf.ignoringRequestMatchers("/api/core/public/webauthn/signup");
             csrf.ignoringRequestMatchers("/api/core/public/webauthn/authenticate");
             csrf.ignoringRequestMatchers("/api/core/public/logout"); // FIXME: this is a workaround for the logout issue - this should be fixed before a merge
+            csrf.ignoringRequestMatchers("/api/core/public/authenticate"); // FIXME: this is a workaround for the logout issue - this should be fixed before a merge
         });
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
