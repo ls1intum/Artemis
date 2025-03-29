@@ -669,24 +669,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildLogStatistics_unauthorized() throws Exception {
-        programmingExerciseTestService.buildLogStatistics_unauthorized();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testBuildLogStatistics_noStatistics() throws Exception {
-        programmingExerciseTestService.buildLogStatistics_noStatistics();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testBuildLogStatistics() throws Exception {
-        programmingExerciseTestService.buildLogStatistics();
-    }
-
     // TODO: enable or remove the test
     @Disabled
     @Test

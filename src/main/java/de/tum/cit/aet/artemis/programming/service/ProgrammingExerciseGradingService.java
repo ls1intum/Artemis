@@ -185,8 +185,6 @@ public class ProgrammingExerciseGradingService {
                 var projectType = exercise.getProjectType();
                 var buildLogs = buildResult.extractBuildLogs();
 
-                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
-
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
                     var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);

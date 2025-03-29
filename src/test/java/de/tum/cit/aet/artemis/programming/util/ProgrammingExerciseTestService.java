@@ -129,11 +129,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
@@ -202,9 +199,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
     private PasswordService passwordService;
@@ -2572,49 +2566,6 @@ public class ProgrammingExerciseTestService {
         examTestRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
-    }
-
-    // TEST
-    public void buildLogStatistics_unauthorized() throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
-        request.get("/api/programming/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
-    }
-
-    // TEST
-    public void buildLogStatistics_noStatistics() throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
-        var statistics = request.get("/api/programming/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isEqualTo(0);
-        assertThat(statistics.agentSetupDuration()).isEqualTo(0);
-        assertThat(statistics.testDuration()).isEqualTo(0);
-        assertThat(statistics.scaDuration()).isEqualTo(0);
-        assertThat(statistics.totalJobDuration()).isEqualTo(0);
-        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0);
-    }
-
-    // TEST
-    public void buildLogStatistics() throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
-        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
-        var submission1 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
-
-        var statistics = request.get("/api/programming/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isEqualTo(2);
-        assertThat(statistics.agentSetupDuration()).isEqualTo(9);
-        assertThat(statistics.testDuration()).isEqualTo(17.5);
-        assertThat(statistics.scaDuration()).isEqualTo(30);
-        assertThat(statistics.totalJobDuration()).isEqualTo(45);
-        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2.5);
     }
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {

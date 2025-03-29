@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
@@ -22,17 +21,13 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
 
     protected final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
-    protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
     protected final ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     protected final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     protected AbstractContinuousIntegrationResultService(ProgrammingExerciseTestCaseRepository testCaseRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.testCaseRepository = testCaseRepository;
-        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.feedbackCreationService = feedbackCreationService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
@@ -143,16 +138,5 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
      */
     protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, Predicate<BuildLogEntry> matchingPredicate, int skipEntries) {
         return buildLogEntries.stream().filter(matchingPredicate).skip(skipEntries).findFirst().map(BuildLogEntry::getTime).orElse(null);
-    }
-
-    /**
-     * Count the number of log entries that contain the searchString in the log message.
-     *
-     * @param buildLogEntries the BuildLogEntries that should be searched
-     * @param searchString    the text that must be contained in the log message
-     * @return the number of matching log entries
-     */
-    protected Integer countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {
-        return Math.toIntExact(buildLogEntries.stream().filter(buildLogEntry -> buildLogEntry.getLog().contains(searchString)).count());
     }
 }
