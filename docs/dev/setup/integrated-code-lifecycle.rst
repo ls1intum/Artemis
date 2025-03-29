@@ -8,8 +8,8 @@ These two systems are integrated into the Artemis server application, and thus, 
 This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
 If you are setting Artemis up for the first time, these are the steps you should follow:
 
-- Install and run Docker: https://docs.docker.com/get-docker
-- Start the database: :ref:`Database Setup`
+- Install and run Docker: https://docs.docker.com/get-docker (required for processing and testing student submissions)
+- Start the database: :ref:`Database Setup` (ignore if previously done, you should either have a database running locally or in a container)
 - :ref:`Configure Artemis`
 - (optional) :ref:`Configure Build Management`
 - :ref:`Start Artemis`
@@ -39,7 +39,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
 
        artemis:
            user-management:
-               use-external: false
+               use-external: false # set to true if you want to use an external user management system. For development, this should be false for easy setup.
            version-control:
                url: http://localhost:8080
                # order and supported authentication mechanisms:
@@ -71,7 +71,11 @@ You can then use that admin user to create further users in Artemis' internal us
 Configure Build Management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Local CI subsystem of the Integrated Code Lifecycle is used to automatically build and test student submissions. By default, the number of concurrent builds that can be executed is determined by the number of available CPU cores. You can manually determine this number by adding the following property to the ``src/main/resources/config/application-local.yml`` file:
+This step is optional for development purposes.
+
+The Local CI subsystem of the Integrated Code Lifecycle is used to automatically build and test student submissions.
+By default, the number of concurrent builds that can be executed is determined by the number of available CPU cores.
+You can manually determine this number by adding the following property to the ``src/main/resources/config/application-local.yml`` file:
 
 .. code-block:: yaml
 
@@ -80,6 +84,10 @@ The Local CI subsystem of the Integrated Code Lifecycle is used to automatically
                 specify-concurrent-builds: true
                 # The number of concurrent builds that can be executed
                 concurrent-build-size: 2
+                # More options can be found in application-localci.yml and application-buildagent.yml
+
+
+More options can be found in ``src/main/resources/config/application-localci.yml`` and ``src/main/resources/config/application-buildagent.yml``.
 
 .. _Start Artemis:
 
@@ -95,7 +103,7 @@ e.g.:
    --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,local
 
 All of these profiles are enabled by default when using the ``Artemis (Server, LocalVC & LocalCI)`` run configuration in IntelliJ.
-Please read :ref:`Server Setup` for more details.
+Please read :ref:`Server Setup <RunServerWithIntelliJ>` for more details.
 
 
 .. _Test the Setup:

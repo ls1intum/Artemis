@@ -3,50 +3,91 @@
 Setup Guide
 ===========
 
-Setting up Artemis in your development environment or a demo production environment is really easy following
-the instructions on this page. When you want to support programming exercises, we recommend using the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
+This guide explains how to set up Artemis in your development environment or a demo production environment.
+Setting up Artemis consists of two main steps:
 
-In this guide, you learn how to set up the development environment of
-Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
-i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
-development on the application server using Java 21, and TypeScript
-development on the application client in the browser using
-`Angular <https://angular.io>`__. To get an overview of the
-used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
-and other tutorials on the JHipster homepage.
+1. **Set up the development environment** (see :ref:`Development Environment Setup <development-environment-setup>`).
+2. **Set up Artemis** (see :ref:`Set up Artemis <setting-up-artemis>`), which includes setting up optional but recommended features such as programming exercises.
+   The installation guide provides two options for programming exercises, including version control and build system setup.
 
-You can find tutorials how to set up JHipster in an IDE (`IntelliJ IDEA
-Ultimate <https://www.jetbrains.com/idea>`__ is recommended) on
-https://jhipster.github.io/configuring-ide. Note that the Community
-Edition of IntelliJ IDEA does not provide Spring Boot support (see the
-`comparison
-matrix <https://www.jetbrains.com/idea/features/editions_comparison_matrix.html>`__).
-Before you can build Artemis, you must install and configure the
-following dependencies/tools on your machine:
+Overview
+--------
 
-1. `Java
-   JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__:
-   We use Java (JDK 21) to develop and run the Artemis application
-   server, which is based on `Spring
-   Boot <http://projects.spring.io/spring-boot>`__.
-2. `MySQL Database Server 9 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL 17 <https://www.postgresql.org/>`_:
-   Artemis uses Hibernate to store entities in an SQL database and Liquibase to
-   automatically apply schema transformations when updating Artemis.
-3. `node <https://nodejs.org/en/download>`__: We use node LTS (>=22.14.0 < 23) to compile
-   and run the client Angular application. Depending on your system, you
-   can install Node either from source or as a pre-packaged bundle.
-4. `npm <https://nodejs.org/en/download>`__: We use npm (>=11.1.0) to
-   manage client side dependencies. Npm is typically bundled with Node.js,
-   but can also be installed separately.
-5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task
-   descriptions.
-   It's not necessary for a successful build,
-   but it's necessary for production setups as otherwise errors will show up during runtime. )
-6. A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
-   There are multiple stacks available for the integration with Artemis:
+Artemis is based on `JHipster <https://jhipster.github.io>`__, combining:
 
-   * :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`
-   * :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
+- `Spring Boot <http://projects.spring.io/spring-boot>`__ (Java 21) for the backend.
+- `Angular <https://angular.io>`__ (TypeScript) for the frontend.
+
+To get an overview of the technology stack, visit the `JHipster Technology Stack <https://jhipster.github.io/tech-stack>`__
+and refer to other tutorials on the JHipster homepage.
+
+.. _development-environment-setup:
+
+Development Environment Setup
+-----------------------------
+
+Before installing Artemis, install and configure the following dependencies:
+
+1. **Java JDK 21**
+   Download and install Java from `Oracle JDK <https://www.oracle.com/java/technologies/javase-downloads.html>`__.
+
+2. **Database Server**
+   Please refer to :ref:`this guide <Database Setup>` for setting up a database server.
+   Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
+
+3. **Node.js (LTS >=22.14.0 < 23)**
+   Download from `Node.js <https://nodejs.org/en/download>`__.
+   Required for compiling and running the Angular client.
+
+4. **npm (>=11.1.0)**
+   Installed automatically with Node.js but can be updated separately.
+
+5. **Graphviz (Optional, but Recommended for Production Setups)**
+   Install from `Graphviz <https://www.graphviz.org/download/>`__ to enable graph generation in exercise descriptions.
+   If missing, errors will appear in production.
+
+.. _setting-up-artemis:
+
+Set up Artemis
+--------------
+
+Once the development environment is ready, proceed with the Artemis Server set up.
+This includes optional features such as programming exercises, which require a version control and build system.
+
+The Artemis set up guide provides two setup options for programming exercises:
+
+- :ref:`Integrated Code Lifecycle Setup (Recommended) <Integrated Code Lifecycle Setup>`
+- :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
+
+After that, we should set up the Artemis client. Refer to the :ref:`Client Setup Guide <client-setup>`.
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+.. toctree::
+   :includehidden:
+   :maxdepth: 2
+
+   setup/database
+   setup/server
+   setup/client
+   setup/integrated-code-lifecycle
+   setup/jenkins-localvc
+   setup/aeolus
+   setup/common-problems
+   setup/docker-compose
+   setup/local-database-tests
+
+IDE Setup
+---------
+
+We recommend using `IntelliJ IDEA Ultimate <https://www.jetbrains.com/idea>`__ for development.
+Refer to JHipster’s guide on configuring an IDE:
+`JHipster IDE Setup <https://jhipster.github.io/configuring-ide>`__.
+
+**Note:** The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the
+`comparison matrix <https://www.jetbrains.com/idea/features/editions_comparison_matrix.html>`__ for details.
+
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -64,17 +105,3 @@ following dependencies/tools on your machine:
     Their setup is described as part of the :ref:`extension service setup <extensions_setup>`.
 
 ------------------------------------------------------------------------------------------------------------------------
-
-.. toctree::
-   :includehidden:
-   :maxdepth: 2
-
-   setup/database
-   setup/server
-   setup/client
-   setup/integrated-code-lifecycle
-   setup/jenkins-localvc
-   setup/aeolus
-   setup/common-problems
-   setup/docker-compose
-   setup/local-database-tests
