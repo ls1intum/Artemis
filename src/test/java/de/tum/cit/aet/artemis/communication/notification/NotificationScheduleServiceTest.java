@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
 import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -60,6 +62,9 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private Exercise exercise;
 
     private User user;
@@ -81,6 +86,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         exerciseRepository.saveAndFlush(exercise);
 
         sizeBefore = notificationTestRepository.count();
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -94,6 +100,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         await().until(() -> notificationTestRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(TIMEOUT_MS)).notifyAllGroupsAboutReleasedExercise(exercise);
         verify(mailService, timeout(TIMEOUT_MS).atLeastOnce()).sendNotification(any(), anySet(), any());
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -117,5 +124,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         await().until(() -> notificationTestRepository.count() > sizeBefore);
         verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(exercise);
         verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage.class));
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 }

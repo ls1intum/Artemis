@@ -127,7 +127,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public void setMatchLetterCase(Boolean matchLetterCase) {
         this.matchLetterCase = matchLetterCase;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public Boolean isValid() {
