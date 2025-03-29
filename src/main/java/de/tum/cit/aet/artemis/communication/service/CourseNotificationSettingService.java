@@ -269,4 +269,17 @@ public class CourseNotificationSettingService {
             }
         }).toList();
     }
+
+    /**
+     * Deletes all presets and specifications for a given user id.
+     *
+     * @param userId the user to delete for.
+     */
+    public void deleteAllForUser(long userId) {
+        var presets = userCourseNotificationSettingPresetRepository.findAllByUserId(userId);
+        var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserId(userId);
+
+        userCourseNotificationSettingPresetRepository.deleteAll(presets);
+        userCourseNotificationSettingSpecificationRepository.deleteAll(specifications);
+    }
 }

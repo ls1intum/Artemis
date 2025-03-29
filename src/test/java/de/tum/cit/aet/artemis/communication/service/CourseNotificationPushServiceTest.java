@@ -62,7 +62,7 @@ class CourseNotificationPushServiceTest {
     }
 
     private CourseNotificationDTO createTestNotification() {
-        return new CourseNotificationDTO("testNotification", 1L, 1L, ZonedDateTime.parse("2023-01-01T12:00:00Z"), CourseNotificationCategory.COMMUNICATION, Map.of());
+        return new CourseNotificationDTO("testNotification", 1L, 1L, ZonedDateTime.parse("2023-01-01T12:00:00Z"), CourseNotificationCategory.COMMUNICATION, Map.of(), "/");
     }
 
     private List<User> createTestRecipients() {
