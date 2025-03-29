@@ -473,17 +473,17 @@ public class CourseUtilService {
             programmingSubmission1.setParticipation(participation4);
             programmingSubmission2.setParticipation(participation5);
 
-            result1 = resultRepo.save(result1);
-            result2 = resultRepo.save(result2);
-            result3 = resultRepo.save(result3);
-            result4 = resultRepo.save(result4);
-            result5 = resultRepo.save(result5);
-
             result1.setSubmission(modelingSubmission1);
             result2.setSubmission(modelingSubmission2);
             result3.setSubmission(textSubmission);
             result4.setSubmission(programmingSubmission1);
             result5.setSubmission(programmingSubmission2);
+
+            result1 = resultRepo.save(result1);
+            result2 = resultRepo.save(result2);
+            result3 = resultRepo.save(result3);
+            result4 = resultRepo.save(result4);
+            result5 = resultRepo.save(result5);
 
             modelingSubmission1.addResult(result1);
             modelingSubmission2.addResult(result2);
