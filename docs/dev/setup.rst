@@ -3,20 +3,17 @@
 Setup Guide
 ===========
 
-This guide explains how to set up Artemis in your development environment or a demo production environment.
-Setting up Artemis consists of two main steps:
+This guide explains how to set up Artemis in your development environment or a demo production environment. For production setups, you would need to additionally consider topics discussed in the :ref:`administration setup <admin_setup>`.
+Running Artemis consists of two main steps:
 
-1. **Set up the development environment** (see :ref:`Development Environment Setup <development-environment-setup>`).
-2. **Set up Artemis** (see :ref:`Set up Artemis <setting-up-artemis>`), which includes setting up optional but recommended features such as programming exercises.
+#. **Set up the development environment** (see :ref:`Development Environment Setup <development-environment-setup>`).
+#. **Set up Artemis** (see :ref:`Set up Artemis <setting-up-artemis>`), which includes setting up optional but recommended features such as programming exercises.
    The installation guide provides two options for programming exercises, including version control and build system setup.
-
-Overview
---------
 
 Artemis is based on `JHipster <https://jhipster.github.io>`__, combining:
 
-- `Spring Boot <http://projects.spring.io/spring-boot>`__ (Java 21) for the backend.
-- `Angular <https://angular.io>`__ (TypeScript) for the frontend.
+* `Spring Boot <http://projects.spring.io/spring-boot>`__ (Java 21) for the backend.
+* `Angular <https://angular.io>`__ (TypeScript) for the frontend.
 
 To get an overview of the technology stack, visit the `JHipster Technology Stack <https://jhipster.github.io/tech-stack>`__
 and refer to other tutorials on the JHipster homepage.
@@ -46,6 +43,23 @@ Before installing Artemis, install and configure the following dependencies:
    Install from `Graphviz <https://www.graphviz.org/download/>`__ to enable graph generation in exercise descriptions.
    If missing, errors will appear in production.
 
+
+IDE Setup
+^^^^^^^^^
+
+We recommend using `IntelliJ IDEA Ultimate <https://www.jetbrains.com/idea>`__ for development.
+Refer to JHipster’s guide on configuring an IDE:
+`JHipster IDE Setup <https://jhipster.github.io/configuring-ide>`__.
+
+**Note:** The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the
+`comparison matrix <https://www.jetbrains.com/idea/features/editions_comparison_matrix.html>`__ for details.
+
+.. note::
+
+    Artemis allows extension with several additional services, e.g., for mobile notifications ('Hermes'),
+    automatic feedback generation using large language models ('Iris/Pyris'), …
+    Their setup is described as part of the :ref:`extension service setup <extensions_setup>`.
+
 .. _setting-up-artemis:
 
 Set up Artemis
@@ -61,12 +75,10 @@ The Artemis set up guide provides two setup options for programming exercises:
 
 After that, we should set up the Artemis client. Refer to the :ref:`Client Setup Guide <client-setup>`.
 
-------------------------------------------------------------------------------------------------------------------------
-
-
 .. toctree::
    :includehidden:
    :maxdepth: 2
+   :hidden:
 
    setup/database
    setup/server
@@ -78,30 +90,22 @@ After that, we should set up the Artemis client. Refer to the :ref:`Client Setup
    setup/docker-compose
    setup/local-database-tests
 
-IDE Setup
----------
+Production Setup and Extension Services
+----------------------------------------
 
-We recommend using `IntelliJ IDEA Ultimate <https://www.jetbrains.com/idea>`__ for development.
-Refer to JHipster’s guide on configuring an IDE:
-`JHipster IDE Setup <https://jhipster.github.io/configuring-ide>`__.
+Production Setup
+^^^^^^^^^^^^^^^^^
 
-**Note:** The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the
-`comparison matrix <https://www.jetbrains.com/idea/features/editions_comparison_matrix.html>`__ for details.
+A production setup of these core services might need further adaptation to ensure security.
+For details on securing your production environment, see the :ref:`administration setup <admin_setup>`.
 
+Extension Services
+^^^^^^^^^^^^^^^^^^^
 
-------------------------------------------------------------------------------------------------------------------------
+Artemis allows extension with several additional services, such as:
 
-.. note::
+- Mobile notifications via **Hermes**
+- Automatic feedback generation using large language models (e.g., **Iris/Pyris**)
+- And more...
 
-    This setup guide describes the core setup for a development Artemis instance and its database.
-    It also contains the setup steps for the version control and continuous integrations systems needed for programming exercises.
-    A production setup of those core services might need to be adapted further to be secure.
-    Check the :ref:`administration setup <admin_setup>` for that.
-
-.. note::
-
-    Artemis allows extension with several additional services, e.g., for mobile notifications ('Hermes'),
-    automatic feedback generation using large language models ('Iris/Pyris'), …
-    Their setup is described as part of the :ref:`extension service setup <extensions_setup>`.
-
-------------------------------------------------------------------------------------------------------------------------
+The setup for these additional services is described as part of the :ref:`extension service setup <extensions_setup>`.

@@ -32,7 +32,7 @@ artemis:
             # Time of cleanup (cron expression)
             cleanup-schedule-time: 0 0 3 * * *
         # This specifies the options that are shown to the instructor when creating a new programming exercise. Max value also defines the max timeout for the build.
-        # These values should be the same specified in application-buildagent.yml
+        # The max value should be the same specified in application-buildagent.yml
         build-timeout-seconds:
             min: 10 # The minimum number of seconds that the instructor can set for the build timeout. This is the minimum value that will be shown in the slider when creating or editing a programming exercise.
             default: 120 # The default number of seconds that will be used if the instructor does not specify a value. This is the default value that will be shown in the slider when creating or editing a programming exercise.
