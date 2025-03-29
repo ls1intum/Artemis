@@ -151,7 +151,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         scrollToTopOfPage();
 
         // Get the textExercise
-        this.activatedRoute.data.subscribe(({ textExercise }) => {
+        this.activatedRoute?.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
 
             this.backupExercise = cloneDeep(this.textExercise);
