@@ -87,7 +87,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
-    static activeDropdownPost: AnswerPostComponent | null = null;
+    static activeDropdownPost: AnswerPostComponent | undefined = undefined;
     mayEdit = false;
     mayDelete = false;
 
@@ -189,7 +189,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             AnswerPostComponent.activeDropdownPost.showDropdown = false;
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
             AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
-            AnswerPostComponent.activeDropdownPost = null;
+            AnswerPostComponent.activeDropdownPost = undefined;
         }
     }
 

@@ -46,8 +46,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
 
     exam = input.required<Exam>();
-    getExamRoutesByIdentifier = input.required<any>();
-    private longestWorkingTimeSub: Subscription | null = null;
+    getExamRoutesByIdentifier = input.required<string>();
+    private longestWorkingTimeSub: Subscription | undefined = undefined;
 
     examChecklist: ExamChecklist;
     isLoading = false;
@@ -68,8 +68,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
-
-    examPreparationFinished: boolean;
 
     // Icons
     faEye = faEye;

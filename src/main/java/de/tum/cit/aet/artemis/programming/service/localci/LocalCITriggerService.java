@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
@@ -225,7 +225,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     // -------Helper methods for triggerBuild()-------
 
     private List<String> getTestResultPaths(Windfile windfile) {
-        return windfile.results().stream().map(result -> LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
+        return windfile.results().stream().map(result -> LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
     }
 
     /**

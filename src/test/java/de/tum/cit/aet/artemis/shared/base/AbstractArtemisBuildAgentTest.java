@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.shared.base;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static org.mockito.ArgumentMatchers.any;
@@ -95,7 +95,7 @@ public abstract class AbstractArtemisBuildAgentTest {
     @BeforeEach
     protected void mockServices() throws IOException {
         mockBuildJobGitService();
-        dockerClientTestService.mockTestResults(dockerClientMock, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        dockerClientTestService.mockTestResults(dockerClientMock, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
 
         // Mock the startContainerCmd to sleep for 100ms. This is necessary to appropriately test the build agent's behavior when a build job is started.
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);

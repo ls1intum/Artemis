@@ -36,7 +36,7 @@ import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { ICER_PAPER_FLAG, PROFILE_IRIS } from 'app/app.constants';
+import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgClass } from '@angular/common';
@@ -57,7 +57,6 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { LtiInitializerComponent } from './lti-initializer.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AccountService } from 'app/core/auth/account.service';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 
 interface InstructorActionItem {
@@ -110,7 +109,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private quizExerciseService = inject(QuizExerciseService);
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
-    private accountService = inject(AccountService); // TODO TW: This "feature" is only temporary for a paper.
     private readonly cdr = inject(ChangeDetectorRef);
 
     readonly AssessmentType = AssessmentType;
@@ -129,7 +127,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
     public learningPathMode = false;
     public exerciseId: number;
     public courseId: number;
@@ -219,14 +216,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
         this.exercise = newExerciseDetails.exercise;
         this.cdr.detectChanges(); // IMPORTANT: necessary to update the view after the exercise has been loaded in learning path view
-
-        // TODO TW: This "feature" is only temporary for a paper.
-        if (this.exercise.problemStatement?.includes(ICER_PAPER_FLAG)) {
-            this.accountService.identity().then((user) => {
-                this.isChatGptWrapper = user && user.id ? user.id % 3 == 0 : false;
-            });
-        }
-
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);

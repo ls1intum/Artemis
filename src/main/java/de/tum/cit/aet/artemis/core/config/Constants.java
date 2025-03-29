@@ -413,15 +413,15 @@ public final class Constants {
     /**
      * The directory in the docker container in which the build script is executed
      */
-    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
+    public static final String LOCAL_CI_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * The directory in the docker container in which the results can be found
      */
-    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
+    public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
 
     /**
-     * The directory to which repositories temporarely get cloned for the build job execution
+     * The directory to which repositories temporarily get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
 
@@ -429,11 +429,6 @@ public final class Constants {
      * Minimum score for a result to be considered successful and shown in green
      */
     public static final int MIN_SCORE_GREEN = 80;
-
-    /**
-     * Minimum score for a result to be considered partially successful and shown in orange
-     */
-    public static final int MIN_SCORE_ORANGE = 40;
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
 
@@ -446,9 +441,6 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
-
-    // TODO TW: This "feature" is only temporary for a paper.
-    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
 
     private Constants() {
     }

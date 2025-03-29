@@ -48,7 +48,7 @@ public class GradingInstruction extends DomainObject {
     private int usageCount;
 
     // TODO: we should think about making this eager, because it is inconsistent
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private GradingCriterion gradingCriterion;
 
     @OneToMany(mappedBy = "gradingInstruction", fetch = FetchType.LAZY)
