@@ -12,6 +12,10 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import dayjs from 'dayjs/esm';
+import isoWeek from 'dayjs/plugin/isoWeek';
+
+dayjs.extend(isoWeek);
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -152,5 +156,105 @@ describe('SidebarAccordionComponent', () => {
         expect(component.totalUnreadMessagesPerGroup['past']).toBe(0);
         expect(component.totalUnreadMessagesPerGroup['future']).toBe(1);
         expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
+    });
+
+    ['real', 'test', 'attempt'].forEach((examKey) => {
+        it(`should return a single group with an empty weekRange for exam-type group key '${examKey}'`, () => {
+            component.groupedData = {
+                [examKey]: {
+                    entityData: [
+                        { title: `${examKey} Exam 1`, id: 1, exercise: { dueDate: dayjs('2025-01-01') } },
+                        { title: `${examKey} Exam 2`, id: 2, exercise: { dueDate: dayjs('2025-01-02') } },
+                    ],
+                },
+            } as any;
+            component.searchValue = '';
+
+            const result = component.getGroupedByWeek(examKey);
+            expect(result.length).toBe(1);
+            expect(result[0].weekRange).toBe('');
+            expect(result[0].items).toHaveLength(2);
+        });
+    });
+
+    // --- Merged test for small group and filtered group cases ---
+    [
+        { groupKey: 'smallGroup', searchValue: '', expectedCount: 2 },
+        { groupKey: 'filteredGroup', searchValue: 'Alpha', expectedCount: 1 },
+    ].forEach(({ groupKey, searchValue, expectedCount }) => {
+        it(`should return a single group for '${groupKey}' when searchValue is '${searchValue}'`, () => {
+            let entityData;
+            if (groupKey === 'smallGroup') {
+                entityData = [
+                    { title: 'Small 1', id: 1, exercise: { dueDate: dayjs('2025-01-03') } },
+                    { title: 'Small 2', id: 2, exercise: { dueDate: dayjs('2025-01-04') } },
+                ];
+            } else if (groupKey === 'filteredGroup') {
+                entityData = [
+                    { title: 'Alpha', id: 1, exercise: { dueDate: dayjs('2025-02-01') } },
+                    { title: 'Beta', id: 2, exercise: { dueDate: dayjs('2025-02-02') } },
+                ];
+            }
+            component.groupedData = { [groupKey]: { entityData } } as any;
+            component.searchValue = searchValue;
+            const result = component.getGroupedByWeek(groupKey);
+            expect(result.length).toBe(1);
+            expect(result[0].weekRange).toBe('');
+            expect(result[0].items).toHaveLength(expectedCount);
+            if (searchValue === 'Alpha') {
+                expect(result[0].items[0].title).toBe('Alpha');
+            }
+        });
+    });
+
+    it('should group items by week if there are more than 5 items and no search filter', () => {
+        component.groupedData = {
+            bigGroup: {
+                entityData: [
+                    { title: 'Item 1', id: 1, exercise: { dueDate: dayjs('2025-01-05') } },
+                    { title: 'Item 2', id: 2, exercise: { dueDate: dayjs('2025-01-06') } },
+                    { title: 'Item 3', id: 3, exercise: { dueDate: dayjs('2025-01-07') } },
+                    { title: 'Item 4', id: 4, exercise: { dueDate: dayjs('2025-01-08') } },
+                    { title: 'Item 5', id: 5, exercise: { dueDate: dayjs('2025-01-09') } },
+                    { title: 'Item 6', id: 6, exercise: { dueDate: dayjs('2025-01-15') } },
+                ],
+            },
+        } as any;
+        component.searchValue = '';
+        const result = component.getGroupedByWeek('bigGroup');
+        expect(result.length).toBeGreaterThan(1);
+    });
+
+    it('should place an item in a correct week if it only has startDateWithTime', () => {
+        component.groupedData = {
+            startDateGroup: {
+                entityData: [{ title: 'StartDate Only', id: 1, startDateWithTime: dayjs('2025-03-10') }],
+            },
+        } as any;
+        component.searchValue = '';
+        const result = component.getGroupedByWeek('startDateGroup');
+        expect(result).toHaveLength(1);
+        expect(result[0].items).toHaveLength(1);
+        expect(result[0].items[0].title).toBe('StartDate Only');
+    });
+
+    it('should place items without date in the "No Date" group when there are more than 5 items', () => {
+        component.groupedData = {
+            past: {
+                entityData: [
+                    { title: 'No Date 1', id: 1 },
+                    { title: 'No Date 2', id: 2 },
+                    { title: 'No Date 3', id: 3 },
+                    { title: 'No Date 4', id: 4 },
+                    { title: 'No Date 5', id: 5 },
+                    { title: 'No Date 6', id: 6 },
+                ],
+            },
+        } as any;
+        component.searchValue = '';
+        const result = component.getGroupedByWeek('past');
+        expect(result).toHaveLength(1);
+        expect(result[0].weekRange).toEqual('No Date');
+        expect(result[0].items).toHaveLength(6);
     });
 });
