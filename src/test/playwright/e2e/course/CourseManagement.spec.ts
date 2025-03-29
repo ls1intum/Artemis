@@ -132,8 +132,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(courseBody.instructorGroupName).toBe(`artemis-${courseData.shortName}-instructors`);
             expect(courseBody.teachingAssistantGroupName).toBe(`artemis-${courseData.shortName}-tutors`);
 
-            await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
-            await expect(courseManagement.getCourseHeaderDescription().filter({ hasText: courseData.description })).toBeVisible();
+            await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
             await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
             await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${courseData.shortName}-students (0)` })).toBeVisible();
@@ -175,7 +174,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
                 expect(courseBody.editorGroupName).toBe(courseData.editorGroupName);
                 expect(courseBody.instructorGroupName).toBe(courseData.instructorGroupName);
 
-                await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
+                await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
                 await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
                 await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
                 await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(courseData.testCourse))).toBeVisible();
@@ -219,7 +218,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(course.shortName).toBe(courseData.shortName);
             expect(course.testCourse).toBe(editedCourseData.testCourse);
 
-            await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
+            await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
             await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
             await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(editedCourseData.testCourse))).toBeVisible();

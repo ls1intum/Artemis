@@ -161,16 +161,8 @@ export class CourseManagementPage {
      * Retrieves the locator for the course header title.
      * @returns The locator for the course header title.
      */
-    getCourseHeaderTitle() {
-        return this.page.locator('#course-header-title');
-    }
-
-    /**
-     * Retrieves the locator for the course header description.
-     * @returns The locator for the course header description.
-     */
-    getCourseHeaderDescription() {
-        return this.page.locator('#course-header-description');
+    getCourseSidebarTitle() {
+        return this.page.locator('#test-course-title');
     }
 
     /**

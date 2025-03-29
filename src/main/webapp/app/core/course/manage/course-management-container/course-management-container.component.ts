@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { Observable, Subscription } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, Subject, Subscription, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
@@ -39,6 +39,11 @@ import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base
 import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -60,13 +65,15 @@ import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
         CourseTitleBarComponent,
+        DeleteButtonDirective,
+        HasAnyAuthorityDirective,
     ],
-    standalone: true,
 })
 export class CourseManagementContainerComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
     private eventManager = inject(EventManager);
     private featureToggleService = inject(FeatureToggleService);
     private sidebarItemService = inject(CourseSidebarItemService);
+    private courseAdminService = inject(CourseAdminService);
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
@@ -83,6 +90,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     localCIActive = signal<boolean>(false);
     irisEnabled = signal<boolean>(false);
     ltiEnabled = signal<boolean>(false);
+
+    // we cannot use signals here because the child component doesn't expect it
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     activatedComponentReference = signal<any>(null);
 
@@ -247,5 +258,77 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.eventManager.destroy(this.eventSubscriber);
         this.featureToggleSub?.unsubscribe();
         this.courseSub?.unsubscribe();
+    }
+
+    private getExistingSummaryEntries(): EntitySummary {
+        const numberOfExercisesPerType = new Map<ExerciseType, number>();
+        this.course()?.exercises?.forEach((exercise) => {
+            if (exercise.type === undefined) {
+                return;
+            }
+            const oldValue = numberOfExercisesPerType.get(exercise.type) ?? 0;
+            numberOfExercisesPerType.set(exercise.type, oldValue + 1);
+        });
+
+        const numberStudents = this.course()?.numberOfStudents ?? 0;
+        const numberTutors = this.course()?.numberOfTeachingAssistants ?? 0;
+        const numberEditors = this.course()?.numberOfEditors ?? 0;
+        const numberInstructors = this.course()?.numberOfInstructors ?? 0;
+        const isTestCourse = this.course()?.testCourse;
+
+        return {
+            'artemisApp.course.delete.summary.numberStudents': numberStudents,
+            'artemisApp.course.delete.summary.numberTutors': numberTutors,
+            'artemisApp.course.delete.summary.numberEditors': numberEditors,
+            'artemisApp.course.delete.summary.numberInstructors': numberInstructors,
+            'artemisApp.course.delete.summary.isTestCourse': isTestCourse,
+        };
+    }
+
+    fetchCourseDeletionSummary(): Observable<EntitySummary> {
+        if (this.course()?.id === undefined) {
+            return of({});
+        }
+
+        return this.courseAdminService.getDeletionSummary(this.course()!.id!).pipe(
+            map((response) => {
+                const summary = response.body;
+
+                if (summary === null) {
+                    return {};
+                }
+
+                return {
+                    ...this.getExistingSummaryEntries(),
+                    'artemisApp.course.delete.summary.numberExams': summary.numberExams,
+                    'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
+                    'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
+                    'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
+                    'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
+                    'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
+                    'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
+                    'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
+                    'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
+                    'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
+                };
+            }),
+        );
+    }
+    /**
+     * Deletes the course
+     * @param courseId id the course that will be deleted
+     */
+    deleteCourse(courseId: number) {
+        this.courseAdminService.delete(courseId).subscribe({
+            next: () => {
+                this.eventManager.broadcast({
+                    name: 'courseListModification',
+                    content: 'Deleted an course',
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+        this.router.navigate(['/course-management']);
     }
 }
