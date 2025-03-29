@@ -8,21 +8,13 @@
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <mat-sidenav
-                disableClose
-                [ngClass]="{ 'sidenav-height-dev': !isProduction() || isTestServer() }"
-                class="module-bg rounded-3"
-                opened="true"
-                mode="side"
-                [hidden]="isExamStarted()"
-            >
+            <mat-sidenav disableClose [ngClass]="{ 'sidenav-height-dev': !isProduction() || isTestServer() }" class="module-bg rounded-3" opened="true" mode="side">
                 <jhi-course-sidebar
                     [course]="course()"
                     [courses]="courses()"
                     [sidebarItems]="sidebarItems()"
                     [courseActionItems]="[]"
                     [isNavbarCollapsed]="isNavbarCollapsed()"
-                    [isExamStarted]="isExamStarted()"
                     [isProduction]="isProduction()"
                     [isTestServer]="isTestServer()"
                     [hasUnreadMessages]="hasUnreadMessages()"
@@ -38,64 +30,30 @@
                 }"
             >
                 @if (course()) {
-                    <div id="course-title-bar-test" class="h5 module-bg m-2 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top" [ngStyle]="{ display: 'flex' }">
-                        @if (hasSidebar()) {
-                            <button
-                                [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                                [ngClass]="{ 'is-collapsed': isSidebarCollapsed(), 'is-communication-module': pageTitle() === 'communication' }"
-                                triggers="hover"
-                                class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
-                                (click)="toggleSidebar()"
-                            >
-                                <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
-                                <div class="btn-sidebar-collapse-chevron d-flex gap-1">
-                                    <fa-icon
-                                        [fixedWidth]="true"
-                                        [icon]="faChevronRight"
-                                        class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
-                                        size="xs"
-                                    />
-                                    <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
-                                </div>
-                            </button>
-                        }
+                    <!-- Replace the old title bar with the shared component -->
+                    <jhi-course-title-bar
+                        [hasSidebar]="hasSidebar()"
+                        [isSidebarCollapsed]="isSidebarCollapsed()"
+                        [pageTitle]="pageTitle()"
+                        [titleTranslation]="pageTitle()"
+                        (toggleSidebar)="toggleSidebar()"
+                    >
+                        <div id="student-view-button">
+                            <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/courses', course()?.id]" jhiTranslate="artemisApp.courseOverview.studentView"></a>
+                        </div>
+                        <div class="controls">
+                            @if (course()?.isAtLeastInstructor) {
+                                <button id="edit-course" [routerLink]="['edit']" class="btn btn-warning btn-md" routerLinkActive="active">
+                                    <fa-icon [icon]="faWrench" />
+                                    <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
+                                </button>
+                            }
+                            @if (course()?.isAtLeastInstructor) {
+                                <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                            }
+                        </div>
+                    </jhi-course-title-bar>
 
-                        <div class="align-self-center d-flex">
-                            <div class="align-self-center" [jhiTranslate]="pageTitle()"></div>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <div id="student-view-button">
-                                <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/courses', course()?.id]" jhiTranslate="artemisApp.courseOverview.studentView"></a>
-                            </div>
-                            <div class="controls">
-                                @if (course()?.isAtLeastInstructor) {
-                                    <button id="edit-course" [routerLink]="['edit']" class="btn btn-warning btn-md" routerLinkActive="active">
-                                        <fa-icon [icon]="faWrench" />
-                                        <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
-                                    </button>
-                                }
-                                @if (course()?.isAtLeastInstructor) {
-                                    <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
-                                }
-                                <!--                                <button-->
-                                <!--                                        id="delete-course"-->
-                                <!--                                        *jhiHasAnyAuthority="'ROLE_ADMIN'"-->
-                                <!--                                        [buttonSize]="ButtonSize.MEDIUM"-->
-                                <!--                                        jhiDeleteButton-->
-                                <!--                                        [entityTitle]="course.title || ''"-->
-                                <!--                                        entitySummaryTitle="artemisApp.course.delete.summary.title"-->
-                                <!--                                        [fetchEntitySummary]="fetchCourseDeletionSummary()"-->
-                                <!--                                        deleteQuestion="artemisApp.course.delete.question"-->
-                                <!--                                        deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"-->
-                                <!--                                        (delete)="deleteCourse(course.id!)"-->
-                                <!--                                        [dialogError]="dialogError$"-->
-                                <!--                                        style="margin-right: 0 !important"-->
-                                <!--                                >-->
-                                <!--                                    <fa-icon [icon]="faTrash" />-->
-                                <!--                                </button>-->
-                            </div>
-                        </div>
-                    </div>
                     <div
                         class="course-body-container mx-2"
                         [ngClass]="{

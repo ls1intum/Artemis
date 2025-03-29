@@ -59,7 +59,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { CourseOverviewComponent } from 'app/core/course/overview/course-overview.component';
+import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';

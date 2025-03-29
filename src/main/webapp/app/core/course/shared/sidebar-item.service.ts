@@ -158,9 +158,18 @@ export class CourseSidebarItemService {
         };
     }
 
-    getFaqItem(): SidebarItem {
+    getFaqMangementItem(): SidebarItem {
         return {
             routerLink: 'faqs',
+            icon: faQuestion,
+            title: 'FAQs',
+            translation: 'artemisApp.courseOverview.menu.faq',
+            hidden: false,
+        };
+    }
+    getFaqItem(): SidebarItem {
+        return {
+            routerLink: 'faq',
             icon: faQuestion,
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',

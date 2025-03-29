@@ -38,6 +38,7 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -58,6 +59,7 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
         TranslateDirective,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
+        CourseTitleBarComponent,
     ],
     standalone: true,
 })
@@ -76,7 +78,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     pageTitle = signal<string>('');
     isNavbarCollapsed = signal<boolean>(false);
     isSidebarCollapsed = signal<boolean>(false);
-    isExamStarted = signal<boolean>(false);
     isShownViaLti = signal<boolean>(false);
     hasSidebar = signal<boolean>(false);
     localCIActive = signal<boolean>(false);
@@ -227,14 +228,13 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
 
         if (currentCourse?.isAtLeastTutor && currentCourse?.faqEnabled) {
-            sidebarItems.push(this.sidebarItemService.getFaqItem());
+            sidebarItems.push(this.sidebarItemService.getFaqMangementItem());
         }
 
         if (currentCourse?.isAtLeastInstructor && this.localCIActive()) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem());
         }
 
-        // LTI Configuration - only for instructors with LTI enabled and online course
         if (this.ltiEnabled() && currentCourse?.onlineCourse && currentCourse?.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem());
         }

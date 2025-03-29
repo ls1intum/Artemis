@@ -32,7 +32,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
-import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
+import { CourseUnenrollmentModalComponent } from '../course-unenrollment-modal.component';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -50,7 +50,7 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss', 'course-overview.component.scss'],
+    styleUrls: ['../course-overview.scss', './course-overview.component.scss'],
     imports: [
         NgClass,
         MatSidenavContainer,

@@ -48,11 +48,11 @@
                         [hasSidebar]="hasSidebar()"
                         [isSidebarCollapsed]="isSidebarCollapsed()"
                         [pageTitle]="pageTitle()"
-                        [titleTranslation]="'artemisApp.courseOverview.menu.' + pageTitle()"
+                        [titleTranslation]="pageTitle()"
                         [isExamStarted]="isExamStarted()"
                         (toggleSidebar)="toggleSidebar()"
                     >
-                        @if (isNotManagementView() && course()?.isAtLeastTutor) {
+                        @if (course()?.isAtLeastTutor) {
                             <div id="manage-button">
                                 <a
                                     class="btn btn-sm btn-outline-secondary"

@@ -12,6 +12,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-course-title-bar',
     templateUrl: './course-title-bar.component.html',
+    styleUrls: ['./course-title-bar.component.scss'],
     imports: [NgClass, NgStyle, NgbTooltip, FaIconComponent, TranslateDirective],
 })
 export class CourseTitleBarComponent {
