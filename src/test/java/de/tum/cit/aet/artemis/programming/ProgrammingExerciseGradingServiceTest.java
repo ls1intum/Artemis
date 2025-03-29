@@ -1043,8 +1043,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Capped by limit for exercise -> Score 60
-            // TODO Michal Kawka we might need to set up a submission here
             var result1 = new Result();
+            var submission1 = participationUtilService.addSubmission(programmingExerciseSCAEnabled, new ProgrammingSubmission(), student1);
+            result1.setSubmission(submission1);
             updateAndSaveAutomaticResult(result1, true, true, true, 10, 10);
         }
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
@@ -1053,8 +1054,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcase points: 42; Penalty: 4*3 = 12; Score: 71
-            // TODO Michal Kawka we might need to set up a submission here
             var result2 = new Result();
+            var submission2 = participationUtilService.addSubmission(programmingExerciseSCAEnabled, new ProgrammingSubmission(), student2);
+            result2.setSubmission(submission2);
             updateAndSaveAutomaticResult(result2, true, true, true, 4, 0);
         }
         // check results without category penalty limits
@@ -1086,8 +1088,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Penalty will be higher than points -> score 0
-            // TODO Michal Kawka we might need to set up a submission here
             var result3 = new Result();
+            var submission3 = participationUtilService.addSubmission(programmingExerciseSCAEnabled, new ProgrammingSubmission(), student3);
+            result3.setSubmission(submission3);
             updateAndSaveAutomaticResult(result3, true, true, true, 10, 10);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
@@ -1096,8 +1099,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Testcase points: 35; Penalty: 5*3 + 3*5 = 30; Score: 11
-            // TODO Michal Kawka we might need to set up a submission here
             var result4 = new Result();
+            var submission4 = participationUtilService.addSubmission(programmingExerciseSCAEnabled, new ProgrammingSubmission(), student4);
+            result4.setSubmission(submission4);
             updateAndSaveAutomaticResult(result4, false, true, true, 5, 3);
         }
         // check results without any limits
@@ -1456,7 +1460,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         result.rated(true).successful(test1Passes && test2Passes && test3Passes).completionDate(completionDate).assessmentType(AssessmentType.AUTOMATIC);
 
         gradingService.calculateScoreForResult(result, programmingExerciseSCAEnabled, true);
-
         resultRepository.save(result);
     }
 
