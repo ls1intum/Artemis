@@ -1,16 +1,16 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { ChannelService } from 'app/communication/conversations/channel.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { generateExampleChannelDTO } from '../helpers/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('ChannelService', () => {
     let service: ChannelService;

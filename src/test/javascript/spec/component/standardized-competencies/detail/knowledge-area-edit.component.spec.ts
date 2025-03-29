@@ -8,7 +8,7 @@ import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxono
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { By } from '@angular/platform-browser';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 

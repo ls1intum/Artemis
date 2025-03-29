@@ -3,13 +3,13 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise.component';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';

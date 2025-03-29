@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -11,11 +11,11 @@ import { Router } from '@angular/router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
+import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TutorEffort } from 'app/entities/tutor-effort.model';
-import { TextPlagiarismResult } from 'app/plagiarism/shared/types/text/TextPlagiarismResult';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
+import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 
 describe('TextExercise Service', () => {
     let service: TextExerciseService;

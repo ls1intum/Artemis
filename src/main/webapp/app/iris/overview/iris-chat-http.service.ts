@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { map, tap } from 'rxjs/operators';
-import { IrisSession } from 'app/entities/iris/iris-session.model';
+import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 

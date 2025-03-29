@@ -7,7 +7,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
-    styleUrls: ['../../overview/course-overview.scss'],
+    styleUrls: ['../../core/course/overview/course-overview.scss'],
     imports: [FaIconComponent, NgClass],
 })
 export class ExerciseActionButtonComponent {

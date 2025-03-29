@@ -6,18 +6,16 @@ import { UMLModel } from '@ls1intum/apollon';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
@@ -26,10 +24,10 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/utils';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -41,9 +39,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     private modelingExerciseService = inject(ModelingExerciseService);
     private route = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
-    private alertService = inject(AlertService);
     private statisticsService = inject(StatisticsService);
-    private accountService = inject(AccountService);
     private profileService = inject(ProfileService);
 
     readonly documentationType: DocumentationType = 'Model';
@@ -58,17 +54,14 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     gradingInstructions: SafeHtml;
     exampleSolution: SafeHtml;
     exampleSolutionUML: UMLModel;
-    numberOfClusters: number;
     detailOverviewSections: DetailOverviewSection[];
 
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
 
-    isAdmin = false;
     isApollonProfileActive = false;
 
     ngOnInit() {
-        this.isAdmin = this.accountService.isAdmin();
         this.subscription = this.route.params.subscribe((params) => {
             // Checks if the current environment includes "apollon" profile
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -97,9 +90,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
         });
-        if (this.isAdmin) {
-            this.countModelClusters(exerciseId);
-        }
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
@@ -139,7 +129,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     ...defaultGradingDetails,
                     { type: DetailType.Text, title: 'artemisApp.modelingExercise.diagramType', data: { text: exercise.diagramType } },
                     ...gradingInstructionsCriteriaDetails,
-                    this.isAdmin && { type: DetailType.Text, title: 'artemisApp.modelingExercise.checkClusters.text', data: { text: this.numberOfClusters } },
                 ],
             },
         ];
@@ -154,45 +143,5 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => {
             this.load(this.modelingExercise.id!);
         });
-    }
-
-    buildModelClusters() {
-        if (this.modelingExercise && this.modelingExercise.id) {
-            this.modelingExerciseService.buildClusters(this.modelingExercise.id).subscribe({
-                next: () => {
-                    this.alertService.success('artemisApp.modelingExercise.buildClusters.success');
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.modelingExercise.buildClusters.error');
-                },
-            });
-        }
-    }
-
-    deleteModelClusters() {
-        if (this.modelingExercise && this.modelingExercise.id) {
-            this.modelingExerciseService.deleteClusters(this.modelingExercise.id).subscribe({
-                next: () => {
-                    this.alertService.success('artemisApp.modelingExercise.deleteClusters.success');
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.modelingExercise.deleteClusters.error');
-                },
-            });
-        }
-    }
-
-    countModelClusters(exerciseId: number) {
-        if (exerciseId) {
-            this.modelingExerciseService.getNumberOfClusters(exerciseId).subscribe({
-                next: (res) => {
-                    this.numberOfClusters = res?.body || 0;
-                    this.detailOverviewSections = this.modelingExercise && this.getExerciseDetailSections();
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.modelingExercise.checkClusters.error');
-                },
-            });
-        }
     }
 }

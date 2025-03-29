@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { Node } from '@swimlane/ngx-graph';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

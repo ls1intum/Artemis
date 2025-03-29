@@ -7,15 +7,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseDifficultyComponent } from 'app/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseModeComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;

@@ -1,31 +1,30 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { Submission } from 'app/entities/submission.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ExamPage } from 'app/entities/exam/exam-page.model';
+import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TestRunRibbonComponent } from '../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from './exam-cover/exam-participation-cover.component';
 import { AsyncPipe, NgClass } from '@angular/common';
@@ -49,8 +48,8 @@ import {
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/exam-participation-live-events.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -61,6 +60,7 @@ import { TextSubmissionService } from 'app/text/overview/text-submission.service
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
+import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

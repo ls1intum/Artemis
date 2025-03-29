@@ -5,19 +5,19 @@ import { SafeHtml } from '@angular/platform-browser';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { filter } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewSection } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -29,7 +29,7 @@ import {
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',

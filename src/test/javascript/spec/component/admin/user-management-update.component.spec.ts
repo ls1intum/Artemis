@@ -1,9 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Subject, of } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { of, Subject } from 'rxjs';
 import { UserManagementUpdateComponent } from 'app/core/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -12,7 +11,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -24,6 +23,7 @@ import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import * as Sentry from '@sentry/angular';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');

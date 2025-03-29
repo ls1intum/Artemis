@@ -5,9 +5,9 @@ import { Router } from '@angular/router';
 import { Selection, UMLModel, UMLModelElement, findElement } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import {
     computeDropLocation,
     generateDragAndDropItemForElement,
@@ -22,7 +22,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {

@@ -1,7 +1,7 @@
-import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
+import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-scores/course-scores-student-statistics';
 import { User } from 'app/core/user/user.model';
 import { EMAIL_KEY, NAME_KEY, POINTS_KEY, REGISTRATION_NUMBER_KEY, SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExportRowBuilder } from 'app/shared/export/export-row-builder';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { CsvDecimalSeparator } from 'app/shared/export/export-modal.component';
