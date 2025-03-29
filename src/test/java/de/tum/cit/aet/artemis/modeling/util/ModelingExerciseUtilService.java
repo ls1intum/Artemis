@@ -253,8 +253,8 @@ public class ModelingExerciseUtilService {
         var user = userUtilService.getUserByLogin(login);
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         studentParticipationRepo.save(participation);
         modelingSubmissionRepo.save(submission);
@@ -316,12 +316,12 @@ public class ModelingExerciseUtilService {
 
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
-        result = resultRepo.save(result);
         submission = modelingSubmissionRepo.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         result = resultRepo.save(result);
 
-        result.setSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
         submission = modelingSubmissionRepo.save(submission);

@@ -220,12 +220,12 @@ public class FileUploadExerciseUtilService {
             result.setCompletionDate(ZonedDateTime.now());
         }
         result.setFeedbacks(feedbacks);
+        result.setSubmission(fileUploadSubmission);
         result = resultRepo.save(result);
         for (Feedback feedback : feedbacks) {
             feedback.setResult(result);
         }
         result = resultRepo.save(result);
-        result.setSubmission(fileUploadSubmission);
         fileUploadSubmission.setParticipation(participation);
         fileUploadSubmission.addResult(result);
         fileUploadSubmission = fileUploadSubmissionRepo.save(fileUploadSubmission);

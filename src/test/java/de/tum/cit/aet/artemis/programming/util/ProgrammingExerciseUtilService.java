@@ -727,7 +727,8 @@ public class ProgrammingExerciseUtilService {
     public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         submission = programmingSubmissionRepo.save(submission);
-        Result result = resultRepo.save(new Result());
+        // TODO check if it needs to be persisted
+        Result result = new Result();
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
@@ -749,7 +750,8 @@ public class ProgrammingExerciseUtilService {
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
-        Result result = resultRepo.save(new Result());
+        // TODO check if it needs to be persisted like before
+        Result result = new Result();
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
@@ -787,8 +789,8 @@ public class ProgrammingExerciseUtilService {
 
         submission.setParticipation(participation);
 
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         // Manual results are always rated
         if (assessmentType == AssessmentType.SEMI_AUTOMATIC) {
@@ -810,8 +812,8 @@ public class ProgrammingExerciseUtilService {
         ProgrammingSubmission submission = createProgrammingSubmission(participation, false);
         submission.addResult(result);
         submission.setCommitHash(commitHash);
-        resultRepo.save(result);
         result.setSubmission(submission);
+        resultRepo.save(result);
         participation.addSubmission(submission);
         studentParticipationRepo.save(participation);
         return submissionRepository.save(submission);

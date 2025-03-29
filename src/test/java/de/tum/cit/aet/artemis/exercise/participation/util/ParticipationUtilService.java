@@ -430,8 +430,8 @@ public class ParticipationUtilService {
      */
     public Result addResultToSubmission(Participation participation, Submission submission) {
         Result result = new Result().submission(submission).successful(true).score(100D).rated(true);
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -535,8 +535,8 @@ public class ParticipationUtilService {
     public Submission addResultToSubmission(final Submission submission, AssessmentType assessmentType, User user, Double score, boolean rated, ZonedDateTime completionDate) {
         Result result = new Result().submission(submission).assessmentType(assessmentType).score(score).rated(rated).completionDate(completionDate);
         result.setAssessor(user);
-        result = resultRepo.save(result);
         result.setSubmission(submission);
+        result = resultRepo.save(result);
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
         return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
@@ -629,12 +629,12 @@ public class ParticipationUtilService {
      */
     public Result generateResult(Submission submission, User assessor) {
         Result result = new Result();
-        result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
+        result = resultRepo.save(result);
         return result;
     }
 
