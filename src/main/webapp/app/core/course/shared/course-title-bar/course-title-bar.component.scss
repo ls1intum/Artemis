@@ -1,9 +1,4 @@
-// Sidebar Button Transition Variables
-$transition-delay: 0.3s;
-$transition-in-between-delay: 0.2s;
-$transition-chevron-rotate-length: 0.2s;
-$transition-chevron-max-width-length: 0.2s;
-$transition-color-length: 0.2s;
+@import '../course-base-container/course-variables';
 
 .btn-sidebar-collapse {
     position: relative;
