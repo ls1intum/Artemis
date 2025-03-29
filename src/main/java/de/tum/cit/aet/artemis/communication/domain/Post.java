@@ -73,10 +73,6 @@ public class Post extends Posting {
     @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "course_wide_context")
-    private CourseWideContext courseWideContext;
-
     @ManyToOne
     private Conversation conversation;
 
@@ -91,12 +87,6 @@ public class Post extends Posting {
 
     @Column(name = "resolved")
     private boolean resolved;
-
-    @Column(name = "answer_count")
-    private int answerCount;
-
-    @Column(name = "vote_count")
-    private int voteCount;
 
     @Transient
     private boolean isSaved = false;
@@ -218,24 +208,6 @@ public class Post extends Posting {
     public void setResolved(Boolean resolved) {
         // the case "null" should NOT happen and is only a safety measurement
         this.resolved = resolved != null ? resolved : false;
-    }
-
-    public int getAnswerCount() {
-        return answerCount;
-    }
-
-    public void setAnswerCount(Integer answerCount) {
-        // the case "null" should NOT happen and is only a safety measurement
-        this.answerCount = answerCount != null ? answerCount : 0;
-    }
-
-    public int getVoteCount() {
-        return voteCount;
-    }
-
-    public void setVoteCount(Integer voteCount) {
-        // the case "null" should NOT happen and is only a safety measurement
-        this.voteCount = voteCount != null ? voteCount : 0;
     }
 
     @JsonProperty("isSaved")

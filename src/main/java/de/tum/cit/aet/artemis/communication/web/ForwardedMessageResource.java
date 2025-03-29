@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,8 +24,12 @@ import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
@@ -42,8 +47,18 @@ public class ForwardedMessageResource {
 
     private final ForwardedMessageRepository forwardedMessageRepository;
 
-    public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository) {
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    private final UserRepository userRepository;
+
+    public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            UserRepository userRepository) {
         this.forwardedMessageRepository = forwardedMessageRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -60,9 +75,14 @@ public class ForwardedMessageResource {
         log.debug("POST createForwardedMessage invoked with forwardedMessageDTO: {}", forwardedMessageDTO.toString());
         long start = System.nanoTime();
 
-        // TODO: add authorization check for the user to be allowed to create a forwarded message
-        // this should probably be done on the sourceId given in the forwardedMessageDTO
+        User user = userRepository.getUser();
 
+        // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
+        // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
+        switch (forwardedMessageDTO.sourceType()) {
+            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
+            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
+        }
         if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
         }
@@ -93,8 +113,18 @@ public class ForwardedMessageResource {
             throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
         }
 
-        // TODO: add authorization check for the user to be allowed to create a forwarded message
-        // we need to verify that the user has access to the postings with the given IDs in postingIds
+        if (postingIds.isEmpty()) {
+            throw new BadRequestAlertException("Posting IDs cannot be empty when getting forwarded messages.", ENTITY_NAME, "emptyPostingIds");
+        }
+
+        User user = userRepository.getUser();
+
+        // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
+        // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
+        switch (type) {
+            case POST -> postRepository.userHasAccessToAllPostsElseThrow(postingIds, user.getId());
+            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(postingIds, user.getId());
+        }
 
         Set<ForwardedMessage> forwardedMessages;
         if (type == PostingType.POST) {

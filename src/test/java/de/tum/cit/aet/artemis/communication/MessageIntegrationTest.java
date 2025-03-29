@@ -468,7 +468,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseWideMessages_OrderByAnswerCountDESC() throws Exception {
+    void testGetCourseWideMessages_OrderByCreationDateDESC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
@@ -476,7 +476,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.DESCENDING.toString());
         params.add("courseWideChannelIds", "");
 
@@ -492,7 +492,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseWideMessages_OrderByAnswerCountASC() throws Exception {
+    void testGetCourseWideMessages_OrderByCreationDateASC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
@@ -500,7 +500,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.ASCENDING.toString());
         params.add("courseWideChannelIds", "");
 
@@ -785,7 +785,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.CREATION_DATE,
                 SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
@@ -824,7 +824,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         groupPost.setContent("SearchTestGroup");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", groupPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.CREATION_DATE,
                 SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
