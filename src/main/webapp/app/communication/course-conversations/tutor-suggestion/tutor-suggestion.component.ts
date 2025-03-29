@@ -3,7 +3,8 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.se
 import { Post } from 'app/entities/metis/post.model';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription } from 'rxjs';
-import { IrisMessage } from 'app/entities/iris/iris-message.model';
+import { filter, take } from 'rxjs/operators';
+import { IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -12,8 +13,8 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { Course } from 'app/entities/course.model';
 
 /**
- * Component to display the tutor suggestion in the course overview
- * The tutor suggestion is displayed in a thread and is used to suggest answers for a tutor
+ * Component to display the tutor suggestion in the chat
+ * It fetches the messages from the chat service and displays the suggestion
  */
 @Component({
     selector: 'jhi-tutor-suggestion',
@@ -61,6 +62,17 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
             const post = this.post();
             if (post) {
                 this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                this.messagesSubscription?.unsubscribe();
+
+                // Subscribe to sessionId$ to ensure that the session is created before fetching messages
+                this.chatService.sessionId$
+                    .pipe(
+                        filter((id): id is number => !!id), // Ensuring that id is not null or undefined
+                        take(1),
+                    )
+                    .subscribe(() => {
+                        this.requestSuggestion();
+                    });
             }
             this.fetchMessages();
         }
@@ -72,16 +84,25 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         this.irisSettingsSubscription?.unsubscribe();
     }
 
-    sendMessage(): void {
-        this.chatService.sendMessage('test').subscribe((m) => {});
+    /**
+     * Requests a tutor suggestion from the chat service
+     * This method is called when the component is initialized or when the post changes
+     */
+    requestSuggestion(): void {
+        const post = this.post();
+        if (post) {
+            this.chatService.requestTutorSuggestion(post).subscribe();
+        }
     }
 
+    /**
+     * Fetches the messages from the chat service and updates the suggestion if necessary
+     */
     private fetchMessages(): void {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
-                this.suggestion = messages.first();
+                this.suggestion = messages.findLast((m) => m.sender === IrisSender.LLM);
             }
-            this.suggestion = messages.first();
             this.messages = messages;
         });
     }

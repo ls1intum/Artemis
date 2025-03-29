@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisTutorSuggestionRequestMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { map, tap } from 'rxjs/operators';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
@@ -62,6 +62,21 @@ export class IrisChatHttpService {
     createMessage(sessionId: number, message: IrisUserMessage): Response<IrisUserMessage> {
         message.messageDifferentiator = this.randomInt();
         return this.httpClient.post<IrisUserMessage>(
+            `${this.apiPrefix}/sessions/${sessionId}/messages`,
+            Object.assign({}, message, {
+                sentAt: convertDateFromClient(message.sentAt),
+            }),
+            { observe: 'response' },
+        );
+    }
+
+    /**
+     * Creates a new tutor suggestion message in a session
+     * @param sessionId of the session
+     * @param message to be created
+     */
+    createTutorSuggestion(sessionId: number, message: IrisTutorSuggestionRequestMessage): Response<IrisTutorSuggestionRequestMessage> {
+        return this.httpClient.post<IrisTutorSuggestionRequestMessage>(
             `${this.apiPrefix}/sessions/${sessionId}/messages`,
             Object.assign({}, message, {
                 sentAt: convertDateFromClient(message.sentAt),

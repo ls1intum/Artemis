@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisTutorSuggestionRequestMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
@@ -14,6 +14,7 @@ import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { Post } from 'app/entities/metis/post.model';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
@@ -34,7 +35,16 @@ export class IrisChatService implements OnDestroy {
     private userService = inject(UserService);
     private accountService = inject(AccountService);
 
-    sessionId?: number;
+    private sessionIdSubject = new BehaviorSubject<number | undefined>(undefined);
+    public sessionId$ = this.sessionIdSubject.asObservable();
+
+    public get sessionId(): number | undefined {
+        return this.sessionIdSubject.value;
+    }
+
+    public set sessionId(id: number | undefined) {
+        this.sessionIdSubject.next(id);
+    }
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -84,6 +94,29 @@ export class IrisChatService implements OnDestroy {
             tap((m) => {
                 this.replaceOrAddMessage(m.body!);
             }),
+            map(() => undefined),
+            catchError((error: HttpErrorResponse) => {
+                this.handleSendHttpError(error);
+                return of();
+            }),
+        );
+    }
+
+    /**
+     * requests a tutor suggestion from the server
+     * @param post that the tutor suggestion should be based on
+     */
+    public requestTutorSuggestion(post: Post): Observable<undefined> {
+        if (!this.sessionId) {
+            return throwError(() => new Error('Not initialized'));
+        }
+
+        const messageJSON = JSON.stringify(post);
+
+        const newMessage = new IrisTutorSuggestionRequestMessage();
+        newMessage.sender = IrisSender.TUT_SUG;
+        newMessage.content = [new IrisTextMessageContent(messageJSON)];
+        return this.http.createTutorSuggestion(this.sessionId, newMessage).pipe(
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
