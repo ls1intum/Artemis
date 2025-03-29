@@ -14,8 +14,6 @@ import java.util.Arrays;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -47,8 +45,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * Contains useful methods for testing the conversations futures
  */
 abstract class AbstractConversationTest extends AbstractSpringIntegrationIndependentTest {
-
-    private static final Logger log = LoggerFactory.getLogger(AbstractConversationTest.class);
 
     @Autowired
     CourseTestRepository courseRepository;
