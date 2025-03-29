@@ -23,10 +23,12 @@ public class SavedPost extends DomainObject {
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
+    // TODO: convert database type to enum
     @Enumerated
     @Column(name = "post_type", nullable = false)
     private PostingType postType;
 
+    // TODO: convert database type to enum
     @Enumerated
     @Column(name = "status", nullable = false)
     private SavedPostStatus status;

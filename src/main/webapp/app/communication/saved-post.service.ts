@@ -1,12 +1,12 @@
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
-import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
     providedIn: 'root',
@@ -22,9 +22,8 @@ export class SavedPostService {
      * @return {Observable<Object>}
      */
     public savePost(post: Posting): Observable<object> {
-        const type = this.getPostingType(post).toString();
-
-        return this.http.post(`${this.resourceUrl}${post.id}/${type}`, {}, { observe: 'response' });
+        const params = new HttpParams().set('type', this.getPostingType(post).toString());
+        return this.http.post(`${this.resourceUrl}${post.id}`, {}, { observe: 'response', params });
     }
 
     /**
@@ -33,9 +32,8 @@ export class SavedPostService {
      * @return {Observable<Object>}
      */
     public removeSavedPost(post: Posting): Observable<object> {
-        const type = this.getPostingType(post).toString();
-
-        return this.http.delete(`${this.resourceUrl}${post.id}/${type}`, { observe: 'response' });
+        const params = new HttpParams().set('type', this.getPostingType(post).toString());
+        return this.http.delete(`${this.resourceUrl}${post.id}`, { observe: 'response', params });
     }
 
     /**
@@ -45,9 +43,9 @@ export class SavedPostService {
      * @return {Observable<Object>}
      */
     public changeSavedPostStatus(post: Posting, status: SavedPostStatus): Observable<object> {
-        const type = this.getPostingType(post).toString();
-
-        return this.http.put(`${this.resourceUrl}${post.id}/${type}?status=${status.toString()}`, null, { observe: 'response' });
+        const params = new HttpParams().set('type', this.getPostingType(post).toString());
+        params.set('status', status.toString());
+        return this.http.put(`${this.resourceUrl}${post.id}`, null, { observe: 'response', params });
     }
 
     /**
@@ -57,7 +55,8 @@ export class SavedPostService {
      * @return {Observable<Posting[]>}
      */
     public fetchSavedPosts(courseId: number, status: SavedPostStatus): Observable<HttpResponse<Posting[]>> {
-        return this.http.get(`${this.resourceUrl}${courseId}/${status.toString()}`, { observe: 'response' }).pipe(map(this.convertPostResponseFromServer));
+        const params = new HttpParams().set('status', status.toString());
+        return this.http.get(`${this.resourceUrl}${courseId}`, { observe: 'response', params }).pipe(map(this.convertPostResponseFromServer));
     }
 
     /**
@@ -66,7 +65,7 @@ export class SavedPostService {
      * @return {Post|AnswerPost}
      */
     public convertPostingToCorrespondingType(post: Posting) {
-        return Object.assign((post.postingType as PostingType) === PostingType.POST ? new Post() : new AnswerPost(), post);
+        return Object.assign(post.postingType === PostingType.POST ? new Post() : new AnswerPost(), post);
     }
 
     /**

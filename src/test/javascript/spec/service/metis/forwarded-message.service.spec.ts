@@ -36,10 +36,9 @@ describe('ForwardedMessageService', () => {
     describe('createForwardedMessage', () => {
         it('should call POST with a converted DTO and courseId in params', () => {
             const response = new HttpResponse<ForwardedMessage>({ body: sampleForwardedMessage });
-            const courseId = 99;
             (httpClientMock.post as jest.Mock).mockReturnValue(of(response));
 
-            service.createForwardedMessage(sampleForwardedMessage, courseId).subscribe((res) => {
+            service.createForwardedMessage(sampleForwardedMessage).subscribe((res) => {
                 expect(res.body).toEqual(sampleForwardedMessage);
             });
 
@@ -66,7 +65,6 @@ describe('ForwardedMessageService', () => {
     describe('getForwardedMessages', () => {
         it('should call GET with type "POST"', () => {
             const ids = [2, 3];
-            const courseId = 99;
             const expectedResponse = [
                 { id: 2, messages: [sampleForwardedMessage] },
                 { id: 3, messages: [] },
@@ -75,7 +73,7 @@ describe('ForwardedMessageService', () => {
 
             (httpClientMock.get as jest.Mock).mockReturnValue(of(response));
 
-            service.getForwardedMessages(ids, PostingType.POST, courseId).subscribe((res) => {
+            service.getForwardedMessages(ids, PostingType.POST).subscribe((res) => {
                 expect(res.body).toEqual(expectedResponse);
             });
 
@@ -97,7 +95,6 @@ describe('ForwardedMessageService', () => {
 
         it('should call GET with type "answer"', () => {
             const ids = [4, 5];
-            const courseId = 99;
             const expectedResponse = [
                 { id: 4, messages: [] },
                 { id: 5, messages: [sampleForwardedMessage] },
@@ -106,7 +103,7 @@ describe('ForwardedMessageService', () => {
 
             (httpClientMock.get as jest.Mock).mockReturnValue(of(response));
 
-            service.getForwardedMessages(ids, PostingType.ANSWER, courseId).subscribe((res) => {
+            service.getForwardedMessages(ids, PostingType.ANSWER).subscribe((res) => {
                 expect(res.body).toEqual(expectedResponse);
             });
 
@@ -126,9 +123,8 @@ describe('ForwardedMessageService', () => {
 
         it('should throw an error if IDs are empty', async () => {
             const ids: number[] = [];
-            const courseId = 99;
 
-            await expect(lastValueFrom(service.getForwardedMessages(ids, PostingType.POST, courseId))).rejects.toThrow('IDs cannot be empty');
+            await expect(lastValueFrom(service.getForwardedMessages(ids, PostingType.POST))).rejects.toThrow('IDs cannot be empty');
             expect(httpClientMock.get).not.toHaveBeenCalled();
         });
     });

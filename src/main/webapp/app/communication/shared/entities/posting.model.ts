@@ -18,8 +18,8 @@ export enum SavedPostStatusMap {
 }
 
 export enum PostingType {
-    POST = 0,
-    ANSWER = 1,
+    POST = 'post',
+    ANSWER = 'answer',
 }
 
 export abstract class Posting implements BaseEntity {
@@ -31,8 +31,8 @@ export abstract class Posting implements BaseEntity {
     public updatedDate?: dayjs.Dayjs;
     public content?: string;
     public isSaved?: boolean;
-    public savedPostStatus?: number;
-    public postingType?: number;
+    public savedPostStatus?: SavedPostStatus;
+    public postingType?: PostingType;
     public reactions?: Reaction[];
     public hasForwardedMessages?: boolean = false;
     public isConsecutive?: boolean = false;
