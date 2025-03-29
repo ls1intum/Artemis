@@ -204,7 +204,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         }
     }
 
-    private static @org.jetbrains.annotations.NotNull List<ExamUserDTO> getExamUserDTOS() {
+    private static List<ExamUserDTO> getExamUserDTOS() {
         List<ExamUserDTO> examUserDTOs = new ArrayList<>();
         ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "");
         ExamUserDTO examUserDTO3 = new ExamUserDTO(TEST_PREFIX + "student3", "", "", "03756884", "", "", "101", "11", true, true, true, true, "");

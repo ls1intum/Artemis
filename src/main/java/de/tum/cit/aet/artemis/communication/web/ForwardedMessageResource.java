@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -55,10 +55,13 @@ public class ForwardedMessageResource {
      * @throws BadRequestAlertException if the forwarded message already has an ID.
      */
     @PostMapping("forwarded-messages")
-    @EnforceAtLeastStudentInCourse
+    @EnforceAtLeastStudent
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessageDTO forwardedMessageDTO) throws URISyntaxException {
         log.debug("POST createForwardedMessage invoked with forwardedMessageDTO: {}", forwardedMessageDTO.toString());
         long start = System.nanoTime();
+
+        // TODO: add authorization check for the user to be allowed to create a forwarded message
+        // this should probably be done on the sourceId given in the forwardedMessageDTO
 
         if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
@@ -81,7 +84,7 @@ public class ForwardedMessageResource {
      * @throws BadRequestAlertException if the type parameter is invalid or unsupported.
      */
     @GetMapping("forwarded-messages")
-    @EnforceAtLeastStudentInCourse
+    @EnforceAtLeastStudent
     public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> postingIds, @RequestParam PostingType type) {
         log.debug("GET getForwardedMessages invoked with postingIds {} and type {}", postingIds, type);
         long start = System.nanoTime();
@@ -89,6 +92,9 @@ public class ForwardedMessageResource {
         if (type != PostingType.POST && type != PostingType.ANSWER) {
             throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
         }
+
+        // TODO: add authorization check for the user to be allowed to create a forwarded message
+        // we need to verify that the user has access to the postings with the given IDs in postingIds
 
         Set<ForwardedMessage> forwardedMessages;
         if (type == PostingType.POST) {
