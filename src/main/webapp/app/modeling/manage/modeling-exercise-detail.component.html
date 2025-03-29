@@ -13,10 +13,6 @@
                     }
                 </div>
                 <hr />
-                <div class="mb-1">
-                    <button (click)="buildModelClusters()" class="btn btn-primary btn-sm me-1" jhiTranslate="artemisApp.modelingExercise.buildClusters.action"></button>
-                    <button (click)="deleteModelClusters()" class="btn btn-primary btn-sm" jhiTranslate="artemisApp.modelingExercise.deleteClusters.action"></button>
-                </div>
                 @if (!modelingExercise.releaseDate || dayjs(modelingExercise.releaseDate).isBefore(dayjs())) {
                     <div class="mt-3">
                         <jhi-exercise-detail-statistics

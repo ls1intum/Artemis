@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 
 import { OrganizationManagementUpdateComponent } from 'app/core/admin/organization-management/organization-management-update.component';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

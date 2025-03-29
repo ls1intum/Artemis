@@ -3,7 +3,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 

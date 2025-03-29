@@ -10,7 +10,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

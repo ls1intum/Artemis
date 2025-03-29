@@ -1,5 +1,5 @@
 import { Directive, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingCreateEditDirective } from 'app/communication/posting-create-edit.directive';
 
 @Directive()

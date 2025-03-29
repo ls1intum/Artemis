@@ -4,7 +4,7 @@ import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
 
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExamEditWorkingTimeDialogComponent } from './exam-edit-working-time-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { Ide } from 'app/core/user/settings/ide-preferences/ide.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalCloningService {

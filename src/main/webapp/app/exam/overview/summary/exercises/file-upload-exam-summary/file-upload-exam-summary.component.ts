@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission.component';
 
 @Component({

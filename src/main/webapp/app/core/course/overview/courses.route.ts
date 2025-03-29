@@ -250,7 +250,7 @@ export const routes: Routes = [
             {
                 path: CourseOverviewRoutePath.SETTINGS,
                 pathMatch: 'full',
-                loadComponent: () => import('app/course/overview/course-settings/course-settings.component').then((m) => m.CourseSettingsComponent),
+                loadComponent: () => import('app/core/course/overview/course-settings/course-settings.component').then((m) => m.CourseSettingsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.settings',

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartFilter } from 'app/shared/chart/chart-filter';
 import { ExerciseScoresDTO } from 'app/core/course/overview/visualizations/exercise-scores-chart.service';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';

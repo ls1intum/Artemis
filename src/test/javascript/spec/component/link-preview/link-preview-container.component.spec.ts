@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
-import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
-import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { MockLinkPreviewService } from '../../helpers/mocks/service/mock-link-preview.service';
 import { of } from 'rxjs';
+import { LinkPreviewContainerComponent } from 'app/communication/link-preview/components/link-preview-container/link-preview-container.component';
+import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 describe('LinkPreviewContainerComponent', () => {
     let component: LinkPreviewContainerComponent;

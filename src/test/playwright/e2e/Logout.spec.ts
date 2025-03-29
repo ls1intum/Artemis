@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from '../support/fixtures';
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { admin, studentOne, studentTwo } from '../support/users';
 
 test.describe('Logout tests', () => {
