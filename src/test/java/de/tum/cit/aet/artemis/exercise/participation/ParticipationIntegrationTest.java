@@ -194,7 +194,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService);
     }
 
     @AfterEach

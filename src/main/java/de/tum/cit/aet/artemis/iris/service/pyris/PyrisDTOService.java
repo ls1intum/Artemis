@@ -60,9 +60,6 @@ public class PyrisDTOService {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
 
-        // var templateRepositoryContents = new HashMap<String, String>();
-        // var solutionRepositoryContents = new HashMap<String, String>();
-
         Map<String, String> testsRepositoryContents = getRepositoryContents(exercise.getVcsTestRepositoryUri());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,

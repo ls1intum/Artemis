@@ -92,7 +92,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCodeReviewFeedbackService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -133,8 +132,6 @@ public class ParticipationResource {
     private final AuthorizationCheckService authCheckService;
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
-
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserRepository userRepository;
 
@@ -178,9 +175,8 @@ public class ParticipationResource {
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ParticipationAuthorizationCheckService participationAuthCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository,
-            GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
@@ -194,7 +190,6 @@ public class ParticipationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
@@ -423,17 +418,17 @@ public class ParticipationResource {
         }
 
         // Process feedback request
-        StudentParticipation updatedParticipation;
-        if (exercise instanceof TextExercise) {
-            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
-            updatedParticipation = api.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
-        }
-        else if (exercise instanceof ModelingExercise) {
-            updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);
-        }
-        else {
-            updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
-                    (ProgrammingExerciseStudentParticipation) participation, (ProgrammingExercise) exercise);
+        StudentParticipation updatedParticipation = null;
+        switch (exercise) {
+            case TextExercise textExercise -> {
+                TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiNotPresentException(TextFeedbackApi.class, PROFILE_CORE));
+                updatedParticipation = api.handleNonGradedFeedbackRequest(participation, textExercise);
+            }
+            case ModelingExercise modelingExercise -> updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, modelingExercise);
+            case ProgrammingExercise programmingExercise -> updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
+                    (ProgrammingExerciseStudentParticipation) participation, programmingExercise);
+            default -> {
+            }
         }
 
         return ResponseEntity.ok().body(updatedParticipation);
@@ -674,18 +669,7 @@ public class ParticipationResource {
             participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
             // we only need participationId, title, dates and max points
             // remove unnecessary elements
-            Exercise exercise = participation.getExercise();
-            exercise.setCourse(null);
-            exercise.setStudentParticipations(null);
-            exercise.setTutorParticipations(null);
-            exercise.setExampleSubmissions(null);
-            exercise.setAttachments(null);
-            exercise.setCategories(null);
-            exercise.setProblemStatement(null);
-            exercise.setPosts(null);
-            exercise.setGradingInstructions(null);
-            exercise.setDifficulty(null);
-            exercise.setMode(null);
+            final var exercise = getExercise(participation);
             switch (exercise) {
                 case ProgrammingExercise programmingExercise -> {
                     programmingExercise.setSolutionParticipation(null);
@@ -713,6 +697,22 @@ public class ParticipationResource {
         long end = System.currentTimeMillis();
         log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
+    }
+
+    private static Exercise getExercise(StudentParticipation participation) {
+        Exercise exercise = participation.getExercise();
+        exercise.setCourse(null);
+        exercise.setStudentParticipations(null);
+        exercise.setTutorParticipations(null);
+        exercise.setExampleSubmissions(null);
+        exercise.setAttachments(null);
+        exercise.setCategories(null);
+        exercise.setProblemStatement(null);
+        exercise.setPosts(null);
+        exercise.setGradingInstructions(null);
+        exercise.setDifficulty(null);
+        exercise.setMode(null);
+        return exercise;
     }
 
     /**

@@ -166,7 +166,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private Set<SavedPost> savedPosts = new HashSet<>();
+    private final Set<SavedPost> savedPosts = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {

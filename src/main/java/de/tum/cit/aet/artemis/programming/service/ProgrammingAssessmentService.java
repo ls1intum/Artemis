@@ -38,18 +38,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
-            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
 

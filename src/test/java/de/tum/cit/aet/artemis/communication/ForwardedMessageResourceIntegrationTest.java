@@ -42,8 +42,6 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private User testUser;
-
     private Post testPost;
 
     private AnswerPost testAnswerPost;
@@ -60,7 +58,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         exampleCourse = courses.get(0);
         exampleCourseId = exampleCourse.getId();
 
-        testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         Conversation conversation = ConversationFactory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
         conversationRepository.save(conversation);

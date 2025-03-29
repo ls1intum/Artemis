@@ -53,8 +53,6 @@ public class ExerciseDeletionService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ModelingExerciseService modelingExerciseService;
-
     private final QuizExerciseService quizExerciseService;
 
     private final ExampleSubmissionService exampleSubmissionService;
@@ -89,7 +87,6 @@ public class ExerciseDeletionService {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.modelingExerciseService = modelingExerciseService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;

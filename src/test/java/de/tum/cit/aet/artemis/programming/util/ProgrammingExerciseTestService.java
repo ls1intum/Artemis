@@ -139,9 +139,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
@@ -275,8 +273,6 @@ public class ProgrammingExerciseTestService {
 
     public static final String TEAM_SHORT_NAME = "team1";
 
-    public static final String PARTICIPATION_BASE_URL = "/api/exercise/participations/";
-
     public LocalRepository exerciseRepo;
 
     public LocalRepository testRepo;
@@ -301,8 +297,6 @@ public class ProgrammingExerciseTestService {
     private VersionControlService versionControlService;
 
     // Injected in the constructor
-    @SuppressWarnings("unused") // might be used in the future and is here for consistency reasons
-    private ContinuousIntegrationService continuousIntegrationService;
 
     private MockDelegate mockDelegate;
 
@@ -319,7 +313,7 @@ public class ProgrammingExerciseTestService {
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -333,7 +327,6 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.continuousIntegrationService = continuousIntegrationService;
 
         course = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
@@ -1048,8 +1041,6 @@ public class ProgrammingExerciseTestService {
 
         // Mock requests
         mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
-        // setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
-        // setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         setupMocksForConsistencyChecksOnImport(sourceExercise);
 
         // Create request
@@ -1292,16 +1283,6 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.save(exercise);
 
         startProgrammingExercise_correctInitializationState(INDIVIDUAL);
-
-        final VersionControlRepositoryPermission permissions;
-        if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
-            permissions = VersionControlRepositoryPermission.REPO_WRITE;
-        }
-        else {
-            permissions = VersionControlRepositoryPermission.REPO_READ;
-        }
-
-        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + STUDENT_LOGIN);
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
@@ -1341,7 +1322,7 @@ public class ProgrammingExerciseTestService {
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
-    // TEST
+    // TEST TODO Enable
     public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode, Object body) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
@@ -1849,19 +1830,19 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    // Test
+    // TEST TODO Enable
     public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new CanceledException("Checkout canceled"));
     }
 
-    // Test
+    // TEST TODO Enable
     public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InvalidRemoteException("InvalidRemoteException"));
     }
 
-    // Test
+    // TEST TODO Enable
     public void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
@@ -1970,7 +1951,7 @@ public class ProgrammingExerciseTestService {
 
         for (var exercise : programmingExercises) {
             setupRepositoryMocks(exercise);
-            for (var examUser : exam.getExamUsers()) {
+            for (var ignored : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
                 // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
@@ -2354,18 +2335,6 @@ public class ProgrammingExerciseTestService {
         assertThat(solutionSubmission.isPresent()).isTrue();
         assertThat(solutionSubmission.get().getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
-    }
-
-    private void persistProgrammingExercise() {
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
-    }
-
-    private ProgrammingExerciseStudentParticipation createUserParticipation() throws Exception {
-        final var path = "/api/exercise/exercises/" + exercise.getId() + "/participations";
-        return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
     private List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {

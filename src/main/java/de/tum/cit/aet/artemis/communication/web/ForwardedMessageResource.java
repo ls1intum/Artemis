@@ -25,9 +25,7 @@ import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
@@ -44,20 +42,13 @@ public class ForwardedMessageResource {
 
     private final ForwardedMessageRepository forwardedMessageRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final AuthorizationCheckService authCheckService;
-
-    public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
+    public ForwardedMessageResource(ForwardedMessageRepository forwardedMessageRepository) {
         this.forwardedMessageRepository = forwardedMessageRepository;
-        this.courseRepository = courseRepository;
-        this.authCheckService = authCheckService;
     }
 
     /**
      * POST /forwarded-messages : Create a new forwarded message.
      *
-     * @param courseId            the ID of the course in which the forwarded message is being created.
      * @param forwardedMessageDTO the forwarded message to create.
      * @return the ResponseEntity with status 201 (Created) and with the body containing the new forwarded message,
      *         or with status 400 (Bad Request) if the forwarded message already has an ID.
@@ -65,7 +56,7 @@ public class ForwardedMessageResource {
      */
     @PostMapping("forwarded-messages")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestParam Long courseId, @RequestBody ForwardedMessageDTO forwardedMessageDTO) throws URISyntaxException {
+    public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessageDTO forwardedMessageDTO) throws URISyntaxException {
         log.debug("POST createForwardedMessage invoked with forwardedMessageDTO: {}", forwardedMessageDTO.toString());
         long start = System.nanoTime();
 
@@ -83,7 +74,6 @@ public class ForwardedMessageResource {
     /**
      * GET /forwarded-messages : Retrieve forwarded messages grouped by their destination IDs.
      *
-     * @param courseId   the ID of the course in which the forwarded message is being created.
      * @param postingIds a set of destination IDs (either post or answer IDs) for which forwarded messages should be retrieved.
      * @param type       the type of destination ('post' or 'answer') to specify whether the IDs belong to posts or answers.
      * @return the ResponseEntity with status 200 (OK) and a list of ForwardedMessagesGroupDTO objects,
@@ -92,7 +82,7 @@ public class ForwardedMessageResource {
      */
     @GetMapping("forwarded-messages")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Long courseId, @RequestParam Set<Long> postingIds, @RequestParam PostingType type) {
+    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> postingIds, @RequestParam PostingType type) {
         log.debug("GET getForwardedMessages invoked with postingIds {} and type {}", postingIds, type);
         long start = System.nanoTime();
 

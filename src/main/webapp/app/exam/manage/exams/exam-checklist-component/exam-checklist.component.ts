@@ -46,7 +46,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
 
     exam = input.required<Exam>();
-    getExamRoutesByIdentifier = input.required<string>();
+    getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
     private longestWorkingTimeSub: Subscription | undefined = undefined;
 
     examChecklist: ExamChecklist;

@@ -141,8 +141,6 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
-
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -161,7 +159,7 @@ public class ProgrammingExerciseResultTestService {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
@@ -504,7 +502,4 @@ public class ProgrammingExerciseResultTestService {
         return solutionParticipation;
     }
 
-    public ProgrammingExerciseStudentParticipation getProgrammingExerciseStudentParticipation() {
-        return programmingExerciseStudentParticipation;
-    }
 }

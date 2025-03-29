@@ -24,10 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
@@ -39,14 +37,8 @@ public class AnswerMessageResource {
 
     private final AnswerMessageService answerMessageService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final CourseRepository courseRepository;
-
-    public AnswerMessageResource(AnswerMessageService answerMessageService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+    public AnswerMessageResource(AnswerMessageService answerMessageService) {
         this.answerMessageService = answerMessageService;
-        this.authorizationCheckService = authorizationCheckService;
-        this.courseRepository = courseRepository;
     }
 
     /**
@@ -119,7 +111,7 @@ public class AnswerMessageResource {
     @GetMapping("courses/{courseId}/answer-messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
-        log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, answerPostIds.size());
+        log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, answerPostIds == null ? 0 : answerPostIds.size());
         long start = System.nanoTime();
 
         if (answerPostIds == null || answerPostIds.isEmpty()) {

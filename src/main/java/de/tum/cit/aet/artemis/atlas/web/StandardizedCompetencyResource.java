@@ -39,15 +39,12 @@ public class StandardizedCompetencyResource {
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
-    private final KnowledgeAreaRepository knowledgeAreaRepository;
-
     private final SourceRepository sourceRepository;
 
     public StandardizedCompetencyResource(StandardizedCompetencyService standardizedCompetencyService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             KnowledgeAreaRepository knowledgeAreaRepository, SourceRepository sourceRepository) {
         this.standardizedCompetencyService = standardizedCompetencyService;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
-        this.knowledgeAreaRepository = knowledgeAreaRepository;
         this.sourceRepository = sourceRepository;
     }
 
