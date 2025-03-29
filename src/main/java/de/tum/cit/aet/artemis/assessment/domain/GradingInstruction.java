@@ -47,7 +47,6 @@ public class GradingInstruction extends DomainObject {
     @Column(name = "usage_count")
     private int usageCount;
 
-    // TODO: we should think about making this eager, because it is inconsistent
     @ManyToOne
     private GradingCriterion gradingCriterion;
 
