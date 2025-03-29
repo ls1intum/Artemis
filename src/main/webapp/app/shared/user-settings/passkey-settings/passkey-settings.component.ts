@@ -10,10 +10,10 @@ import { User } from 'app/core/user/user.model';
 import { Subject, Subscription, tap } from 'rxjs';
 import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
 import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
-import { base64UrlDecode } from 'app/shared/util/utils';
 import { WebAuthnPublicKeyCredentialDescriptor } from 'app/shared/user-settings/passkey-settings/dto/assertion-server-options.dto';
 import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
 import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
+import { decodeBase64url } from 'app/shared/util/utils';
 
 export interface WebAuthn4NgCredentialRequestOptions {
     challenge?: BufferSource;
@@ -92,7 +92,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     }
 
     async addNewPasskey() {
-        // TODO add error handling
+        // TODO add proper error handling
         const options = await this.webauthnApiService.getWebauthnOptions();
         const credentialOptions = this.createCredentialOptions(options);
 
@@ -105,10 +105,20 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        // const userId = '' + this.currentUser!.id!.toString(); // TODO adjust properly
+        const login = this.currentUser?.login;
+        if (!login) {
+            throw new Error('Login is undefined');
+        }
+
+        const username = this.currentUser?.name;
+        if (!username) {
+            throw new Error('Username is undefined');
+        }
+
+        // TODO make sure handle is consistent with the server: handle on server side Base64UrlUtil.encode(userEntity.getUsername().getBytes()
         await this.passkeySettingsApiService.createNewPasskey({
-            userHandle: 'test',
-            username: 'test',
+            userHandle: login,
+            username: username,
             webAuthnCredential: credential,
         });
     }
@@ -124,7 +134,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         // TODO verify values are set properly
         return {
             ...options,
-            challenge: base64UrlDecode(options.challenge, true),
+            challenge: decodeBase64url(options.challenge),
             user: {
                 id: new TextEncoder().encode(userId.toString()),
                 name: username,
@@ -132,7 +142,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
             },
             excludeCredentials: options.excludeCredentials.map((credential) => ({
                 ...credential,
-                id: base64UrlDecode(credential.id, true),
+                id: decodeBase64url(credential.id),
             })),
             authenticatorSelection: {
                 requireResidentKey: true,

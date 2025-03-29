@@ -3,7 +3,6 @@ import { captureException } from '@sentry/angular';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Buffer } from 'buffer';
 
 export function cleanString(str?: string): string {
     if (!str) {
@@ -177,27 +176,95 @@ export function removeSpecialCharacters(input: string): string {
     return input.replace(/[^a-zA-Z0-9]/g, '');
 }
 
+// /**
+//  * Decodes a base64 URL-encoded string.
+//  *
+//  * @param base64Url to decode.
+//  * @param isUrlSafe If true, replaces URL-safe characters with standard base64 characters before decoding.
+//  *                  Base64 URL encoding replaces certain characters to make the encoded string safe for use in URLs ('+' is replaced with '-', '/' is replaced with '_').
+//  * @returns The decoded data as a BufferSource.
+//  */
+// export function base64UrlDecode(base64Url: string, isUrlSafe: boolean = false): BufferSource {
+//     if (isUrlSafe) {
+//         base64Url = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+//     }
+//     const pad = base64Url.length % 4;
+//     if (pad) {
+//         base64Url += new Array(5 - pad).join('=');
+//     }
+//     const binaryString = Buffer.from(base64Url, 'base64').toString('binary');
+//     const len = binaryString.length;
+//     const bytes = new Uint8Array(len);
+//     for (let i = 0; i < len; i++) {
+//         bytes[i] = binaryString.charCodeAt(i);
+//     }
+//     return bytes.buffer;
+// }
+
+// src/app/webauthn/base64url.js
 /**
- * Decodes a base64 URL-encoded string.
+ * Encodes a string to base64 URL-encoded format.
  *
- * @param base64Url to decode.
- * @param isUrlSafe If true, replaces URL-safe characters with standard base64 characters before decoding.
- *                  Base64 URL encoding replaces certain characters to make the encoded string safe for use in URLs ('+' is replaced with '-', '/' is replaced with '_').
- * @returns The decoded data as a BufferSource.
+ * @param input The string to encode.
+ * @returns The base64 URL-encoded string.
  */
-export function base64UrlDecode(base64Url: string, isUrlSafe: boolean = false): BufferSource {
-    if (isUrlSafe) {
-        base64Url = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+// export function base64UrlEncode(input: string): string {
+//     const base64 = Buffer.from(input).toString('base64');
+//     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+// }
+
+const lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const reverseLookup = new Uint8Array(256);
+
+for (let i = 0; i < lookup.length; i++) {
+    reverseLookup[lookup.charCodeAt(i)] = i;
+}
+
+// @ts-ignore // TODO add source (sample project)
+export function decodeBase64url(base64url: any) {
+    const base64urlLength = base64url.length;
+
+    const placeHolderLength = base64url.charAt(base64urlLength - 2) === '=' ? 2 : base64url.charAt(base64urlLength - 1) === '=' ? 1 : 0;
+    const bufferLength = (base64urlLength * 3) / 4 - placeHolderLength;
+
+    const arrayBuffer = new ArrayBuffer(bufferLength);
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    let j = 0;
+    for (let i = 0; i < base64urlLength; i += 4) {
+        const tmp0 = reverseLookup[base64url.charCodeAt(i)];
+        const tmp1 = reverseLookup[base64url.charCodeAt(i + 1)];
+        const tmp2 = reverseLookup[base64url.charCodeAt(i + 2)];
+        const tmp3 = reverseLookup[base64url.charCodeAt(i + 3)];
+
+        uint8Array[j++] = (tmp0 << 2) | (tmp1 >> 4);
+        uint8Array[j++] = ((tmp1 & 15) << 4) | (tmp2 >> 2);
+        uint8Array[j++] = ((tmp2 & 3) << 6) | (tmp3 & 63);
     }
-    const pad = base64Url.length % 4;
-    if (pad) {
-        base64Url += new Array(5 - pad).join('=');
+
+    return arrayBuffer;
+}
+
+// @ts-ignore
+export function encodeBase64url(arrayBuffer: any) {
+    const uint8Array = new Uint8Array(arrayBuffer);
+    const length = uint8Array.length;
+    let base64url = '';
+
+    for (let i = 0; i < length; i += 3) {
+        base64url += lookup[uint8Array[i] >> 2];
+        base64url += lookup[((uint8Array[i] & 3) << 4) | (uint8Array[i + 1] >> 4)];
+        base64url += lookup[((uint8Array[i + 1] & 15) << 2) | (uint8Array[i + 2] >> 6)];
+        base64url += lookup[uint8Array[i + 2] & 63];
     }
-    const binaryString = Buffer.from(base64Url, 'base64').toString('binary');
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+
+    switch (length % 3) {
+        case 1:
+            base64url = base64url.substring(0, base64url.length - 2);
+            break;
+        case 2:
+            base64url = base64url.substring(0, base64url.length - 1);
+            break;
     }
-    return bytes.buffer;
+    return base64url;
 }

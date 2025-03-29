@@ -78,6 +78,7 @@ public class PasskeyCredentials extends AbstractAuditingEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transports")
+    // TODO should be private Set<AuthenticatorTransport> transports;
     private Transports transports;
 
     @Column(name = "backup_eligible", nullable = false)
