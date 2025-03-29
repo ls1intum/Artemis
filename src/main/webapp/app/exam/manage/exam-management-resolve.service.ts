@@ -40,7 +40,7 @@ export class ExamResolve implements Resolve<Exam> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<Exam> {
-        const courseId = route.parent?.parent?.params['courseId'] ?? undefined;
+        const courseId = route.parent?.parent?.params['courseId'];
         const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
@@ -72,7 +72,7 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
      * @param route Contains the information about the route to be resolved
      */
     resolve(route: ActivatedRouteSnapshot): Observable<ExerciseGroup> {
-        const courseId = route.params['courseId'] || undefined;
+        const courseId = route.parent?.parent?.params['courseId'];
         const examId = route.params['examId'] || undefined;
         const exerciseGroupId = route.params['exerciseGroupId'] || undefined;
         if (courseId && examId && exerciseGroupId) {

@@ -6,7 +6,7 @@ import { EntityResponseType, GradingSystemService } from 'app/assessment/manage/
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { catchError, finalize } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -76,19 +76,28 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     faInfo = faInfo;
 
     ngOnInit(): void {
-        this.route.parent?.params.subscribe((params) => {
-            this.isLoading = true;
-            this.courseId = Number(params['courseId']);
-            if (params['examId']) {
-                this.examId = Number(params['examId']);
-                this.isExam = true;
-            }
-            if (this.isExam) {
-                this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
-            } else {
-                this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
-            }
-        });
+        this.route.parent?.parent?.parent?.params
+            .pipe(
+                map((parentParentParams) => Number(parentParentParams['courseId'])),
+                tap((courseId) => {
+                    this.courseId = courseId;
+                    this.isLoading = true;
+                }),
+                switchMap(() => this.route.parent!.params),
+            )
+            .subscribe((parentParams) => {
+                if (parentParams['examId']) {
+                    this.examId = Number(parentParams['examId']);
+                    this.isExam = true;
+                }
+
+                // Now handle the appropriate observable based on whether we're in an exam or course
+                if (this.isExam) {
+                    this.handleFindObservable(this.gradingSystemService.findGradingScaleForExam(this.courseId!, this.examId!));
+                } else {
+                    this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
+                }
+            });
     }
 
     private handleFindObservable(findObservable: Observable<EntityResponseType>) {

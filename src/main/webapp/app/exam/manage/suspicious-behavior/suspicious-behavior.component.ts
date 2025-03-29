@@ -54,7 +54,7 @@ export class SuspiciousBehaviorComponent implements OnInit {
 
     ngOnInit(): void {
         this.examId = Number(this.activatedRoute.snapshot.paramMap.get('examId'));
-        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.activatedRoute.parent?.parent?.snapshot.paramMap.get('courseId'));
         this.examService.getExercisesWithPotentialPlagiarismForExam(this.courseId, this.examId).subscribe((res) => {
             this.exercises = res;
             this.retrievePlagiarismCases();

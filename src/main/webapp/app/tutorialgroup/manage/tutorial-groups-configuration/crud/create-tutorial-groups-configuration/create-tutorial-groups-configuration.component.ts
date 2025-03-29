@@ -38,7 +38,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.paramMap
+        this.activatedRoute.parent?.paramMap
             .pipe(
                 take(1),
                 switchMap((params) => {
