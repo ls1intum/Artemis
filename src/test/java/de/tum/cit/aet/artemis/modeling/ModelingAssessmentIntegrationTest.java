@@ -853,10 +853,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         Result firstResult = ParticipationFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);
+        firstResult.setSubmission(submission);
         firstResult = resultRepository.saveAndFlush(firstResult);
 
         submission.addResult(firstResult);
-        firstResult.setSubmission(submission);
         submission = submissionRepository.saveAndFlush(submission);
 
         // creating complaint by student 1
