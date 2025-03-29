@@ -179,8 +179,6 @@ public class ProgrammingExerciseGradingService {
             // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
             final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
             latestSubmission.setBuildFailed(buildFailed);
-            // Add artifacts to submission
-            latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
