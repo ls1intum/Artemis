@@ -66,10 +66,14 @@ public class ConsistencyCheckTestService {
 
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
+
+        // course1 and exercise1: The exercise gets created by an explicit call to 'programming-exercises/setup', which creates LocalVC repos
         course1 = courseUtil.addEmptyCourse();
         exercise1 = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course1);
 
+        // course2: The exercise gets created via the util, hence, no actual repositories get created
         course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+
         User user = userUtilService.createAndSaveUser("instructor1");
         Set<String> groups = new HashSet<>();
         groups.add(course1.getInstructorGroupName());
@@ -78,11 +82,12 @@ public class ConsistencyCheckTestService {
         userRepository.save(user);
     }
 
-    private void setupNewExercise() throws Exception {
-        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
-    }
-
-    public ProgrammingExercise getExercise1() {
+    /**
+     * Returns the ProgrammingExercise, which the jenkinsMockProvider then uses to inject the mocked jenkins requests
+     *
+     * @return the generated programming exercise
+     */
+    public ProgrammingExercise getNotPersistedExercise() {
         return exercise1;
     }
 
@@ -95,7 +100,8 @@ public class ConsistencyCheckTestService {
     public void testCheckConsistencyOfProgrammingExercise_noErrors() throws Exception {
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
-        setupNewExercise();
+
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
 
         var consistencyErrors = request.getList("/api/exercise/programming-exercises/" + exercise1.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
         assertThat(consistencyErrors).isEmpty();
@@ -126,12 +132,9 @@ public class ConsistencyCheckTestService {
      */
     public void testCheckConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
         mockDelegate.mockCheckIfProjectExistsInVcs(exercise1, true);
-        mockDelegate.mockRepositoryUriIsValid(exercise1.getVcsTemplateRepositoryUri(), exercise1.getProjectKey(), false);
-        mockDelegate.mockRepositoryUriIsValid(exercise1.getVcsTestRepositoryUri(), exercise1.getProjectKey(), false);
-        mockDelegate.mockRepositoryUriIsValid(exercise1.getVcsSolutionRepositoryUri(), exercise1.getProjectKey(), false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(exercise1.getProjectKey(), exercise1.getSolutionBuildPlanId(), true, false);
-        setupNewExercise();
+        exercise1 = request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise1, ProgrammingExercise.class, HttpStatus.CREATED);
 
         submissionRepository.deleteAll(submissionRepository.findAllByParticipationId(exercise1.getTemplateParticipation().getId()));
         submissionRepository.deleteAll(submissionRepository.findAllByParticipationId(exercise1.getSolutionParticipation().getId()));

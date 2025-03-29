@@ -26,7 +26,7 @@ class ConsistencyCheckLocalVcJenkinsIntegrationTest extends AbstractProgrammingI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
-        mockConnectorRequestsForSetup(consistencyCheckTestService.getExercise1(), false, false, false);
+        mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_noErrors();
     }
 
@@ -39,7 +39,7 @@ class ConsistencyCheckLocalVcJenkinsIntegrationTest extends AbstractProgrammingI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
-        mockConnectorRequestsForSetup(consistencyCheckTestService.getExercise1(), false, false, false);
+        mockConnectorRequestsForSetup(consistencyCheckTestService.getNotPersistedExercise(), false, false, false);
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_missingVCSRepos();
     }
 
