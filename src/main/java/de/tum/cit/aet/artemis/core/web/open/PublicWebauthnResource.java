@@ -131,26 +131,26 @@ public class PublicWebauthnResource {
     }
 
     /**
-     * {@code POST /authenticate} : authenticate as a user with a passkey.
+     * {@code Get /authenticate} : authenticate as a user with a passkey.
      *
-     * @return ResponseEntity with status 201 (Created) if successfully authenticated.
      */
+    // @PostMapping("authenticate")
+    // @EnforceNothing
+    // public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody AuthenticateDTO authenticateDTO, BindingResult result) throws URISyntaxException {
+    // TODO endpoint does not work yet
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authenticate(HttpServletRequest request, @Valid @RequestBody AuthenticateDTO authenticateDTO, BindingResult result) throws URISyntaxException {
-        // TODO how to validate the authenticateDTO ?
-        try {
-            WebAuthnAuthenticationToken authenticationToken = getWebAuthnAuthenticationToken(authenticateDTO);
-
-            Authentication authResult = authenticationManager.authenticate(authenticationToken);
-            SecurityContextHolder.getContext().setAuthentication(authResult);
-            log.info("User is authenticated");
-
+    public ResponseEntity<Void> authenticate() throws URISyntaxException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.isAuthenticated()) {
+            throw new BadRequestAlertException("Authentication with passkey was not successful, not authenticated", ENTITY_NAME, null);
         }
-        catch (WebAuthnAuthenticationException e) {
-            log.error("Authentication failed", e);
-            throw new BadRequestAlertException("Authentication failed. Please try again.", ENTITY_NAME, null);
-        }
+        //
+        // WebAuthnAuthenticationToken authenticationToken = getWebAuthnAuthenticationToken(authenticateDTO);
+        //
+        // Authentication authResult = authenticationManager.authenticate(authenticationToken);
+        // SecurityContextHolder.getContext().setAuthentication(authResult);
+        // log.info("User is authenticated");
 
         return ResponseEntity.ok().build();
     }

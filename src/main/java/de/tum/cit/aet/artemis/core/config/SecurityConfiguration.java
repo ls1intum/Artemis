@@ -56,15 +56,15 @@ import com.webauthn4j.springframework.security.challenge.HttpSessionChallengeRep
 import com.webauthn4j.springframework.security.config.configurers.WebAuthnLoginConfigurer;
 import com.webauthn4j.springframework.security.converter.jackson.WebAuthn4JSpringSecurityJSONModule;
 import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordService;
-import com.webauthn4j.springframework.security.options.AssertionOptionsProvider;
-import com.webauthn4j.springframework.security.options.AssertionOptionsProviderImpl;
 import com.webauthn4j.springframework.security.options.AttestationOptionsProvider;
 import com.webauthn4j.springframework.security.options.AttestationOptionsProviderImpl;
+import com.webauthn4j.springframework.security.options.PublicKeyCredentialUserEntityProvider;
 import com.webauthn4j.springframework.security.options.RpIdProvider;
 import com.webauthn4j.springframework.security.options.RpIdProviderImpl;
 import com.webauthn4j.springframework.security.server.ServerPropertyProvider;
 import com.webauthn4j.springframework.security.server.ServerPropertyProviderImpl;
 
+import de.tum.cit.aet.artemis.core.domain.PublicKeyCredentialUserEntityProviderImpl;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
@@ -344,22 +344,8 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public ObjectConverter objectConverter() {
-        var jsonMapper = new ObjectMapper();
-        jsonMapper.registerModule(new WebAuthnMetadataJSONModule());
-        jsonMapper.registerModule(new WebAuthn4JSpringSecurityJSONModule());
-        var cborMapper = new ObjectMapper(new CBORFactory());
-        return new ObjectConverter(jsonMapper, cborMapper);
-    }
-
-    @Bean
-    public WebAuthnManager webAuthnManager(ObjectConverter objectConverter) {
-        return WebAuthnManager.createNonStrictWebAuthnManager(objectConverter);
-    }
-
-    @Bean
-    public WebAuthnSecurityExpression webAuthnSecurityExpression() {
-        return new WebAuthnSecurityExpression();
+    public PublicKeyCredentialUserEntityProvider webAuthnUserEntityProvider(DomainUserDetailsService userManager) {
+        return new PublicKeyCredentialUserEntityProviderImpl(userManager);
     }
 
     @Bean
@@ -368,15 +354,11 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    public AttestationOptionsProvider attestationOptionsProvider(RpIdProvider rpIdProvider, WebAuthnCredentialRecordService webAuthnAuthenticatorService,
-            ChallengeRepository challengeRepository) {
-        return new AttestationOptionsProviderImpl(rpIdProvider, webAuthnAuthenticatorService, challengeRepository);
-    }
-
-    @Bean
-    public AssertionOptionsProvider assertionOptionsProvider(RpIdProvider rpIdProvider, WebAuthnCredentialRecordService webAuthnAuthenticatorService,
-            ChallengeRepository challengeRepository) {
-        return new AssertionOptionsProviderImpl(rpIdProvider, webAuthnAuthenticatorService, challengeRepository);
+    public AttestationOptionsProvider attestationOptionsProvider(RpIdProvider rpIdProvider, WebAuthnCredentialRecordService webAuthnCredentialRecordService,
+            ChallengeRepository challengeRepository, PublicKeyCredentialUserEntityProvider publicKeyCredentialUserEntityProvider) {
+        AttestationOptionsProviderImpl optionsProviderImpl = new AttestationOptionsProviderImpl(rpIdProvider, webAuthnCredentialRecordService, challengeRepository);
+        optionsProviderImpl.setPublicKeyCredentialUserEntityProvider(publicKeyCredentialUserEntityProvider);
+        return optionsProviderImpl;
     }
 
     @Bean
@@ -387,6 +369,28 @@ public class SecurityConfiguration {
     @Bean
     public ServerPropertyProvider serverPropertyProvider(RpIdProvider rpIdProvider, ChallengeRepository challengeRepository) {
         return new ServerPropertyProviderImpl(rpIdProvider, challengeRepository);
+    }
+
+    @Bean
+    public WebAuthnManager webAuthnManager(ObjectConverter objectConverter) {
+
+        WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager(objectConverter);
+        webAuthnManager.getAuthenticationDataVerifier().setCrossOriginAllowed(true);
+        return webAuthnManager;
+    }
+
+    @Bean
+    public WebAuthnSecurityExpression webAuthnSecurityExpression() {
+        return new WebAuthnSecurityExpression();
+    }
+
+    @Bean
+    public ObjectConverter objectConverter() {
+        ObjectMapper jsonMapper = new ObjectMapper();
+        jsonMapper.registerModule(new WebAuthnMetadataJSONModule());
+        jsonMapper.registerModule(new WebAuthn4JSpringSecurityJSONModule());
+        ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
+        return new ObjectConverter(jsonMapper, cborMapper);
     }
 
     @Bean
