@@ -1,6 +1,6 @@
 import { Component, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
-import { CompetencyRelationDTO, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 

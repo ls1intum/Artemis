@@ -4,7 +4,7 @@ import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-imp
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs.component';

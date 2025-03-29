@@ -8,9 +8,9 @@ import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scor
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
 

@@ -1,15 +1,15 @@
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TestBed } from '@angular/core/testing';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 const generateExerciseCategory = (type: ExerciseType, index: number) => {
     return { category: type + index.toString(), color: '#9f34eb' };

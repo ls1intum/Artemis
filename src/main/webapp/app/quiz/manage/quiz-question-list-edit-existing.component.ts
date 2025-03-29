@@ -5,21 +5,21 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/quiz-manage-util.service';
-import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
+import { FileService } from 'app/shared/service/file.service';
 
 export enum State {
     COURSE = 'Course',

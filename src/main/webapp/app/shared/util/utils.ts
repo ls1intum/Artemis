@@ -1,8 +1,8 @@
 import { omit, sum } from 'lodash-es';
 import { captureException } from '@sentry/angular';
-import { Result } from 'app/entities/result.model';
-import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Buffer } from 'buffer';
 
 export function cleanString(str?: string): string {

@@ -3,13 +3,13 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { mockSettings } from './mock-settings';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled.component';
 import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 

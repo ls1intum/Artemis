@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { input, runInInjectionContext } from '@angular/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs';
-import { Post } from 'app/entities/metis/post.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

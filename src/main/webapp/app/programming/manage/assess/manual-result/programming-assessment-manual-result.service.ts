@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

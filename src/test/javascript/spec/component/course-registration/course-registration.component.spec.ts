@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
