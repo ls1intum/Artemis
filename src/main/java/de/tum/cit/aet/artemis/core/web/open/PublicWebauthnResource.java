@@ -101,14 +101,20 @@ public class PublicWebauthnResource {
 
         WebAuthnRegistrationRequestValidationResponse registrationRequestValidationResponse;
         try {
-            // TODO check data from the demo and diff to what we sent from the client right now
-            registrationRequestValidationResponse = registrationRequestValidator.validate(request, createPasskeyDTO.webAuthnCredential().response().clientDataJSON(),
-                    createPasskeyDTO.webAuthnCredential().response().attestationObject(), createPasskeyDTO.webAuthnCredential().response().transports(),
-                    clientExtensionResultsJson);
+            // @formatter:off
+            registrationRequestValidationResponse = registrationRequestValidator.validate(
+                request,
+                createPasskeyDTO.webAuthnCredential().response().clientDataJSON(),
+                createPasskeyDTO.webAuthnCredential().response().attestationObject(),
+                createPasskeyDTO.webAuthnCredential().response().transports(),
+                clientExtensionResultsJson
+            );
+            // @formatter:on
         }
-        catch (WebAuthnException | WebAuthnAuthenticationException ignored) {
+        catch (WebAuthnException | WebAuthnAuthenticationException exception) {
             throw new BadRequestAlertException("WebAuthn registration request validation failed. Please try again.", ENTITY_NAME, "TODO");
         }
+        // valid registrationRequestValidationResponse, we could still reject (e.g. only allow credentials via USB)
 
         WebAuthnCredentialRecord authenticator = getWebAuthnCredentialRecord(registrationRequestValidationResponse);
 
