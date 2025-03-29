@@ -393,10 +393,10 @@ public class SubmissionService {
      */
     public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
-        result = resultRepository.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
         submissionRepository.save(submission);
+        result = resultRepository.save(result);
         return result;
     }
 
