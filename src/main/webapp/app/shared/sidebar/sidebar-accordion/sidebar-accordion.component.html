@@ -24,19 +24,28 @@
             </div>
             @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <hr class="my-0" />
-                <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
-                    @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
-                        <div [ngClass]="{ 'mb-2': !last }">
-                            <!-- loading sidebarCard with help of a directive depending on its size input-->
-                            <div
-                                jhiSidebarCard
-                                [size]="sidebarItem.size"
-                                [itemSelected]="itemSelected"
-                                [sidebarType]="sidebarType"
-                                [sidebarItem]="sidebarItem"
-                                [groupKey]="groupKey"
-                                (onUpdateSidebar)="onUpdateSidebar.emit()"
-                            ></div>
+                <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-module">
+                    @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.weekRange) {
+                        @if (weekGroup.weekRange && weekGroup.weekRange !== 'No Date' && groupKey !== 'noDate') {
+                            <div class="text-muted small p-2">
+                                {{ weekGroup.weekRange }}
+                            </div>
+                        }
+                        <div class="bg-body p-2">
+                            @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
+                                <div [ngClass]="{ 'mb-2': !last }">
+                                    <!-- loading sidebarCard with help of a directive depending on its size input-->
+                                    <div
+                                        jhiSidebarCard
+                                        [size]="sidebarItem.size"
+                                        [itemSelected]="itemSelected"
+                                        [sidebarType]="sidebarType"
+                                        [sidebarItem]="sidebarItem"
+                                        [groupKey]="groupKey"
+                                        (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                    ></div>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
