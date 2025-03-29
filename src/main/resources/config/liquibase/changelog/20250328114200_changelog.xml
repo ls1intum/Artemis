@@ -7,7 +7,7 @@
         <!-- Connection to quiz group -->
         <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKkYIc8NStrPM5ULjNkq417ssEc"/>
         <!-- Connection to quiz pool -->
-        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKFIH1SII1GTGLX7WFMOVRR8AAB"/>
+        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKfIH1sii1GTGlX7wfMoVrr8AAb"/>
         <dropColumn tableName="quiz_question" columnName="quiz_group_id"/>
         <dropColumn tableName="quiz_question" columnName="quiz_pool_id"/>
         <dropTable tableName="quiz_pool"/>
