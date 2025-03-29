@@ -75,21 +75,23 @@ export class TestRunManagementComponent implements OnInit {
     faTimes = faTimes;
 
     ngOnInit(): void {
-        this.examManagementService.find(Number(this.route.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), false, true).subscribe({
-            next: (response: HttpResponse<Exam>) => {
-                this.exam.set(response.body!);
-                this.course.set(this.exam()!.course!);
-                const course = this.course()!;
-                course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
-                this.examManagementService.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({
-                    next: (res: HttpResponse<StudentExam[]>) => {
-                        this.testRuns.set(res.body!);
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        this.examManagementService
+            .find(Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId')), Number(this.route.snapshot.paramMap.get('examId')), false, true)
+            .subscribe({
+                next: (response: HttpResponse<Exam>) => {
+                    this.exam.set(response.body!);
+                    this.course.set(this.exam()!.course!);
+                    const course = this.course()!;
+                    course.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+                    this.examManagementService.findAllTestRunsForExam(course.id!, this.exam()!.id!).subscribe({
+                        next: (res: HttpResponse<StudentExam[]>) => {
+                            this.testRuns.set(res.body!);
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         this.accountService.identity().then((user) => {
             if (user) {
                 this.instructor.set(user);

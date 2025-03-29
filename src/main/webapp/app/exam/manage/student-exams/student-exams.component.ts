@@ -100,7 +100,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.isLoading = true;
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.loadAll();
 
