@@ -37,7 +37,7 @@ export class ExerciseGroupUpdateComponent implements OnInit {
      * Initialize the courseId and exerciseGroup
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.route.data.subscribe(({ exam, exerciseGroup }) => {
             this.exam = exam;
             this.exerciseGroup = exerciseGroup;
