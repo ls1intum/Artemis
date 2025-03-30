@@ -86,4 +86,12 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
             """)
     @Cacheable(cacheNames = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE, key = "'user_course_notification_count_' + #userId + '_' + #courseId")
     Long countUnseenCourseNotificationsForUserInCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Find all course notification status by user id.
+     *
+     * @param userId id to query for
+     * @return list of course notification status for the user
+     */
+    List<UserCourseNotificationStatus> findAllByUserId(long userId);
 }
