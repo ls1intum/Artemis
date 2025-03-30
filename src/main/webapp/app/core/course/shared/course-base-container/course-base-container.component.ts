@@ -106,7 +106,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             this.isSidebarCollapsed.set(false);
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.isProduction.set(profileInfo?.inProduction);
                 this.isTestServer.set(profileInfo.testServer ?? false);
@@ -147,10 +147,15 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     // Abstract methods to be implemented by child classes
     abstract handleCourseIdChange(courseId: number): void;
+
     protected abstract getSidebarItems(): SidebarItem[];
+
     protected abstract getHasSidebar(): boolean;
+
     protected abstract handleComponentActivation(componentRef: any): void;
+
     abstract handleToggleSidebar(): void;
+
     abstract loadCourse(refresh?: boolean): Observable<void>;
 
     ngAfterViewInit() {

@@ -329,9 +329,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                     content: 'Deleted an course',
                 });
                 this.dialogErrorSource.next('');
+                this.router.navigate(['/course-management']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
-        this.router.navigate(['/course-management']);
     }
 }

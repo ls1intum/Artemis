@@ -28,7 +28,7 @@ describe('CourseSidebarComponent', () => {
         title: 'Course1',
         description: 'Description of course 1',
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
-        courseIcon: 'path/to/icon.png',
+        courseIconPath: 'path/to/icon.png',
         studentCourseAnalyticsDashboardEnabled: true,
     };
 

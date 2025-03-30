@@ -9,21 +9,7 @@ import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/mat
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-import {
-    faChartBar,
-    faChartColumn,
-    faChevronLeft,
-    faChevronRight,
-    faCircleNotch,
-    faDoorOpen,
-    faEllipsis,
-    faEye,
-    faListAlt,
-    faSync,
-    faTable,
-    faTimes,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -41,7 +27,6 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { facSidebar } from 'app/shared/icons/icons';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
@@ -108,9 +93,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    facSidebar = facSidebar;
-    faEllipsis = faEllipsis;
-    faChartColumn = faChartColumn;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -136,7 +118,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
     }
 
-    protected handleCourseIdChange(courseId: number): void {
+    handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
     }
 
@@ -207,7 +189,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.getShowRefreshButton();
     }
 
-    protected handleToggleSidebar(): void {
+    handleToggleSidebar(): void {
         if (!this.activatedComponentReference()) {
             return;
         }
