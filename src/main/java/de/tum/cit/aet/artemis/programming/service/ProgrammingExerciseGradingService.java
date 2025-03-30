@@ -338,12 +338,8 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Finally, save the new result once and make sure the order column between submission and result is maintained
-
-        // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.cit.aet.artemis.domain.Submission.results
-        processedResult.setSubmission(null);
-
-        processedResult = resultRepository.save(processedResult);
         processedResult.setSubmission(programmingSubmission);
+        processedResult = resultRepository.save(processedResult);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 

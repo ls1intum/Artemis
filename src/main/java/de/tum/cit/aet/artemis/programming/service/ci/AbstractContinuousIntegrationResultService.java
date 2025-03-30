@@ -47,7 +47,7 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.buildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
 
-        addFeedbackToResult(result, buildResult);
+        addFeedbackToResult(result, buildResult, exercise);
         return result;
     }
 
@@ -57,9 +57,9 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
      * @param result      the result for which the feedback should be added
      * @param buildResult The build result
      */
-    private void addFeedbackToResult(Result result, BuildResultNotification buildResult) {
+    // TODO Michal Kawka update doc
+    private void addFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {
         final var jobs = buildResult.jobs();
-        final var programmingExercise = (ProgrammingExercise) result.getSubmission().getParticipation().getExercise();
 
         // 1) add feedback for failed and passed test cases
         addTestCaseFeedbacksToResult(result, jobs, programmingExercise);
