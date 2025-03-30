@@ -29,10 +29,10 @@
             <column name="aaguid" type="binary(16)">
                 <constraints nullable="true"/>
             </column>
-            <column name="credential_id" type="binary">
+            <column name="credential_id" type="LONGBLOB">
                 <constraints nullable="true"/>
             </column>
-            <column name="cose_key" type="binary">
+            <column name="cose_key" type="LONGBLOB">
                 <constraints nullable="true"/>
             </column>
             <column name="attestation_statement" type="LONGBLOB"/>
