@@ -59,10 +59,13 @@ export class ResetRepoButtonComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.exercise.loading = false;
-                    this.alertService.success('artemisApp.exerciseActions.resetRepository.success');
-                    window.scrollTo(0, 0);
                 }),
             )
-            .subscribe();
+            .subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.exerciseActions.resetRepository.success');
+                    window.scrollTo(0, 0);
+                },
+            });
     }
 }
