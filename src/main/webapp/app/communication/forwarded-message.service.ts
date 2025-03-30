@@ -19,7 +19,7 @@ export class ForwardedMessageService {
      * @returns An observable containing the HTTP response with the created forwarded message.
      */
     createForwardedMessage(forwardedMessage: ForwardedMessage): Observable<EntityResponseType> {
-        const dto: ForwardedMessageDTO = forwardedMessage.toDTO();
+        const dto = forwardedMessage.toDTO();
 
         return this.http.post<ForwardedMessageDTO>(`${this.resourceUrl}`, dto, { observe: 'response' }).pipe(
             catchError(() => {

@@ -20,8 +20,8 @@ import { addPublicFilePrefix } from 'app/app.constants';
     imports: [FaIconComponent, TranslateDirective, NgClass, ProfilePictureComponent, NgbTooltip, PostingContentComponent, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class PostingSummaryComponent {
-    readonly post = input<Posting>();
-    readonly isShowSavedPostOptions = input<boolean>(false);
+    post = input<Posting>();
+    isShowSavedPostOptions = input<boolean>(false);
 
     readonly onChangeSavedPostStatus = output<SavedPostStatus>();
     readonly onNavigateToPost = output<Posting>();

@@ -68,16 +68,17 @@ public class SavedPostResource {
     }
 
     /**
-     * GET /saved-posts/{courseId} : Get saved posts of the course for the logged in user with specific status
+     * GET /saved-posts : Get saved posts of the course for the logged in user with specific status
      *
-     * @param courseId        id of course to filter posts
-     * @param savedPostStatus saved post status (progress, completed, archived)
+     * @param courseId id of course to filter posts
+     * @param status   saved post status (progress, completed, archived)
      * @return ResponseEntity with status 200 (Success) if course id and status are ok,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @GetMapping("saved-posts/{courseId}")
+    @GetMapping("saved-posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PostingDTO>> getSavedPosts(@PathVariable Long courseId, @RequestParam(name = "status") SavedPostStatus savedPostStatus) {
+    public ResponseEntity<List<PostingDTO>> getSavedPosts(@RequestParam Long courseId, @RequestParam(name = "status") String status) {
+        SavedPostStatus savedPostStatus = SavedPostStatus.fromString(status);
         log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, savedPostStatus);
         long start = System.nanoTime();
 
@@ -108,14 +109,15 @@ public class SavedPostResource {
     /**
      * POST /saved-posts/{postId} : Create a new saved post
      *
-     * @param postId      post to save
-     * @param postingType post type (post, answer)
+     * @param postId post to save
+     * @param type   post type (post, answer)
      * @return ResponseEntity with status 201 (Created) if successfully saved post,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
     @PostMapping("saved-posts/{postId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> savePost(@PathVariable Long postId, @RequestParam(name = "type") PostingType postingType) {
+    public ResponseEntity<Void> savePost(@PathVariable Long postId, @RequestParam(name = "type") String type) {
+        PostingType postingType = PostingType.fromString(type);
         log.debug("POST savePost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -142,14 +144,15 @@ public class SavedPostResource {
     /**
      * DELETE /saved-posts/{postId} : Remove a saved post
      *
-     * @param postId      post to save
-     * @param postingType post type (post, answer)
+     * @param postId post to save
+     * @param type   post type (post, answer)
      * @return ResponseEntity with status 204 (No content) if successfully deleted post,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
     @DeleteMapping("saved-posts/{postId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @RequestParam(name = "type") PostingType postingType) {
+    public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @RequestParam(name = "type") String type) {
+        PostingType postingType = PostingType.fromString(type);
         log.debug("DELETE deletePost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -168,16 +171,17 @@ public class SavedPostResource {
     /**
      * PUT /saved-posts/{postId}/{type} : Update the status of a saved post
      *
-     * @param postId          post to save
-     * @param postingType     post type (post, answer)
-     * @param savedPostStatus saved post status (progress, answer)
+     * @param postId post to save
+     * @param type   post type (post, answer)
+     * @param status saved post status (progress, answer)
      * @return ResponseEntity with status 200 (Success) if successfully updated saved post status,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
     @PutMapping("saved-posts/{postId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @RequestParam(name = "type") PostingType postingType,
-            @RequestParam(name = "status") SavedPostStatus savedPostStatus) {
+    public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @RequestParam(name = "type") String type, @RequestParam(name = "status") String status) {
+        PostingType postingType = PostingType.fromString(type);
+        SavedPostStatus savedPostStatus = SavedPostStatus.fromString(status);
         log.debug("DELETE putSavedPost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -200,6 +204,7 @@ public class SavedPostResource {
             }
         }
         catch (EntityNotFoundException e) {
+            log.error("Could not find post with id {} and type {}", postId, postingType, e);
             throw new BadRequestAlertException("The provided post could not be found.", ENTITY_NAME, "savedPostIdDoesNotExist");
         }
 

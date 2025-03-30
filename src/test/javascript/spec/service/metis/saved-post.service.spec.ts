@@ -80,9 +80,9 @@ describe('SavedPostService', () => {
             const post = new Post();
             post.id = 1;
 
-            service.changeSavedPostStatus(post, SavedPostStatus.PROGRESS).subscribe();
+            service.changeSavedPostStatus(post, SavedPostStatus.IN_PROGRESS).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}?status=${SavedPostStatus.PROGRESS}`);
+            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}?status=${SavedPostStatus.IN_PROGRESS}`);
             expect(req.request.method).toBe('PUT');
         });
 
@@ -100,7 +100,7 @@ describe('SavedPostService', () => {
     describe('Fetch saved posts', () => {
         it('should fetch saved posts and convert dates accordingly', fakeAsync(() => {
             const courseId = 1;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             const mockPosts = [
                 {
                     id: 1,
@@ -116,7 +116,7 @@ describe('SavedPostService', () => {
                 expect(response.body?.[0].updatedDate).toBeInstanceOf(Dayjs);
             });
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${SavedPostStatus.PROGRESS}`);
+            const req = httpMock.expectOne(`${resourceUrl}1/${SavedPostStatus.IN_PROGRESS}`);
             expect(req.request.method).toBe('GET');
             req.flush(mockPosts, { status: 200, statusText: 'OK' });
             tick();

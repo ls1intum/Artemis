@@ -1,6 +1,8 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { PROFILE_IRIS } from 'app/app.constants';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisCourseSettings, IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { Subscription, catchError, of } from 'rxjs';
 import { Course } from 'app/core/shared/entities/course.model';
@@ -24,6 +26,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     course = input<Course>();
     extraClass = input<any>();
 
+    profileService = inject(ProfileService);
     metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
     irisSettingsService = inject(IrisSettingsService);
@@ -39,7 +42,12 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     TEXT = IrisLogoSize.TEXT;
 
-    ngOnInit(): void {
+    ngOnInit() {
+        const isIrisActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled.set(isIrisActive);
+        if (!isIrisActive) {
+            return;
+        }
         this.conversationServiceSubscription = this.metisConversationService.activeConversation$.subscribe((conversation) => {
             this.checkIrisSettings(getAsChannelDTO(conversation));
         });

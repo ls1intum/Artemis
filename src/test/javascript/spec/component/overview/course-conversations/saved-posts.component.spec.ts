@@ -45,7 +45,7 @@ describe('SavedPostsComponent', () => {
     describe('Initialization', () => {
         it('should fetch saved posts successfully', fakeAsync(() => {
             const courseId = 123;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             savedPostService.fetchSavedPosts.mockReturnValue(of(new HttpResponse({ body: mockPostings })));
 
             fixture.componentRef.setInput('courseId', courseId);
@@ -59,7 +59,7 @@ describe('SavedPostsComponent', () => {
 
         it('should handle empty response', fakeAsync(() => {
             const courseId = 123;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             savedPostService.fetchSavedPosts.mockReturnValue(of(new HttpResponse({ body: [] })));
 
             fixture.componentRef.setInput('courseId', courseId);
@@ -71,7 +71,7 @@ describe('SavedPostsComponent', () => {
 
         it('should handle error response', fakeAsync(() => {
             const courseId = 123;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             savedPostService.fetchSavedPosts.mockReturnValue(throwError(() => new Error('Test error')));
 
             fixture.componentRef.setInput('courseId', courseId);
@@ -106,7 +106,7 @@ describe('SavedPostsComponent', () => {
 
     describe('Template interaction', () => {
         beforeEach(async () => {
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             fixture.componentRef.setInput('savedPostStatus', status);
             savedPostService.fetchSavedPosts.mockReturnValue(EMPTY);
         });

@@ -645,13 +645,13 @@ export class MetisService implements OnDestroy {
             const indexOfAnswer = this.cachedPosts[indexToUpdate].answers?.findIndex((answer) => answer.id === post.id) ?? -1;
             const postCopy = cloneDeep(this.cachedPosts[indexToUpdate].answers![indexOfAnswer]);
             postCopy.isSaved = isSaved;
-            postCopy.savedPostStatus = status?.valueOf();
+            postCopy.savedPostStatus = status;
             this.cachedPosts[indexToUpdate].answers![indexOfAnswer] = postCopy;
         } else {
             const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
             const postCopy = cloneDeep(this.cachedPosts[indexToUpdate]);
             postCopy.isSaved = isSaved;
-            postCopy.savedPostStatus = status?.valueOf();
+            postCopy.savedPostStatus = status;
             this.cachedPosts[indexToUpdate] = postCopy;
         }
     }

@@ -25,7 +25,7 @@ import { Course, isMessagingEnabled } from 'app/core/shared/entities/course.mode
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
+import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations/course-wide-search/course-wide-search.component';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
@@ -169,7 +169,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isMobile = false;
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
-    selectedSavedPostStatus: null | SavedPostStatus = null;
+    selectedSavedPostStatus: undefined | SavedPostStatus = undefined;
     showOnlyPinned = false;
     pinnedCount: number = 0;
 
@@ -314,14 +314,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+            // NOTE: queryParams.conversationId can either be a number or a string according to SavedPostStatus
             if (queryParams.conversationId) {
                 if (
                     isNaN(Number(queryParams.conversationId)) &&
-                    Object.values(SavedPostStatusMap)
-                        .map((s) => s.toString())
+                    Object.values(SavedPostStatus)
+                        .map((status) => status.toString())
                         .includes(queryParams.conversationId)
                 ) {
-                    this.selectedSavedPostStatus = Posting.mapToStatus(queryParams.conversationId as SavedPostStatusMap);
+                    this.selectedSavedPostStatus = toSavedPostStatus(queryParams.conversationId);
                 } else {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
                     this.closeSidebarOnMobile();
@@ -358,7 +359,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams: {
-                conversationId: this.activeConversation?.id ?? (this.selectedSavedPostStatus !== null ? Posting.statusToMap(this.selectedSavedPostStatus) : undefined),
+                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus,
             },
             replaceUrl: true,
         });
@@ -437,7 +438,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.courseSidebarService.openSidebar();
             }
         }
-        this.selectedSavedPostStatus = null;
+        this.selectedSavedPostStatus = undefined;
         this.metisConversationService.setActiveConversation(undefined);
         this.activeConversation = undefined;
         this.updateQueryParameters();
@@ -469,17 +470,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         };
     }
 
+    // NOTE: conversationId can either be a number or a string according to SavedPostStatus (for saved post status)
     onConversationSelected(conversationId: number | string) {
         this.closeSidebarOnMobile();
         this.focusPostId = undefined;
         this.openThreadOnFocus = false;
         if (typeof conversationId === 'string') {
             if (
-                Object.values(SavedPostStatusMap)
-                    .map((s) => s.toString())
+                Object.values(SavedPostStatus)
+                    .map((status) => status.toString())
                     .includes(conversationId)
             ) {
-                this.selectedSavedPostStatus = Posting.mapToStatus(conversationId as SavedPostStatusMap);
+                this.selectedSavedPostStatus = conversationId as SavedPostStatus;
                 this.postInThread = undefined;
                 this.metisConversationService.setActiveConversation(undefined);
                 this.activeConversation = undefined;
@@ -489,7 +491,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
         } else {
             conversationId = +conversationId;
-            this.selectedSavedPostStatus = null;
+            this.selectedSavedPostStatus = undefined;
             this.metisConversationService.setActiveConversation(conversationId);
         }
     }
@@ -575,7 +577,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openChannelOverviewDialog() {
-        const subType = null;
+        const subType = undefined;
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;

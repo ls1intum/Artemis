@@ -83,6 +83,7 @@ public class ForwardedMessageResource {
             case POST -> postRepository.userHasAccessToAllPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
             case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
         }
+
         if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
         }
@@ -105,11 +106,12 @@ public class ForwardedMessageResource {
      */
     @GetMapping("forwarded-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> postingIds, @RequestParam PostingType type) {
+    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> postingIds, @RequestParam String type) {
+        PostingType postingType = PostingType.fromString(type);
         log.debug("GET getForwardedMessages invoked with postingIds {} and type {}", postingIds, type);
         long start = System.nanoTime();
 
-        if (type != PostingType.POST && type != PostingType.ANSWER) {
+        if (postingType != PostingType.POST && postingType != PostingType.ANSWER) {
             throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
         }
 
@@ -121,26 +123,22 @@ public class ForwardedMessageResource {
 
         // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
         // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
-        switch (type) {
+        switch (postingType) {
             case POST -> postRepository.userHasAccessToAllPostsElseThrow(postingIds, user.getId());
             case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(postingIds, user.getId());
         }
 
-        Set<ForwardedMessage> forwardedMessages;
-        if (type == PostingType.POST) {
-            forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(postingIds);
-        }
-        else { // type == PostingType.ANSWER
-            forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(postingIds);
-        }
+        Set<ForwardedMessage> forwardedMessages = switch (postingType) {
+            case POST -> forwardedMessageRepository.findAllByDestinationPostIds(postingIds);
+            case ANSWER -> forwardedMessageRepository.findAllByDestinationAnswerPostIds(postingIds);
+        };
 
         List<ForwardedMessagesGroupDTO> result = forwardedMessages.stream()
-                .collect(Collectors.groupingBy(fm -> type == PostingType.POST ? fm.getDestinationPost().getId() : fm.getDestinationAnswerPost().getId(),
+                .collect(Collectors.groupingBy(fm -> postingType == PostingType.POST ? fm.getDestinationPost().getId() : fm.getDestinationAnswerPost().getId(),
                         Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())))
                 .entrySet().stream().map(entry -> new ForwardedMessagesGroupDTO(entry.getKey(), entry.getValue())).toList();
 
         log.info("getForwardedMessages took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(result);
     }
-
 }

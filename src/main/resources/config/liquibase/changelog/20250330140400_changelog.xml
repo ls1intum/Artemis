@@ -83,13 +83,16 @@
         </preConditions>
         <renameColumn tableName="saved_post"
                       oldColumnName="post_type_tmp"
-                      newColumnName="post_type"/>
+                      newColumnName="post_type"
+                      columnDataType="post_type_enum"/>
         <renameColumn tableName="saved_post"
                       oldColumnName="status_tmp"
-                      newColumnName="status"/>
+                      newColumnName="status"
+                      columnDataType="saved_post_status_enum"/>
         <renameColumn tableName="forwarded_message"
                       oldColumnName="source_type_tmp"
-                      newColumnName="source_type"/>
+                      newColumnName="source_type"
+                      columnDataType="post_type_enum"/>
     </changeSet>
 
     <!-- Step 5b: MySQL column rename (must specify type) -->
