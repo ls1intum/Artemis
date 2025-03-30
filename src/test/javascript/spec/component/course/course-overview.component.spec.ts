@@ -1,5 +1,4 @@
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { EMPTY, Observable, of, Subject, throwError } from 'rxjs';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -8,9 +7,6 @@ import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/e
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -19,7 +15,6 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { AlertService } from 'app/core/util/alert.service';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -28,12 +23,10 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { generateExampleTutorialGroupsConfiguration } from '../tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
-import { CourseAccessStorageService } from 'app/core/course/course-access-storage.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -41,8 +34,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -59,7 +50,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
+import { CourseOverviewComponent } from 'app/core/course/overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
@@ -225,7 +216,8 @@ describe('CourseOverviewComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
                 component = fixture.componentInstance;
-                component.isShownViaLti = false;
+
+                component.isShownViaLti.set(false);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
@@ -296,7 +288,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
-        component.course = { id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true };
+        component.course.set({ id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Dashboard');
@@ -305,7 +297,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items with default items', () => {
-        component.course = { id: 123, lectures: [], exams: [] };
+        component.course.set({ id: 123, lectures: [], exams: [] });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
@@ -358,7 +350,7 @@ describe('CourseOverviewComponent', () => {
         const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService');
 
-        component.course = { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED };
+        component.course.set({ courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED });
 
         const tabs = ['exercises', 'communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
@@ -518,9 +510,9 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasCompetencies()).toBeTrue();
         expect(component.hasTutorialGroups()).toBeTrue();
-        expect(component.course?.competencies).not.toBeEmpty();
-        expect(component.course?.prerequisites).not.toBeEmpty();
-        expect(component.course?.tutorialGroups).not.toBeEmpty();
+        expect(component.course()?.competencies).not.toBeEmpty();
+        expect(component.course()?.prerequisites).not.toBeEmpty();
+        expect(component.course()?.tutorialGroups).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
@@ -581,11 +573,11 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should toggle sidebar based on isNavbarCollapsed', () => {
-        component.isNavbarCollapsed = true;
+        component.isNavbarCollapsed.set(true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.container-closed')).not.toBeNull();
 
-        component.isNavbarCollapsed = false;
+        component.isNavbarCollapsed.set(false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.container-closed')).toBeNull();
     });
@@ -604,7 +596,7 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
 
-        component.isExamStarted = false;
+        component.isExamStarted.set(false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
@@ -615,7 +607,7 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeTrue();
 
-        component.isExamStarted = false;
+        component.isExamStarted.set(false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
     });
@@ -629,7 +621,7 @@ describe('CourseOverviewComponent', () => {
         const displayStyle = courseTitleBar.nativeElement.style.display;
         expect(displayStyle).toBe('none');
 
-        component.isExamStarted = false;
+        component.isExamStarted.set(false);
         fixture.detectChanges();
         const courseTitleBar2 = fixture.debugElement.query(By.css('#course-title-bar-test'));
         const displayStyle2 = courseTitleBar2.nativeElement.style.display;
@@ -639,22 +631,22 @@ describe('CourseOverviewComponent', () => {
     it('should initialize courses attribute when page is loaded', async () => {
         await component.ngOnInit();
 
-        expect(component.courses).toEqual(courses);
-        expect(component.courses?.length).toBe(1);
+        expect(component.courses()).toEqual(courses);
+        expect(component.courses()?.length).toBe(1);
     });
 
     it('should not initialize courses attribute when page has error while loading', async () => {
         findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         await component.ngOnInit();
-        expect(component.courses?.length).toBeUndefined();
+        expect(component.courses()?.length).toBeUndefined();
     });
 
     it('should not display current course in dropdown', async () => {
         await component.ngOnInit();
 
-        expect(component.courses).toEqual(courses);
-        expect(component.courses?.pop()).toBe(course2);
+        expect(component.courses()).toEqual(courses);
+        expect(component.courses()?.pop()).toBe(course2);
     });
 
     it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
@@ -669,12 +661,12 @@ describe('CourseOverviewComponent', () => {
     it('should toggle isCollapsed when service emits corresponding event', () => {
         fixture.detectChanges();
         courseSidebarService.openSidebar();
-        expect(component.isSidebarCollapsed).toBeTrue();
+        expect(component.isSidebarCollapsed()).toBeTrue();
 
         courseSidebarService.closeSidebar();
-        expect(component.isSidebarCollapsed).toBeFalse();
+        expect(component.isSidebarCollapsed()).toBeFalse();
 
         courseSidebarService.toggleSidebar();
-        expect(component.isSidebarCollapsed).toBeTrue();
+        expect(component.isSidebarCollapsed()).toBeTrue();
     });
 });
