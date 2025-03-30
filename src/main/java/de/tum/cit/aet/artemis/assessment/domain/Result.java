@@ -86,7 +86,8 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Column(name = "rated")
     private Boolean rated;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    // @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne // TODO Michal Kawka I'm not sure, but I thin this should be eager, since participation was eager before it was removed
     @JsonIgnoreProperties({ "results", "participation" })
     private Submission submission;
 
