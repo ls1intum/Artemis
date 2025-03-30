@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewExerciseNotification;
@@ -337,7 +338,21 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, DUPLICATE_TEST_CASE, exercise, notificationText, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository
+                    .findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+            var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
+            var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
+
+            var duplicateTestCaseNotification = new DuplicateTestCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle(), formattedReleaseDate, formattedDueDate);
+
+            courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, DUPLICATE_TEST_CASE, exercise, notificationText, null);
+        }
     }
 
     /**

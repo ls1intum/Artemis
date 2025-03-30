@@ -243,6 +243,11 @@
                 "content": "In {{exerciseTitle}} wird Feedback benötigt.",
                 "settingsTitle": "Feedback benötigt"
             },
+            "duplicateTestCaseNotification": {
+                "title": "Test Duplikat Warnung",
+                "content": "In {{exerciseTitle}} wurde ein Test Duplikat entdeckt.",
+                "settingsTitle": "Test Duplikat Warnung"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",

@@ -727,4 +727,26 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
         featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
+
+    @Test
+    void shouldCreateDuplicateTestCaseNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        exercise.setReleaseDate(FUTURE_TIME);
+        exercise.setDueDate(FUTURISTIC_TIME);
+        exerciseRepository.save(exercise);
+
+        groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(exercise, NOTIFICATION_TEXT);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasDuplicateTestCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 12);
+
+            assertThat(hasDuplicateTestCaseNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
 }

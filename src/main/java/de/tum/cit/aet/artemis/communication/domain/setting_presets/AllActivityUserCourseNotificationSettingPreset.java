@@ -5,6 +5,7 @@ import java.util.Map;
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
@@ -41,6 +42,8 @@ public class AllActivityUserCourseNotificationSettingPreset extends UserCourseNo
                 Map.entry(AttachmentChangedNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(NewManualFeedbackRequestNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)));
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(DuplicateTestCaseNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)));
     }
 }

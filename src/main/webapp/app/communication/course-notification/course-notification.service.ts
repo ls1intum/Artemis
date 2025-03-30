@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { faComments, faRectangleList } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -32,6 +32,7 @@ export class CourseNotificationService {
         quizExerciseStartedNotification: faRectangleList,
         attachmentChangedNotification: faRectangleList,
         newManualFeedbackRequestNotification: faRectangleList,
+        duplicateTestCaseNotification: faTriangleExclamation,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -46,6 +47,7 @@ export class CourseNotificationService {
         quizExerciseStartedNotification: [CourseNotificationChannel.EMAIL],
         attachmentChangedNotification: [CourseNotificationChannel.EMAIL],
         newManualFeedbackRequestNotification: [CourseNotificationChannel.EMAIL],
+        duplicateTestCaseNotification: [],
     };
 
     // Parameter keys that should be rendered as markdown
