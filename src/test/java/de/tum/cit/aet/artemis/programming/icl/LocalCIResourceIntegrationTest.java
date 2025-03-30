@@ -26,7 +26,6 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -107,10 +107,22 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", buildAgent, 5, course.getId(), programmingExercise.getId(), 1, 1, BuildStatus.FAILED,
                 repositoryInfo, jobTimingInfo3, buildConfig, null);
-        var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
-        var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
-        var result3 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
-        var resultForLogs = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        var result1 = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission1, TEST_PREFIX + "student1");
+        result1.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+
+        var submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        var result2 = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission2, TEST_PREFIX + "student1");
+        result2.successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+
+        var submission3 = ParticipationFactory.generateProgrammingSubmission(true);
+        var result3 = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission3, TEST_PREFIX + "student1");
+        result3.successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+
+        var submissionForLogs = ParticipationFactory.generateProgrammingSubmission(true);
+        var resultForLogs = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submissionForLogs, TEST_PREFIX + "student1");
+        resultForLogs.successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
         resultRepository.save(result1);
         resultRepository.save(result2);
@@ -297,7 +309,10 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
         var failedJob1 = new BuildJobQueueItem("5", "job5", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
-        var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        var jobResult = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student1");
+        jobResult.successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var failedFinishedJob = new BuildJob(failedJob1, BuildStatus.FAILED, jobResult);
 
         // Save the jobs

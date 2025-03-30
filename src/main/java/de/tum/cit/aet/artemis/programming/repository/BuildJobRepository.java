@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO;
 @Repository
 public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.

@@ -726,14 +726,13 @@ public class ProgrammingExerciseUtilService {
      */
     public Result addProgrammingSubmissionWithResult(ProgrammingExercise exercise, ProgrammingSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
-        submission = programmingSubmissionRepo.save(submission);
         // TODO check if it needs to be persisted
         Result result = new Result();
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submission.addResult(result);
-        submission = programmingSubmissionRepo.save(submission);
         result.setSubmission(submission);
+        programmingSubmissionRepo.save(submission);
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return result;
