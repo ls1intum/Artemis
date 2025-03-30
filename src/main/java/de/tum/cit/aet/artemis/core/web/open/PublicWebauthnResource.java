@@ -5,11 +5,15 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URISyntaxException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationTrustResolver;
@@ -40,6 +44,7 @@ import de.tum.cit.aet.artemis.core.dto.CreatePasskeyDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
@@ -140,11 +145,17 @@ public class PublicWebauthnResource {
     // TODO endpoint does not work yet
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authenticate() throws URISyntaxException {
+    public ResponseEntity<Void> authenticate(JWTCookieService jwtCookieService, HttpServletResponse response) throws URISyntaxException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (!authentication.isAuthenticated()) {
-            throw new BadRequestAlertException("Authentication with passkey was not successful, not authenticated", ENTITY_NAME, null);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            // throw new BadRequestAlertException("Authentication with passkey was not successful, not authenticated", ENTITY_NAME, null);
+            // TODO Unauthorzied Exception werfen (oder badCredentials wenn es das nicht gibt)
+            // HttpClientErrorException.unauthorzied
+            // UnauthorizedException
+            // BadCredentials
         }
+
         //
         // WebAuthnAuthenticationToken authenticationToken = getWebAuthnAuthenticationToken(authenticateDTO);
         //
@@ -152,6 +163,16 @@ public class PublicWebauthnResource {
         // SecurityContextHolder.getContext().setAuthentication(authResult);
         // log.info("User is authenticated");
 
+        // boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
+        boolean rememberMe = true;
+
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+        // return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
+
+        // TODO hier response cookie zurückgeben, Https ServletR
+        // TODO remember me setzen
         return ResponseEntity.ok().build();
     }
 

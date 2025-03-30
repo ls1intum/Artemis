@@ -23,7 +23,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -33,7 +33,6 @@ import org.springframework.security.web.access.expression.DefaultHttpSecurityExp
 import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -133,7 +132,6 @@ public class SecurityConfiguration {
         remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
         // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
         // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
-
         return builder.build();
     }
 
@@ -210,13 +208,15 @@ public class SecurityConfiguration {
         // @formatter:off
         http
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
             .exceptionHandling(handler -> handler.authenticationEntryPoint(securityProblemSupport).accessDeniedHandler(securityProblemSupport))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
+            // TODO
+//            .addFilterAfter(Web)
             // Configures security headers.
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
@@ -272,17 +272,6 @@ public class SecurityConfiguration {
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
             // TODO: check if we can remove the lambda here and solve this differently, the main purpose was to extract this to a different location
             .with(webAuthnLoginConfigurer(), configurer -> {});
-
-        // As WebAuthn has its own CSRF protection mechanism (challenge), CSRF token is disabled here
-        http.csrf(csrf -> {
-            csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
-            csrf.ignoringRequestMatchers("/webauthn/**");
-            // TODO demo appears not to disable csrf for signup and authenticate, but we do: see https://github.com/webauthn4j/webauthn4j-spring-security
-            csrf.ignoringRequestMatchers("/api/core/public/webauthn/signup");
-            csrf.ignoringRequestMatchers("/api/core/public/webauthn/authenticate");
-            csrf.ignoringRequestMatchers("/api/core/public/logout"); // FIXME: this is a workaround for the logout issue - this should be fixed before a merge
-            csrf.ignoringRequestMatchers("/api/core/public/authenticate"); // FIXME: this is a workaround for the logout issue - this should be fixed before a merge
-        });
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
@@ -378,8 +367,6 @@ public class SecurityConfiguration {
         webAuthnManager.getAuthenticationDataVerifier().setCrossOriginAllowed(true);
         return webAuthnManager;
     }
-
-    // TODO use webauthn4j directly or is it supported by spring boot aslwell?
 
     @Bean
     public WebAuthnSecurityExpression webAuthnSecurityExpression() {

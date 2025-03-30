@@ -86,7 +86,11 @@ public class PasskeyCredentials extends AbstractAuditingEntity implements WebAut
     @Convert(converter = AttestationStatementConverter.class)
     private AttestationStatement attestationStatement;
 
-    // TODO is there a better solution than the "custom converter"?
+    // FIXME client data appears to be null right now on creating new passkey? -> check if this is intended, check if there is a problem with the converter
+    // TODO add tests for the following cases
+    // AssertUtil.notNull(type, "type must not be null");
+    // AssertUtil.notNull(challenge, "challenge must not be null");
+    // AssertUtil.notNull(origin, "origin must not be null");
     @Lob
     @Convert(converter = CustomCollectedClientDataConverter.class)
     private CollectedClientData clientData;
