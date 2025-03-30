@@ -579,25 +579,14 @@ public class CourseUtilService {
 
         // Connect participations to results and vice versa
         // TODO Michal Kawka I don't know if I can simply remove that or need to connect them via submissions
-        // resultModeling.setParticipation(participationModeling);
-        // resultText.setParticipation(participationText);
-        // resultFileUpload.setParticipation(participationFileUpload);
-        // resultQuiz.setParticipation(participationQuiz);
-        // resultProgramming.setParticipation(participationProgramming);
-        //
+
         // participationModeling.addResult(resultModeling);
         // participationText.addResult(resultText);
         // participationFileUpload.addResult(resultFileUpload);
         // participationQuiz.addResult(resultQuiz);
         // participationProgramming.addResult(resultProgramming);
 
-        // Save results and participations
-        resultModeling = resultRepo.save(resultModeling);
-        resultText = resultRepo.save(resultText);
-        resultFileUpload = resultRepo.save(resultFileUpload);
-        resultQuiz = resultRepo.save(resultQuiz);
-        resultProgramming = resultRepo.save(resultProgramming);
-
+        // Save participations
         participationModeling = studentParticipationRepo.save(participationModeling);
         participationText = studentParticipationRepo.save(participationText);
         participationFileUpload = studentParticipationRepo.save(participationFileUpload);
@@ -627,14 +616,26 @@ public class CourseUtilService {
 
         modelingSubmission.setParticipation(participationModeling);
         modelingSubmission.addResult(resultModeling);
+        resultModeling.setSubmission(modelingSubmission);
         textSubmission.setParticipation(participationText);
         textSubmission.addResult(resultText);
+        resultText.setSubmission(textSubmission);
         fileUploadSubmission.setParticipation(participationFileUpload);
         fileUploadSubmission.addResult(resultFileUpload);
+        resultFileUpload.setSubmission(fileUploadSubmission);
         quizSubmission.setParticipation(participationQuiz);
         quizSubmission.addResult(resultQuiz);
+        resultQuiz.setSubmission(quizSubmission);
         programmingSubmission.setParticipation(participationProgramming);
         programmingSubmission.addResult(resultProgramming);
+        resultProgramming.setSubmission(programmingSubmission);
+
+        // Save results
+        resultRepo.save(resultModeling);
+        resultRepo.save(resultText);
+        resultRepo.save(resultFileUpload);
+        resultRepo.save(resultQuiz);
+        resultRepo.save(resultProgramming);
 
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
@@ -757,13 +758,7 @@ public class CourseUtilService {
         // resultQuiz.setParticipation(participationQuiz);
         // resultProgramming.setParticipation(participationProgramming);
 
-        // Save results and participations
-        resultModeling = resultRepo.save(resultModeling);
-        resultText = resultRepo.save(resultText);
-        resultFileUpload = resultRepo.save(resultFileUpload);
-        resultQuiz = resultRepo.save(resultQuiz);
-        resultProgramming = resultRepo.save(resultProgramming);
-
+        // Save participations
         participationModeling = studentParticipationRepo.save(participationModeling);
         participationText = studentParticipationRepo.save(participationText);
         participationText2 = studentParticipationRepo.save(participationText2);
@@ -801,14 +796,26 @@ public class CourseUtilService {
         lateTextSubmission.setParticipation(participationText);
         modelingSubmission.setParticipation(participationModeling);
         modelingSubmission.addResult(resultModeling);
+        resultModeling.setSubmission(modelingSubmission);
         textSubmission.setParticipation(participationText);
         textSubmission.addResult(resultText);
+        resultText.setSubmission(textSubmission);
         fileUploadSubmission.setParticipation(participationFileUpload);
         fileUploadSubmission.addResult(resultFileUpload);
+        resultFileUpload.setSubmission(fileUploadSubmission);
         quizSubmission.setParticipation(participationQuiz);
         quizSubmission.addResult(resultQuiz);
+        resultQuiz.setSubmission(quizSubmission);
         programmingSubmission.setParticipation(participationProgramming);
         programmingSubmission.addResult(resultProgramming);
+        resultProgramming.setSubmission(programmingSubmission);
+
+        // Save results
+        resultRepo.save(resultModeling);
+        resultRepo.save(resultText);
+        resultRepo.save(resultFileUpload);
+        resultRepo.save(resultQuiz);
+        resultRepo.save(resultProgramming);
 
         // Save submissions
         textSubmission2 = submissionRepository.save(textSubmission2);
