@@ -165,7 +165,7 @@ public class ParticipationAuthorizationCheckService {
      * Determines whether a given programming exercise participation is locked.
      * A participation is considered locked if:
      * <ul>
-     * <li>The due date of the exercise has passed.</li>
+     * <li>The due date of the exercise has passed and the participation is not in practice mode.</li>
      * <li>The exercise is an exam exercise, and:
      * <ul>
      * <li>The associated student exam has already been submitted.</li>
@@ -181,7 +181,7 @@ public class ParticipationAuthorizationCheckService {
      * @return {@code true} if the participation is locked based on the conditions above; {@code false} otherwise.
      */
     public boolean isLocked(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
-        if (exerciseDateService.isAfterDueDate(participation, exercise)) {
+        if (exerciseDateService.isAfterDueDate(participation, exercise) && !participation.isPracticeMode()) {
             return true;
         }
 
