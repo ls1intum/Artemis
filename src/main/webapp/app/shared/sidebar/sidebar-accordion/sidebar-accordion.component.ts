@@ -108,7 +108,8 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     private getWeekKey(date: dayjs.Dayjs): string {
         const weekStart = date.startOf('isoWeek');
         const weekEnd = date.endOf('isoWeek');
-        return `${weekStart.format('DD MMM')} - ${weekEnd.format('DD MMM YYYY')}`;
+        const year = weekStart.year();
+        return `${year} - ${weekStart.format('DD MMM YYYY')} - ${weekEnd.format('DD MMM YYYY')}`;
     }
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
@@ -146,15 +147,41 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
             weekGroups.set(weekKey, group);
         }
 
+        // Sort items within each group by date (newest first)
+        for (const [, items] of weekGroups) {
+            items.sort((a, b) => {
+                const dateA = a.exercise?.dueDate || a.startDateWithTime || a.startDate;
+                const dateB = b.exercise?.dueDate || b.startDateWithTime || b.startDate;
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1;
+                if (!dateB) return -1;
+                return dateB.valueOf() - dateA.valueOf();
+            });
+        }
+
         return Array.from(weekGroups.entries())
-            .map(([weekRange, items]) => ({ weekRange, items }))
+            .map(([weekRange, items]) => {
+                const displayRange = weekRange === 'No Date' ? weekRange : weekRange.split(' - ').slice(1).join(' - ');
+                return { weekRange: displayRange, items };
+            })
             .sort((a, b) => {
                 if (a.weekRange === 'No Date') return 1;
                 if (b.weekRange === 'No Date') return -1;
 
+                const aFullKey = Array.from(weekGroups.keys()).find((key) => key.includes(a.weekRange));
+                const bFullKey = Array.from(weekGroups.keys()).find((key) => key.includes(b.weekRange));
+
+                if (!aFullKey || !bFullKey) return 0;
+
+                const [aYear] = aFullKey.split(' - ');
+                const [bYear] = bFullKey.split(' - ');
+                if (aYear !== bYear) {
+                    return Number(bYear) - Number(aYear);
+                }
+
                 const aDate = dayjs(a.weekRange.split(' - ')[0], 'DD MMM');
                 const bDate = dayjs(b.weekRange.split(' - ')[0], 'DD MMM');
-                return aDate.isBefore(bDate) ? -1 : 1;
+                return bDate.valueOf() - aDate.valueOf();
             });
     }
 }
