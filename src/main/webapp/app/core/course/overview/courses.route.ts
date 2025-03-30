@@ -66,7 +66,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId',
-        loadComponent: () => import('./course-overview/course-overview.component').then((m) => m.CourseOverviewComponent),
+        loadComponent: () => import('./course-overview.component').then((m) => m.CourseOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.course',

@@ -81,7 +81,7 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        return [...items, this.getExamsItem(), exercisesItem, statisticsItem];
+        return [...items, exercisesItem, statisticsItem];
     }
 
     getExamsItem(courseId?: number): SidebarItem {
@@ -146,7 +146,7 @@ export class CourseSidebarItemService {
     }
     getLearningPathItem(): SidebarItem {
         return {
-            routerLink: 'learning-paths',
+            routerLink: 'learning-path',
             icon: faNetworkWired,
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',

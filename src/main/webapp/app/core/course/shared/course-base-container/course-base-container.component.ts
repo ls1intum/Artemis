@@ -31,7 +31,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LtiService } from 'app/shared/service/lti.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
-import { PROFILE_ATLAS } from 'app/app.constants';
+import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -69,6 +69,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
     atlasEnabled = signal<boolean>(false);
+    irisEnabled = signal<boolean>(false);
+    ltiEnabled = signal<boolean>(false);
+    localCIActive = signal<boolean>(false);
     isProduction = signal<boolean>(true);
     isTestServer = signal<boolean>(false);
     pageTitle = signal<string>('');
@@ -103,16 +106,15 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             this.isSidebarCollapsed.set(false);
         });
 
-        this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
-            const id = Number(params.courseId);
-            this.courseId.set(id);
-            this.handleCourseIdChange(id);
-        });
-
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo: any) => {
-            this.isProduction.set(profileInfo?.inProduction);
-            this.isTestServer.set(profileInfo.testServer ?? false);
-            this.atlasEnabled.set(profileInfo.activeProfiles.includes(PROFILE_ATLAS));
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.isProduction.set(profileInfo?.inProduction);
+                this.isTestServer.set(profileInfo.testServer ?? false);
+                this.atlasEnabled.set(profileInfo.activeProfiles.includes(PROFILE_ATLAS));
+                this.irisEnabled.set(profileInfo.activeProfiles.includes(PROFILE_IRIS));
+                this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
+                this.localCIActive.set(profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
+            }
         });
 
         this.getCollapseStateFromStorage();

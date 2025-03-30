@@ -26,7 +26,6 @@ import {
 
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -44,6 +43,19 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
+import { CourseManagementExercisesComponent } from 'app/core/course/manage/course-management-exercises.component';
+import { LectureComponent } from 'app/lecture/manage/lecture.component';
+import { CourseManagementStatisticsComponent } from 'app/core/course/manage/course-management-statistics.component';
+import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
+import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
+import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
+import { CourseScoresComponent } from 'app/core/course/manage/course-scores/course-scores.component';
+import { FaqComponent } from 'app/communication/faq/faq.component';
+import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
+import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
+import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -79,23 +91,26 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
 
-    // Signals for reactive state management
-    hasUnreadMessages = signal<boolean>(false);
-    communicationRouteLoaded = signal<boolean>(false);
-    pageTitle = signal<string>('');
-    isNavbarCollapsed = signal<boolean>(false);
-    isSidebarCollapsed = signal<boolean>(false);
-    isShownViaLti = signal<boolean>(false);
-    hasSidebar = signal<boolean>(false);
-    localCIActive = signal<boolean>(false);
-    irisEnabled = signal<boolean>(false);
-    ltiEnabled = signal<boolean>(false);
-
     // we cannot use signals here because the child component doesn't expect it
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    activatedComponentReference = signal<any>(null);
+    activatedComponentReference = signal<
+        | CourseDetailComponent
+        | ExamManagementComponent
+        | CourseManagementExercisesComponent
+        | LectureComponent
+        | CourseManagementStatisticsComponent
+        | IrisCourseSettingsUpdateComponent
+        | CourseConversationsComponent
+        | TutorialGroupsChecklistComponent
+        | CompetencyManagementComponent
+        | LearningPathInstructorPageComponent
+        | AssessmentDashboardComponent
+        | CourseScoresComponent
+        | FaqComponent
+        | BuildQueueComponent
+    >(new CourseDetailComponent());
 
     // Icons
     faTimes = faTimes;
@@ -118,39 +133,16 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     ButtonSize = ButtonSize;
     isCommunicationEnabled = isCommunicationEnabled;
 
-    // constructor() {
-    //     super();
-    //
-    //     effect(() => {
-    //         if (this.controlConfiguration && this.controls && this.controlsViewContainer) {
-    //             this.tryRenderControls();
-    //         }
-    //     });
-    //
-    //     effect(() => {
-    //         if (this.conversationServiceInstantiated && this.communicationRouteLoaded()) {
-    //             this.setUpConversationService();
-    //         }
-    //     });
-    // }
-
     async ngOnInit() {
+        this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
+            const id = Number(params.courseId);
+            this.handleCourseIdChange(id);
+        });
         await super.ngOnInit();
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
             this.subscribeToCourseUpdates(this.courseId()!);
-        });
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.isProduction.set(profileInfo?.inProduction);
-                this.isTestServer.set(profileInfo.testServer ?? false);
-                this.atlasEnabled.set(profileInfo.activeProfiles.includes(PROFILE_ATLAS));
-                this.irisEnabled.set(profileInfo.activeProfiles.includes(PROFILE_IRIS));
-                this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
-                this.localCIActive.set(profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
-            }
         });
     }
 
@@ -182,8 +174,23 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     protected handleComponentActivation(componentRef: any): void {
-        // Set activated component reference for specific component types
-        this.activatedComponentReference.set(componentRef);
+        if (
+            componentRef instanceof CourseDetailComponent ||
+            componentRef instanceof CourseManagementExercisesComponent ||
+            componentRef instanceof ExamManagementComponent ||
+            componentRef instanceof LectureComponent ||
+            componentRef instanceof CourseManagementStatisticsComponent ||
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof TutorialGroupsChecklistComponent ||
+            componentRef instanceof CompetencyManagementComponent ||
+            componentRef instanceof LearningPathInstructorPageComponent ||
+            componentRef instanceof AssessmentDashboardComponent ||
+            componentRef instanceof CourseScoresComponent ||
+            componentRef instanceof FaqComponent ||
+            componentRef instanceof BuildQueueComponent
+        ) {
+            this.activatedComponentReference.set(componentRef);
+        }
     }
 
     protected handleToggleSidebar(): void {
@@ -208,22 +215,18 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             sidebarItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
 
-        // Communication - only when communication is enabled
         if (currentCourse && isCommunicationEnabled(currentCourse)) {
             sidebarItems.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         }
 
-        // Tutorial Groups - when configuration exists or user is instructor
         if (currentCourse?.tutorialGroupsConfiguration || currentCourse?.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
 
-        // Competency Management - only for instructors with Atlas enabled
         if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
             sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
         }
 
-        // Learning Path - only for instructors with Atlas enabled and learning paths enabled
         if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
             this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
                 if (isActive) {
@@ -314,6 +317,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             }),
         );
     }
+
     /**
      * Deletes the course
      * @param courseId id the course that will be deleted

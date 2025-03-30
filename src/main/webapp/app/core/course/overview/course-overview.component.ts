@@ -32,7 +32,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
-import { CourseUnenrollmentModalComponent } from '../course-unenrollment-modal.component';
+import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -46,11 +46,16 @@ import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';
+import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['../course-overview.scss', './course-overview.component.scss'],
+    styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
     imports: [
         NgClass,
         MatSidenavContainer,
@@ -85,12 +90,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
 
-    // Additional state unique to CourseOverviewComponent using signals
     courseActionItems = signal<CourseActionItem[]>([]);
-    isNotManagementView = signal<boolean>(true);
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
-    activatedComponentReference = signal<any>(null);
+    activatedComponentReference = signal<CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent>(
+        new CourseExercisesComponent(),
+    );
 
     // Icons
     faTimes = faTimes;
@@ -111,21 +116,21 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     CachingStrategy = CachingStrategy;
 
     async ngOnInit() {
-        // Add toggle sidebar event subscription specific to this component
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => this.activatedComponentReference()?.isCollapsed ?? !value);
         });
 
-        // Call the base class initialization
+        this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
+            const id = Number(params.courseId);
+            this.courseId.set(id);
+        });
+        //this.courseId.set(Number(this.route?.snapshot.params['courseId']));
         await super.ngOnInit();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
             this.isExamStarted.set(isStarted);
         });
 
-        this.isNotManagementView.set(!this.router.url.startsWith('/course-management'));
-
-        // Additional initialization specific to CourseOverviewComponent
         await this.initAfterCourseLoad();
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
@@ -190,6 +195,15 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     protected handleComponentActivation(componentRef: any): void {
+        if (
+            componentRef instanceof CourseExercisesComponent ||
+            componentRef instanceof CourseLecturesComponent ||
+            componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseExamsComponent ||
+            componentRef instanceof CourseConversationsComponent
+        ) {
+            this.activatedComponentReference.set(componentRef);
+        }
         this.activatedComponentReference.set(componentRef);
         this.getShowRefreshButton();
     }
