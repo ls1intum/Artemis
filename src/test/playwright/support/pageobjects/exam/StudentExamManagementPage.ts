@@ -51,11 +51,22 @@ export class StudentExamManagementPage {
                 break;
             }
         }
+        console.log(propertyIndex);
 
         expect(propertyIndex).toBeDefined();
-        await expect(
-            this.page.locator('.datatable-body-row', { hasText: studentName }).locator('.datatable-row-center').getByRole('cell').nth(propertyIndex!).getByText(value),
-        ).toBeVisible();
+        // First scroll the container
+        await this.page.locator('#course-body-container').evaluate((container) => {
+            container.scrollTop = container.scrollHeight;
+        });
+
+        // Wait for the UI to update after scrolling
+        await this.page.waitForTimeout(500);
+
+        // Define the locator AFTER scrolling
+        const studentCell = this.page.locator('.datatable-body-row', { hasText: studentName }).locator('.datatable-row-center').getByRole('cell').nth(propertyIndex!);
+
+        // Check if it's visible
+        await expect(studentCell.getByText(value)).toBeVisible();
     }
 
     async checkStudentExamProperty(username: string, property: string, value: string) {
