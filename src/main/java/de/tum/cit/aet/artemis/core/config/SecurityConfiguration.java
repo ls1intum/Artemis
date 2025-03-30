@@ -379,6 +379,8 @@ public class SecurityConfiguration {
         return webAuthnManager;
     }
 
+    // TODO use webauthn4j directly or is it supported by spring boot aslwell?
+
     @Bean
     public WebAuthnSecurityExpression webAuthnSecurityExpression() {
         return new WebAuthnSecurityExpression();

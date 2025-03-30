@@ -14,17 +14,10 @@
             <column name="name" type="varchar(32)">
                 <constraints nullable="false"/>
             </column>
-            <column name="credential_id" type="varbinary(1024)">
-                <constraints nullable="false" unique="true"/>
-            </column>
-            <column name="public_key" type="TEXT"/>
-
-            <column name="attestation_type" type="varchar(8)" defaultValue="direct">
-                <constraints nullable="false"/>
-            </column>
-            <column name="aaguid" type="char(36)" defaultValue="00000000-0000-0000-0000-000000000000"/>
-            <column name="signature_count" type="int"/>
-            <column name="last_used_date" type="datetime(3)"/>
+            <column name="counter" type="bigint"/>
+            <column name="uv_initialized" type="boolean" defaultValue="false"/>
+            <column name="backup_eligible" type="boolean" defaultValue="false"/>
+            <column name="backed_up" type="boolean" defaultValue="false"/>
             <column name="created_by" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
@@ -33,11 +26,29 @@
             </column>
             <column name="last_modified_date" type="datetime(3)"/>
             <column name="last_modified_by" type="varchar(45)"/>
+            <column name="aaguid" type="binary(16)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="credential_id" type="binary">
+                <constraints nullable="true"/>
+            </column>
+            <column name="cose_key" type="binary">
+                <constraints nullable="true"/>
+            </column>
+            <column name="attestation_statement" type="LONGBLOB"/>
+            <column name="client_data" type="LONGBLOB"/>
+            <column name="client_extensions" type="LONGBLOB"/>
+            <column name="authenticator_extensions" type="LONGBLOB"/>
+        </createTable>
 
-            <column name="type" type="varchar(25)"/>
-            <column name="transports" type="enum('USB', 'NFC', 'BLE', 'INTERNAL', 'HYBRID')"/>
-            <column name="backup_eligible" type="boolean" defaultValue="false"/>
-            <column name="backup_state" type="boolean" defaultValue="false"/>
+        <!-- Create m_transport table for element collection -->
+        <createTable tableName="m_transport">
+            <column name="credential_record_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transport" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
 
         <!-- Create index for userId -->
@@ -51,6 +62,15 @@
                 baseColumnNames="user_id"
                 constraintName="FK_passkey_credentials_userId"
                 referencedTableName="jhi_user"
+                referencedColumnNames="id"
+                onDelete="CASCADE"/>
+
+        <!-- Add foreign key constraint for credential_record_id referencing passkey_credentials -->
+        <addForeignKeyConstraint
+                baseTableName="m_transport"
+                baseColumnNames="credential_record_id"
+                constraintName="FK_m_transport_credential_record_id"
+                referencedTableName="passkey_credentials"
                 referencedColumnNames="id"
                 onDelete="CASCADE"/>
     </changeSet>

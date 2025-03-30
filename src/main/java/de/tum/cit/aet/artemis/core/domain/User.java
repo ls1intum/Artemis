@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
@@ -34,6 +35,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -560,5 +562,12 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;
+    }
+
+    public static UserDetails toUserDetails(de.tum.cit.aet.artemis.core.domain.User user) {
+        return new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(), user.getActivated(), true, // accountNonExpired
+                true, // credentialsNonExpired
+                true, // accountNonLocked
+                user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList()));
     }
 }
