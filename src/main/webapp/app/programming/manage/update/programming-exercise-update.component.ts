@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
-import { switchMap, take, tap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -448,17 +448,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
         if (this.activatedRoute && this.activatedRoute.url) {
-            // in the exam mode, the courseId is not in the params of the route but of the parent.parent
-            this.activatedRoute.parent?.parent?.params
+            this.activatedRoute.url
                 .pipe(
-                    take(1),
-                    tap((parentParams) => {
-                        if (parentParams['courseId']) {
-                            this.courseId = parentParams['courseId'];
-                        }
-                    }),
-                    // Then continue with the rest of the logic after ensuring courseId is set
-                    switchMap(() => this.activatedRoute.url),
                     tap((segments) => {
                         this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                         this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
@@ -473,19 +464,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         if (this.isImportFromExistingExercise) {
                             this.createProgrammingExerciseForImport(params);
                         } else {
-                            if (params['examId'] && params['exerciseGroupId']) {
+                            if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
                                 this.isExamMode = true;
-                                this.exerciseGroupService.find(this.courseId, params['examId'], params['exerciseGroupId']).subscribe((res) => {
+                                this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                     this.programmingExercise.exerciseGroup = res.body!;
                                     if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                     }
                                 });
-                                // we need the course id to make the request to the server if it's an import from file
+                                // we need the course id  to make the request to the server if it's an import from file
                                 if (this.isImportFromFile) {
-                                    this.loadCourseExerciseCategories(this.courseId);
+                                    this.courseId = params['courseId'];
+                                    this.loadCourseExerciseCategories(params['courseId']);
                                 }
-                            } else {
+                            } else if (params['courseId']) {
+                                this.courseId = params['courseId'];
                                 this.isExamMode = false;
                                 this.courseService.find(this.courseId).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;

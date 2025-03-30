@@ -26,9 +26,9 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
                 filter((res) => !!res.body),
                 map((fileUploadExercise: HttpResponse<FileUploadExercise>) => fileUploadExercise.body!),
             );
-        } else if (route.parent?.parent?.params['courseId']) {
+        } else if (route.params['courseId']) {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
-                return this.exerciseGroupService.find(route.parent?.parent?.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
+                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
                     filter((res) => !!res.body),
                     map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
                         const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup.body!);

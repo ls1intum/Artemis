@@ -162,7 +162,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.shortAnswerFilterEnabled = true;
         this.notificationText = undefined;
 
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId') ?? this.route.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const quizId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const groupId = Number(this.route.snapshot.paramMap.get('exerciseGroupId'));
