@@ -27,9 +27,9 @@ import {
     providedIn: 'root',
 })
 export class CourseSidebarItemService {
-    getManagementDefaultItems(): SidebarItem[] {
+    getManagementDefaultItems(courseId: number): SidebarItem[] {
         const overviewItem: SidebarItem = {
-            routerLink: '.',
+            routerLink: courseId ? `${courseId}` : '',
             icon: faTableCells,
             title: 'Overview',
             translation: 'artemisApp.course.overview',
@@ -38,7 +38,7 @@ export class CourseSidebarItemService {
         };
 
         const exercisesItem: SidebarItem = {
-            routerLink: 'exercises',
+            routerLink: courseId ? `${courseId}/exercises` : 'exercises',
             icon: faListAlt,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
@@ -46,7 +46,7 @@ export class CourseSidebarItemService {
         };
 
         const statisticsItem: SidebarItem = {
-            routerLink: 'course-statistics',
+            routerLink: courseId ? `${courseId}/course-statistics` : 'course-statistics',
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
@@ -54,7 +54,7 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        return [overviewItem, this.getExamsItem(), exercisesItem, statisticsItem];
+        return [overviewItem, this.getExamsItem(courseId), exercisesItem, statisticsItem];
     }
 
     getStudentDefaultItems(hasDashboard = false): SidebarItem[] {
@@ -81,12 +81,12 @@ export class CourseSidebarItemService {
             hidden: false,
         };
 
-        return [...items, exercisesItem, statisticsItem];
+        return [...items, this.getExamsItem(), exercisesItem, statisticsItem];
     }
 
-    getExamsItem(): SidebarItem {
+    getExamsItem(courseId?: number): SidebarItem {
         return {
-            routerLink: 'exams',
+            routerLink: courseId ? `${courseId}/exams` : 'exams',
             icon: faGraduationCap,
             title: 'Exams',
             testId: 'exam-tab',
@@ -95,9 +95,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getLecturesItem(): SidebarItem {
+    getLecturesItem(courseId?: number): SidebarItem {
         return {
-            routerLink: 'lectures',
+            routerLink: courseId ? `${courseId}/lectures` : 'lectures',
             icon: faChalkboardUser,
             title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
@@ -105,9 +105,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getCommunicationsItem(): SidebarItem {
+    getCommunicationsItem(courseId?: number): SidebarItem {
         return {
-            routerLink: 'communication',
+            routerLink: courseId ? `${courseId}/communication` : 'communication',
             icon: faComments,
             title: 'Communication',
             translation: 'artemisApp.courseOverview.menu.communication',
@@ -115,9 +115,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getTutorialGroupsItem(): SidebarItem {
+    getTutorialGroupsItem(courseId?: number): SidebarItem {
         return {
-            routerLink: 'tutorial-groups',
+            routerLink: courseId ? `${courseId}/tutorial-groups` : 'tutorial-groups',
             icon: faPersonChalkboard,
             title: 'Tutorials',
             translation: 'artemisApp.courseOverview.menu.tutorialGroups',
@@ -126,19 +126,38 @@ export class CourseSidebarItemService {
         };
     }
 
-    getCompetenciesItem(): SidebarItem {
+    getCompetenciesManagementItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'competency-management',
+            routerLink: courseId ? `${courseId}/competency-management` : 'competency-management',
             icon: faFlag,
             title: 'Competency Management',
             translation: 'artemisApp.courseOverview.menu.competencies',
             hidden: false,
         };
     }
-
+    getCompetenciesItem(): SidebarItem {
+        return {
+            routerLink: 'competencies',
+            icon: faFlag,
+            title: 'Competency Management',
+            translation: 'artemisApp.courseOverview.menu.competencies',
+            hidden: false,
+        };
+    }
     getLearningPathItem(): SidebarItem {
         return {
-            routerLink: 'learning-path-management',
+            routerLink: 'learning-paths',
+            icon: faNetworkWired,
+            title: 'Learning Path',
+            translation: 'artemisApp.courseOverview.menu.learningPath',
+            featureToggle: FeatureToggle.LearningPaths,
+            hidden: false,
+        };
+    }
+
+    getLearningPathManagementItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/learning-path-management`,
             icon: faNetworkWired,
             title: 'Learning Path',
             translation: 'artemisApp.courseOverview.menu.learningPath',
@@ -158,15 +177,16 @@ export class CourseSidebarItemService {
         };
     }
 
-    getFaqMangementItem(): SidebarItem {
+    getFaqManagementItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'faqs',
+            routerLink: `${courseId}/faqs`,
             icon: faQuestion,
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
             hidden: false,
         };
     }
+
     getFaqItem(): SidebarItem {
         return {
             routerLink: 'faq',
@@ -177,9 +197,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getIrisSettingsItem(): SidebarItem {
+    getIrisSettingsItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'iris-settings',
+            routerLink: `${courseId}/iris-settings`,
             icon: faRobot,
             title: 'IRIS Settings',
             translation: 'artemisApp.iris.settings.button.course.title',
@@ -188,9 +208,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getAssessmentDashboardItem(): SidebarItem {
+    getAssessmentDashboardItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'assessment-dashboard',
+            routerLink: `${courseId}/assessment-dashboard`,
             icon: faUserCheck,
             title: 'Assessment Dashboard',
             translation: 'entity.action.assessmentDashboard',
@@ -198,9 +218,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getScoresItem(): SidebarItem {
+    getScoresItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'scores',
+            routerLink: `${courseId}/scores`,
             icon: faTable,
             title: 'Scores',
             translation: 'entity.action.scores',
@@ -208,9 +228,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getBuildQueueItem(): SidebarItem {
+    getBuildQueueItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'build-queue',
+            routerLink: `${courseId}/build-queue`,
             icon: faList,
             title: 'Build Queue',
             translation: 'artemisApp.buildQueue.title',
@@ -218,9 +238,9 @@ export class CourseSidebarItemService {
         };
     }
 
-    getLtiConfigurationItem(): SidebarItem {
+    getLtiConfigurationItem(courseId: number): SidebarItem {
         return {
-            routerLink: 'lti-configuration',
+            routerLink: `${courseId}/lti-configuration`,
             icon: faPuzzlePiece,
             title: 'LTI Configuration',
             translation: 'global.menu.admin.lti',

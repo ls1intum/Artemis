@@ -102,8 +102,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        //console.log('route', this.route);
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled) {

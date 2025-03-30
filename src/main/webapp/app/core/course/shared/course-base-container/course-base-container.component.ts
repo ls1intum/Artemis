@@ -55,7 +55,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription: Subscription;
     protected openSidebarEventSubscription: Subscription;
-    protected subscription: Subscription;
+    protected subscription?: Subscription;
     protected profileSubscription?: Subscription;
     protected ltiSubscription: Subscription;
     protected loadCourseSubscription?: Subscription;
@@ -103,7 +103,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             this.isSidebarCollapsed.set(false);
         });
 
-        this.subscription = this.route.params.subscribe((params: { courseId: string }) => {
+        this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.courseId.set(id);
             this.handleCourseIdChange(id);

@@ -199,55 +199,55 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         const sidebarItems: SidebarItem[] = [];
         const currentCourse = this.course();
 
-        sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems());
+        sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
         if (currentCourse?.isAtLeastEditor) {
-            sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem());
+            sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
         }
 
         if (currentCourse?.isAtLeastInstructor && this.irisEnabled()) {
-            sidebarItems.push(this.sidebarItemService.getIrisSettingsItem());
+            sidebarItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
 
         // Communication - only when communication is enabled
         if (currentCourse && isCommunicationEnabled(currentCourse)) {
-            sidebarItems.push(this.sidebarItemService.getCommunicationsItem());
+            sidebarItems.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         }
 
         // Tutorial Groups - when configuration exists or user is instructor
         if (currentCourse?.tutorialGroupsConfiguration || currentCourse?.isAtLeastInstructor) {
-            sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem());
+            sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
 
         // Competency Management - only for instructors with Atlas enabled
         if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
-            sidebarItems.push(this.sidebarItemService.getCompetenciesItem());
+            sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
         }
 
         // Learning Path - only for instructors with Atlas enabled and learning paths enabled
         if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
             this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
                 if (isActive) {
-                    sidebarItems.push(this.sidebarItemService.getLearningPathItem());
+                    sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
                 }
             });
         }
 
-        sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem());
+        sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));
 
         if (currentCourse?.isAtLeastInstructor) {
-            sidebarItems.push(this.sidebarItemService.getScoresItem());
+            sidebarItems.push(this.sidebarItemService.getScoresItem(this.courseId()));
         }
 
         if (currentCourse?.isAtLeastTutor && currentCourse?.faqEnabled) {
-            sidebarItems.push(this.sidebarItemService.getFaqMangementItem());
+            sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
 
         if (currentCourse?.isAtLeastInstructor && this.localCIActive()) {
-            sidebarItems.push(this.sidebarItemService.getBuildQueueItem());
+            sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
 
         if (this.ltiEnabled() && currentCourse?.onlineCourse && currentCourse?.isAtLeastInstructor) {
-            sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem());
+            sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
         }
 
         return sidebarItems;

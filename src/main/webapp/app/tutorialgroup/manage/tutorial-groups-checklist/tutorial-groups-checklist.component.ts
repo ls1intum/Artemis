@@ -43,7 +43,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.activatedRoute.parent?.paramMap
+        this.activatedRoute?.paramMap
             .pipe(
                 take(1),
                 switchMap((params) => {

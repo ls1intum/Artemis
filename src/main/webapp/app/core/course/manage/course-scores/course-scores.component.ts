@@ -92,7 +92,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private gradingSystemService = inject(GradingSystemService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
 
-    private paramSub?: Subscription;
+    private paramSub: Subscription;
     private languageChangeSubscription?: Subscription;
 
     course: Course;
@@ -171,7 +171,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * On init fetch the course, all released exercises and all participations with result for the course from the server.
      */
     ngOnInit() {
-        this.paramSub = this.route?.parent?.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
                 this.initializeWithCourse(findWithExercisesResult.body!);
             });
