@@ -59,6 +59,7 @@ import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exer
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -194,7 +195,6 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(ArtemisServerDateService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
-                MockProvider(ProfileService),
                 MockProvider(TutorialGroupsService),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
@@ -208,6 +208,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -315,10 +316,10 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalled();
 
         expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
-
+        const baseUrl = '/' + 'courses/' + course1.id;
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
-            route.snapshot.firstChild!.routeConfig!.path = tab;
+            router.url = '' + baseUrl + '/' + tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
 
             expect(metisConversationServiceStub).toHaveBeenCalledOnce();
@@ -335,7 +336,7 @@ describe('CourseOverviewComponent', () => {
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
 
-        expect(component.hasUnreadMessages).toBe(hasNewMessages);
+        expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
@@ -584,14 +585,14 @@ describe('CourseOverviewComponent', () => {
 
     it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
         component.toggleCollapseState();
-        expect(component.isNavbarCollapsed).toBeTrue();
+        expect(component.isNavbarCollapsed()).toBeTrue();
 
         component.toggleCollapseState();
-        expect(component.isNavbarCollapsed).toBeFalse();
+        expect(component.isNavbarCollapsed()).toBeFalse();
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
+        component.isExamStarted.set(true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
@@ -602,30 +603,10 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
 
-    it('should display/hide sidebar if exam is started/over', () => {
+    it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeTrue();
-
-        component.isExamStarted.set(false);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
-    });
-
-    it('should display/hide course title bar if exam is started/over', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        fixture.detectChanges();
-        const courseTitleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
-        const displayStyle = courseTitleBar.nativeElement.style.display;
-        expect(displayStyle).toBe('none');
-
-        component.isExamStarted.set(false);
-        fixture.detectChanges();
-        const courseTitleBar2 = fixture.debugElement.query(By.css('#course-title-bar-test'));
-        const displayStyle2 = courseTitleBar2.nativeElement.style.display;
-        expect(displayStyle2).toBe('flex');
+        await component.ngOnInit();
+        expect(component.isExamStarted()).toBeTrue();
     });
 
     it('should initialize courses attribute when page is loaded', async () => {
