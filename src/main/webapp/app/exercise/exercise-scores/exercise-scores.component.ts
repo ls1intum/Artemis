@@ -362,8 +362,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Converts a result object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
+     * Converts a result object to a string that can be searched for. This is used
+     * by the autocomplete select inside the data table.
      *
      * @param participation
      */
