@@ -308,6 +308,7 @@ export class CourseOverviewService {
             id: lecture.id ?? '',
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
             size: 'M',
+            startDate: lecture.startDate,
         };
         return lectureCardItem;
     }

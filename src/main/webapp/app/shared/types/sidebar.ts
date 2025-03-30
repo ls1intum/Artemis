@@ -156,6 +156,10 @@ export interface SidebarCardElement {
      * Set for Conversation. Will be removed after refactoring
      */
     conversation?: ConversationDTO;
+    /**
+     * Set for Lectures, shows the start date
+     */
+    startDate?: dayjs.Dayjs;
 
     isCurrent?: boolean;
 }

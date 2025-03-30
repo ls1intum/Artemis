@@ -131,7 +131,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         const weekGroups = new Map<string, SidebarCardElement[]>();
 
         for (const item of filteredItems) {
-            const date = item.exercise?.dueDate || item.startDateWithTime;
+            const date = item.exercise?.dueDate || item.startDateWithTime || item.startDate;
             if (!date) {
                 const noDateKey = 'No Date';
                 const noDateGroup = weekGroups.get(noDateKey) || [];
