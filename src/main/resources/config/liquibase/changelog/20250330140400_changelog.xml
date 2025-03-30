@@ -32,7 +32,10 @@
     <!-- Step 2b: Add enum columns in MySQL using inline enum definitions -->
     <changeSet id="20250330-02b-add-enum-columns-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <dbms type="mysql"/>
+            <or>
+                <dbms type="mysql"/>
+                <dbms type="h2"/>
+            </or>
         </preConditions>
         <addColumn tableName="saved_post">
             <column name="post_type_tmp" type="enum('POST','ANSWER')"/>
@@ -71,6 +74,7 @@
 
     <!-- Step 4: Drop old columns and rename new ones (finalize migration) -->
     <changeSet id="20250330-04-finalize-column-replacement" author="krusche">
+        <dropIndex tableName="saved_post" indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE"/>
         <dropColumn tableName="saved_post" columnName="post_type"/>
         <dropColumn tableName="saved_post" columnName="status"/>
         <dropColumn tableName="forwarded_message" columnName="source_type"/>
@@ -93,12 +97,20 @@
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
                       columnDataType="post_type_enum"/>
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+            <column name="user_id"/>
+            <column name="post_id"/>
+            <column name="post_type"/>
+        </createIndex>
     </changeSet>
 
     <!-- Step 5b: MySQL column rename (must specify type) -->
     <changeSet id="20250330-04b-rename-columns-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <dbms type="mysql"/>
+            <or>
+                <dbms type="mysql"/>
+                <dbms type="h2"/>
+            </or>
         </preConditions>
         <renameColumn tableName="saved_post"
                       oldColumnName="post_type_tmp"
@@ -112,6 +124,11 @@
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
                       columnDataType="enum('POST','ANSWER')"/>
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+            <column name="user_id"/>
+            <column name="post_id"/>
+            <column name="post_type"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>
