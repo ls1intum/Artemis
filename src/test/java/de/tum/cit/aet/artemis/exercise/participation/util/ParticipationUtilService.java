@@ -173,7 +173,8 @@ public class ParticipationUtilService {
         else {
             studentParticipation = storedParticipation.get();
         }
-        return addResultToSubmission(null, null, studentParticipation.getSubmissions().iterator().next());
+        var submission = this.addSubmission(studentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+        return addResultToSubmission(null, null, submission);
     }
 
     /**
