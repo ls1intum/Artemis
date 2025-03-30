@@ -18,8 +18,8 @@ import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scor
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import {
     BONUS_GRADE_KEY,
@@ -37,8 +37,8 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
-import { BonusStrategy } from 'app/entities/bonus.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

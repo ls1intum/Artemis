@@ -6,7 +6,7 @@ import { combineLatest, forkJoin } from 'rxjs';
 
 import { EditCourseCompetencyComponent } from 'app/atlas/manage/edit/edit-course-competency.component';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -1,14 +1,14 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 @Component({
     selector: 'jhi-submission-result-status',

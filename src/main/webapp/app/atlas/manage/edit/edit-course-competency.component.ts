@@ -5,8 +5,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     template: '',

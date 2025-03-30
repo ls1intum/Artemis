@@ -22,26 +22,38 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewExerciseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManualFeedbackRequestNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -51,6 +63,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Profile(PROFILE_CORE)
 @Service
 public class GroupNotificationService {
+
+    private static final Logger log = LoggerFactory.getLogger(GroupNotificationService.class);
 
     private final GroupNotificationRepository groupNotificationRepository;
 
@@ -62,13 +76,20 @@ public class GroupNotificationService {
 
     private final NotificationSettingsService notificationSettingsService;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
-            GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService) {
+            GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService, FeatureToggleService featureToggleService,
+            CourseNotificationService courseNotificationService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -160,8 +181,20 @@ public class GroupNotificationService {
         if (attachment.getReleaseDate() != null && attachment.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        // Create and send the notification.
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, ATTACHMENT_CHANGE, attachment, notificationText, userRepository.getUser());
+
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember() : attachment.getLecture().getCourse();
+            var recipients = userRepository.getStudents(course);
+
+            var attachmentChangedNotification = new AttachmentChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), attachment.getName(),
+                    attachment.getExercise() == null ? attachment.getLecture().getTitle() : attachment.getExercise().getTitle(),
+                    attachment.getExercise() == null ? null : attachment.getExercise().getId(), attachment.getLecture() == null ? null : attachment.getLecture().getId());
+
+            courseNotificationService.sendCourseNotification(attachmentChangedNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, ATTACHMENT_CHANGE, attachment, notificationText, userRepository.getUser());
+        }
     }
 
     /**
@@ -170,7 +203,18 @@ public class GroupNotificationService {
      * @param exercise that has been opened for practice
      */
     public void notifyStudentGroupAboutExercisePractice(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, EXERCISE_PRACTICE, exercise, null, userRepository.getUser());
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository.getStudents(course);
+
+            var exerciseOpenForPracticeNotification = new ExerciseOpenForPracticeNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle());
+
+            courseNotificationService.sendCourseNotification(exerciseOpenForPracticeNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, EXERCISE_PRACTICE, exercise, null, userRepository.getUser());
+        }
     }
 
     /**
@@ -179,7 +223,18 @@ public class GroupNotificationService {
      * @param quizExercise that has been started
      */
     public void notifyStudentGroupAboutQuizExerciseStart(QuizExercise quizExercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, QUIZ_EXERCISE_STARTED, quizExercise, null, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository.getStudents(course);
+
+            var quizExerciseStartedNotification = new QuizExerciseStartedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), quizExercise.getId(),
+                    quizExercise.getSanitizedExerciseTitle());
+
+            courseNotificationService.sendCourseNotification(quizExerciseStartedNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT }, QUIZ_EXERCISE_STARTED, quizExercise, null, null);
+        }
     }
 
     /**
@@ -195,7 +250,20 @@ public class GroupNotificationService {
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             return;
         }
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, userRepository.getUser());
+
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(
+                    Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
+
+            var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle());
+
+            courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, userRepository.getUser());
+        }
     }
 
     /**
@@ -205,7 +273,20 @@ public class GroupNotificationService {
      * @param exercise that has been created
      */
     public void notifyAllGroupsAboutReleasedExercise(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, EXERCISE_RELEASED, exercise, null, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository.getUsersInCourse(course);
+
+            var newExerciseNotification = new NewExerciseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle(), exercise.getDifficulty() == null ? null : exercise.getDifficulty().toString(),
+                    exercise.getReleaseDate() == null ? null : exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                    exercise.getDueDate() == null ? null : exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")), exercise.getMaxPoints().longValue());
+
+            courseNotificationService.sendCourseNotification(newExerciseNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, EXERCISE_RELEASED, exercise, null, null);
+        }
     }
 
     /**
@@ -215,7 +296,19 @@ public class GroupNotificationService {
      * @param notificationText that should be displayed
      */
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository
+                    .findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+
+            var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle());
+
+            courseNotificationService.sendCourseNotification(exerciseUpdatedNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, EXERCISE_UPDATED, exercise, notificationText, null);
+        }
     }
 
     /**
@@ -258,8 +351,24 @@ public class GroupNotificationService {
         notifyGroupsWithNotificationType(new GroupNotificationType[] { INSTRUCTOR }, ILLEGAL_SUBMISSION, exercise, notificationText, null);
     }
 
+    /**
+     * Notifies a tutor that their feedback was requested.
+     *
+     * @param exercise that has been affected
+     */
     public void notifyTutorGroupAboutNewFeedbackRequest(Exercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA }, NEW_MANUAL_FEEDBACK_REQUEST, exercise, null, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository.getTutors(course);
+
+            var manualFeedbackRequestNotification = new NewManualFeedbackRequestNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle());
+
+            courseNotificationService.sendCourseNotification(manualFeedbackRequestNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { TA }, NEW_MANUAL_FEEDBACK_REQUEST, exercise, null, null);
+        }
     }
 
     /**

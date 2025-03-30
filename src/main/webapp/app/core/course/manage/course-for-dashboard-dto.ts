@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 
 export class CourseForDashboardDTO {
@@ -13,6 +13,8 @@ export class CourseForDashboardDTO {
     quizScores: CourseScores;
 
     participationResults: ParticipationResultDTO[];
+
+    courseNotificationCount: number;
 }
 
 export class ParticipationResultDTO {

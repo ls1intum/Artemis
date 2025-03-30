@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { SidebarCardSize } from 'app/types/sidebar';
-import { DifficultyLevel } from 'app/entities/exercise.model';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { input, runInInjectionContext } from '@angular/core';
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { ProfilePictureComponent } from '../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
 import { MockComponent } from 'ng-mocks';
+import { SidebarCardSize } from 'app/shared/types/sidebar';
 
 describe('SidebarCardItemComponent', () => {
     let component: SidebarCardItemComponent;

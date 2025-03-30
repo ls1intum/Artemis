@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.PushNotificationDataDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
@@ -65,10 +66,11 @@ class CourseNotificationPushProxyServiceTest {
     void shouldReturnOriginalDTOWhenNotificationTypeIsNotSupported(String notificationType) {
         ZonedDateTime creationDate = ZonedDateTime.parse("2023-01-01T12:00:00Z");
         CourseNotificationDTO notification = createNotificationWithType(creationDate, notificationType);
+        var notificationSerializedDTO = new CourseNotificationSerializedDTO(notification);
 
         PushNotificationDataDTO result = courseNotificationPushProxyService.fromCourseNotification(notification);
 
-        assertThat(result.courseNotificationDTO()).isEqualTo(notification);
+        assertThat(result.courseNotificationDTO()).isEqualTo(notificationSerializedDTO);
         assertThat(result.notificationPlaceholders()).isNull();
     }
 
@@ -89,13 +91,13 @@ class CourseNotificationPushProxyServiceTest {
         parameters.put("postId", "456");
         parameters.put("channelId", "789");
 
-        return new CourseNotificationDTO("newMessageNotification", 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, parameters);
+        return new CourseNotificationDTO("newMessageNotification", 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, parameters, "/");
     }
 
     /**
      * Helper method to create a notification with a specific type
      */
     private CourseNotificationDTO createNotificationWithType(ZonedDateTime creationDate, String notificationType) {
-        return new CourseNotificationDTO(notificationType, 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, new HashMap<>());
+        return new CourseNotificationDTO(notificationType, 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, new HashMap<>(), "/");
     }
 }

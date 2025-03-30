@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { cloneDeep } from 'lodash-es';

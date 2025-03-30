@@ -2,7 +2,7 @@ import { ComponentRef, Directive, EventEmitter, Input, OnDestroy, OnInit, Output
 import { SidebarCardSmallComponent } from 'app/shared/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardMediumComponent } from 'app/shared/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardLargeComponent } from 'app/shared/sidebar/sidebar-card-large/sidebar-card-large.component';
-import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
 
 @Directive({
     selector: '[jhiSidebarCard]',

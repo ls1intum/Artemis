@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -64,7 +65,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionFilterService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
-import de.tum.cit.aet.artemis.modeling.service.compass.strategy.NameSimilarity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -552,6 +552,11 @@ public class ResultService {
         if (shouldSave) {
             // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
             deleteLongFeedback(result.getFeedbacks(), result);
+
+            // Set all long feedback IDs to null to make hibernate aware that the long feedback doesn't exist.
+            result.getFeedbacks().forEach(feedback -> {
+                feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null));
+            });
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }

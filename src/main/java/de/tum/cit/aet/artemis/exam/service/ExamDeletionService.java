@@ -42,8 +42,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
-import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -75,8 +73,6 @@ public class ExamDeletionService {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
-    private final QuizPoolRepository quizPoolRepository;
-
     private final BuildJobRepository buildJobRepository;
 
     private final PostRepository postRepository;
@@ -86,8 +82,7 @@ public class ExamDeletionService {
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
             StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
-            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository, BuildJobRepository buildJobRepository, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository) {
+            ExamLiveEventRepository examLiveEventRepository, BuildJobRepository buildJobRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -100,7 +95,6 @@ public class ExamDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
-        this.quizPoolRepository = quizPoolRepository;
         this.buildJobRepository = buildJobRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -131,9 +125,6 @@ public class ExamDeletionService {
         Channel examChannel = channelRepository.findChannelByExamId(examId);
         channelService.deleteChannel(examChannel);
 
-        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findByExamId(examId);
-        quizPoolOptional.ifPresent(quizPool -> quizPoolRepository.deleteById(quizPool.getId()));
-
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
         testRuns.forEach(testRun -> deleteTestRun(testRun.getId()));
@@ -144,7 +135,7 @@ public class ExamDeletionService {
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
-                    exerciseDeletionService.delete(exercise.getId(), true, true);
+                    exerciseDeletionService.delete(exercise.getId(), true);
                 }
             }
         }

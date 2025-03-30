@@ -3,34 +3,32 @@ import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/exercise.utils';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
-import { faDesktop, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 @Component({
     imports: [
@@ -42,15 +40,13 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
-        FaIconComponent,
-        TranslateDirective,
         RequestFeedbackButtonComponent,
         ArtemisTranslatePipe,
     ],
     providers: [ExternalCloningService],
     selector: 'jhi-exercise-details-student-actions',
-    styleUrls: ['../course-overview.scss'],
     templateUrl: './exercise-details-student-actions.component.html',
+    styleUrls: ['../course-overview.scss'],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     private alertService = inject(AlertService);
@@ -87,16 +83,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     athenaEnabled = false;
     routerLink: string;
 
-    theiaEnabled = false;
-    theiaPortalURL: string;
-
     // Icons
     readonly faFolderOpen = faFolderOpen;
     readonly faUsers = faUsers;
     readonly faEye = faEye;
     readonly faPlayCircle = faPlayCircle;
     readonly faRedo = faRedo;
-    readonly faDesktop = faDesktop;
 
     ngOnInit(): void {
         if (this.exercise.type === ExerciseType.QUIZ) {
@@ -108,29 +100,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-
-                // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
-                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
-                    this.theiaEnabled = true;
-
-                    // Set variables now, sanitize later on
-                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-
-                    // Verify that Theia's portal URL is set
-                    if (this.theiaPortalURL === '') {
-                        this.theiaEnabled = false;
-                    }
-
-                    // Verify that the exercise allows the online IDE
-                    if (!this.programmingExercise.allowOnlineIde) {
-                        this.theiaEnabled = false;
-                    }
-
-                    // Verify that the exercise has a theia blueprint configured
-                    if (!this.programmingExercise.buildConfig?.theiaImage) {
-                        this.theiaEnabled = false;
-                    }
-                }
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -155,10 +124,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
-    }
-
-    startOnlineIDE() {
-        window.open(this.theiaPortalURL, '_blank');
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {

@@ -15,22 +15,20 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { PluginSimple } from 'markdown-it';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { problemStatementHasChanged } from 'app/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
@@ -43,6 +41,8 @@ import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programmi
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',

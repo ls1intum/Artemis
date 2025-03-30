@@ -1,10 +1,10 @@
-import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { captureException } from '@sentry/angular';
-import { ValidationReason } from 'app/entities/exercise.model';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import {
     MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD,
     MAX_QUIZ_QUESTION_HINT_LENGTH_THRESHOLD,
@@ -13,13 +13,13 @@ import {
 } from 'app/shared/constants/input.constants';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { CanBecomeInvalid, DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
+import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
+import { CanBecomeInvalid, DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
 /**
  * Check if quiz is editable

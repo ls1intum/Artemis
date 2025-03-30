@@ -99,6 +99,8 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -158,6 +160,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private UserSshPublicKeyService userSshPublicKeyService;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @Captor
     private ArgumentCaptor<Notification> appleNotificationCaptor;
@@ -299,6 +304,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         dataExport = new DataExport();
         dataExport.setUser(user);
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     /**
