@@ -587,8 +587,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result.setAssessor(examTutor1);
-                result = resultRepository.save(result);
                 result.setSubmission(submission);
+                result = resultRepository.save(result);
                 submission.addResult(result);
                 submissionRepository.save(submission);
             }
@@ -681,8 +681,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
                 result.setAssessor(examInstructor);
-                result = resultRepository.save(result);
                 result.setSubmission(submission);
+                result = resultRepository.save(result);
                 submission.addResult(result);
                 submissionRepository.save(submission);
             }
@@ -854,15 +854,15 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                 if (withSecondCorrectionAndStarted) {
                     var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
                     firstResult.setAssessor(instructor);
-                    firstResult = resultRepository.save(firstResult);
                     firstResult.setSubmission(submission);
+                    firstResult = resultRepository.save(firstResult);
                     submission.addResult(firstResult);
                 }
 
                 var finalResult = new Result().score(resultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
                 finalResult.setAssessor(instructor);
-                finalResult = resultRepository.save(finalResult);
                 finalResult.setSubmission(submission);
+                finalResult = resultRepository.save(finalResult);
                 submission.addResult(finalResult);
 
                 submission.submitted(true);
