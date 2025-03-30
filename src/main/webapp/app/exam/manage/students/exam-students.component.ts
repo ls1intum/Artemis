@@ -94,7 +94,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isLoading = true;
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.setUpExamInformation(exam);

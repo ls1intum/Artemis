@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
@@ -167,106 +167,85 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private languageChangeSubscription?: Subscription;
 
     ngOnInit() {
-        // First, get the courseId from parent.parent.params
-        this.route.parent?.parent?.params
-            .pipe(
-                // Combine with params from the current route
-                switchMap((parentParams) => {
-                    const courseId = parentParams['courseId'];
+        this.route.params.subscribe((params) => {
+            const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
+            // alternative exam scores calculation using participant scores table
+            const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']).pipe(catchError(() => of(new HttpResponse<ScoresDTO[]>())));
 
-                    // Now get the params from current route
-                    return this.route.params.pipe(
-                        map((currentParams) => {
-                            return {
-                                courseId: courseId,
-                                examId: currentParams['examId'],
-                            };
-                        }),
-                    );
-                }),
-            )
-            .subscribe((combinedParams) => {
-                // Now you have both courseId and examId
-                const getExamScoresObservable = this.examService.getExamScores(combinedParams.courseId, combinedParams.examId);
-                // alternative exam scores calculation using participant scores table
-                const findExamScoresObservable = this.participantScoresService.findExamScores(combinedParams['examId']).pipe(catchError(() => of(new HttpResponse<ScoresDTO[]>())));
+            // find grading scale if one exists and handle case when it doesn't
+            const gradingScaleObservable = this.gradingSystemService
+                .findGradingScaleForExam(params['courseId'], params['examId'])
+                .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
 
-                // find grading scale if one exists and handle case when it doesn't
-                const gradingScaleObservable = this.gradingSystemService
-                    .findGradingScaleForExam(combinedParams['courseId'], combinedParams['examId'])
-                    .pipe(catchError(() => of(new HttpResponse<GradingScale>())));
+            this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
 
-                this.courseManagementService.find(combinedParams['courseId']).subscribe((courseResponse) => (this.course = courseResponse.body!));
+            forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
+                next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
+                    this.examScoreDTO = getExamScoresResponse!.body!;
+                    if (this.examScoreDTO) {
+                        this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
+                        this.studentResults = this.examScoreDTO.studentResults;
+                        this.exerciseGroups = this.examScoreDTO.exerciseGroups;
 
-                forkJoin([getExamScoresObservable, findExamScoresObservable, gradingScaleObservable]).subscribe({
-                    next: ([getExamScoresResponse, findExamScoresResponse, gradingScaleResponse]) => {
-                        this.examScoreDTO = getExamScoresResponse!.body!;
-                        if (this.examScoreDTO) {
-                            this.hasSecondCorrectionAndStarted = this.examScoreDTO.hasSecondCorrectionAndStarted;
-                            this.studentResults = this.examScoreDTO.studentResults;
-                            this.exerciseGroups = this.examScoreDTO.exerciseGroups;
-
-                            const titleMap = new Map<string, number>();
-                            if (this.exerciseGroups) {
-                                for (const exerciseGroup of this.exerciseGroups) {
-                                    if (titleMap.has(exerciseGroup.title)) {
-                                        const currentValue = titleMap.get(exerciseGroup.title);
-                                        titleMap.set(exerciseGroup.title, currentValue! + 1);
-                                    } else {
-                                        titleMap.set(exerciseGroup.title, 1);
-                                    }
+                        const titleMap = new Map<string, number>();
+                        if (this.exerciseGroups) {
+                            for (const exerciseGroup of this.exerciseGroups) {
+                                if (titleMap.has(exerciseGroup.title)) {
+                                    const currentValue = titleMap.get(exerciseGroup.title);
+                                    titleMap.set(exerciseGroup.title, currentValue! + 1);
+                                } else {
+                                    titleMap.set(exerciseGroup.title, 1);
                                 }
+                            }
 
-                                // this workaround is necessary if the exam has exercise groups with the same title (we add the id to make it unique)
-                                for (const exerciseGroup of this.exerciseGroups) {
-                                    if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title)! > 1) {
-                                        exerciseGroup.title = `${exerciseGroup.title} (id=${exerciseGroup.id})`;
-                                    }
+                            // this workaround is necessary if the exam has exercise groups with the same title (we add the id to make it unique)
+                            for (const exerciseGroup of this.exerciseGroups) {
+                                if (titleMap.has(exerciseGroup.title) && titleMap.get(exerciseGroup.title)! > 1) {
+                                    exerciseGroup.title = `${exerciseGroup.title} (id=${exerciseGroup.id})`;
                                 }
                             }
                         }
-                        // set the grading scale if it exists for the exam
-                        if (gradingScaleResponse.body) {
-                            this.gradingScaleExists = true;
-                            this.gradingScale = gradingScaleResponse.body!;
-                            this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
-                            this.hasBonus = this.studentResults?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy;
-                            this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
-                            this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
-                        }
-                        // Only try to calculate statistics if the exam has exercise groups and student results
-                        if (this.studentResults && this.exerciseGroups) {
-                            this.hasPlagiarismVerdicts = this.studentResults.some((studentResult) => studentResult.mostSeverePlagiarismVerdict);
-                            this.hasPlagiarismVerdictsInBonusSource =
-                                this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
+                    }
+                    // set the grading scale if it exists for the exam
+                    if (gradingScaleResponse.body) {
+                        this.gradingScaleExists = true;
+                        this.gradingScale = gradingScaleResponse.body!;
+                        this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
+                        this.hasBonus = this.studentResults?.find((studentResult) => studentResult?.gradeWithBonus)?.gradeWithBonus?.bonusStrategy;
+                        this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
+                        this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
+                    }
+                    // Only try to calculate statistics if the exam has exercise groups and student results
+                    if (this.studentResults && this.exerciseGroups) {
+                        this.hasPlagiarismVerdicts = this.studentResults.some((studentResult) => studentResult.mostSeverePlagiarismVerdict);
+                        this.hasPlagiarismVerdictsInBonusSource =
+                            this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
 
-                            if (this.hasBonus) {
-                                const firstStudentResultWithPresentationScore = this.studentResults.find(
-                                    (studentResult) => studentResult.gradeWithBonus?.presentationScoreThreshold,
-                                );
-                                this.presentationScoreThreshold = firstStudentResultWithPresentationScore?.gradeWithBonus!.presentationScoreThreshold;
-                            }
-
-                            // Exam statistics must only be calculated once as they are not filter dependent
-                            this.calculateExamStatistics();
-                            this.calculateFilterDependentStatistics();
-                            const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
-                            // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
-                            // We need to set the value for the overall median in order to show it next to the checkbox
-                            if (medianType === MedianType.PASSED) {
-                                // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
-                                this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
-                                this.showOverallMedian = false;
-                            }
-                            this.determineAndHighlightChartMedian(medianType);
+                        if (this.hasBonus) {
+                            const firstStudentResultWithPresentationScore = this.studentResults.find((studentResult) => studentResult.gradeWithBonus?.presentationScoreThreshold);
+                            this.presentationScoreThreshold = firstStudentResultWithPresentationScore?.gradeWithBonus!.presentationScoreThreshold;
                         }
-                        this.isLoading = false;
-                        this.changeDetector.detectChanges();
-                        this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
-                    },
-                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                });
+
+                        // Exam statistics must only be calculated once as they are not filter dependent
+                        this.calculateExamStatistics();
+                        this.calculateFilterDependentStatistics();
+                        const medianType = this.gradingScaleExists && !this.isBonus ? MedianType.PASSED : MedianType.OVERALL;
+                        // if a grading scale exists and the scoring type is not bonus, per default the median of all passed exams is shown.
+                        // We need to set the value for the overall median in order to show it next to the checkbox
+                        if (medianType === MedianType.PASSED) {
+                            // We pass MedianType.OVERALL since we want the median of all exams to be shown, not only of the submitted exams
+                            this.setOverallChartMedianDependingOfExamsIncluded(MedianType.OVERALL);
+                            this.showOverallMedian = false;
+                        }
+                        this.determineAndHighlightChartMedian(medianType);
+                    }
+                    this.isLoading = false;
+                    this.changeDetector.detectChanges();
+                    this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
+        });
 
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe(() => {

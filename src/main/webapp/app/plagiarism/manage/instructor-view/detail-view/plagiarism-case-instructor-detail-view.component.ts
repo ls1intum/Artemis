@@ -102,7 +102,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     posts: Post[];
 
     ngOnInit(): void {
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.plagiarismCaseId = Number(this.route.snapshot.paramMap.get('plagiarismCaseId'));
         this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId, this.plagiarismCaseId).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {

@@ -63,7 +63,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.courseId = Number(this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         const plagiarismCasesForInstructor$ = this.examId
             ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)

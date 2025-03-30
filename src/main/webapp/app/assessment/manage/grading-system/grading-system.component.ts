@@ -13,7 +13,6 @@ import { FormsModule } from '@angular/forms';
 import { GradingSystemPresentationsComponent } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { switchMap, take, tap } from 'rxjs';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -50,20 +49,13 @@ export class GradingSystemComponent implements OnInit {
     readonly faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {
-        this.route.parent?.parent?.params
-            .pipe(
-                take(1),
-                tap((parentParams) => {
-                    this.courseId = Number(parentParams['courseId']);
-                }),
-                switchMap(() => this.route.params),
-            )
-            .subscribe((params) => {
-                if (params['examId']) {
-                    this.examId = Number(params['examId']);
-                    this.isExam = true;
-                }
-            });
+        this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            if (params['examId']) {
+                this.examId = Number(params['examId']);
+                this.isExam = true;
+            }
+        });
     }
 
     /**
