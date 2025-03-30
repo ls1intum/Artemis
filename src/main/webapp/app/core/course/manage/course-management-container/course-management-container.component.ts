@@ -92,7 +92,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private courseSub?: Subscription;
 
     // we cannot use signals here because the child component doesn't expect it
-    private dialogErrorSource = new Subject<string>();
+    dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     activatedComponentReference = signal<
@@ -110,7 +110,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | CourseScoresComponent
         | FaqComponent
         | BuildQueueComponent
-    >(new CourseDetailComponent());
+        | undefined
+    >(undefined);
 
     // Icons
     faTimes = faTimes;
@@ -146,7 +147,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
-    protected handleCourseIdChange(courseId: number): void {
+    handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
         this.subscribeToCourseUpdates(courseId);
     }
@@ -163,7 +164,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 if (res.body) {
                     this.course.set(res.body);
                 }
-
                 this.setUpConversationService();
             }),
         );
@@ -193,7 +193,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
     }
 
-    protected handleToggleSidebar(): void {
+    handleToggleSidebar(): void {
         if (!this.activatedComponentReference() || !(this.activatedComponentReference() instanceof CourseConversationsComponent)) {
             return;
         }
@@ -248,7 +248,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (currentCourse?.isAtLeastInstructor && this.localCIActive()) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
-
         if (this.ltiEnabled() && currentCourse?.onlineCourse && currentCourse?.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
         }

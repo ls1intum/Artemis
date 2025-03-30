@@ -52,19 +52,19 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected ltiService = inject(LtiService);
     protected courseSidebarService = inject(CourseSidebarService);
 
-    protected ngUnsubscribe = new Subject<void>();
+    ngUnsubscribe = new Subject<void>();
     protected closeSidebarEventSubscription: Subscription;
     protected openSidebarEventSubscription: Subscription;
     protected subscription?: Subscription;
     protected profileSubscription?: Subscription;
     protected ltiSubscription: Subscription;
     protected loadCourseSubscription?: Subscription;
-    protected dashboardSubscription: Subscription;
+    dashboardSubscription: Subscription;
 
     // Common state properties using signals
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
-    courses = signal<Course[]>([]);
+    courses = signal<Course[] | undefined>(undefined);
     refreshingCourse = signal<boolean>(false);
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
@@ -85,11 +85,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     readonly MIN_DISPLAYED_COURSES: number = 6;
 
     protected conversationServiceInstantiated = signal<boolean>(false);
-    protected checkedForUnreadMessages = signal<boolean>(false);
+    checkedForUnreadMessages = signal<boolean>(false);
 
     // Controls handling properties
     protected controlsEmbeddedView?: EmbeddedViewRef<any>;
-    protected controls = signal<TemplateRef<any> | undefined>(undefined);
+    controls = signal<TemplateRef<any> | undefined>(undefined);
     public controlConfiguration = signal<BarControlConfiguration | undefined>(undefined);
     protected controlsSubscription?: Subscription;
     protected vcSubscription?: Subscription;
@@ -146,11 +146,11 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     // Abstract methods to be implemented by child classes
-    protected abstract handleCourseIdChange(courseId: number): void;
+    abstract handleCourseIdChange(courseId: number): void;
     protected abstract getSidebarItems(): SidebarItem[];
     protected abstract getHasSidebar(): boolean;
     protected abstract handleComponentActivation(componentRef: any): void;
-    protected abstract handleToggleSidebar(): void;
+    abstract handleToggleSidebar(): void;
     abstract loadCourse(refresh?: boolean): Observable<void>;
 
     ngAfterViewInit() {
@@ -214,7 +214,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         const urlSegments = this.router.url.split('/');
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
         this.hasSidebar.set(this.getHasSidebar());
-
         this.setUpConversationService();
 
         if (componentRef.controlConfiguration) {
@@ -263,7 +262,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         }
     }
 
-    protected setUpConversationService() {
+    setUpConversationService() {
         const currentCourse = this.course();
         if (!currentCourse || (!isMessagingEnabled(currentCourse) && !isCommunicationEnabled(currentCourse))) {
             return;

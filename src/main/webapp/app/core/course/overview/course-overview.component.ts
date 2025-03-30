@@ -93,9 +93,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
-    activatedComponentReference = signal<CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent>(
-        new CourseExercisesComponent(),
-    );
+    activatedComponentReference = signal<
+        CourseExercisesComponent | CourseLecturesComponent | CourseExamsComponent | CourseTutorialGroupsComponent | CourseConversationsComponent | undefined
+    >(undefined);
 
     // Icons
     faTimes = faTimes;
@@ -204,7 +204,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         ) {
             this.activatedComponentReference.set(componentRef);
         }
-        this.activatedComponentReference.set(componentRef);
         this.getShowRefreshButton();
     }
 
@@ -213,8 +212,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             return;
         }
         const childRouteComponent = this.activatedComponentReference();
-        childRouteComponent.toggleSidebar();
-        this.isSidebarCollapsed.set(childRouteComponent.isCollapsed);
+        childRouteComponent?.toggleSidebar();
+        this.isSidebarCollapsed.set(childRouteComponent!.isCollapsed);
     }
 
     getShowRefreshButton(): void {

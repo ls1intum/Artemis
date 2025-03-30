@@ -19,7 +19,6 @@ export class CourseTitleBarComponent {
     hasSidebar = input(false);
     isSidebarCollapsed = input(false);
     pageTitle = input('');
-    titleTranslation = input('');
     isExamStarted = input(false);
 
     toggleSidebar = output<void>();
