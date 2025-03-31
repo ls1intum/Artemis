@@ -166,7 +166,7 @@ public class ParticipationAuthorizationCheckService {
      * A practice mode participation is never locked.
      * Otherwise, a participation is considered locked if:
      * <ul>
-     * <li>The due date of the exercise has passed and the participation is not in practice mode.</li>
+     * <li>The due date of the exercise has passed.</li>
      * <li>The exercise is an exam exercise, and:
      * <ul>
      * <li>The associated student exam has already been submitted.</li>
