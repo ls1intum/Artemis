@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -67,7 +66,7 @@ public class SlideService {
 
         log.debug("Updating hidden date for {} slides related to exercise {}", relatedSlides.size(), exercise.getId());
 
-        ZonedDateTime newHiddenDate = ZonedDateTime.ofInstant(exercise.getDueDate().toInstant(), ZoneId.systemDefault());
+        ZonedDateTime newHiddenDate = exercise.getDueDate();
 
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);

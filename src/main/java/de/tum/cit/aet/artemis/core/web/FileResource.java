@@ -632,6 +632,8 @@ public class FileResource {
         log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+        checkAttachmentAuthorizationOrThrow(course, attachment);
 
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
