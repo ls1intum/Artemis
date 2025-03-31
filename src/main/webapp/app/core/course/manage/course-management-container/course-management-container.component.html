@@ -37,7 +37,7 @@
                         </div>
                         <div class="controls">
                             @if (course()?.isAtLeastInstructor) {
-                                <button id="edit-course" [routerLink]="['edit']" class="btn btn-warning btn-md" routerLinkActive="active">
+                                <button id="edit-course" [routerLink]="[courseId(), 'edit']" class="btn btn-warning btn-md" routerLinkActive="active">
                                     <fa-icon [icon]="faWrench" />
                                     <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
                                 </button>
@@ -82,15 +82,6 @@
             </mat-sidenav-content>
         </mat-sidenav-container>
     </div>
-</div>
-<div class="course-body-container" [ngClass]="{ 'd-none': !isShownViaLti() }">
-    @if (!hasSidebar()) {
-        <ng-container class="d-flex ms-auto" #controlsViewContainer />
-    }
-    <!-- Check isLTI to render the router outlet only once and avoid side effects on route updates. -->
-    @if (isShownViaLti()) {
-        <ng-template *ngTemplateOutlet="routerOutlet" />
-    }
 </div>
 
 <!-- TEMPLATES -->

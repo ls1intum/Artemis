@@ -101,6 +101,7 @@ export class CourseSidebarItemService {
             icon: faChalkboardUser,
             title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
+            testId: 'lectures',
             hidden: false,
         };
     }
