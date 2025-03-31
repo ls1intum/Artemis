@@ -3,7 +3,7 @@
     <div class="forwarded-message-content">
         <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
             <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem" />
-            <span [jhiTranslate]="'artemisApp.metis.forward.' + (hasOriginalPostBeenDeleted ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName }}
+            <span [jhiTranslate]="'artemisApp.metis.forward.' + (hasOriginalPostBeenDeleted() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName }}
             @if (viewButtonVisible) {
                 <button
                     type="button"
@@ -14,7 +14,7 @@
                 ></button>
             }
         </span>
-        @if (hasOriginalPostBeenDeleted) {
+        @if (hasOriginalPostBeenDeleted()) {
             <div class="forwarded-message-missing-container">
                 <span class="forwarded-message-missing-label"> <span [jhiTranslate]="'artemisApp.metis.forward.forwardedMessageDeleted'"></span> {{ sourceName }} </span>
             </div>

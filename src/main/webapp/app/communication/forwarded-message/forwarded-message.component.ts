@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -34,7 +34,9 @@ export class ForwardedMessageComponent implements AfterViewInit {
     postingIsOfToday = false;
 
     protected viewButtonVisible = false;
-    protected hasOriginalPostBeenDeleted = false;
+    readonly hasOriginalPostBeenDeleted = computed(() => {
+        return this.originalPostDetails() === null;
+    });
 
     private cdr = inject(ChangeDetectorRef);
     private conversation: Conversation | undefined;
@@ -52,9 +54,6 @@ export class ForwardedMessageComponent implements AfterViewInit {
                     this.postingIsOfToday = dayjs().isSame(post.creationDate, 'day');
                     this.todayFlag = this.getTodayFlag();
                 } else {
-                    if (post === null) {
-                        this.hasOriginalPostBeenDeleted = true;
-                    }
                     this.sourceName = '';
                     this.conversation = undefined;
                     this.viewButtonVisible = false;
