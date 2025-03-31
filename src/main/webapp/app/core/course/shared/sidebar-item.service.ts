@@ -141,7 +141,7 @@ export class CourseSidebarItemService {
         return {
             routerLink: 'competencies',
             icon: faFlag,
-            title: 'Competency Management',
+            title: 'Competencies',
             translation: 'artemisApp.courseOverview.menu.competencies',
             hidden: false,
         };

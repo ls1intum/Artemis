@@ -27,7 +27,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -60,6 +60,7 @@ import { CourseExercisesComponent } from 'app/core/course/overview/course-exerci
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -153,6 +154,8 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
     let courseSidebarService: CourseSidebarService;
+    let profileService: ProfileService;
+    let modalService: NgbModal;
 
     let metisConversationService: MetisConversationService;
 
@@ -198,6 +201,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
+                MockProvider(NgbModal),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -223,6 +227,8 @@ describe('CourseOverviewComponent', () => {
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
+                profileService = TestBed.inject(ProfileService);
+                modalService = TestBed.inject(NgbModal);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(WebsocketService);
@@ -248,6 +254,13 @@ describe('CourseOverviewComponent', () => {
                 findAllForDropdownSpy = jest
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
+                    of({
+                        inProduction: true,
+                        activeProfiles: ['prod', 'atlas', 'iris', 'lti'],
+                        testServer: false,
+                    } as ProfileInfo),
+                );
             });
     }));
 
@@ -302,6 +315,19 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
         expect(sidebarItems[1].title).toContain('Lectures');
+    });
+
+    it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
+        component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
+        component.atlasEnabled.set(true);
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems[2].title).toContain('Competencies');
+        expect(sidebarItems[3].title).toContain('Learning Path');
+    });
+    it('should create faq item when faqs are enabled', () => {
+        component.course.set({ id: 123, faqEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems[2].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -486,6 +512,20 @@ describe('CourseOverviewComponent', () => {
         const bool = component.hasVisibleExams();
 
         expect(bool).toBeFalse();
+    });
+
+    it('should contain unenrollment as course action when allowed', () => {
+        component.course.set({ unenrollmentEnabled: true, unenrollmentEndDate: dayjs().add(1, 'days') });
+        const courseActionItems = component.getCourseActionItems();
+        expect(courseActionItems.length).toBeGreaterThan(0);
+        expect(courseActionItems[0].title).toContain('Unenroll');
+    });
+
+    it('should open modal on triggering unenrollment option', () => {
+        const mockModalRef = { componentInstance: {} } as NgbModalRef;
+        const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        component.courseActionItemClick(component.getUnenrollItem());
+        expect(modalServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should have competencies and tutorial groups', () => {
