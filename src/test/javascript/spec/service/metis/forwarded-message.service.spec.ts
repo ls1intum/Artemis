@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of } from 'rxjs';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { PostingType } from 'app/communication/shared/entities/posting.model';
@@ -34,7 +34,7 @@ describe('ForwardedMessageService', () => {
     });
 
     describe('createForwardedMessage', () => {
-        it('should call POST with a converted DTO and courseId in params', () => {
+        it('should call POST with a converted DTO in params', () => {
             const response = new HttpResponse<ForwardedMessage>({ body: sampleForwardedMessage });
             (httpClientMock.post as jest.Mock).mockReturnValue(of(response));
 
@@ -47,16 +47,13 @@ describe('ForwardedMessageService', () => {
             const expectedDto = {
                 id: 1,
                 sourceId: 2,
-                sourceType: 0, // numeric enum for POST
+                sourceType: PostingType.POST,
                 destinationPostId: 3,
                 destinationAnswerPostId: undefined,
                 content: '',
             };
 
-            const expectedParams = new HttpParams().set('courseId', '99');
-
             expect(httpClientMock.post).toHaveBeenCalledWith(apiUrl, expectedDto, {
-                params: expectedParams,
                 observe: 'response',
             });
         });
@@ -83,11 +80,9 @@ describe('ForwardedMessageService', () => {
             expect(calledUrl).toBe(apiUrl);
 
             const expectedParams = {
-                courseId: '99',
                 postingIds: '2,3',
             };
 
-            expect(calledOptions.params.get('courseId')).toBe(expectedParams.courseId);
             expect(calledOptions.params.get('postingIds')).toBe(expectedParams.postingIds);
             expect(calledOptions.params.get('type')).toBe('POST');
             expect(calledOptions.observe).toBe('response');
@@ -113,10 +108,9 @@ describe('ForwardedMessageService', () => {
             expect(calledUrl).toBe(apiUrl);
 
             const expectedParams = {
-                courseId: '99',
                 postingIds: '4,5',
             };
-            expect(calledOptions.params.get('courseId')).toBe(expectedParams.courseId);
+
             expect(calledOptions.params.get('postingIds')).toBe(expectedParams.postingIds);
             expect(calledOptions.params.get('type')).toBe('ANSWER');
         });
