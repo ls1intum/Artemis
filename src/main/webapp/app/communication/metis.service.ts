@@ -820,13 +820,22 @@ export class MetisService implements OnDestroy {
      * Retrieves the source answer posts for a given set of answer post IDs.
      *
      * @param answerPostIds - An array of numeric answer post IDs to retrieve source answer posts for.
-     * @returns An observable containing the source answer posts or undefined if the IDs are invalid.
+     * @returns An observable containing the source answer posts or undefined if the IDs are invalid or not existent.
      */
-    getSourceAnswerPostsByIds(answerPostIds: number[]) {
-        if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
-        else return;
+    getSourceAnswerPostsByIds(answerPostIds: number[]): Observable<AnswerPost[] | undefined> {
+        if (answerPostIds) {
+            return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds).pipe(
+                catchError((error) => {
+                    if (error.status === 404) {
+                        return of(undefined);
+                    }
+                    return throwError(() => error);
+                }),
+            );
+        } else {
+            return of(undefined);
+        }
     }
-
     /**
      * Creates forwarded messages by associating original posts with a target conversation.
      *
