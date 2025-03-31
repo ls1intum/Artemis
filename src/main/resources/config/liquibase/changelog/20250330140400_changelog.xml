@@ -74,6 +74,7 @@
 
     <!-- Step 4: Drop old columns and rename new ones (finalize migration) -->
     <changeSet id="20250330-04-finalize-column-replacement" author="krusche">
+        <dropForeignKeyConstraint baseTableName="saved_post" constraintName="FK_SAVED_POST_USER"/>
         <dropIndex tableName="saved_post" indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE"/>
         <dropColumn tableName="saved_post" columnName="post_type"/>
         <dropColumn tableName="saved_post" columnName="status"/>
@@ -97,7 +98,12 @@
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
                       columnDataType="post_type_enum"/>
-        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+        <addForeignKeyConstraint baseTableName="saved_post"
+                                 baseColumnNames="user_id"
+                                 constraintName="FK_SAVED_POST_USER"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post" unique="true">
             <column name="user_id"/>
             <column name="post_id"/>
             <column name="post_type"/>
@@ -124,6 +130,11 @@
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
                       columnDataType="enum('POST','ANSWER')"/>
+        <addForeignKeyConstraint baseTableName="saved_post"
+                                 baseColumnNames="user_id"
+                                 constraintName="FK_SAVED_POST_USER"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
         <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post" unique="true">
             <column name="user_id"/>
             <column name="post_id"/>
