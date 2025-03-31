@@ -22,7 +22,7 @@ export class PostingThreadComponent {
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
     @Input() isConsecutive: boolean | undefined = false;
-    searchQuery = input<string | undefined>(undefined);
+    searchQuery = input<string>('');
     forwardedPosts = input<Post[]>([]);
     forwardedAnswerPosts = input<AnswerPost[]>([]);
     readonly onNavigateToPost = output<Posting>();

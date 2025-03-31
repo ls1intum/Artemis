@@ -85,7 +85,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
-    searchQuery = input<string | undefined>(undefined);
+    searchQuery = input<string>('');
     showAnswers = model<boolean>(false);
 
     openThread = output<void>();
@@ -227,7 +227,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     updateShowSearchResultInAnswersHint() {
         const searchQuery = this.searchQuery()?.toLowerCase();
-        if (searchQuery === undefined || searchQuery === '') {
+        if (!searchQuery) {
             this.showSearchResultInAnswersHint = false;
             return;
         }
