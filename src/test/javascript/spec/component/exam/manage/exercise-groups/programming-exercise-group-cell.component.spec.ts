@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { By } from '@angular/platform-browser';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';

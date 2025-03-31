@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

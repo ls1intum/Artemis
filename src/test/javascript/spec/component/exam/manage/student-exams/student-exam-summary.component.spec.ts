@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent } from 'ng-mocks';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { of } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
 

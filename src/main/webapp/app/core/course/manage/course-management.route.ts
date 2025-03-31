@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
 import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/tutorial-group-management-resolve.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
+import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const courseManagementState: Routes = [
     {
@@ -115,11 +115,11 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/exams/:examId/plagiarism-cases',
-                loadChildren: () => import('../../../plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
+                loadChildren: () => import('app/plagiarism/manage/instructor-view/plagiarism-instructor-view.route').then((m) => m.plagiarismInstructorRoutes),
             },
             {
                 path: ':courseId/exams',
-                loadChildren: () => import('../../../exam/manage/exam-management.route').then((m) => m.examManagementRoute),
+                loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoute),
             },
             {
                 path: ':courseId/tutorial-groups-checklist',
@@ -215,7 +215,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'ratings',
-                        loadComponent: () => import('app/exercise/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
+                        loadComponent: () => import('app/assessment/manage/rating/rating-list/rating-list.component').then((m) => m.RatingListComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.ratingList.pageTitle',

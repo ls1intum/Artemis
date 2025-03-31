@@ -4,10 +4,10 @@ import { TestBed, fakeAsync } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
-import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 
 describe('OnlineUnitService', () => {

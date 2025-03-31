@@ -146,6 +146,7 @@ public class GroupNotificationScheduleService {
      */
     @Async
     public void checkNotificationsForNewExerciseAsync(Exercise exercise) {
+
         SecurityUtils.setAuthorizationObject(); // required for async
         // TODO: in a course with 2000 participants, this can take really long, we should optimize this
         checkNotificationForExerciseRelease(exercise);

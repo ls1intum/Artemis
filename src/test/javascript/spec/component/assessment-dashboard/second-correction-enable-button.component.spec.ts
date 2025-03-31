@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SecondCorrectionEnableButtonComponent } from 'app/exercise/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 
 describe('SecondCorrectionEnableButtonComponent', () => {
     let comp: SecondCorrectionEnableButtonComponent;

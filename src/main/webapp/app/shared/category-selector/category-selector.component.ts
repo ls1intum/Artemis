@@ -1,13 +1,13 @@
 import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
 import { Observable, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { MatFormField } from '@angular/material/form-field';
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
