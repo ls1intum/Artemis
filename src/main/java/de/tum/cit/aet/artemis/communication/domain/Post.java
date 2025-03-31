@@ -76,6 +76,7 @@ public class Post extends Posting {
     @ManyToOne
     private Conversation conversation;
 
+    // TODO: convert to real database enum
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
