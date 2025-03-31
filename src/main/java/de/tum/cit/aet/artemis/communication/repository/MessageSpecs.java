@@ -109,27 +109,6 @@ public class MessageSpecs {
     }
 
     /**
-     * Specification to fetch Posts and answer posts of the calling user
-     *
-     * @param filterToOwn whether only calling users own Posts should be fetched or not
-     * @param userId      id of the calling user
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getOwnSpecification(boolean filterToOwn, Long userId) {
-        return ((root, query, criteriaBuilder) -> {
-            if (!filterToOwn) {
-                return null;
-            }
-            else {
-                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
-                Predicate searchInAnswerContent = criteriaBuilder.equal(answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
-                Predicate isPostOwner = criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
-                return criteriaBuilder.or(isPostOwner, searchInAnswerContent);
-            }
-        });
-    }
-
-    /**
      * Specification to fetch Posts that were created by given authors for the calling user
      *
      * @param authorIds ids of the post authors

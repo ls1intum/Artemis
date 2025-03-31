@@ -424,10 +424,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseWideMessages_WithOwnAndUnresolvedPosts() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        // authorIds containing the current user id & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("filterToCourseWide", "true");
         params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         params.add("size", "50");
@@ -444,10 +445,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseWideMessages_WithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        // authorIds containing the current user id & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("filterToCourseWide", "true");
         params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
@@ -484,9 +486,10 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("filterToCourseWide", "true");
         params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
@@ -525,8 +528,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("filterToUnresolved", "true");
         params.add("filterToAnsweredOrReacted", "true");
         params.add("filterToCourseWide", "true");
@@ -547,9 +551,10 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("filterToCourseWide", "true");
         params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 

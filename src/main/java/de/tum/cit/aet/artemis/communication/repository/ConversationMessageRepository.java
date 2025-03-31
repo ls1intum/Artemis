@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAn
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAuthorSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getOwnSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPinnedSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
@@ -57,7 +56,6 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             .and(getSearchTextSpecification(postContextFilter.searchText()))
             .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), postContextFilter.courseId()))
             .and(getAuthorSpecification(postContextFilter.authorIds()))
-            .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
             .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))

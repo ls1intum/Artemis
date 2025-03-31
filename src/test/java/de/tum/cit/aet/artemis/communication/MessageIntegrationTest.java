@@ -451,9 +451,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         params.add("conversationIds", courseWideChannelId.toString());
         params.add("filterToCourseWide", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -538,9 +539,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         params.add("conversationIds", courseWideChannelId.toString());
         params.add("filterToCourseWide", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
         params.add("searchText", "Content");
 
@@ -563,10 +565,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         courseWidePosts.getFirst().getAnswers().forEach(answer -> answer.setContent("AnswerPost"));
         params.add("conversationIds", courseWideChannelId.toString());
         params.add("filterToCourseWide", "true");
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
         params.add("searchText", "Answer");
 
