@@ -451,8 +451,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
     @Override
     public Set<CompetencyExerciseLink> getCompetencyLinks() {
         return competencyLinks;

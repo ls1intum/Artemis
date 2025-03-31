@@ -18,13 +18,6 @@
                             <fa-icon [icon]="faListAlt" />
                             <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
                         </a>
-                        <!-- Remove ngIf when Quiz Exam feature is fully implemented -->
-                        @if (false) {
-                            <a id="quiz-pool" type="submit" [routerLink]="getExamRoutesByIdentifier('quiz-pool')" class="btn btn-primary mt-1">
-                                <fa-icon [icon]="faListAlt" />
-                                <span jhiTranslate="artemisApp.examManagement.quizPool"></span>
-                            </a>
-                        }
                         @if (!exam.testExam) {
                             <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faUser" />

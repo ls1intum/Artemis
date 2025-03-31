@@ -33,7 +33,7 @@ describe('CourseNotificationOverviewComponent', () => {
         category: CourseNotificationCategory,
         status: CourseNotificationViewingStatus = CourseNotificationViewingStatus.UNSEEN,
     ): CourseNotification => {
-        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' });
+        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, '/');
     };
 
     beforeEach(async () => {
@@ -87,7 +87,7 @@ describe('CourseNotificationOverviewComponent', () => {
 
     it('should initialize with the correct default values', () => {
         expect(componentAsAny.isShown).toBeFalse();
-        expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.COMMUNICATION);
+        expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.GENERAL);
         expect(componentAsAny.notifications).toBeUndefined();
         expect(componentAsAny.notificationsForSelectedCategory).toEqual([]);
         expect(componentAsAny.courseNotificationCount).toBe(0);
@@ -114,7 +114,7 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny.filterNotificationsIntoCurrentCategory();
 
         expect(componentAsAny.notificationsForSelectedCategory).toHaveLength(1);
-        expect(componentAsAny.notificationsForSelectedCategory[0]).toBe(communicationNotification);
+        expect(componentAsAny.notificationsForSelectedCategory[0]).toBe(generalNotification);
     });
 
     it('should toggle overlay visibility when toggleOverlay is called', () => {
