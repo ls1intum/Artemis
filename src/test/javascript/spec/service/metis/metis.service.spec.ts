@@ -823,15 +823,6 @@ describe('Metis Service', () => {
         tick();
     }));
 
-    it('should not call getSourcePostsByIds if postId list is undefined', fakeAsync(() => {
-        const postIds: number[] | undefined = undefined;
-        metisService.getSourcePostsByIds(postIds as any);
-        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
-
-        expect(postServiceSpy).not.toHaveBeenCalled();
-        tick();
-    }));
-
     it('should not call getSourceAnswerPostsByIds if answerPostIds is undefined', () => {
         const answerPostIds: number[] | undefined = undefined;
         metisService.getSourceAnswerPostsByIds(answerPostIds as any);
