@@ -106,8 +106,9 @@ export class PdfPreviewDateBoxComponent implements OnInit {
                     this.categorizedExercises.set(this.processExercises(response.body));
                 }
             },
-            error: () => {
+            error: (error) => {
                 this.exercises.set([]);
+                this.alertService.error(error);
             },
         });
     }

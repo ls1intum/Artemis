@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,9 +72,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
-import de.tum.cit.aet.artemis.lecture.service.SlideUnhideService;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -141,10 +136,6 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
-    private final SlideRepository slideRepository;
-
-    private final SlideUnhideService slideUnhideService;
-
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
@@ -152,8 +143,7 @@ public class ExerciseService {
             TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
             FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
             QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
-            Optional<CompetencyRelationApi> competencyRelationApi, ParticipationFilterService participationFilterService, SlideRepository slideRepository,
-            SlideUnhideService slideUnhideService) {
+            Optional<CompetencyRelationApi> competencyRelationApi, ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -178,8 +168,6 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
-        this.slideRepository = slideRepository;
-        this.slideUnhideService = slideUnhideService;
     }
 
     /**
@@ -820,50 +808,5 @@ public class ExerciseService {
                 .collect(Collectors.toMap(ExerciseTypeCountDTO::exerciseType, ExerciseTypeCountDTO::count));
 
         return Arrays.stream(ExerciseType.values()).collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
-    }
-
-    /**
-     * Checks if the due date of an exercise has changed and updates related slides if needed.
-     * This method should be called after saving an updated exercise.
-     *
-     * @param originalExercise The original exercise before the update
-     * @param updatedExercise  The updated exercise after the update
-     */
-    public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
-        ZonedDateTime originalDueDate = originalExercise.getDueDate();
-        ZonedDateTime updatedDueDate = updatedExercise.getDueDate();
-
-        // Check if the due date has changed
-        if (updatedDueDate != null && (originalDueDate == null || !originalDueDate.equals(updatedDueDate))) {
-
-            updateRelatedSlides(updatedExercise);
-        }
-
-    }
-
-    /**
-     * Updates the hidden date of slides associated with the given exercise to match the exercise's due date.
-     * This method should only be called when an exercise's due date has changed.
-     *
-     * @param exercise The exercise whose due date has changed
-     */
-    public void updateRelatedSlides(Exercise exercise) {
-        if (exercise.getDueDate() == null) {
-            return;
-        }
-
-        List<Slide> relatedSlides = slideRepository.findByExerciseId(exercise.getId());
-        if (relatedSlides.isEmpty()) {
-            return;
-        }
-
-        log.debug("Updating hidden date for {} slides related to exercise {}", relatedSlides.size(), exercise.getId());
-
-        ZonedDateTime newHiddenDate = ZonedDateTime.ofInstant(exercise.getDueDate().toInstant(), ZoneId.systemDefault());
-
-        relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
-        slideRepository.saveAll(relatedSlides);
-        // Schedule the slide to be unhidden at the new date
-        relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
     }
 }
