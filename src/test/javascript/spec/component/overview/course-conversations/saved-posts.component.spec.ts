@@ -113,6 +113,8 @@ describe('SavedPostsComponent', () => {
 
         it('should show empty notice when no posts are available', () => {
             component['posts'] = [];
+            fixture.componentRef.setInput('savedPostStatus', SavedPostStatus.IN_PROGRESS);
+            fixture.componentRef.setInput('courseId', 1);
             fixture.detectChanges();
 
             const emptyNotice = fixture.nativeElement.querySelector('.saved-posts-empty-notice');
@@ -133,6 +135,7 @@ describe('SavedPostsComponent', () => {
 
         it('should show delete post notice when archived is selected', fakeAsync(() => {
             fixture.componentRef.setInput('savedPostStatus', SavedPostStatus.ARCHIVED);
+            fixture.componentRef.setInput('courseId', 1);
             fixture.detectChanges();
             tick();
             fixture.detectChanges();

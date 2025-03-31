@@ -38,7 +38,7 @@ describe('SavedPostService', () => {
 
             service.savePost(post).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.POST.toLowerCase()}`);
             expect(req.request.method).toBe('POST');
         });
 
@@ -48,7 +48,7 @@ describe('SavedPostService', () => {
 
             service.savePost(answerPost).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.ANSWER}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.ANSWER.toLowerCase()}`);
             expect(req.request.method).toBe('POST');
         });
     });
@@ -60,7 +60,7 @@ describe('SavedPostService', () => {
 
             service.removeSavedPost(post).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.POST.toLowerCase()}`);
             expect(req.request.method).toBe('DELETE');
         });
 
@@ -70,7 +70,7 @@ describe('SavedPostService', () => {
 
             service.removeSavedPost(answerPost).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.ANSWER}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.ANSWER.toLowerCase()}`);
             expect(req.request.method).toBe('DELETE');
         });
     });
@@ -82,7 +82,7 @@ describe('SavedPostService', () => {
 
             service.changeSavedPostStatus(post, SavedPostStatus.IN_PROGRESS).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}?status=${SavedPostStatus.IN_PROGRESS}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.POST.toLowerCase()}&status=${SavedPostStatus.IN_PROGRESS.toLowerCase()}`);
             expect(req.request.method).toBe('PUT');
         });
 
@@ -92,7 +92,7 @@ describe('SavedPostService', () => {
 
             service.changeSavedPostStatus(answerPost, SavedPostStatus.COMPLETED).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.ANSWER}?status=${SavedPostStatus.COMPLETED}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.ANSWER.toLowerCase()}&status=${SavedPostStatus.COMPLETED.toLowerCase()}`);
             expect(req.request.method).toBe('PUT');
         });
     });
@@ -116,7 +116,8 @@ describe('SavedPostService', () => {
                 expect(response.body?.[0].updatedDate).toBeInstanceOf(Dayjs);
             });
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${SavedPostStatus.IN_PROGRESS}`);
+            const resourceUrlNoTrailingSlash = resourceUrl.slice(0, -1);
+            const req = httpMock.expectOne(`${resourceUrlNoTrailingSlash}?status=${SavedPostStatus.IN_PROGRESS.toLowerCase()}&courseId=${courseId}`);
             expect(req.request.method).toBe('GET');
             req.flush(mockPosts, { status: 200, statusText: 'OK' });
             tick();
