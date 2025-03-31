@@ -39,7 +39,6 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService } from 'app/shared/service/alert.service';
 
-// Mocks
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -58,7 +57,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 
-// Test Data
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
@@ -97,7 +95,6 @@ const course1: Course = {
         'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
         'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
-    courseIconPath: 'path/to/icon.png',
     courseIconPath: 'api/core/files/path/to/icon.png',
     onlineCourse: true,
     faqEnabled: true,
